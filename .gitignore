@@ -39,3 +39,13 @@ sysinfo.txt
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Vercel CLI link folders and generated lab-check payload
+.vercel/
+/tools/labcheck/speedtest.bin
+
+# Claude Code agent worktrees
+.claude/worktrees/
+
+# Local web builds and deploy staging
+/deploy/

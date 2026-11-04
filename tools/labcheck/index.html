@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CityScooter 机房体检</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231f6feb'/%3E%3Cpath d='M4 8.5l2.5 2.5L12 5' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="labcheck.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>CityScooter 机房体检</h1>
+    <p class="sub">在机房电脑上从上往下做一遍，最后点“复制结果”发给 Claude。尽量用<strong>学生账号</strong>登录来测，学校策略可能按账号不同。</p>
+  </div>
+  <div class="top-actions">
+    <label class="inline">电脑编号 <input id="pcLabel" placeholder="例如 Lab2-PC07" autocomplete="off"></label>
+    <button id="copyBtn" class="primary">复制结果</button>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1. 浏览器与环境 <span class="chip" id="chip-env">检测中</span></h2>
+    <table class="kv" id="envTable"></table>
+  </section>
+
+  <section class="card">
+    <h2>2. 显卡性能 <span class="chip" id="chip-gpu">未测</span></h2>
+    <p>模拟游戏画面跑两档，每档 4 秒。测的时候别动鼠标、别切窗口。</p>
+    <div class="row"><button id="gpuBtn">开始测试</button></div>
+    <div id="gpuHolder" class="gpu-holder"></div>
+    <pre id="gpuOut" class="out"></pre>
+  </section>
+
+  <section class="card">
+    <h2>3. 网速 <span class="chip" id="chip-net">未测</span></h2>
+    <p>从 Vercel 下载 3 次 5 MB 文件，估算游戏第一次打开要等多久。可以叫几台电脑同时点，看全班一起下载时的速度。</p>
+    <div class="row"><button id="netBtn">测速</button></div>
+    <pre id="netOut" class="out"></pre>
+  </section>
+
+  <section class="card">
+    <h2>4. micro:bit USB 连接（Web Serial） <span class="chip" id="chip-serial">未连接</span></h2>
+    <ol class="steps">
+      <li>打开 <a href="https://python.microbit.org" target="_blank" rel="noopener">python.microbit.org</a>，把下面的测试程序粘贴进去，分别刷进一块 <strong>V1</strong> 和一块 <strong>V2</strong>。刷好后板子会显示 1 或 2（代表版本）。</li>
+      <li>回到本页点“连接 micro:bit”，在弹出的列表里选板子；第二块板再点一次。</li>
+      <li>倾斜板子看转向条，按 A、按住 B，再点“发送 crash / gift”，看板子有没有显示表情（V2 还应该有声音）。</li>
+    </ol>
+    <details>
+      <summary>测试程序 labcheck.py（V1、V2 通用）</summary>
+      <div class="row"><button id="copyProgBtn">复制代码</button><a href="labcheck.py" download>下载 labcheck.py</a></div>
+      <pre id="progText" class="code"></pre>
+    </details>
+    <div class="row">
+      <button id="serialConnectBtn" class="primary">连接 micro:bit</button>
+      <label class="inline"><input type="checkbox" id="serialNoFilter"> 列表里找不到板子时勾上（显示所有串口）</label>
+    </div>
+    <p id="serialMsg" class="msg"></p>
+    <div id="serialPorts" class="ports"></div>
+  </section>
+
+  <section class="card">
+    <h2>5. 和 python.microbit.org 同时连接</h2>
+    <p>学生上课时会一边用 python.microbit.org 刷程序，一边开着游戏，这一步测它们会不会抢同一块板。</p>
+    <ol class="steps">
+      <li>本页保持连着板子，在 python.microbit.org 里也连上同一块板（点 Send to micro:bit）。</li>
+      <li>看本页上面那块板的“行/秒”是否还在跳。</li>
+      <li>在 python.microbit.org 把 <code>sleep(50)</code> 改成 <code>sleep(60)</code> 再刷一次：看刷写是否成功，本页是否自己恢复（板子卡片上的“断开 / 重连”次数会变）。</li>
+      <li>把结果勾到第 7 步的人工确认里。</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>6. 官方模拟器嵌入 <span class="chip" id="chip-sim">加载中</span></h2>
+    <p>点“自动测试”，再按提示点一下<strong>模拟器里的 ▶ 按钮</strong>（模拟器规定第一次必须由人来点）。之后它会自动刷入测试程序，模拟倾斜、按 A，并给它发消息。勾上“键盘控制”后也可以手动试：← → 倾斜，A / B 按键，按住 M 模拟大声，按住 L 摸 logo。</p>
+    <div class="sim-wrap">
+      <iframe id="simFrame" title="micro:bit simulator" allow="autoplay"></iframe>
+      <div class="sim-side">
+        <div class="row">
+          <button id="simAutoBtn" class="primary">自动测试</button>
+          <button id="simRunBtn">只运行程序</button>
+          <button id="simCrashBtn">发送 crash</button>
+          <label class="inline"><input type="checkbox" id="simKeys" checked> 键盘控制</label>
+        </div>
+        <div class="steer"><div class="steer-mid"></div><div class="steer-bar" id="simSteer"></div></div>
+        <pre id="simOut" class="out"></pre>
+        <pre id="simLog" class="log"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>7. 人工确认</h2>
+    <div id="manualList" class="checks"></div>
+    <label class="block">备注（报错、弹窗、卡顿、哪一步不顺，都写在这里）
+      <textarea id="notes" rows="4"></textarea>
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>8. 结果</h2>
+    <div class="row"><button id="copyBtn2" class="primary">复制结果</button><span id="copyMsg" class="msg"></span></div>
+    <pre id="resultOut" class="out small"></pre>
+  </section>
+</main>
+
+<script src="labcheck.js"></script>
+</body>
+</html>

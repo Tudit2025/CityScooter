@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{{ PRODUCT_NAME }}}</title>
+  <link rel="stylesheet" href="TemplateData/shell.css">
+</head>
+<body>
+  <!-- Minimal shell v0 (Claude). The full shell (simulator mode, monitor, multi-board UI) replaces
+       TemplateData/shell.* and this markup; keep the contract in docs/bridge.md. -->
+  <header class="bar">
+    <strong>CityScooter</strong>
+    <button id="cs-connect" type="button">Connect micro:bit</button>
+    <span id="cs-status">Keyboard: ← → steer · Space jump · S brake</span>
+  </header>
+  <main class="stage">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="cs-loading">Loading… <span id="cs-progress">0%</span></div>
+  </main>
+  <pre id="cs-monitor" class="monitor"></pre>
+
+  <script src="TemplateData/shell.js"></script>
+  <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+  <script>
+    CityScooterShell.boot(document.querySelector("#unity-canvas"), {
+      dataUrl: "Build/{{{ DATA_FILENAME }}}",
+      frameworkUrl: "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_THREADS
+      workerUrl: "Build/{{{ WORKER_FILENAME }}}",
+#endif
+#if USE_WASM
+      codeUrl: "Build/{{{ CODE_FILENAME }}}",
+#endif
+#if MEMORY_FILENAME
+      memoryUrl: "Build/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+      symbolsUrl: "Build/{{{ SYMBOLS_FILENAME }}}",
+#endif
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+    });
+  </script>
+</body>
+</html>
