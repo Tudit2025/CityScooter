@@ -50,7 +50,8 @@
 - **打开项目**：Unity Hub → Add → 选 `CityScooter` 文件夹 → 用 6000.0.58f2 打开。
 - **没有板子时在编辑器里测**：点 Play，按 F1 打开设备面板；另开终端运行 `python tools/fake_microbit.py`，用 `--boards 2` 可以测合作，用 `--spam-jump` 可以看轮询写法的效果。面板上的 go/crash/gift/spd 按钮会把事件发回假板子，终端里能看到。
 - **打 Web 包**：先在 Unity Hub 里给 6000.0.58f2 **添加 Web Build Support 模块**，然后在菜单选 `CityScooter/Build Web`，输出到 `Builds/Web`。也可以用批处理模式：`Unity.exe -batchmode -quit -projectPath . -executeMethod CityScooter.EditorTools.BuildScript.BuildWebBatch`。
-- **部署**：周五加脚本。Vercel 上 `Build/*.unityweb` 要加 `Content-Encoding: br` 响应头，这样浏览器原生解压，加载更快。不加也能跑，因为构建开了解压兜底。
+- **部署**：`node tools/deploy-web.mjs --build` 一条命令完成打包和上线到 `https://cityscooter.vercel.app`。打包前先关掉这个项目的 Unity 编辑器；如果已经用菜单打好了包，就不加 `--build`。想先发预览版用 `--preview`。脚本会给 `Build/*.unityweb` 加上 `Content-Encoding: br` 响应头，让浏览器原生解压，加载更快。没有这个头的托管（比如 GitHub Pages 备用）也能跑，因为构建开了解压兜底。
+- **玩法数据**：所有手感参数都在 `Assets/_Project/Data/GameTuning.asset`。美术素材挂到 `Theme_PerthStreet.asset`，里面有路段、障碍、栏杆、礼物四个列表；列表为空时游戏自动用灰盒占位。`Main.unity` 里已经放了 `Prefabs/Game/GameSystems.prefab`。
 - **Unity Smart Merge**（可选，减少场景合并冲突）：在 `git config` 里把 `merge.unityyamlmerge.driver` 设成 `"<Unity 安装目录>/Editor/Data/Tools/UnityYAMLMerge.exe" merge -p %O %B %A %A`。
 
 ## 已经验证过的结论（2026-11-05）
