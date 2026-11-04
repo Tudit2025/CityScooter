@@ -4,6 +4,7 @@
     "references": [
         "CityScooter.Protocol",
         "CityScooter.Runtime",
+        "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

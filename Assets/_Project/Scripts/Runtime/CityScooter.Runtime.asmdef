@@ -3,7 +3,8 @@
     "rootNamespace": "CityScooter",
     "references": [
         "CityScooter.Protocol",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
