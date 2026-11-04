@@ -1,0 +1,24 @@
+{
+    "name": "CityScooter.Tests.PlayMode",
+    "rootNamespace": "CityScooter.Tests",
+    "references": [
+        "CityScooter.Protocol",
+        "CityScooter.Runtime",
+        "UnityEngine.UI",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
