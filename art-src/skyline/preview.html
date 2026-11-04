@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CityScooter 天际线预览</title>
+<!--
+  本地直接双击打开即可（file://），不需要服务器、不联网。
+  图片来自 ./out/（先运行 node generator.mjs 生成）。
+  out/skyline-meta.js 由生成器写出，提供场景列表 / 地平线颜色等信息。
+-->
+<script src="out/skyline-meta.js"></script>
+<style>
+  :root {
+    --bg: #14181c; --panel: #1d2329; --panel2: #232a31; --line: #313a43;
+    --text: #e7ebee; --muted: #9aa6b0; --accent: #e3955a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 14px/1.55 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding: 14px 16px 10px; }
+  h1 { font-size: 18px; margin: 0; font-weight: 650; }
+  h2 { font-size: 15px; margin: 22px 0 8px; font-weight: 600; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  #stage {
+    position: relative; width: 100%; height: clamp(180px, 25vw, 62vh);
+    overflow: hidden; background: #000; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .layer, .seam { position: absolute; inset: 0; background-repeat: repeat-x; }
+  .seam { pointer-events: none; display: none; }
+  .seam[data-seam="far"]  { background-image: linear-gradient(to right, rgba(80, 230, 255, .95) 0 2px, transparent 2px); }
+  .seam[data-seam="mid"]  { background-image: linear-gradient(to right, rgba(255, 220, 60, .95) 0 2px, transparent 2px); }
+  .seam[data-seam="near"] { background-image: linear-gradient(to right, rgba(255, 70, 70, .95) 0 2px, transparent 2px); }
+  #road {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 17%; display: none;
+    background:
+      linear-gradient(to bottom, #c9c3b6 0 7%, #8d8a84 7% 10%, transparent 10%),
+      repeating-linear-gradient(to right, #f2efe6 0 60px, transparent 60px 130px) 0 62% / 100% 5% no-repeat,
+      linear-gradient(to bottom, #4a4f55, #34383d);
+  }
+  .controls {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px 22px; padding: 14px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  .controls label { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+  .controls label > span:first-child { white-space: nowrap; min-width: 5.5em; color: var(--muted); }
+  .controls input[type=range] { flex: 1; min-width: 80px; accent-color: var(--accent); }
+  .controls output { font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
+  .checks { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+  .checks label { min-height: 26px; gap: 5px; }
+  select, button {
+    font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 10px; min-height: 30px;
+  }
+  button { cursor: pointer; }
+  button:hover, select:hover { border-color: #4a5560; }
+  main { padding: 0 16px 40px; max-width: 1600px; }
+  .shot { width: 100%; display: block; border: 1px solid var(--line); background: #000; image-rendering: auto; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px 26px; }
+  .swatch { display: inline-flex; align-items: center; gap: 8px; }
+  .swatch i { width: 26px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,.25); display: inline-block; }
+  code { background: var(--panel2); padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+  table { border-collapse: collapse; font-size: 13px; }
+  td, th { border-bottom: 1px solid var(--line); padding: 5px 12px 5px 0; text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; }
+  @media (max-width: 560px) { .controls { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>CityScooter 远景天际线预览</h1>
+  <span class="muted">空格键：播放/暂停 · 远景最慢、近景最快 · 打开“接缝线”可以看到每层贴图首尾相接的位置（应该完全看不出断痕）</span>
+</header>
+
+<div id="stage" aria-label="视差滚动预览">
+  <div class="layer" data-layer="sky"></div>
+  <div class="layer" data-layer="far"></div>
+  <div class="seam" data-seam="far"></div>
+  <div class="layer" data-layer="mid"></div>
+  <div class="seam" data-seam="mid"></div>
+  <div class="layer" data-layer="near"></div>
+  <div class="seam" data-seam="near"></div>
+  <div id="road"></div>
+</div>
+
+<div class="controls">
+  <label><span>场景</span><select id="scene"></select></label>
+  <label><span>分辨率</span>
+    <select id="res">
+      <option value="-2k">2k（Web 用）</option>
+      <option value="">4k 母版</option>
+    </select>
+  </label>
+  <label><span>速度</span><input id="speed" type="range" min="0" max="800" step="10" value="160"><output id="speedOut"></output></label>
+  <label><span>缩放</span><input id="zoom" type="range" min="1" max="4" step="0.05" value="1"><output id="zoomOut"></output></label>
+  <label><span>垂直锚点</span><input id="anchor" type="range" min="0" max="100" step="1" value="80"><output id="anchorOut"></output></label>
+  <label><span>远景视差</span><input id="f-far" type="range" min="0" max="1.5" step="0.01"><output></output></label>
+  <label><span>中景视差</span><input id="f-mid" type="range" min="0" max="1.5" step="0.01"><output></output></label>
+  <label><span>近景视差</span><input id="f-near" type="range" min="0" max="1.5" step="0.01"><output></output></label>
+  <label><span>天空视差</span><input id="f-sky" type="range" min="0" max="0.5" step="0.01"><output></output></label>
+  <div class="checks">
+    <label><input type="checkbox" id="v-sky" checked>天空</label>
+    <label><input type="checkbox" id="v-far" checked>远景</label>
+    <label><input type="checkbox" id="v-mid" checked>中景</label>
+    <label><input type="checkbox" id="v-near" checked>近景</label>
+  </div>
+  <div class="checks">
+    <label><input type="checkbox" id="seams">显示接缝线</label>
+    <label><input type="checkbox" id="roadOn">模拟前景路面</label>
+  </div>
+  <div class="checks">
+    <button id="play" type="button">暂停</button>
+    <button id="reset" type="button">重置参数</button>
+  </div>
+</div>
+
+<main>
+  <h2>颜色参考（给 Unity 调雾 / 相机背景用）</h2>
+  <div class="row" id="swatches"><span class="muted">（未找到 out/skyline-meta.js，请先运行 node generator.mjs）</span></div>
+
+  <h2>静态合成图（2k）</h2>
+  <img class="shot" id="composite" alt="合成图">
+
+  <h2>拼接检查：同一张合成图左右并排两次，正中间就是接缝</h2>
+  <img class="shot" id="tiled" alt="拼接检查图">
+
+  <h2>说明</h2>
+  <table>
+    <tr><th>缩放</th><td>1 = 整幅 4:1 全景塞进预览框；2~3 更接近游戏里实际看到的范围（一屏只看到全景的一部分）。</td></tr>
+    <tr><th>垂直锚点</th><td>缩放后保持贴图的哪一高度对齐预览框（0% = 顶部，100% = 底部）。</td></tr>
+    <tr><th>视差</th><td>相对速度，近景 = 1。默认值 = README 里的推荐值。</td></tr>
+    <tr><th>速度</th><td>近景每秒移动多少“2k 贴图像素”。</td></tr>
+  </table>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const META = (window.SKYLINE_META && window.SKYLINE_META.scenes) || {
+    perth: { title: 'Perth CBD', parallax: { sky: 0, far: 0.15, mid: 0.4, near: 1 } },
+  };
+  const LAYERS = ['sky', 'far', 'mid', 'near'];
+  const ASPECT = 4; // 4096x1024
+  const DEFAULT_PARALLAX = { sky: 0, far: 0.15, mid: 0.4, near: 1 };
+
+  const state = {
+    scene: Object.keys(META)[0], res: '-2k', speed: 160, zoom: 1, anchor: 80, playing: true,
+    factors: { ...DEFAULT_PARALLAX, ...(META[Object.keys(META)[0]].parallax || {}) },
+    visible: { sky: true, far: true, mid: true, near: true }, seams: false, road: false,
+  };
+  // 网址 # 参数，方便分享某个状态：preview.html#scene=rockingham&zoom=2&seams=1&road=1&res=4k&speed=300
+  const hp = new URLSearchParams(location.hash.slice(1));
+  if (hp.get('scene') && META[hp.get('scene')]) state.scene = hp.get('scene');
+  if (hp.get('res') === '4k') state.res = '';
+  if (hp.get('zoom')) state.zoom = Math.min(4, Math.max(1, parseFloat(hp.get('zoom')) || 1));
+  if (hp.get('speed')) state.speed = Math.max(0, parseFloat(hp.get('speed')) || 0);
+  if (hp.get('anchor')) state.anchor = Math.min(100, Math.max(0, parseFloat(hp.get('anchor')) || 0));
+  state.seams = hp.get('seams') === '1';
+  state.road = hp.get('road') === '1';
+  const offsets = { sky: 0, far: 0, mid: 0, near: 0, road: 0 };
+  const els = {}, seamEls = {};
+  LAYERS.forEach(k => { els[k] = $(`.layer[data-layer="${k}"]`); seamEls[k] = $(`.seam[data-seam="${k}"]`); });
+
+  // ---- 场景下拉框 ----
+  const sceneSel = $('#scene');
+  for (const [k, m] of Object.entries(META)) {
+    const o = document.createElement('option'); o.value = k; o.textContent = m.title || k; sceneSel.appendChild(o);
+  }
+
+  function src(layer) { return `out/${state.scene}_${layer}${state.res}.png`; }
+  function applySources() {
+    for (const k of LAYERS) els[k].style.backgroundImage = `url("${src(k)}")`;
+    $('#composite').src = `out/${state.scene}_composite-2k.png`;
+    $('#tiled').src = `out/${state.scene}_composite_tiled-check.png`;
+    renderSwatches();
+  }
+  function renderSwatches() {
+    const m = META[state.scene], box = $('#swatches');
+    if (!m || !m.fog) return;
+    const sw = (c, label) => `<span class="swatch"><i style="background:${c}"></i>${label} <code>${c}</code></span>`;
+    box.innerHTML = sw(m.fog, '雾颜色 / 地平线') + sw(m.skyTop, '天空顶部（相机背景色）') + sw(m.haze, '大气透视色') +
+      `<span class="muted">地平线（水面线）在贴图高度的 ${(m.horizon * 100).toFixed(1)}% 处</span>`;
+  }
+
+  // ---- 控件绑定 ----
+  const bindRange = (id, get, set, fmt) => {
+    const el = $(id), out = el.nextElementSibling;
+    const sync = () => { if (out) out.textContent = fmt(get()); };
+    el.value = get(); sync();
+    el.addEventListener('input', () => { set(parseFloat(el.value)); sync(); });
+    return () => { el.value = get(); sync(); };
+  };
+  const syncers = [
+    bindRange('#speed', () => state.speed, v => state.speed = v, v => `${v}`),
+    bindRange('#zoom', () => state.zoom, v => state.zoom = v, v => `${v.toFixed(2)}×`),
+    bindRange('#anchor', () => state.anchor, v => state.anchor = v, v => `${v}%`),
+    ...LAYERS.map(k => bindRange(`#f-${k}`, () => state.factors[k], v => state.factors[k] = v, v => v.toFixed(2))),
+  ];
+  sceneSel.addEventListener('change', () => { state.scene = sceneSel.value; applySources(); });
+  $('#res').addEventListener('change', (e) => { state.res = e.target.value; applySources(); });
+  LAYERS.forEach(k => $(`#v-${k}`).addEventListener('change', (e) => { state.visible[k] = e.target.checked; }));
+  $('#seams').addEventListener('change', (e) => { state.seams = e.target.checked; });
+  $('#roadOn').addEventListener('change', (e) => { state.road = e.target.checked; $('#road').style.display = state.road ? 'block' : 'none'; });
+  const playBtn = $('#play');
+  const togglePlay = () => { state.playing = !state.playing; playBtn.textContent = state.playing ? '暂停' : '播放'; };
+  playBtn.addEventListener('click', togglePlay);
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !/INPUT|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); togglePlay(); }
+  });
+  $('#reset').addEventListener('click', () => {
+    Object.assign(state, { speed: 160, zoom: 1, anchor: 80 });
+    Object.assign(state.factors, DEFAULT_PARALLAX, (META[state.scene] || {}).parallax || {});
+    for (const k in offsets) offsets[k] = 0;
+    syncers.forEach(f => f());
+  });
+
+  // ---- 动画 ----
+  const stage = $('#stage'), road = $('#road');
+  let last = performance.now();
+  function tick(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    const h = stage.clientHeight * state.zoom, tileW = h * ASPECT;
+    const pxScale = h / 512; // 速度单位：2k 贴图像素/秒
+    for (const k of LAYERS) {
+      if (state.playing) offsets[k] = (offsets[k] + state.speed * state.factors[k] * pxScale * dt) % tileW;
+      const size = `${tileW}px ${h}px`, pos = `${-offsets[k]}px ${state.anchor}%`;
+      const el = els[k];
+      el.style.display = state.visible[k] ? '' : 'none';
+      el.style.backgroundSize = size; el.style.backgroundPosition = pos;
+      const s = seamEls[k];
+      if (s) { s.style.display = state.seams && state.visible[k] ? 'block' : 'none'; s.style.backgroundSize = size; s.style.backgroundPosition = pos; }
+    }
+    if (state.road) {
+      if (state.playing) offsets.road = (offsets.road + state.speed * 2.5 * pxScale * dt) % 130;
+      road.style.backgroundPosition = `0 0, ${-offsets.road}px 62%, 0 0`;
+    }
+    requestAnimationFrame(tick);
+  }
+  // 把 # 参数同步到控件上
+  sceneSel.value = state.scene;
+  $('#res').value = state.res;
+  $('#seams').checked = state.seams;
+  $('#roadOn').checked = state.road;
+  road.style.display = state.road ? 'block' : 'none';
+  syncers.forEach(f => f());
+  applySources();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

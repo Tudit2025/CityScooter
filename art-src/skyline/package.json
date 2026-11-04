@@ -1,0 +1,21 @@
+{
+  "name": "cityscooter-skyline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CityScooter 远景天际线生成器（Perth CBD / Rockingham）：参数化 SVG -> PNG",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node generator.mjs",
+    "perth": "node generator.mjs --scene perth",
+    "rockingham": "node generator.mjs --scene rockingham",
+    "svg": "node generator.mjs --svg-only",
+    "verify": "node generator.mjs --verify"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}
