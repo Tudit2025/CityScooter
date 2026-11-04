@@ -12,7 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36c9a72dc92dc3840b2d7c6c544d060a, type: 3}
   m_Name: Theme_PerthStreet
   m_EditorClassIdentifier: 
-  chunks: []
-  obstacles: []
-  jumpObstacles: []
-  gifts: []
+  chunks:
+  - {fileID: 4832495967398081829, guid: a9a8409624ea1e44e9abfc4f2d1fd1db, type: 3}
+  - {fileID: 2716797638611389570, guid: bac67ecd439dbc2478b99a77cbcceacb, type: 3}
+  - {fileID: 5003730474192332, guid: 3de8ca451669d7242bc91cc96be01163, type: 3}
+  obstacles:
+  - {fileID: 4439370452533281643, guid: 4727ebaaa9188ba4d8a6e79acbe8abc1, type: 3}
+  - {fileID: 3893705369193250758, guid: ad03626d2505d6c40bbb1d50e4cc9e6e, type: 3}
+  - {fileID: 3665028518727639208, guid: 7f8d36b684430b04b9fcfe24d090db50, type: 3}
+  - {fileID: 7269804685352509269, guid: 7e1419748a3942f4697e1c4837832ce0, type: 3}
+  - {fileID: 7926635622405681103, guid: 9d3314f99e8c0f8439403167af28dc5d, type: 3}
+  - {fileID: 7011842423708803706, guid: 8a044dc38ef900944bdf4cdfcd16d800, type: 3}
+  jumpObstacles:
+  - {fileID: 785599757487275254, guid: 098799d716c12104197be2eacdf17f53, type: 3}
+  gifts:
+  - {fileID: 1958351135698532571, guid: 979de83145a1efd45ad0c115c12d10fc, type: 3}
+  - {fileID: 541098976610873748, guid: 95b10362975463b4dac73b186e88d440, type: 3}
+  - {fileID: 671617113920802668, guid: 30784fb2da008464bbfdb4ec3c07b442, type: 3}
+  - {fileID: 815583598194828538, guid: ae222f6bb181fef4a881ee918e6dc4ab, type: 3}
+  - {fileID: 2176563685798402813, guid: 0aaac1935dbc3a54e8b68e06cac6e943, type: 3}
+  - {fileID: 5034289025256511863, guid: fcecb0e04757e0245bf8bc7591d54964, type: 3}
