@@ -71,7 +71,12 @@ namespace CityScooter.DevTools
             GUILayout.Label("steer " + input.Steer.ToString("+0.00;-0.00") + (input.DeviceSteering ? " (device)" : " (keys)")
                 + "   brake " + (input.Brake ? "ON" : "-") + "   keyboard " + (_hub.KeyboardEnabled ? "on" : "off"), _style);
 
-            if (_hub.Devices.Count == 0) GUILayout.Label("no devices yet - run tools/fake_microbit.py, or use the web build", _style);
+            if (_hub.Devices.Count == 0)
+            {
+                GUILayout.Label("no devices yet", _style);
+                GUILayout.Label("  real micro:bit: run tools/serial_bridge.cmd (its window says why a board is silent)", _style);
+                GUILayout.Label("  no micro:bit: run python tools/fake_microbit.py", _style);
+            }
             foreach (DeviceInfo d in _hub.Devices.Values)
             {
                 GUILayout.Label((d.Connected ? "<color=#5f5>●</color> " : "<color=#f55>●</color> ") + d.Id + " [" + d.Kind + "] "
