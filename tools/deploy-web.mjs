@@ -36,7 +36,13 @@ if (args.has("--build")) {
     ...(args.has("--dev") ? ["-cityscooterDev"] : []),
     "-logFile", log,
   ], { stdio: "inherit" });
-  if (r.status !== 0) fail("Unity build failed (exit " + r.status + "), see " + log + ". Is the project open in the Editor?");
+  if (r.status !== 0) {
+    const why = fs.existsSync(log)
+      ? fs.readFileSync(log, "utf8").split(/\r?\n/).filter((l) => /\[CityScooter\]|error CS\d+/.test(l)).slice(-6)
+      : [];
+    if (why.length) console.error(why.join("\n"));
+    fail("Unity build failed (exit " + r.status + "), see " + log + ". Is the project open in the Editor?");
+  }
 }
 
 if (!fs.existsSync(path.join(buildDir, "index.html"))) fail("No build at " + buildDir + " — build first (--build or menu CityScooter/Build Web).");

@@ -68,4 +68,5 @@
 - Web 打包模块已装好。第一个 Web 包（灰盒版）已经上线 https://cityscooter.vercel.app ，无头 Chrome 验证过能加载、能和外壳通信、能收发板子消息。
 - Unity 6 Web 平台的两个坑，编辑器里看不出来，只有打包后才暴露：
   - 6000.0 打包时，脚本里直接写 `WebGLInput` 会报 CS0103（编译脚本时没引用 `UnityEngine.WebGLModule`；6000.3 已经正常）。我们用反射设置，两个版本都能编译，`Assets/_Project/link.xml` 防止它被裁掉。
+  - **升级 URP 后，URP 设置资源必须用新版 Unity 保存一次再打包。** 11/5 `art/lookdev` 的 Mobile_RPAsset 还是旧格式，打包时把 URP/Lit 的变体全裁掉了，网页里只剩天空和天际线，路和楼都看不见，打包却显示成功。现在 `BuildScript` 遇到旧格式的 URP 资源会直接停止打包；修复方法是菜单 `CityScooter/Tools/Upgrade URP assets`，然后提交改动的资源。
   - 运行时 `CreatePrimitive` 生成的物体自带的默认材质，打包后是**洋红色**（URP 17 的默认材质只在编辑器里有）。运行时新建的材质要基于一个会被打进包的材质资源，比如放在 `Resources/` 里，或者被场景、预制体引用。
