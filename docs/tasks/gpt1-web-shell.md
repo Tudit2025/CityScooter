@@ -46,6 +46,7 @@ CityScooter 是一款 Unity 6 做的城市滑板车无尽跑酷游戏，给 WA �
    - 收到 `hi:` 行后显示 V1 或 V2。
    - 每块板的写操作要排队。
    - 这几种错误要有清楚的英文提示：浏览器不支持、端口被占用（"another tab may be using this board, e.g. python.microbit.org — click Disconnect there"）、用户取消、列表是空的（"try another cable — some only charge"）。
+   - **连上了但不发数据**：某块板连上后连续 3 秒一行都没收到，就在这块板旁边提示 "Connected, but this micro:bit is not sending anything. Flash a program that prints, like the starter. Code you only ran in the REPL is gone after unplugging."；收到数据后提示自动消失。11/5 实测遇到过：拔插后板子跑回闪存里旧的 `main.py`，它不发协议，游戏里看起来就像没连上。
 3. **转发**：所有设备发来的行按 bridge.md 合并，每帧发一次给 Unity；`sendToDevices` 写回目标设备。
 4. **串口监视器**（上课时很多讲解点都靠它）：
    - `st:` 不逐行刷屏，显示"当前转向值 + 每秒条数"。
