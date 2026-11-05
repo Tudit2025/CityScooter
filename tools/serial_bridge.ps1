@@ -57,7 +57,7 @@ $lines = 0
 $fromGame = 0
 $lastSteer = "-"
 $version = $null
-$openedAt = Get-Date
+$lastLineAt = Get-Date
 $warnedSilent = $false
 $nextStatus = (Get-Date).AddSeconds(5)
 
@@ -77,7 +77,7 @@ try {
                     try {
                         $sp = Open-Board $name
                         $buf = ""
-                        $openedAt = Get-Date
+                        $lastLineAt = Get-Date
                         $warnedSilent = $false
                         Write-Host "Connected to micro:bit on $name"
                     } catch {
@@ -99,6 +99,8 @@ try {
                         $buf = $buf.Substring($i + 1)
                         if ($line.Length -eq 0) { continue }
                         $lines++
+                        $lastLineAt = Get-Date
+                        if ($warnedSilent) { $warnedSilent = $false; Write-Host "Board is sending again." }
                         $out.Add("$Id|$line")
                         if ($line.StartsWith("st:")) { $lastSteer = $line.Substring(3) }
                         elseif ($line.StartsWith("hi:")) {
@@ -118,9 +120,11 @@ try {
                 $sp = $null
                 $nextTry = (Get-Date).AddSeconds(1)
             }
-            if ($null -ne $sp -and $lines -eq 0 -and -not $warnedSilent -and ((Get-Date) - $openedAt).TotalSeconds -gt 3) {
+            if ($null -ne $sp -and -not $warnedSilent -and ((Get-Date) - $lastLineAt).TotalSeconds -gt 3) {
                 $warnedSilent = $true
-                Write-Host "The board is connected but sends nothing. Flash a protocol program (tools/labcheck/labcheck.py or the starter) from python.microbit.org, then press reset."
+                Write-Host "The board is connected but has sent nothing for 3 s, so the game sees no device."
+                Write-Host "  Its main.py must print the protocol (tools/labcheck/labcheck.py or the starter): flash it from python.microbit.org."
+                Write-Host "  Unplugging or reset restarts the board's main.py; code you only ran from a REPL is gone."
             }
         }
 
