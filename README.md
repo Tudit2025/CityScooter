@@ -10,3 +10,5 @@ and speaker. Unity 6000.0.58f2 + URP, shipped as a Web build (Chrome/Edge, Web S
 - Task briefs: [docs/tasks/](docs/tasks/)
 - Lab check page: https://cityscooter-labcheck.vercel.app (source in `tools/labcheck/`)
 - No micro:bit? Press Play, F1 for the device overlay, and run `python tools/fake_microbit.py`.
+- Real micro:bit in the Editor? Flash `tools/labcheck/labcheck.py`, double-click `tools/serial_bridge.cmd`, press Play,
+  then press A on the board to start (the Editor does not open serial ports itself; the Web build uses Web Serial).
