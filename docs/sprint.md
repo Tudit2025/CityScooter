@@ -48,6 +48,12 @@
 ## 常用操作
 
 - **打开项目**：Unity Hub → Add → 选 `CityScooter` 文件夹 → 用 6000.0.58f2 打开。
+- **有板子时在编辑器里测**：编辑器本身不读 USB 串口（网页版才用浏览器的 Web Serial），要靠串口桥中转。
+  1. 板子用 python.microbit.org 刷一个会发协议的程序：`tools/labcheck/labcheck.py` 或第一课的 starter。
+  2. 双击 `tools/serial_bridge.cmd`，它会自动找到 micro:bit 的 COM 口，拔插、重刷程序后会自动重连。
+  3. 在 Unity 里点 Play，按板子上的 A（或空格）开始一局；倾斜转向，A 跳，按住 B 刹车。
+
+  同一块板同时只能被一个程序占用，用串口桥之前要先断开浏览器里的连接。
 - **没有板子时在编辑器里测**：点 Play，按 F1 打开设备面板；另开终端运行 `python tools/fake_microbit.py`，用 `--boards 2` 可以测合作，用 `--spam-jump` 可以看轮询写法的效果。面板上的 go/crash/gift/spd 按钮会把事件发回假板子，终端里能看到。
 - **打 Web 包**：先在 Unity Hub 里给 6000.0.58f2 **添加 Web Build Support 模块**，然后在菜单选 `CityScooter/Build Web`，输出到 `Builds/Web`。也可以用批处理模式：`Unity.exe -batchmode -quit -projectPath . -executeMethod CityScooter.EditorTools.BuildScript.BuildWebBatch`。
 - **部署**：`node tools/deploy-web.mjs --build` 一条命令完成打包和上线到 `https://cityscooter.vercel.app`。打包前先关掉这个项目的 Unity 编辑器；如果已经用菜单打好了包，就不加 `--build`。想先发预览版用 `--preview`。脚本会给 `Build/*.unityweb` 加上 `Content-Encoding: br` 响应头，让浏览器原生解压，加载更快。没有这个头的托管（比如 GitHub Pages 备用）也能跑，因为构建开了解压兜底。
