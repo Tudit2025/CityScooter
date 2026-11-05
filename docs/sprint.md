@@ -64,4 +64,7 @@
 
 - 官方 MicroPython 模拟器可以嵌进我们的 vercel.app 页面。**第一次必须由学生点模拟器里的 ▶**，否则模拟器会卡死，细节见 `docs/bridge.md`。
 - MicroPython 的 `uart.readline()` 会读到半行，学生代码必须先攒到换行再处理，见 `docs/protocol.md`。
-- 机器上的 Unity 6000.0.58f2 目前**还没有 Web 打包模块**。
+- Web 打包模块已装好。第一个 Web 包（灰盒版）已经上线 https://cityscooter.vercel.app ，无头 Chrome 验证过能加载、能和外壳通信、能收发板子消息。
+- Unity 6 Web 平台的两个坑，编辑器里看不出来，只有打包后才暴露：
+  - 脚本里不能直接写 `WebGLInput`：这个版本编译脚本时不引用 `UnityEngine.WebGLModule`，会报 CS0103。我们改成用反射设置，配合 `Assets/_Project/link.xml` 防止被裁掉。
+  - 运行时 `CreatePrimitive` 生成的物体自带的默认材质，打包后是**洋红色**（URP 17 的默认材质只在编辑器里有）。运行时新建的材质要基于一个会被打进包的材质资源，比如放在 `Resources/` 里，或者被场景、预制体引用。

@@ -28,6 +28,7 @@ namespace CityScooter.EditorTools
 
         public static bool BuildWeb(bool development)
         {
+            GameplaySetup.EnsurePlaceholderMaterial(); // grey-box renders magenta in builds without it
             string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             if (scenes.Length == 0)
             {

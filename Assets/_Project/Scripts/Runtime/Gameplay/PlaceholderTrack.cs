@@ -25,15 +25,24 @@ namespace CityScooter.Gameplay
         public static readonly Color GiftBox = new Color(1f, 0.83f, 0.15f);
         public static readonly Color Ribbon = new Color(0.9f, 0.2f, 0.35f);
 
+        public const string PlaceholderMaterialName = "CityScooterPlaceholder";
+
         public static Material MaterialFor(Color c)
         {
             if (Materials.TryGetValue(c, out Material m) && m != null) return m;
             if (_base == null)
             {
-                // The pipeline's default material (URP Lit) is always in the build, unlike Shader.Find.
-                GameObject probe = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                _base = probe.GetComponent<Renderer>().sharedMaterial;
-                SafeDestroy(probe);
+                // A URP Lit material in Resources/ so its shader is always in the build. A primitive's default
+                // material is fine in the Editor but renders magenta in Web builds (URP 17 keeps its default
+                // materials editor-only). Created by CityScooter/Gameplay setup (GameplaySetup.EnsurePlaceholderMaterial).
+                _base = Resources.Load<Material>(PlaceholderMaterialName);
+                if (_base == null)
+                {
+                    Debug.LogWarning("[CityScooter] Resources/" + PlaceholderMaterialName + " missing; placeholders may render magenta in builds.");
+                    GameObject probe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    _base = probe.GetComponent<Renderer>().sharedMaterial;
+                    SafeDestroy(probe);
+                }
             }
             m = new Material(_base) { color = c, name = "Placeholder " + ColorUtility.ToHtmlStringRGB(c) };
             Materials[c] = m;

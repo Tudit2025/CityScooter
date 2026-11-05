@@ -23,6 +23,7 @@ namespace CityScooter.EditorTools
         [MenuItem("CityScooter/Gameplay/Create GameSystems prefab + add to Main")]
         public static void Setup()
         {
+            EnsurePlaceholderMaterial();
             GameTuning tuning = LoadOrCreate<GameTuning>(TuningPath);
             TrackTheme theme = LoadOrCreate<TrackTheme>(ThemePath);
 
@@ -50,6 +51,35 @@ namespace CityScooter.EditorTools
         public static void SetupBatch()
         {
             Setup();
+            EditorApplication.Exit(0);
+        }
+
+        const string PlaceholderMaterialPath = "Assets/_Project/Resources/" + PlaceholderTrack.PlaceholderMaterialName + ".mat";
+
+        /// <summary>
+        /// The grey-box placeholders tint copies of this URP Lit material. It lives in Resources/ so the shader
+        /// ships in Web builds; BuildScript calls this before every build. Only created if missing.
+        /// </summary>
+        public static void EnsurePlaceholderMaterial()
+        {
+            if (AssetDatabase.LoadAssetAtPath<Material>(PlaceholderMaterialPath) != null) return;
+            Shader lit = Shader.Find("Universal Render Pipeline/Lit");
+            if (lit == null)
+            {
+                Debug.LogError("[CityScooter] URP Lit shader not found; cannot create " + PlaceholderMaterialPath);
+                return;
+            }
+            Directory.CreateDirectory(Path.GetDirectoryName(PlaceholderMaterialPath));
+            var mat = new Material(lit) { name = PlaceholderTrack.PlaceholderMaterialName };
+            mat.SetFloat("_Smoothness", 0.15f);
+            AssetDatabase.CreateAsset(mat, PlaceholderMaterialPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[CityScooter] Created " + PlaceholderMaterialPath);
+        }
+
+        public static void EnsurePlaceholderMaterialBatch()
+        {
+            EnsurePlaceholderMaterial();
             EditorApplication.Exit(0);
         }
 

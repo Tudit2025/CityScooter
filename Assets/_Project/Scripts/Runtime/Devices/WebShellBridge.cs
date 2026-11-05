@@ -28,12 +28,30 @@ namespace CityScooter.Devices
         void Start()
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
-            // Unity must not swallow every key on the page: the shell has text boxes (code editor, notes).
-            // The canvas still gets keys when it has focus.
-            WebGLInput.captureAllKeyboardInput = false;
+            ReleaseKeyboardCapture();
             CS_UnityReady(Messages.ProtocolVersion);
 #endif
         }
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // Unity must not swallow every key on the page: the shell has text boxes (code editor, notes).
+        // The canvas still gets keys when it has focus. This is WebGLInput.captureAllKeyboardInput = false,
+        // set by reflection because Unity 6000.0 does not pass UnityEngine.WebGLModule to script
+        // compilation (error CS0103). Assets/_Project/link.xml keeps the property from being stripped.
+        static void ReleaseKeyboardCapture()
+        {
+            var type = System.Type.GetType("UnityEngine.WebGLInput, UnityEngine.WebGLModule");
+            var prop = type?.GetProperty("captureAllKeyboardInput",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (prop == null)
+            {
+                Debug.LogWarning("[CityScooter] WebGLInput.captureAllKeyboardInput not found; text boxes on the page may not get keys.");
+                return;
+            }
+            prop.SetValue(null, false);
+            Debug.Log("[CityScooter] keyboard capture released: " + !(bool)prop.GetValue(null));
+        }
+#endif
 
         public void Send(string target, string line)
         {
