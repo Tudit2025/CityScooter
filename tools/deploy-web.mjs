@@ -8,7 +8,7 @@
 //
 // --build needs the Unity Editor CLOSED for this project (batchmode cannot open a locked project);
 // otherwise use the menu CityScooter/Build Web first. Requires `npx vercel login` done once.
-// Env: UNITY_EXE (default: Unity 6000.0.58f2 under Program Files), VERCEL_PROJECT (default: cityscooter).
+// Env: UNITY_EXE (default: Unity 6000.3.28f1 under Program Files), VERCEL_PROJECT (default: cityscooter).
 import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -19,7 +19,7 @@ const args = new Set(process.argv.slice(2));
 const buildDir = path.join(repo, "Builds", "Web");
 const stageDir = path.join(repo, "deploy", "web");
 const project = process.env.VERCEL_PROJECT || "cityscooter";
-const unityExe = process.env.UNITY_EXE || "C:/Program Files/Unity/Hub/Editor/6000.0.58f2/Editor/Unity.exe";
+const unityExe = process.env.UNITY_EXE || "C:/Program Files/Unity/Hub/Editor/6000.3.28f1/Editor/Unity.exe";
 
 function fail(msg) {
   console.error("✗ " + msg);
