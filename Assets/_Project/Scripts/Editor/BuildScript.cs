@@ -29,6 +29,15 @@ namespace CityScooter.EditorTools
         public static bool BuildWeb(bool development)
         {
             GameplaySetup.EnsurePlaceholderMaterial(); // grey-box renders magenta in builds without it
+            var outdatedUrp = UrpAssetCheck.Outdated();
+            if (outdatedUrp.Count > 0)
+            {
+                Debug.LogError("[CityScooter] Build stopped: URP assets saved by an older URP: " + string.Join(", ", outdatedUrp)
+                    + ". Building now would strip URP/Lit and the game would show no road or buildings. Run the menu"
+                    + " CityScooter/Tools/Upgrade URP assets (or batchmode, without -quit: -executeMethod"
+                    + " CityScooter.EditorTools.UrpAssetCheck.UpgradeBatch), commit the changed assets, then build.");
+                return false;
+            }
             string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             if (scenes.Length == 0)
             {
