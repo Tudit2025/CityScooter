@@ -1,5 +1,5 @@
 <linker>
-  <!-- WebShellBridge sets WebGLInput.captureAllKeyboardInput by reflection (Unity 6000.0 does not let
+  <!-- WebShellBridge sets WebGLInput.captureAllKeyboardInput by reflection (Unity 6000.0 did not let
        scripts reference UnityEngine.WebGLModule), so keep the type from being stripped in Web builds. -->
   <assembly fullname="UnityEngine.WebGLModule" ignoreIfMissing="1">
     <type fullname="UnityEngine.WebGLInput" preserve="all"/>

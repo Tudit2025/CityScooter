@@ -2,7 +2,7 @@
 
 A Perth city-scooter endless runner used to teach Year 9 students micro:bit + MicroPython. Students program
 their micro:bit as the controller (tilt to steer, buttons, sound, pins) and react to game events on the LEDs
-and speaker. Unity 6000.0.58f2 + URP, shipped as a Web build (Chrome/Edge, Web Serial).
+and speaker. Unity 6000.3.28f1 (Unity 6.3 LTS) + URP 17.3, shipped as a Web build (Chrome/Edge, Web Serial).
 
 - Sprint plan, ownership, how-tos: [docs/sprint.md](docs/sprint.md)
 - Message protocol (micro:bit ↔ game): [docs/protocol.md](docs/protocol.md)
