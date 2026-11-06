@@ -12,7 +12,7 @@ namespace CityScooter.Track
 
     /// <summary>
     /// Data contract between art and gameplay: one authored stretch of road.
-    /// Conventions: 1 unit = 1 m, +Z is forward, +Y up, road surface at y = 0.
+    /// Conventions: 1 unit = 1 m, +Z is forward, +Y up; the surface starts at y = 0 and ends at endHeight.
     /// Pivot at the START of the chunk, centred on the road (x = 0). The track generator places
     /// the next chunk at local z = <see cref="length"/>. Art owns the visuals; gameplay reads only this
     /// component, its <see cref="SpawnSlot"/> children, and colliders on <see cref="Obstacle"/>s.
@@ -22,6 +22,11 @@ namespace CityScooter.Track
     {
         [Tooltip("Length along +Z in metres; the next chunk starts here.")]
         public float length = 40f;
+
+        [Tooltip("Height change from start to end. Negative = downhill; the start surface remains at local y = 0.")]
+        public float endHeight;
+
+        public float HeightAt(float localZ) => endHeight * localZ / Mathf.Max(1f, length);
 
         [Tooltip("Half width of the area the rider can steer in (rider x stays within ±halfWidth).")]
         public float halfWidth = 4f;
@@ -40,9 +45,13 @@ namespace CityScooter.Track
         {
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.9f);
-            Gizmos.DrawWireCube(new Vector3(0f, 0.05f, length * 0.5f), new Vector3(halfWidth * 2f, 0.1f, length));
+            Vector3 startLeft = new Vector3(-halfWidth, 0f, 0f), startRight = new Vector3(halfWidth, 0f, 0f);
+            Vector3 endLeft = new Vector3(-halfWidth, endHeight, length), endRight = new Vector3(halfWidth, endHeight, length);
+            Gizmos.DrawLine(startLeft, startRight);
+            Gizmos.DrawLine(startLeft, endLeft);
+            Gizmos.DrawLine(startRight, endRight);
             Gizmos.color = new Color(1f, 0.4f, 0.2f, 0.9f);
-            Gizmos.DrawLine(new Vector3(-halfWidth, 0f, length), new Vector3(halfWidth, 0f, length));
+            Gizmos.DrawLine(endLeft, endRight);
         }
     }
 }

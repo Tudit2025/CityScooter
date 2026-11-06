@@ -14,7 +14,7 @@ namespace CityScooter.Track
 
     /// <summary>
     /// Empty child of a <see cref="RoadChunk"/> marking where gameplay may place an obstacle or a gift.
-    /// Only the local position matters (y = 0 on the road). Rotation is ignored.
+    /// Only the local position matters (y matches RoadChunk.HeightAt(z)). Rotation is ignored.
     /// </summary>
     public sealed class SpawnSlot : MonoBehaviour
     {

@@ -13,6 +13,9 @@ namespace CityScooter.Gameplay
         [Tooltip("Road chunk prefabs (root has RoadChunk).")]
         public RoadChunk[] chunks;
 
+        [Tooltip("Cycle chunks in array order to preserve authored near / open / near vista rhythm.")]
+        public bool orderedChunks;
+
         [Tooltip("Single-lane obstacle prefabs (root has Obstacle).")]
         public Obstacle[] obstacles;
 

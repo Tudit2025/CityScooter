@@ -1,0 +1,477 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a5c2767558bdfc4082375461b575cc6, type: 3}
+  m_Name: ComicCityRecipe
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Rendering.ComicCityRecipe
+  schemaVersion: 5
+  grid: 0.5
+  chunkLength: 40
+  roadHalfWidth: 4
+  sidewalkWidth: 4
+  curbHeight: 0.2
+  downhillGrade: 0.07867673
+  openSetback: 5
+  floorHeight: 3
+  seed: 7301
+  roadsidePropDensity: 0.1
+  roadsideLayoutVariants: 10
+  roadsideYawJitter: 14
+  cameraOffset: {x: 0, y: 3.38, z: -5.6}
+  cameraLookAhead: 12
+  cameraLookHeight: 0
+  cameraFov: 76
+  cameraMaxFov: 82
+  cameraFovPerSpeed: 0.3
+  cityBendStart: 32
+  cityBendStrength: 0.0011
+  horizonTaperStart: 180
+  horizonTaperEnd: 460
+  horizonMinimumScale: 0.002
+  curveTransitionDistance: 180
+  horizonRiseSlope: 0.18
+  curveEaseLength: 70
+  skyPanorama: {fileID: 2800000, guid: ac5009b180c3a62488251e8be8f16927, type: 3}
+  skyYaw: -28
+  skyElevation: 12
+  skyVerticalScale: 0.45
+  skyHaze: 0.12
+  outlineColor: {r: 0.012, g: 0.014, b: 0.022, a: 1}
+  outlinePixels: 1.8
+  creasePixels: 0.65
+  halftoneStrength: 0.12
+  shadowTint: {r: 0.36, g: 0.4, b: 0.53, a: 1}
+  ink: {r: 0.1, g: 0.15, b: 0.22, a: 1}
+  asphalt: {r: 0.34, g: 0.39, b: 0.47, a: 1}
+  pavement: {r: 0.78, g: 0.76, b: 0.67, a: 1}
+  cream: {r: 0.98, g: 0.89, b: 0.67, a: 1}
+  glass: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  red: {r: 0.91, g: 0.12, b: 0.15, a: 1}
+  yellow: {r: 1, g: 0.69, b: 0.16, a: 1}
+  green: {r: 0.36, g: 0.58, b: 0.29, a: 1}
+  props:
+  - id: Hydrant
+    label: "\u6D88\u9632\u6813"
+    style: hydrant
+    width: 0.5
+    height: 1
+    depth: 0.5
+    floors: 2
+    color: {r: 0.91, g: 0.12, b: 0.15, a: 1}
+  - id: Bin
+    label: "\u5706\u7B52\u5783\u573E\u6876"
+    style: bin
+    width: 0.65
+    height: 1
+    depth: 0.65
+    floors: 2
+    color: {r: 0.36, g: 0.58, b: 0.29, a: 1}
+  - id: RecycleBins
+    label: "\u5206\u7C7B\u5783\u573E\u7BB1"
+    style: recycle
+    width: 1.5
+    height: 1
+    depth: 0.75
+    floors: 2
+    color: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  - id: NewspaperBox
+    label: "\u62A5\u520A\u7BB1"
+    style: newspaper
+    width: 0.65
+    height: 1.2
+    depth: 0.5
+    floors: 2
+    color: {r: 1, g: 0.69, b: 0.16, a: 1}
+  - id: Mailbox
+    label: "\u90AE\u7B52"
+    style: mail
+    width: 0.6
+    height: 1.3
+    depth: 0.6
+    floors: 2
+    color: {r: 0.91, g: 0.12, b: 0.15, a: 1}
+  - id: ParcelLocker
+    label: "\u5FEB\u9012\u67DC"
+    style: locker
+    width: 2
+    height: 2
+    depth: 0.6
+    floors: 2
+    color: {r: 1, g: 0.69, b: 0.16, a: 1}
+  - id: UtilityBox
+    label: "\u914D\u7535\u7BB1"
+    style: utility
+    width: 1
+    height: 1.5
+    depth: 0.5
+    floors: 2
+    color: {r: 0.36, g: 0.58, b: 0.29, a: 1}
+  - id: AirConditioner
+    label: "\u7A7A\u8C03\u5916\u673A"
+    style: ac
+    width: 1
+    height: 0.65
+    depth: 0.5
+    floors: 2
+    color: {r: 0.98, g: 0.89, b: 0.67, a: 1}
+  - id: TreePit
+    label: "\u65B9\u5F62\u6811\u6C60"
+    style: tree
+    width: 2
+    height: 5
+    depth: 2
+    floors: 2
+    color: {r: 0.78, g: 0.76, b: 0.67, a: 1}
+  - id: Planter
+    label: "\u957F\u6761\u82B1\u7BB1"
+    style: planter
+    width: 2
+    height: 1
+    depth: 0.8
+    floors: 2
+    color: {r: 0.78, g: 0.76, b: 0.67, a: 1}
+  - id: FlowerPot
+    label: "\u5706\u5F62\u82B1\u76C6"
+    style: pot
+    width: 0.8
+    height: 1.2
+    depth: 0.8
+    floors: 2
+    color: {r: 0.8, g: 0.39, b: 0.24, a: 1}
+  - id: StonePost
+    label: "\u77F3\u8D28\u77EE\u58A9"
+    style: stone
+    width: 0.5
+    height: 0.8
+    depth: 0.5
+    floors: 2
+    color: {r: 0.78, g: 0.76, b: 0.67, a: 1}
+  - id: Bollard
+    label: "\u9694\u79BB\u67F1"
+    style: bollard
+    width: 0.4
+    height: 1
+    depth: 0.4
+    floors: 2
+    color: {r: 0.1, g: 0.15, b: 0.22, a: 1}
+  - id: Rail
+    label: "\u77ED\u6BB5\u62A4\u680F"
+    style: rail
+    width: 2
+    height: 1
+    depth: 0.3
+    floors: 2
+    color: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  - id: StreetLamp
+    label: "\u8DEF\u706F"
+    style: lamp
+    width: 0.8
+    height: 5
+    depth: 1
+    floors: 2
+    color: {r: 0.1, g: 0.15, b: 0.22, a: 1}
+  - id: StreetSign
+    label: "\u8DEF\u724C\u6746"
+    style: sign
+    width: 1.2
+    height: 3
+    depth: 0.25
+    floors: 2
+    color: {r: 0.36, g: 0.58, b: 0.29, a: 1}
+  - id: ParkingMeter
+    label: "\u505C\u8F66\u8BA1\u8D39\u5668"
+    style: meter
+    width: 0.35
+    height: 1.5
+    depth: 0.3
+    floors: 2
+    color: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  - id: Bench
+    label: "\u957F\u6905"
+    style: bench
+    width: 2
+    height: 1
+    depth: 0.8
+    floors: 2
+    color: {r: 0.72, g: 0.39, b: 0.2, a: 1}
+  - id: BikeRack
+    label: "\u81EA\u884C\u8F66\u505C\u8F66\u67B6"
+    style: bike
+    width: 2
+    height: 1
+    depth: 0.8
+    floors: 2
+    color: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  - id: ShopBoard
+    label: "\u5E97\u94FA\u7ACB\u724C"
+    style: board
+    width: 0.75
+    height: 1.1
+    depth: 0.6
+    floors: 2
+    color: {r: 1, g: 0.69, b: 0.16, a: 1}
+  - id: VendingMachine
+    label: "\u81EA\u52A8\u552E\u8D27\u673A"
+    style: vending
+    width: 1
+    height: 2
+    depth: 0.7
+    floors: 2
+    color: {r: 0.91, g: 0.12, b: 0.15, a: 1}
+  - id: Crates
+    label: "\u8D27\u7BB1\u7EC4"
+    style: crates
+    width: 1
+    height: 1
+    depth: 0.8
+    floors: 2
+    color: {r: 0.65, g: 0.42, b: 0.23, a: 1}
+  - id: Cones
+    label: "\u4EA4\u901A\u9525\u7EC4"
+    style: cones
+    width: 1
+    height: 0.75
+    depth: 0.5
+    floors: 2
+    color: {r: 0.91, g: 0.12, b: 0.15, a: 1}
+  - id: WorkBarrier
+    label: "\u65BD\u5DE5\u6321\u677F"
+    style: barrier
+    width: 1.8
+    height: 1
+    depth: 0.65
+    floors: 2
+    color: {r: 1, g: 0.69, b: 0.16, a: 1}
+  - id: ConcreteBarrier
+    label: "\u6C34\u6CE5\u9694\u79BB\u58A9"
+    style: concrete
+    width: 2
+    height: 1
+    depth: 0.75
+    floors: 2
+    color: {r: 0.78, g: 0.76, b: 0.67, a: 1}
+  - id: BusShelter
+    label: "\u516C\u4EA4\u5019\u8F66\u4EAD"
+    style: shelter
+    width: 4
+    height: 3
+    depth: 1.5
+    floors: 2
+    color: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  buildings:
+  - id: CornerStore
+    label: "\u8857\u89D2\u4FBF\u5229\u5E97"
+    style: corner
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.86, g: 0.43, b: 0.31, a: 1}
+  - id: Cafe
+    label: "\u5496\u5561\u5E97"
+    style: cafe
+    width: 8
+    height: 6
+    depth: 12
+    floors: 2
+    color: {r: 0.28, g: 0.59, b: 0.59, a: 1}
+  - id: Bakery
+    label: "\u9762\u5305\u5E97"
+    style: shop
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.88, g: 0.65, b: 0.32, a: 1}
+  - id: PizzaShop
+    label: "\u62AB\u8428\u5E97"
+    style: shop
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.86, g: 0.43, b: 0.31, a: 1}
+  - id: Diner
+    label: "\u5C0F\u9910\u9986"
+    style: cafe
+    width: 8
+    height: 6
+    depth: 12
+    floors: 2
+    color: {r: 0.57, g: 0.49, b: 0.64, a: 1}
+  - id: Barber
+    label: "\u7406\u53D1\u5E97"
+    style: shop
+    width: 4
+    height: 9
+    depth: 8
+    floors: 3
+    color: {r: 0.28, g: 0.59, b: 0.59, a: 1}
+  - id: Laundry
+    label: "\u6D17\u8863\u5E97"
+    style: shop
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.72, g: 0.74, b: 0.67, a: 1}
+  - id: Bookshop
+    label: "\u4E66\u5E97"
+    style: shop
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.57, g: 0.49, b: 0.64, a: 1}
+  - id: ScooterShop
+    label: "\u6ED1\u677F\u8F66\u5E97"
+    style: shop
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.28, g: 0.59, b: 0.59, a: 1}
+  - id: Pharmacy
+    label: "\u836F\u5E97"
+    style: civic
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.72, g: 0.74, b: 0.67, a: 1}
+  - id: Hardware
+    label: "\u4E94\u91D1\u5E97"
+    style: garage
+    width: 8
+    height: 6
+    depth: 12
+    floors: 2
+    color: {r: 0.88, g: 0.65, b: 0.32, a: 1}
+  - id: Garage
+    label: "\u6C7D\u8F66\u7EF4\u4FEE\u5E97"
+    style: garage
+    width: 8
+    height: 3
+    depth: 12
+    floors: 1
+    color: {r: 0.28, g: 0.59, b: 0.59, a: 1}
+  - id: Market
+    label: "\u5C0F\u578B\u8D85\u5E02"
+    style: shop
+    width: 12
+    height: 6
+    depth: 12
+    floors: 2
+    color: {r: 0.88, g: 0.65, b: 0.32, a: 1}
+  - id: PostOffice
+    label: "\u90AE\u5C40"
+    style: civic
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.86, g: 0.43, b: 0.31, a: 1}
+  - id: Bank
+    label: "\u94F6\u884C"
+    style: bank
+    width: 12
+    height: 12
+    depth: 12
+    floors: 4
+    color: {r: 0.72, g: 0.74, b: 0.67, a: 1}
+  - id: Clinic
+    label: "\u793E\u533A\u8BCA\u6240"
+    style: civic
+    width: 8
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.28, g: 0.59, b: 0.59, a: 1}
+  - id: Cinema
+    label: "\u7535\u5F71\u9662"
+    style: cinema
+    width: 12
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.57, g: 0.49, b: 0.64, a: 1}
+  - id: RowHouse
+    label: "\u8054\u6392\u4F4F\u5B85"
+    style: residential
+    width: 4
+    height: 9
+    depth: 12
+    floors: 3
+    color: {r: 0.86, g: 0.43, b: 0.31, a: 1}
+  - id: ShopApartment
+    label: "\u5546\u4F4F\u516C\u5BD3"
+    style: shop
+    width: 8
+    height: 15
+    depth: 12
+    floors: 5
+    color: {r: 0.88, g: 0.65, b: 0.32, a: 1}
+  - id: CornerApartment
+    label: "\u8F6C\u89D2\u516C\u5BD3"
+    style: corner
+    width: 8
+    height: 15
+    depth: 16
+    floors: 5
+    color: {r: 0.86, g: 0.43, b: 0.31, a: 1}
+  - id: Office
+    label: "\u529E\u516C\u697C"
+    style: office
+    width: 8
+    height: 21
+    depth: 16
+    floors: 7
+    color: {r: 0.28, g: 0.59, b: 0.59, a: 1}
+  - id: Hotel
+    label: "\u8857\u533A\u65C5\u9986"
+    style: hotel
+    width: 8
+    height: 18
+    depth: 16
+    floors: 6
+    color: {r: 0.57, g: 0.49, b: 0.64, a: 1}
+  - id: Warehouse
+    label: "\u4ED3\u5E93"
+    style: warehouse
+    width: 12
+    height: 6
+    depth: 16
+    floors: 2
+    color: {r: 0.72, g: 0.74, b: 0.67, a: 1}
+  - id: ParkingGarage
+    label: "\u505C\u8F66\u697C"
+    style: parking
+    width: 12
+    height: 12
+    depth: 16
+    floors: 4
+    color: {r: 0.72, g: 0.74, b: 0.67, a: 1}
+  - id: Tower
+    label: "\u57CE\u5E02\u5854\u697C"
+    style: tower
+    width: 12
+    height: 36
+    depth: 16
+    floors: 12
+    color: {r: 0.28, g: 0.59, b: 0.59, a: 1}
+  - id: BackgroundBlock
+    label: "\u80CC\u666F\u697C\u7FA4\u6A21\u5757"
+    style: background
+    width: 12
+    height: 24
+    depth: 16
+    floors: 8
+    color: {r: 0.57, g: 0.49, b: 0.64, a: 1}

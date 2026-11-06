@@ -49,6 +49,7 @@ namespace CityScooter.Gameplay
 
         public void ResetRider(Vector3 start)
         {
+            if (track != null) start.y = track.SurfaceHeightAt(start.z);
             transform.position = start;
             _startZ = start.z;
             Speed = 0f;
@@ -56,7 +57,7 @@ namespace CityScooter.Gameplay
             Airborne = false;
             Braking = false;
             _running = false;
-            if (model != null) model.localRotation = Quaternion.identity;
+            if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(start.z) : 0f, 0f, 0f);
             SetSpeedLevel(0);
         }
 
@@ -113,10 +114,11 @@ namespace CityScooter.Gameplay
             float x = from.x + _vx * dt;
             if (x > limit) { x = limit; _vx = Mathf.Min(_vx, 0f); }
             if (x < -limit) { x = -limit; _vx = Mathf.Max(_vx, 0f); }
-            Vector3 to = new Vector3(x, _y, from.z + Speed * dt);
+            float nextZ = from.z + Speed * dt;
+            Vector3 to = new Vector3(x, _y + (track != null ? track.SurfaceHeightAt(nextZ) : 0f), nextZ);
             transform.position = to;
 
-            if (model != null) model.localRotation = Quaternion.Euler(0f, 0f, -_vx / Mathf.Max(0.01f, T.lateralMaxSpeed) * T.maxLean);
+            if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(nextZ) : 0f, 0f, -_vx / Mathf.Max(0.01f, T.lateralMaxSpeed) * T.maxLean);
             SetSpeedLevel(Mathf.RoundToInt(Speed / Mathf.Max(0.01f, T.maxSpeed) * Messages.MaxSpeedLevel));
             Sweep(from, to);
         }
@@ -124,7 +126,8 @@ namespace CityScooter.Gameplay
         void Sweep(Vector3 from, Vector3 to)
         {
             Vector3 centre = (from + to) * 0.5f + Vector3.up * (height * 0.5f);
-            var half = new Vector3(radius, height * 0.5f, Mathf.Abs(to.z - from.z) * 0.5f + radius);
+            var half = new Vector3(radius + Mathf.Abs(to.x - from.x) * 0.5f,
+                height * 0.5f + Mathf.Abs(to.y - from.y) * 0.5f, Mathf.Abs(to.z - from.z) * 0.5f + radius);
             int n = Physics.OverlapBoxNonAlloc(centre, half, _hits, Quaternion.identity, Physics.AllLayers, QueryTriggerInteraction.Collide);
             for (int i = 0; i < n; i++)
             {

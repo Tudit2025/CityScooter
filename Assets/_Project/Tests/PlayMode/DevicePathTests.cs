@@ -16,6 +16,10 @@ namespace CityScooter.Tests
     /// </summary>
     public class DevicePathTests
     {
+        UdpDeviceTransport transport;
+        int originalPort;
+        bool originalEnabled;
+
         [UnityTest]
         public IEnumerator FakeBoardOverUdp_Steers_Jumps_AndGetsCrash()
         {
@@ -24,10 +28,21 @@ namespace CityScooter.Tests
             Assert.IsNotNull(hub, "Bootstrap should create the DeviceBridge object");
             Assert.AreEqual(DeviceHub.GameObjectName, hub.gameObject.name);
 
+            // An open game/editor may own 47800. Exercise the real UDP path on an isolated test port.
+            transport=hub.GetComponent<UdpDeviceTransport>();
+            Assert.IsNotNull(transport);
+            originalPort=transport.listenPort;originalEnabled=transport.enabled;
+            transport.enabled=false;
+            yield return null; // let a previous receiver exit before restarting this component
+            int testPort;
+            using(var reservation=new UdpClient(new IPEndPoint(IPAddress.Loopback,0)))
+                testPort=((IPEndPoint)reservation.Client.LocalEndPoint).Port;
+            transport.listenPort=testPort;transport.enabled=true;
+
             using (var client = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0)))
             {
                 client.Client.ReceiveTimeout = 3000;
-                var game = new IPEndPoint(IPAddress.Loopback, UdpDeviceTransport.DefaultPort);
+                var game = new IPEndPoint(IPAddress.Loopback, testPort);
                 byte[] lines = Encoding.UTF8.GetBytes("t1|hi:v2\nt1|st:-50\nt1|jp\nt1|print from student\n");
                 client.Send(lines, lines.Length, game);
 
@@ -50,6 +65,16 @@ namespace CityScooter.Tests
                 var from = new IPEndPoint(IPAddress.Any, 0);
                 byte[] reply = client.Receive(ref from);
                 Assert.AreEqual("crash\n", Encoding.UTF8.GetString(reply));
+            }
+        }
+
+        [UnityTearDown]
+        public IEnumerator RestoreTransport()
+        {
+            if(transport!=null)
+            {
+                transport.enabled=false;yield return null;
+                transport.listenPort=originalPort;transport.enabled=originalEnabled;
             }
         }
     }

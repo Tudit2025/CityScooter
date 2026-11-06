@@ -1,0 +1,8 @@
+Original slope angle: 13.4957 deg
+Current slope angle: 4.4986 deg
+Vertical FOV: 58 -> 76.0000 deg
+Camera offset: (0.00, 3.38, -5.60)
+Rider viewport height (reference/current): 0.2207 / 0.2196
+Rider viewport centre Y from bottom (reference/current): 0.4114 / 0.4103
+Height ratio: 0.9952
+Centre delta: -0.0011

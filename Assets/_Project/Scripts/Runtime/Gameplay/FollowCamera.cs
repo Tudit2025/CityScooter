@@ -9,6 +9,8 @@ namespace CityScooter.Gameplay
         public Vector3 offset = new Vector3(0f, 3.4f, -6.5f);
         [Tooltip("Metres ahead of the rider the camera looks at.")]
         public float lookAhead = 16f;
+        [Tooltip("Height of the aim point above the road ahead.")]
+        public float lookHeight = 1f;
         [Tooltip("How much of the rider's sideways movement the camera follows (0..1).")]
         [Range(0f, 1f)] public float followX = 0.6f;
         public float smoothing = 8f;
@@ -31,13 +33,19 @@ namespace CityScooter.Gameplay
         Vector3 Desired()
         {
             Vector3 p = target.position;
-            return new Vector3(p.x * followX + offset.x, offset.y, p.z + offset.z);
+            return new Vector3(p.x * followX + offset.x, Ground(p.z) + offset.y, p.z + offset.z);
+        }
+
+        float Ground(float z)
+        {
+            if (_rider == null && target != null) _rider = target.GetComponent<RiderController>();
+            return _rider != null && _rider.track != null ? _rider.track.SurfaceHeightAt(z) : 0f;
         }
 
         Vector3 LookPoint()
         {
             Vector3 p = target.position;
-            return new Vector3(p.x * followX, 1f, p.z + lookAhead);
+            return new Vector3(p.x * followX, Ground(p.z + lookAhead) + lookHeight, p.z + lookAhead);
         }
 
         void LateUpdate()
