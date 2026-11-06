@@ -1,0 +1,2 @@
+21 clips; 48 kHz / PCM16; no clipped samples; loop endpoint delta < 0.00015; music exactly 32 bars at 160 BPM.
+Peak/RMS measurements in measurements.csv. Freesound sources are lossy previews.

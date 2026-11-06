@@ -1,0 +1,13 @@
+CityScooter audio source metadata (not a page archive)
+
+id: scrape
+title: Metal Scrape
+author: magnuswaker
+page: https://freesound.org/people/magnuswaker/sounds/530075/
+download: https://cdn.freesound.org/previews/530/530075_11537497-hq.mp3
+file: originals/scrape.mp3
+license: CC0 1.0
+license_url: https://creativecommons.org/publicdomain/zero/1.0/
+retrieved: 2026-11-06
+sha256: ae8e0f6fe04664df684de19ddab2db411793cba3a543c05ac656a0a7209dbd6f
+delivery: public HQ MP3 preview (lossy)

@@ -27,7 +27,7 @@ namespace CityScooter.EditorTools.Art
                 Camera cam=Camera.main;
                 cam.transform.position=new Vector3(-5,65,8);cam.transform.LookAt(new Vector3(0,-12,80));cam.fieldOfView=65;
                 Save(cam,"02-street-layout.png",1600,1000);
-                RenderSky();RenderSheet(false);RenderSheet(true);
+                RenderSky();RenderSheet(false);RenderSheet(true);ComicSurfaceAssets.RenderSheet();
                 Validate();
                 Debug.Log("[ComicCity] Previews: "+Path.GetFullPath(Output));
             }

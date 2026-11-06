@@ -1,0 +1,13 @@
+CityScooter audio source metadata (not a page archive)
+
+id: music
+title: Hot Roadway (160 BPM)
+author: MintoDog
+page: https://opengameart.org/content/hot-roadway
+download: https://opengameart.org/sites/default/files/hot_roadway_bpm160.flac
+file: originals/music.flac
+license: CC0 1.0
+license_url: https://creativecommons.org/publicdomain/zero/1.0/
+retrieved: 2026-11-06
+sha256: 0c8b5b2396d352c3d9bf239fa55582f3ed526c80ed089cfb6ef13d81fc5dcb27
+delivery: lossless FLAC

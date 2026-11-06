@@ -22,17 +22,32 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _SurfaceMasks:
+        m_Texture: {fileID: 18700000, guid: e67bc8a2031f07c4f8b011be69fcf10e, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SurfaceNormals:
+        m_Texture: {fileID: 18700000, guid: 4cc779980de96be4ca10252df33b962d, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _CreasePixels: 0
     - _FogOverride: 0.65
     - _Halftone: 0.12
     - _HorizonExtension: 1
+    - _SurfaceDetail: 1
+    - _SurfaceNormal: 1
+    - _SurfaceOverride: -1
+    - _SurfaceShade: 1
+    - _SurfaceSpecular: 0.32
+    - _SurfaceTiling: 0.5
     - _WorldBend: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _InkColor: {r: 0.012, g: 0.014, b: 0.022, a: 1}
     - _ShadowTint: {r: 0.36, g: 0.4, b: 0.53, a: 1}
+    - _SurfaceFade: {r: 24, g: 100, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

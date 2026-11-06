@@ -108,6 +108,7 @@ MonoBehaviour:
   width: 0.28
   color: {r: 0.91, g: 0.12, b: 0.15, a: 1}
   wind: 22
+  surfaceTiling: 2
 --- !u!1 &4816004467653041963
 GameObject:
   m_ObjectHideFlags: 0

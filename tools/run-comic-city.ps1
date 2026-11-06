@@ -24,7 +24,7 @@ $unityJob.WaitForExit()
 if ($unityJob.ExitCode -ne 0) { throw "Unity failed ($($unityJob.ExitCode)). See $logFile" }
 if ($Mode -eq 'Build') {
     # Only generated kit outputs, configured scene files and Unity-created .meta files return to the workspace.
-    foreach ($folder in @('Assets\_Project\Art\ComicCity','Assets\_Project\Prefabs\ComicCity','art-src\comic-city')) {
+    foreach ($folder in @('Assets\_Project\Art\ComicCity','Assets\_Project\Prefabs\ComicCity','Assets\_Project\Audio\ComicCity','art-src\comic-city','audio-src\comic-city')) {
         & robocopy (Join-Path $scratchRoot $folder) (Join-Path $projectRoot $folder) /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
         if ($LASTEXITCODE -ge 8) { throw "Output copy failed: $folder" }
     }
@@ -44,10 +44,11 @@ if ($Mode -eq 'Build') {
     }
 }
 if ($Mode -eq 'PlayMode') {
-    $checkpoint = 'art-src\comic-city\previews\07-runtime-after-recycle.png'
-    $checkpointSource = Join-Path $scratchRoot $checkpoint
-    if (Test-Path -LiteralPath $checkpointSource) {
-        Copy-Item -LiteralPath $checkpointSource -Destination (Join-Path $projectRoot $checkpoint) -Force
+    foreach ($checkpoint in @('art-src\comic-city\previews\07-runtime-after-recycle.png','art-src\comic-city\previews\09-sidewalk-right.png','art-src\comic-city\previews\10-sidewalk-left.png','audio-src\comic-city\previews\Audio_Controls.png')) {
+        $checkpointSource = Join-Path $scratchRoot $checkpoint
+        if (Test-Path -LiteralPath $checkpointSource) {
+            Copy-Item -LiteralPath $checkpointSource -Destination (Join-Path $projectRoot $checkpoint) -Force
+        }
     }
 }
 Write-Output "Comic City $Mode completed. Log: $logFile"

@@ -1,4 +1,4 @@
-# Comic City 素材与场景试制标准 v5
+# Comic City 素材与场景试制标准 v7
 
 本标准对应 2026-11-06 的低多边形美式漫画城市试制。可玩街区使用项目内的确定性几何生成器；天空使用基于珀斯照片风格化制作的全景图片。生成源、图片来源、提示词、参数和结果一并保留。
 
@@ -9,7 +9,7 @@
 - 首次应用前的场景：`Assets/_Project/Scenes/Main_PreComicPrototype.unity`，仅首次创建，后续重建不覆盖。
 - Unity 菜单 `CityScooter / Comic City / 1 - Rebuild Kit and Street`：按当前配置重建素材、路段与主题。
 - 菜单 `2 - Apply to Main and Save Preview`：将主题、骑手、镜头、光照接入 Main，保存独立预览场景。
-- 菜单 `3 - Render Previews and Validate`：渲染游戏视角、街区俯视、小物件与建筑图集、图片天空和背部接缝，并检查预算与消失点。
+- 菜单 `3 - Render Previews and Validate`：渲染游戏视角、街区俯视、小物件、建筑和表面材质图集、图片天空和背部接缝，并检查预算与消失点。
 - 编辑器占用项目时：`powershell -NoProfile -ExecutionPolicy Bypass -File tools/run-comic-city.ps1 -Mode Build`。在 `Temp/ComicCityValidation` 的独立工程中运行 Unity，再复制生成结果回来。需要本机 Unity 许可证服务可用。正在打开的场景需重新加载才能显示磁盘版本；先保存自己的修改。
 
 ## 参数的唯一来源
@@ -25,6 +25,7 @@
 - `art-src/comic-city/perth-sky-prompt.txt` 与 `references/SOURCES.txt`：内置 imagegen 的完整提示词、参考照片和署名许可。
 - `art-src/comic-city/previews/`：Unity 实际渲染 PNG。图集从左到右、从上到下对应 catalog 中各类条目的顺序。
 - 生成代码：`Scripts/Editor/Art/ComicCityBuilder.cs`、`ComicKitGeometry.cs`、`ComicMesh.cs`、`ComicCityDefaults.cs`。
+- 表面配置：`Surfaces/ComicSurfaceLibrary.asset`；制作配方、贴图通道和复用流程见 [表面材质标准](comic-city-surfaces.md)。
 
 ## 造型、坐标与命名
 
@@ -47,7 +48,7 @@
 
 ## 材质与预算
 
-- 52 个单体共用 `ComicPalette.mat`（色块）和 `ComicInk.mat`（外轮廓）。色彩写入顶点；无需贴图。输入色为 sRGB，烘入网格时转线性。
+- 52 个单体共用 `ComicPalette.mat`（色块与表面细节）和 `ComicInk.mat`（外轮廓）。底色写入顶点，输入色为 sRGB，烘入网格时转线性。新增两个线性纹理数组提供 13 类材料的明暗、粗糙度与法线；UV2 标记每个部件的材质，保留合并绘制。
 - 城市天空使用 `Comic Panorama Sky` Shader 和 `Sky_ComicCity.mat`，通过 `RenderSettings.skybox` 采样全景图片。场景中没有城市天空球 MeshRenderer、楼群圆环或云片；旧版网格天空不再生成和实例化。
 - 三档明暗、较深的冷色阴影、半调网点；主体增加近黑色外轮廓和建筑硬边墨线。当前没有全屏描边后处理。
 - `Comic Outline` 使用反面外扩壳，位置焊接的平滑法线存入 UV1，原始平面法线保留给色块着色。描边与主体共用网格，采用额外 Renderer 明确绘制，不依赖 URP 隐式多 Pass。
@@ -67,12 +68,12 @@
 - 默认坡度约 7.8677%，相对水平角约 **4.4986°**，恰为首版 13.4957° 的三分之一；每段下降约 3.1471 m。道路和人行道网格沿坡面生成；建筑保持直立，下方深基础遮住高差。
 - 开阔段建筑后退 5 m，形成封闭前庭；下一段恢复近景街墙，产生近远交替。路线上没有虚假的可进入支路。
 - 人行道之后是连续实体建筑或前庭矮墙；再叠加两排完整楼体，不使用薄片假墙。树冠、雨棚和楼层变化增加近景层次。
-- 当前玩家仍被原玩法限制在路面半宽内。人行道道具是场景陈设；独立 Prefab 自带简单碰撞盒。**本版不开放人行道骑行或建筑内部探索。**
-- 装饰合并进街区后不保留每个小道具的碰撞，以免无效物理开销；建筑保留简单碰撞盒。实际跑酷碰撞只由 `Obstacle` / `Gift` 处理。
+- 当前开放两侧各 4 m 人行道，角色中心可达约 x=±7.65 m；路缘高度 0.2 m，并用 0.3 m 宽的平滑过渡支持驶上驶下。门市及前庭边缘继续构成通行边界。
+- 摆件视觉继续合并绘制；每套 `StreetDressing` 布局附带原单体的简单碰撞盒配置，运行时复用并同步切换。接触由 `Obstacle` / `Gift` 规则处理。详情见 [镜头、速度进度与人行道骑行](../gameplay/comic-city-riding.md)。
 - 三条生成列 x=-2.6/0/2.6 m；每段的 z=10/25 m 为生成行；保留首 50 m 安全区和每行至少一条空路。
 - 试制玩法障碍为货箱、交通锥、施工挡板、垃圾桶，均可跳跃；当前主题不生成横贯全路的必跳栏杆。
 - `RoadChunk.endHeight` 默认 0，兼容所有既有平路素材。新路段必须同时更新路面、SpawnSlot 高度和 endHeight，不能只倾斜路段根节点。
-- `TrackGenerator.SurfaceHeightAt` 统一供角色、镜头查询高度；跳跃高度叠加在路面上。骑手倾斜随坡度，镜头高度随地面而非跳跃上下抖动。
+- `TrackGenerator.SurfaceHeightAt(x,z)` 供角色查询含人行道的地面高度；单参数版本保持道路基准，供镜头及城市卷曲使用。骑手倾斜随坡度，镜头不随跳跃或跨路缘上下抖动。
 - 生成距离 320 m，保留身后 40 m，背景雾在远处衔接。物理路线沿 +Z 下坡，远端向上卷曲由渲染实现；没有新增左右弯道控制。
 - 开局预先铺好身后 40 m 路段，避免跟随镜头看到道路起点截面；远景独立楼群跟随无尽下坡的高度和纵向位置。
 
@@ -108,10 +109,12 @@
 | `skyYaw` | -28° | 旋转全景，让珀斯特色塔楼出现在街墙间隙 |
 | `skyElevation` | 12° | 调整图片地平线的视觉高度 |
 | `skyVerticalScale` | 0.45 | 调整城市天际线占据的垂直角度 |
+| `skyApparentScale` | 0.70 | 将正前方天空内容的横纵显示尺度缩到约 70%，减少塔楼放大拉伸；1 恢复之前的大小 |
 | `skyHaze` | 0.12 | 将图片轻微混入冷色空气透视 |
 
 - 色彩用 sRGB；开启 mipmap、三线性过滤和高质量纹理压缩，关闭 Read/Write。U 方向 Repeat，V 方向 Clamp；保留原始 2:1 尺寸，导入上限 4096，不把小图宣称为 4K。
 - `ComicPanorama.hlsl` 由天空盒与远端道路融合共同使用，确保同一视线采样同一图片颜色。背部约 1.2% 环绕带做接缝混合，两极逐渐转为统一颜色，避免明显断边和极点拉丝。
+- 天空内容缩放以正前方、现有 `skyElevation` 为中心；横向采用连续的角度映射，纵向同步缩小，不改变游戏相机 FOV，也不通过重复平铺图片缩小楼群。调整前的主镜头保存在 `00-before-sky-scale.png`。
 - 原始照片为 Luxure 的 [Perth Panorama Kings Park.jpg](https://commons.wikimedia.org/wiki/File:Perth_Panorama_Kings_Park.jpg)，采用 [CC BY 3.0 AU](https://creativecommons.org/licenses/by/3.0/au/)；原图下载副本、作者、许可与改动说明保存在 `art-src/comic-city/references/`。
 - 用内置 imagegen 将照片转为简化色块、深蓝漫画线条、半调云影与冷色远景，并扩展天空及下部雾层。保留珀斯天际线特征；这是艺术化全景，不是地理精确的 360° 实景，也不代表当前城市建设状况。
 - 替换或发布该派生图片时，保留 `references/SOURCES.txt` 中的作者署名、来源、许可链接和改动说明。完整提示词见 `perth-sky-prompt.txt`，无需调用 CLI 或配置 API 密钥。
@@ -128,6 +131,8 @@
 - 路边布局使用独立随机序列，不消耗跑酷障碍和礼物的随机数序列。
 
 ## 广角近距离镜头
+
+当前镜头沿街道中心线前进，以最多 ±22° 的平滑转向跟随横向移动；不再使用原来的横向平移跟随。参数为 Recipe 中的 `cameraDirectionalFollow / cameraYawLimit / cameraRotationResponse`。以下镜头距离与 FOV 继续沿用。
 
 | 参数 | 首版 | v2 |
 |---|---:|---:|
@@ -154,11 +159,13 @@
 
 所有生成资源附 Unity 自行创建的 `.meta`。未经生成验证，不手工编造 GUID。
 
+场景音频现已独立标准化并接入；完整 Build 同时导入音频。素材清单、声音联动、来源和调音入口见 [Comic City 音频标准](../audio/comic-city-audio-standard.md)。
+
 ## 本次验证记录
 
 - Unity 6000.3.28f1 已完成素材生成、图片导入、Shader 编译和六张编辑器实际渲染预览，并输出消失点投影报告。
-- PlayMode：17/17 通过，结果位于 `Logs/comic-city-PlayMode-results.xml`，含真实 Main 场景运行、图片天空引用、跨街区收束及卸载清理。`07-runtime-after-recycle.png` 是骑手移动至 z=242 m、完成街区回收后的运行截图。UDP 设备回归使用独立临时端口，避免与正在打开的游戏占用同一端口；运行时默认端口保持 47800。
-- 此前 EditMode：34/34 通过；结果位于 `Logs/comic-city-EditMode-results.xml`。新增资源均已核对配套 `.meta`。
+- 当前 PlayMode：25/25 通过，含真实 Main 场景、图片天空、跨街区回收、音频联动，以及限角镜头、人行道、高速碰撞和速度进度回归。`07-runtime-after-recycle.png` 检查跨街区渲染，`09-sidewalk-right.png` / `10-sidewalk-left.png` 检查两侧镜头。结果位于 `Logs/comic-city-PlayMode-results.xml`。UDP 测试使用独立临时端口，运行时默认端口仍为 47800。
+- 当前 EditMode：39/39 通过，含速度曲线五个时间节点；结果位于 `Logs/comic-city-EditMode-results.xml`。新增资源均配套 Unity 生成的 `.meta`。
 - 四种路段按各自最复杂的路边布局计算，含描边提交分别为 17,760 / 15,956 / 19,528 / 16,164 三角形，每段 6 个渲染器，均低于 25k 上限。catalog 和 validation 均记录布局库中的峰值。原先 11,814 三角形的天空楼群和云片已从场景移除，替换为图片天空盒；额外道路延伸段为 662 三角形。
 - 已检查游戏视角：近处骑手构图稳定，远端道路向上卷起并收束至一点，与珀斯图片远景衔接。
 - 尚未执行 WebGL 打包和目标机帧率实测；当前交付为可玩的素材与关卡试制。

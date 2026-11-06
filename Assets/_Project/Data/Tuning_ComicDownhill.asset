@@ -13,9 +13,12 @@ MonoBehaviour:
   m_Name: Tuning_ComicDownhill
   m_EditorClassIdentifier: 
   startSpeed: 9
-  maxSpeed: 22
+  maxSpeed: 44
+  maxSpeedMultiplier: 5
+  speedRampSeconds: 600
+  postRampMultiplierPerMinute: 0.1
   difficultyDistance: 1500
-  acceleration: 3
+  acceleration: 9
   brakeDeceleration: 14
   brakeMinSpeed: 4
   lateralMaxSpeed: 7

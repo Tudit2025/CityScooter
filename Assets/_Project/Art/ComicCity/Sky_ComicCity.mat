@@ -35,6 +35,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _ComicSkyScale: 0.7
     - _GradientHorizon: 0.845
     - _GradientHorizonAngle: -0.4
     - _GradientPower: 0.55

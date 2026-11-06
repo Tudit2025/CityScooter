@@ -11,6 +11,7 @@ namespace CityScooter.Rendering
         public float width = 0.28f;
         public Color color = new Color(0.9f, 0.045f, 0.07f);
         public float wind = 22f;
+        public float surfaceTiling = 2f;
         Vector3[] _points, _previous, _vertices;
         Color[] _colors;
         Mesh _mesh;
@@ -47,6 +48,16 @@ namespace CityScooter.Rendering
                 inkUV.Add(new Vector3(0,t,1));inkUV.Add(new Vector3(1,t,1));
             }
             _mesh.SetUVs(0,inkUV);
+            var surfaceUV=new System.Collections.Generic.List<Vector4>(_vertices.Length);
+            for(int i=0;i<=segments;i++)
+            {
+                float along=length*i/segments;
+                surfaceUV.Add(new Vector4(0,along,(int)ComicSurface.Fabric,surfaceTiling));
+                surfaceUV.Add(new Vector4(width,along,(int)ComicSurface.Fabric,surfaceTiling));
+                surfaceUV.Add(new Vector4(0,along,(int)ComicSurface.Fabric,surfaceTiling));
+                surfaceUV.Add(new Vector4(width,along,(int)ComicSurface.Fabric,surfaceTiling));
+            }
+            _mesh.SetUVs(2,surfaceUV);
             GetComponent<MeshFilter>().sharedMesh = _mesh;
             ResetCloth();
             UpdateMesh();

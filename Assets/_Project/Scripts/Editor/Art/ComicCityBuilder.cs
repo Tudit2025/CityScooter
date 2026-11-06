@@ -51,6 +51,7 @@ namespace CityScooter.EditorTools.Art
             material.SetFloat("_CreasePixels",recipe.creasePixels);
             material.SetFloat("_Halftone",recipe.halftoneStrength);
             material.SetFloat("_WorldBend",1);
+            ComicSurfaceAssets.Build(recipe,material);
             EditorUtility.SetDirty(material);
             outlineMaterial=AssetDatabase.LoadAssetAtPath<Material>(Root+"/ComicInk.mat");
             if(outlineMaterial==null)
@@ -70,6 +71,8 @@ namespace CityScooter.EditorTools.Art
             BuildBackdrop();
             for(int i=0;i<ChunkIds.Length;i++)BuildChunk(i);
             BuildTheme();
+            ComicSurfaceAssets.SaveCoverage();
+            ComicCityAudioBuilder.Build();
             AssetDatabase.SaveAssets();
             Directory.CreateDirectory("art-src/comic-city");
             File.WriteAllLines("art-src/comic-city/catalog.csv",report, new UTF8Encoding(false));
@@ -92,6 +95,7 @@ namespace CityScooter.EditorTools.Art
             if(r.roadsidePropDensity<0||r.roadsidePropDensity>1||r.roadsideLayoutVariants<1||r.roadsideLayoutVariants>16)throw new InvalidOperationException("Invalid roadside density/layout count.");
             if(r.cityBendStart<20||r.cityBendStrength<0||r.cityBendStrength>.003f||r.horizonTaperStart<100||r.horizonTaperEnd<=r.horizonTaperStart+40||r.horizonTaperEnd>600||r.horizonMinimumScale<.001f||r.horizonMinimumScale>.1f||r.curveTransitionDistance<r.cityBendStart||r.curveEaseLength<=0||r.skyVerticalScale<.2f||r.skyPanorama==null)
                 throw new InvalidOperationException("Invalid city convergence/image sky configuration.");
+            if(r.skyApparentScale<.4f||r.skyApparentScale>1f)throw new InvalidOperationException("Sky apparent scale must be between 0.4 and 1.");
             var ids=new HashSet<string>();
             foreach(var s in r.props.Concat(r.buildings))
                 if(string.IsNullOrEmpty(s.id)||!ids.Add(s.id)||s.width<=0||s.height<=0||s.depth<=0||s.id.Any(c=>!char.IsLetterOrDigit(c)))throw new InvalidOperationException("Invalid or duplicate asset ID/dimensions: "+s.id);
@@ -100,6 +104,7 @@ namespace CityScooter.EditorTools.Art
         static Mesh SaveMesh(string id,ComicMesh data)
         {
             string path=Root+"/Meshes/"+id+".asset";Mesh mesh=data.Bake(id),existing=AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            ComicSurfaceAssets.Record(id,mesh);
             if(id.StartsWith("CHN_")||id=="HorizonRoad")
             {
                 // Unity culls on CPU, before the vertex shader. Cover the full 320 m build range + one chunk.
@@ -117,6 +122,7 @@ namespace CityScooter.EditorTools.Art
                 existing.SetVertices(mesh.vertices);existing.SetNormals(mesh.normals);existing.SetColors(mesh.colors);
                 var uv=new List<Vector3>();mesh.GetUVs(0,uv);existing.SetUVs(0,uv);
                 mesh.GetUVs(1,uv);existing.SetUVs(1,uv);
+                var surfaceUV=new List<Vector4>();mesh.GetUVs(2,surfaceUV);existing.SetUVs(2,surfaceUV);
                 existing.SetTriangles(mesh.triangles,0);existing.bounds=mesh.bounds;
                 existing.UploadMeshData(false);
                 Object.DestroyImmediate(mesh);EditorUtility.SetDirty(existing);
@@ -161,7 +167,7 @@ namespace CityScooter.EditorTools.Art
             dressingReport.Clear();dressingReport.Add("chunk,layout,side,asset,x_m,y_m,z_m,yaw_deg");
         }
 
-        static void ScatterRoadside(ComicMesh mesh,int variant,int layout)
+        static void ScatterRoadside(ComicMesh mesh,int variant,int layout,List<DressingObstacle> collisions)
         {
             string[] curbPool={"Hydrant","Bin","RecycleBins","NewspaperBox","Mailbox","TreePit","Planter","FlowerPot","StonePost","Bollard","Rail","StreetLamp","StreetSign","ParkingMeter","Bench","BikeRack","ShopBoard","Crates","Cones","WorkBarrier","ConcreteBarrier"};
             string[] wallPool={"ParcelLocker","UtilityBox","AirConditioner","VendingMachine","FlowerPot","Planter","ShopBoard","Crates"};
@@ -202,6 +208,7 @@ namespace CityScooter.EditorTools.Art
                     occupied.Add(new Vector2(z,extentZ));
                     float y=-recipe.downhillGrade*z+recipe.curbHeight;
                     mesh.Add(geometry[id],new Vector3(x,y,z),Quaternion.Euler(0,yaw,0),Vector3.one);
+                    collisions.Add(PropCollision(spec,new Vector3(x,y,z),yaw));
                     dressingReport.Add(FormattableString.Invariant($"{ChunkIds[variant]},{layout},{side},{id},{x:F3},{y:F3},{z:F3},{yaw:F2}"));
                 }
             }
@@ -220,12 +227,18 @@ namespace CityScooter.EditorTools.Art
             report.Add(string.Join(",",s.id,s.label,building?"building":"prop",s.width.ToString(System.Globalization.CultureInfo.InvariantCulture),s.height.ToString(System.Globalization.CultureInfo.InvariantCulture),s.depth.ToString(System.Globalization.CultureInfo.InvariantCulture),data.TriangleCount*2,2,1));
         }
 
+        static DressingObstacle PropCollision(ComicAssetSpec spec,Vector3 position,float yaw)
+        {
+            var collider=AssetDatabase.LoadAssetAtPath<GameObject>(AssetPath(spec.id,false)).GetComponent<BoxCollider>();
+            return new DressingObstacle{id=spec.id,position=position,rotation=new Vector3(0,yaw,0),centre=collider.center,size=collider.size,canJumpOver=spec.height<=1.1f};
+        }
+
         static void BuildRider()
         {
             string path=Prefabs+"/Rider/Rider_Comic.prefab";GameObject root=PrefabBuildUtility.OpenPrefab(path);
             var sync=new ChildSync(root.transform);Renderer(sync.Plain("RiderAndScooter"),"Rider_Comic",ComicKitGeometry.Rider(recipe));
             GameObject scarf=sync.Plain("ScarfAnchor");scarf.transform.localPosition=new Vector3(0,1.63f,.02f);
-            var rest=new ComicMesh();
+            var rest=new ComicMesh{Surface=ComicSurface.Fabric};
             for(int i=0;i<18;i++)
             {
                 Vector3 Point(int j,float side){float t=j/18f;return new Vector3(Mathf.Sin(t*5)*.45f+side*.14f,-t*.25f,-t*3.2f);}
@@ -234,6 +247,7 @@ namespace CityScooter.EditorTools.Art
             }
             Renderer(scarf,"Scarf_Rest",rest,false);
             var ribbon=PrefabBuildUtility.GetOrAdd<ScarfRibbon>(scarf);ribbon.color=recipe.red;
+            ribbon.surfaceTiling=ComicSurfaceAssets.Tiling(ComicSurface.Fabric);
             scarf.GetComponent<MeshRenderer>().sharedMaterial=material;
             scarf.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.Off;
             sync.Finish();PrefabBuildUtility.SaveAndClose(root,path);
@@ -269,7 +283,7 @@ namespace CityScooter.EditorTools.Art
                 importer.npotScale=TextureImporterNPOTScale.None;importer.alphaSource=TextureImporterAlphaSource.None;
                 importer.textureCompression=TextureImporterCompression.CompressedHQ;importer.SaveAndReimport();
             }
-            recipe.schemaVersion=5;EditorUtility.SetDirty(recipe);
+            recipe.schemaVersion=7;EditorUtility.SetDirty(recipe);
         }
 
         static void BuildChunk(int variant)
@@ -278,10 +292,14 @@ namespace CityScooter.EditorTools.Art
             bool open=variant%2==1;string id=ChunkIds[variant],path=ChunkPath(id);
             GameObject root=PrefabBuildUtility.OpenPrefab(path);var sync=new ChildSync(root.transform);
             var chunk=PrefabBuildUtility.GetOrAdd<RoadChunk>(root);chunk.length=length;chunk.halfWidth=half;chunk.endHeight=-length*grade;
+            chunk.sidewalkWidth=recipe.sidewalkWidth;chunk.sidewalkHeight=recipe.curbHeight;chunk.curbTransitionWidth=.3f;
             var road=new ComicMesh();var buildings=new ComicMesh();var props=new ComicMesh();var background=new ComicMesh();
+            var fixedCollisions=new List<DressingObstacle>();
             Color ink=recipe.ink,cream=recipe.cream;
             void B(ComicMesh mesh,Vector3 p,Vector3 s,Color c)
             {
+                if(mesh==road)mesh.Surface=c==recipe.asphalt?ComicSurface.Asphalt:c==recipe.pavement?ComicSurface.Paving:ComicSurface.Plain;
+                else mesh.Surface=ComicSurface.Concrete;
                 if(mesh==road&&s.z>4)mesh.BoxStrip(p,s,c);else mesh.Box(p,s,c);
             }
             B(road,new Vector3(0,-.4f,length/2),new Vector3(half*2,.8f,length),recipe.asphalt);
@@ -306,7 +324,7 @@ namespace CityScooter.EditorTools.Art
             {
                 float setback=open?recipe.openSetback:0;
                 // The setback square has a closed low retaining edge, never an opening to the map boundary.
-                var terrace=new ComicMesh();
+                var terrace=new ComicMesh{Surface=ComicSurface.Concrete};
                 terrace.BoxStrip(new Vector3(side*(edge+setback/2),-.3f,length/2),new Vector3(Mathf.Max(.1f,setback),1,length),recipe.pavement);
                 terrace.BoxStrip(new Vector3(side*(edge+.15f),.55f,length/2),new Vector3(.3f,1.1f,length),ink);
                 if(open){terrace.Shear(grade);buildings.Add(terrace,Vector3.zero,Quaternion.identity,Vector3.one);}
@@ -336,17 +354,22 @@ namespace CityScooter.EditorTools.Art
                 {
                     props.Add(geometry["BusShelter"],new Vector3(side*(edge+2.5f),-grade*20+recipe.curbHeight,20),Quaternion.Euler(0,side<0?90:-90,0),Vector3.one);
                     props.Add(ComicKitGeometry.Car(recipe,side<0?recipe.yellow:recipe.glass),new Vector3(side*(edge+2.5f),-grade*32+.25f,32),Quaternion.identity,Vector3.one);
+                    fixedCollisions.Add(PropCollision(recipe.props.First(s=>s.id=="BusShelter"),new Vector3(side*(edge+2.5f),-grade*20+recipe.curbHeight,20),side<0?90:-90));
+                    fixedCollisions.Add(new DressingObstacle{id="ParkedCar",position=new Vector3(side*(edge+2.5f),-grade*32+.25f,32),centre=new Vector3(0,.9f,0),size=new Vector3(1.7f,1.8f,3.4f),canJumpOver=false});
                 }
             }
             boundaries.Finish();
             Renderer(sync.Plain("RoadAndSidewalk"),"CHN_"+id+"_Road",road,false);
             Renderer(sync.Plain("Frontage"),"CHN_"+id+"_Frontage",buildings);
             var layouts=new Mesh[recipe.roadsideLayoutVariants];
+            var collisionLayouts=new DressingCollisionLayout[layouts.Length];
             GameObject furniture=sync.Plain("StreetFurniture");
             for(int layout=0;layout<layouts.Length;layout++)
             {
                 var dressing=new ComicMesh();dressing.Add(props,Vector3.zero,Quaternion.identity,Vector3.one);
-                ScatterRoadside(dressing,variant,layout);
+                var collisions=new List<DressingObstacle>(fixedCollisions);
+                ScatterRoadside(dressing,variant,layout,collisions);
+                collisionLayouts[layout]=new DressingCollisionLayout{obstacles=collisions.ToArray()};
                 if(layout==0)
                 {
                     Renderer(furniture,"CHN_"+id+"_Props",dressing);
@@ -356,6 +379,7 @@ namespace CityScooter.EditorTools.Art
             }
             var selection=PrefabBuildUtility.GetOrAdd<StreetDressing>(root);
             selection.surface=furniture.GetComponent<MeshFilter>();selection.outline=furniture.transform.Find("InkOutline").GetComponent<MeshFilter>();selection.layouts=layouts;
+            selection.collisionLayouts=collisionLayouts;
             Renderer(sync.Plain("DeepCity"),"CHN_"+id+"_Background",background,false);
             var slotsGo=sync.Plain("SpawnSlots");var slots=new ChildSync(slotsGo.transform);
             foreach(float z in new[]{10f,25f})foreach(float x in new[]{-2.6f,0f,2.6f})
@@ -409,13 +433,19 @@ namespace CityScooter.EditorTools.Art
             {
                 tuning=Object.Instantiate(game.tuning!=null?game.tuning:GameTuning.Default);tuning.name="Tuning_ComicDownhill";
                 tuning.safeStartDistance=50;tuning.jumpObstacleChance=0; // single-lane obstacles keep an escape route
+                tuning.maxSpeed=44;tuning.maxSpeedMultiplier=5;tuning.speedRampSeconds=600;
+                tuning.acceleration=9;
+                tuning.postRampMultiplierPerMinute=.1f;
                 AssetDatabase.CreateAsset(tuning,"Assets/_Project/Data/Tuning_ComicDownhill.asset");
             }
             game.tuning=tuning;game.track.tuning=tuning;game.rider.tuning=tuning;
+            ComicCityAudioBuilder.Apply(game);
             foreach(var component in new Component[]{game,game.track,game.rider}){EditorUtility.SetDirty(component);PrefabUtility.RecordPrefabInstancePropertyModifications(component);}
             var follow=PrefabBuildUtility.GetOrAdd<FollowCamera>(Camera.main.gameObject);follow.target=game.rider.transform;
             follow.offset=recipe.cameraOffset;follow.lookAhead=recipe.cameraLookAhead;follow.lookHeight=recipe.cameraLookHeight;
             follow.baseFov=recipe.cameraFov;follow.maxFov=recipe.cameraMaxFov;follow.fovPerMetrePerSecond=recipe.cameraFovPerSpeed;
+            follow.directionalFollow=recipe.cameraDirectionalFollow;follow.maxYaw=recipe.cameraYawLimit;follow.rotationResponse=recipe.cameraRotationResponse;
+            EditorUtility.SetDirty(follow);PrefabUtility.RecordPrefabInstancePropertyModifications(follow);
             Camera.main.fieldOfView=recipe.cameraFov;Camera.main.farClipPlane=700;
             foreach(var skyline in Object.FindObjectsByType<SkylineParallax>(FindObjectsSortMode.None))skyline.gameObject.SetActive(false);
             ApplyComicLighting();
@@ -467,6 +497,7 @@ namespace CityScooter.EditorTools.Art
                 else sky.shader=skyShader;
                 sky.SetTexture("_ComicSkyTexture",recipe.skyPanorama);
                 sky.SetVector("_ComicSkyMapping",ComicCityProjection.SkyMapping(recipe));
+                sky.SetFloat("_ComicSkyScale",recipe.skyApparentScale);
                 sky.SetColor("_ComicSkyHaze",ComicCityProjection.SkyHaze(recipe));EditorUtility.SetDirty(sky);
                 look.skyboxMaterial=sky;EditorUtility.SetDirty(look);
                 apply.look=look;apply.Apply();EditorUtility.SetDirty(apply);PrefabUtility.RecordPrefabInstancePropertyModifications(apply);

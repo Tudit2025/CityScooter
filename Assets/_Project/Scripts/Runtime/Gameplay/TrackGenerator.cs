@@ -50,6 +50,7 @@ namespace CityScooter.Gameplay
         int _chunkCounter;
         int _runSeed;
         object _lastChunkKey;
+        bool _collisionTransformsDirty;
 
         GameTuning T => tuning != null ? tuning : GameTuning.Default;
 
@@ -77,6 +78,7 @@ namespace CityScooter.Gameplay
                 }
             }
             BuildAhead(startZ);
+            SyncCollisionTransforms();
         }
 
         void Update()
@@ -85,6 +87,13 @@ namespace CityScooter.Gameplay
             float z = rider.position.z;
             BuildAhead(z);
             while (_active.Count > 1 && _active[0].StartZ + _active[0].Chunk.length < z - keepBehind) Recycle(0);
+            SyncCollisionTransforms();
+        }
+
+        void SyncCollisionTransforms()
+        {
+            if(!_collisionTransformsDirty)return;
+            Physics.SyncTransforms();_collisionTransformsDirty=false;
         }
 
         void BuildAhead(float riderZ)
@@ -93,7 +102,7 @@ namespace CityScooter.Gameplay
             while (_nextZ < riderZ + buildAhead && guard++ < 64) SpawnChunk();
         }
 
-        /// <summary>Half width of the drivable lane at world z (rider clamps to it).</summary>
+        /// <summary>Half width of the road, excluding sidewalks.</summary>
         public float HalfWidthAt(float z)
         {
             for (int i = 0; i < _active.Count; i++)
@@ -103,6 +112,16 @@ namespace CityScooter.Gameplay
             }
             return PlaceholderTrack.HalfWidth;
         }
+
+        RoadChunk SurfaceChunkAt(float z)
+        {
+            if(_active.Count==0)return null;
+            for(int i=0;i<_active.Count;i++)if(z<_active[i].StartZ+_active[i].Chunk.length)return _active[i].Chunk;
+            return _active[_active.Count-1].Chunk;
+        }
+        public float RideableHalfWidthAt(float z)=>SurfaceChunkAt(z)?.RideableHalfWidth??PlaceholderTrack.HalfWidth;
+        public float SidewalkOffsetAt(float x,float z)=>SurfaceChunkAt(z)?.SidewalkOffsetAt(x)??0;
+        public float SurfaceHeightAt(float x,float z)=>SurfaceHeightAt(z)+SidewalkOffsetAt(x,z);
 
         // Extrapolate the end chunks for the chase camera just behind / ahead of built track.
         public float SurfaceHeightAt(float z)
@@ -124,6 +143,7 @@ namespace CityScooter.Gameplay
             go.transform.SetParent(transform, false);
             go.transform.SetPositionAndRotation(new Vector3(0f, _nextY, _nextZ), Quaternion.identity);
             go.GetComponent<StreetDressing>()?.ApplyLayout(_runSeed, _chunkCounter);
+            _collisionTransformsDirty=true;
             var active = new Active { Key = key, Chunk = chunk, StartZ = _nextZ };
             _active.Add(active);
             Populate(active);
@@ -293,6 +313,7 @@ namespace CityScooter.Gameplay
                 if (worldPos.z >= a.StartZ && worldPos.z < a.StartZ + a.Chunk.length)
                 {
                     Place(a, key, a.Chunk.transform.InverseTransformPoint(worldPos));
+                    Physics.SyncTransforms();
                     return a.Spawned[a.Spawned.Count - 1].Instance;
                 }
             }

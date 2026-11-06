@@ -607,6 +607,9 @@ MonoBehaviour:
   length: 40
   endHeight: -3.1470692
   halfWidth: 4
+  sidewalkWidth: 4
+  sidewalkHeight: 0.2
+  curbTransitionWidth: 0.3
   roadType: 0
   weight: 1
   minDifficulty: 0
@@ -635,6 +638,383 @@ MonoBehaviour:
   - {fileID: 4300000, guid: 9c1066c852718f549b6df1a67904af9e, type: 2}
   - {fileID: 4300000, guid: 20edadb58a6d1db42910d65ed8930daa, type: 2}
   - {fileID: 4300000, guid: b9817c4625d10ee4d90368b3523e2293, type: 2}
+  collisionLayouts:
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: AirConditioner
+      position: {x: 6.4298687, y: -0.6275801, z: 10.518741}
+      rotation: {x: 0, y: -94.03023, z: 0}
+      centre: {x: 0, y: 0.325, z: 0}
+      size: {x: 1, y: 0.65, z: 0.5}
+      canJumpOver: 1
+    - id: Planter
+      position: {x: 7.047116, y: -1.3133788, z: 19.235405}
+      rotation: {x: 0, y: -87.194046, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.8}
+      canJumpOver: 1
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: FlowerPot
+      position: {x: -4.5151086, y: -2.6046007, z: 35.647144}
+      rotation: {x: 0, y: 80.33605, z: 0}
+      centre: {x: 0, y: 0.6, z: 0}
+      size: {x: 0.8, y: 1.2, z: 0.8}
+      canJumpOver: 0
+    - id: Bench
+      position: {x: -4.5296373, y: -0.39150962, z: 7.5182285}
+      rotation: {x: 0, y: 87.445335, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.8}
+      canJumpOver: 1
+    - id: UtilityBox
+      position: {x: 6.823669, y: -0.21594945, z: 5.2868166}
+      rotation: {x: 0, y: -102.4455, z: 0}
+      centre: {x: 0, y: 0.75, z: 0}
+      size: {x: 1, y: 1.5, z: 0.5}
+      canJumpOver: 0
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: ParkingMeter
+      position: {x: -5.098266, y: -2.4974687, z: 34.28547}
+      rotation: {x: 0, y: 90.00702, z: 0}
+      centre: {x: 0, y: 0.75, z: 0}
+      size: {x: 0.35, y: 1.5, z: 0.3}
+      canJumpOver: 0
+    - id: Planter
+      position: {x: 5.0983477, y: -2.3366225, z: 32.241077}
+      rotation: {x: 0, y: -99.54142, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.8}
+      canJumpOver: 1
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: ConcreteBarrier
+      position: {x: -5.5598135, y: -2.1495798, z: 29.86372}
+      rotation: {x: 0, y: 86.330795, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.75}
+      canJumpOver: 1
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: Mailbox
+      position: {x: -4.365056, y: -2.4401567, z: 33.557022}
+      rotation: {x: 0, y: 93.79897, z: 0}
+      centre: {x: 0, y: 0.65, z: 0}
+      size: {x: 0.6, y: 1.3, z: 0.6}
+      canJumpOver: 0
+    - id: UtilityBox
+      position: {x: -7.617445, y: -0.20079546, z: 5.094206}
+      rotation: {x: 0, y: 87.04125, z: 0}
+      centre: {x: 0, y: 0.75, z: 0}
+      size: {x: 1, y: 1.5, z: 0.5}
+      canJumpOver: 0
+    - id: ShopBoard
+      position: {x: 4.740507, y: -1.0042884, z: 15.306793}
+      rotation: {x: 0, y: -81.03334, z: 0}
+      centre: {x: 0, y: 0.55, z: 0}
+      size: {x: 0.75, y: 1.1, z: 0.6}
+      canJumpOver: 1
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: Mailbox
+      position: {x: 5.6655416, y: -1.4951569, z: 21.545849}
+      rotation: {x: 0, y: -91.83475, z: 0}
+      centre: {x: 0, y: 0.65, z: 0}
+      size: {x: 0.6, y: 1.3, z: 0.6}
+      canJumpOver: 0
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: Mailbox
+      position: {x: -5.1106954, y: -0.136904, z: 4.2821302}
+      rotation: {x: 0, y: 79.72027, z: 0}
+      centre: {x: 0, y: 0.65, z: 0}
+      size: {x: 0.6, y: 1.3, z: 0.6}
+      canJumpOver: 0
+    - id: Cones
+      position: {x: 4.803047, y: -2.0293896, z: 28.336073}
+      rotation: {x: 0, y: -99.20997, z: 0}
+      centre: {x: 0, y: 0.375, z: 0}
+      size: {x: 1, y: 0.75, z: 0.5}
+      canJumpOver: 1
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: Cones
+      position: {x: -5.359455, y: -0.98244053, z: 15.029101}
+      rotation: {x: 0, y: 103.0653, z: 0}
+      centre: {x: 0, y: 0.375, z: 0}
+      size: {x: 1, y: 0.75, z: 0.5}
+      canJumpOver: 1
+    - id: Bench
+      position: {x: 4.656138, y: -1.718557, z: 24.385317}
+      rotation: {x: 0, y: -91.50347, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.8}
+      canJumpOver: 1
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: WorkBarrier
+      position: {x: -4.365241, y: -2.2269402, z: 30.846987}
+      rotation: {x: 0, y: 87.91781, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 1.8, y: 1, z: 0.65}
+      canJumpOver: 1
+    - id: Rail
+      position: {x: -4.9062495, y: -0.19092931, z: 4.968805}
+      rotation: {x: 0, y: 101.78105, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.3}
+      canJumpOver: 1
+    - id: StreetLamp
+      position: {x: 4.7564025, y: -2.147921, z: 29.842636}
+      rotation: {x: 0, y: -97.94, z: 0}
+      centre: {x: 0, y: 2.5, z: 0}
+      size: {x: 0.35, y: 5, z: 0.35}
+      canJumpOver: 0
+    - id: ParcelLocker
+      position: {x: 7.1765046, y: -0.6559616, z: 10.879476}
+      rotation: {x: 0, y: -91.39002, z: 0}
+      centre: {x: 0, y: 1, z: 0}
+      size: {x: 2, y: 2, z: 0.6}
+      canJumpOver: 0
+  - obstacles:
+    - id: BusShelter
+      position: {x: -10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: -10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: BusShelter
+      position: {x: 10.5, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: -90, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 4, y: 3, z: 1.5}
+      canJumpOver: 0
+    - id: ParkedCar
+      position: {x: 10.5, y: -2.2676554, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.9, z: 0}
+      size: {x: 1.7, y: 1.8, z: 3.4}
+      canJumpOver: 0
+    - id: AirConditioner
+      position: {x: -6.7537227, y: -1.6959515, z: 24.097996}
+      rotation: {x: 0, y: 102.45166, z: 0}
+      centre: {x: 0, y: 0.325, z: 0}
+      size: {x: 1, y: 0.65, z: 0.5}
+      canJumpOver: 1
 --- !u!1 &3428185383910969900
 GameObject:
   m_ObjectHideFlags: 0

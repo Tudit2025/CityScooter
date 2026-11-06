@@ -107,7 +107,9 @@ namespace CityScooter.Gameplay
             GameController g = game != null ? game : GameController.Instance;
             if (g == null || g.rider == null) return;
             _score.text = g.Score.ToString();
-            _stats.text = Mathf.FloorToInt(Mathf.Max(0f, g.rider.Distance)) + " m    Gifts " + g.Gifts + (g.rider.Braking ? "    BRAKE" : "");
+            _stats.text = Mathf.FloorToInt(Mathf.Max(0f, g.rider.Distance)) + " m    Gifts " + g.Gifts
+                + "    Speed " + g.rider.Speed.ToString("0") + " / " + g.rider.CurrentMaxSpeed.ToString("0") + " m/s"
+                + (g.rider.Braking ? "    BRAKE" : "");
             int level = Mathf.Max(0, g.rider.SpeedLevel);
             for (int i = 0; i < _speedSegments.Length; i++) _speedSegments[i].color = i <= level && g.State == RunState.Running ? SegmentOn : SegmentOff;
             _device.text = DeviceLabel();

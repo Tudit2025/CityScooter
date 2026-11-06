@@ -1,5 +1,5 @@
 {
-    "schemaVersion": 5,
+    "schemaVersion": 7,
     "grid": 0.5,
     "chunkLength": 40.0,
     "roadHalfWidth": 4.0,
@@ -22,6 +22,9 @@
     "cameraFov": 76.0,
     "cameraMaxFov": 82.0,
     "cameraFovPerSpeed": 0.30000001192092898,
+    "cameraDirectionalFollow": true,
+    "cameraYawLimit": 22.0,
+    "cameraRotationResponse": 6.0,
     "cityBendStart": 32.0,
     "cityBendStrength": 0.0010999999940395356,
     "horizonTaperStart": 180.0,
@@ -31,11 +34,12 @@
     "horizonRiseSlope": 0.18000000715255738,
     "curveEaseLength": 70.0,
     "skyPanorama": {
-        "instanceID": 36596
+        "instanceID": 36634
     },
     "skyYaw": -28.0,
     "skyElevation": 12.0,
     "skyVerticalScale": 0.44999998807907107,
+    "skyApparentScale": 0.699999988079071,
     "skyHaze": 0.11999999731779099,
     "outlineColor": {
         "r": 0.012000000104308129,

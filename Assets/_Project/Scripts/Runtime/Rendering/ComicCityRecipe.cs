@@ -17,7 +17,7 @@ namespace CityScooter.Rendering
     [CreateAssetMenu(menuName = "CityScooter/Comic City Recipe")]
     public sealed class ComicCityRecipe : ScriptableObject
     {
-        public int schemaVersion = 5;
+        public int schemaVersion = 7;
         [Header("Metres; road +Z, building fronts +Z, bottom-centre pivots")]
         [Tooltip("Authoring snap guideline; small attachments can use finer dimensions.")]
         public float grid = 0.5f;
@@ -41,6 +41,9 @@ namespace CityScooter.Rendering
         [Range(40f, 100f)] public float cameraFov = 76f;
         [Range(40f, 110f)] public float cameraMaxFov = 82f;
         public float cameraFovPerSpeed = 0.3f;
+        public bool cameraDirectionalFollow = true;
+        [Range(0,45)] public float cameraYawLimit = 22f;
+        [Min(.1f)] public float cameraRotationResponse = 6f;
         [Header("Visual city curl; gameplay stays on the original slope")]
         [Min(20f)] public float cityBendStart = 32f;
         [Range(0f, 0.003f)] public float cityBendStrength = 0.0011f;
@@ -56,6 +59,8 @@ namespace CityScooter.Rendering
         [Range(-180f,180f)] public float skyYaw = -28f;
         [Range(-20f,40f)] public float skyElevation = 12f;
         [Range(.2f,1.5f)] public float skyVerticalScale = .45f;
+        [Tooltip("Apparent size around the forward sky horizon. Smaller values show more of the panorama without repeating it.")]
+        [Range(.4f,1f)] public float skyApparentScale = .7f;
         [Range(0f,.5f)] public float skyHaze = .12f;
         [Header("Comic ink; pixel widths at 900 px image height")]
         public Color outlineColor = new Color(0.012f, 0.014f, 0.022f);

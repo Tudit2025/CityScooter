@@ -10,6 +10,15 @@ Shader "CityScooter/Comic Vertex"
         _CreasePixels("Crease width at 900p", Range(0,2)) = 0.65
         _WorldBend("Follow city curvature", Float) = 1
         _HorizonExtension("Distant road strip", Float) = 0
+        [NoScaleOffset] _SurfaceMasks("Shade / Roughness / Height / Cavity",2DArray)="" {}
+        [NoScaleOffset] _SurfaceNormals("Surface normals (linear XYZ)",2DArray)="" {}
+        _SurfaceDetail("Surface detail enabled",Range(0,1))=0
+        _SurfaceShade("Shade variation",Range(0,1.5))=1
+        _SurfaceNormal("Normal strength",Range(0,2))=1
+        _SurfaceSpecular("Comic highlight strength",Range(0,1))=.32
+        _SurfaceFade("Detail fade start / end metres",Vector)=(24,100,0,0)
+        _SurfaceOverride("Surface override (-1 uses mesh IDs)",Float)=-1
+        _SurfaceTiling("Override repetitions per metre",Float)=.5
     }
     SubShader
     {
@@ -27,7 +36,11 @@ Shader "CityScooter/Comic Vertex"
             float _CreasePixels;
             float _WorldBend;
             float _HorizonExtension;
+            float _SurfaceDetail, _SurfaceShade, _SurfaceNormal, _SurfaceSpecular, _SurfaceOverride, _SurfaceTiling;
+            float4 _SurfaceFade;
         CBUFFER_END
+        TEXTURE2D_ARRAY(_SurfaceMasks);SAMPLER(sampler_SurfaceMasks);
+        TEXTURE2D_ARRAY(_SurfaceNormals);SAMPLER(sampler_SurfaceNormals);
         ENDHLSL
         Pass
         {
@@ -36,11 +49,13 @@ Shader "CityScooter/Comic Vertex"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma target 3.5
+            #pragma require 2darray
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fog
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            struct A { float4 positionOS:POSITION; float3 normalOS:NORMAL; half4 color:COLOR; float3 inkUV:TEXCOORD0; };
-            struct V { float4 positionCS:SV_POSITION; float3 positionWS:TEXCOORD0; half3 normalWS:TEXCOORD1; half4 color:COLOR; half fog:TEXCOORD2; float3 inkUV:TEXCOORD3; };
+            struct A { float4 positionOS:POSITION; float3 normalOS:NORMAL; half4 color:COLOR; float3 inkUV:TEXCOORD0; float4 surfaceUV:TEXCOORD2; };
+            struct V { float4 positionCS:SV_POSITION; float3 positionWS:TEXCOORD0; half3 normalWS:TEXCOORD1; half4 color:COLOR; half fog:TEXCOORD2; float3 inkUV:TEXCOORD3; float4 surfaceUV:TEXCOORD4; };
             V Vert(A i)
             {
                 V o;
@@ -50,18 +65,44 @@ Shader "CityScooter/Comic Vertex"
                 o.normalWS = ComicBendNormal(originalWS, TransformObjectToWorldNormal(i.normalOS), _WorldBend);
                 o.color = i.color * _BaseColor; o.fog = ComputeFogFactor(o.positionCS.z);
                 o.inkUV = i.inkUV;
+                o.surfaceUV=i.surfaceUV;
                 return o;
             }
             half4 Frag(V i):SV_Target
             {
                 Light sun = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
-                half ndl = saturate(dot(normalize(i.normalWS), sun.direction));
+                half3 baseNormal=normalize(i.normalWS),normal=baseNormal;
+                half ndl = saturate(dot(baseNormal, sun.direction));
+                float detailFade=1-smoothstep(_SurfaceFade.x,max(_SurfaceFade.x+1,_SurfaceFade.y),distance(_WorldSpaceCameraPos,i.positionWS));
+                half shade=1,cavity=1,roughness=1;
+                float surface=_SurfaceOverride>=0?_SurfaceOverride:round(i.surfaceUV.z);
+                if(_SurfaceDetail>.001&&surface>.5)
+                {
+                    float2 uv=i.surfaceUV.xy*(_SurfaceOverride>=0?_SurfaceTiling:i.surfaceUV.w);
+                    half4 mask=SAMPLE_TEXTURE2D_ARRAY(_SurfaceMasks,sampler_SurfaceMasks,uv,surface);
+                    half3 mapped=SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormals,sampler_SurfaceNormals,uv,surface).xyz*2-1;
+                    mapped.xy*=_SurfaceNormal*detailFade;mapped=normalize(mapped);
+                    // Derivative tangent frame follows curved geometry and mirrored/rotated UV faces.
+                    float3 dp1=ddx(i.positionWS),dp2=ddy(i.positionWS);
+                    float2 duv1=ddx(uv),duv2=ddy(uv);
+                    float3 perp2=cross(dp2,baseNormal),perp1=cross(baseNormal,dp1);
+                    float3 tangent=perp2*duv1.x+perp1*duv2.x,bitangent=perp2*duv1.y+perp1*duv2.y;
+                    float invLength=rsqrt(max(max(dot(tangent,tangent),dot(bitangent,bitangent)),1e-12));
+                    normal=normalize((tangent*mapped.x+bitangent*mapped.y)*invLength+baseNormal*mapped.z);
+                    shade=1+(mask.r-.5)*2*_SurfaceShade*detailFade;cavity=lerp(1,mask.a,detailFade);roughness=mask.g;
+                }
                 half band = ndl > 0.62 ? 1 : (ndl > 0.18 ? 0.62 : 0.18);
                 band *= lerp(0.28, 1, step(0.5, sun.shadowAttenuation));
                 half3 lighting = lerp(_ShadowTint.rgb, half3(1.10,1.06,0.98), band);
                 float2 dots = frac(i.positionCS.xy / (4.0 * _ScreenParams.y / 900.0)) - 0.5;
                 half ink = (1-smoothstep(0.14,0.23,length(dots))) * (1 - band) * _Halftone;
                 half3 col = i.color.rgb * lighting * max(half3(0.8,0.8,0.8), sun.color) * (1 - ink);
+                // Keep broad cel-shaded bands stable; normal variation shades within each band.
+                col*=shade*cavity*(1+clamp(dot(normal,sun.direction)-dot(baseNormal,sun.direction),-.35,.35)*.65);
+                half3 view=SafeNormalize(_WorldSpaceCameraPos-i.positionWS);
+                half highlight=pow(saturate(dot(normal,SafeNormalize(sun.direction+view))),lerp(120,6,roughness*roughness));
+                highlight=(smoothstep(.35,.65,highlight)*.75+highlight*.25)*(1-roughness)*_SurfaceSpecular*detailFade*_SurfaceDetail;
+                col+=sun.color*highlight*sun.shadowAttenuation*smoothstep(0,.15,ndl);
                 float2 uvWidth=max(fwidth(i.inkUV.xy),float2(0.00001,0.00001));
                 float2 edgePixels=min(i.inkUV.xy,1-i.inkUV.xy)/uvWidth;
                 float width=_CreasePixels*_ScreenParams.y/900.0;

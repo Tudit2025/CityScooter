@@ -14,6 +14,7 @@ namespace CityScooter.Rendering
         static readonly int HorizonId=Shader.PropertyToID("_ComicHorizon");
         static readonly int CurveId=Shader.PropertyToID("_ComicCurveTail");
         static readonly int SkyMappingId=Shader.PropertyToID("_ComicSkyMapping");
+        static readonly int SkyScaleId=Shader.PropertyToID("_ComicSkyScale");
         static readonly int SkyTextureId=Shader.PropertyToID("_ComicSkyTexture");
         static readonly int SkyHazeId=Shader.PropertyToID("_ComicSkyHaze");
         static ComicCityBackdrop owner;
@@ -24,6 +25,7 @@ namespace CityScooter.Rendering
             owner=null;Shader.SetGlobalVector(BendId,Vector4.zero);
             Shader.SetGlobalVector(HorizonId,Vector4.zero);Shader.SetGlobalVector(CurveId,Vector4.zero);
             Shader.SetGlobalVector(SkyMappingId,Vector4.zero);Shader.SetGlobalTexture(SkyTextureId,null);
+            Shader.SetGlobalFloat(SkyScaleId,1);
         }
 
         void OnEnable() { RenderPipelineManager.beginCameraRendering += BeforeCamera; Refresh(); }
@@ -48,6 +50,7 @@ namespace CityScooter.Rendering
             Shader.SetGlobalVector(CurveId,new Vector4(recipe.curveTransitionDistance,recipe.horizonRiseSlope,recipe.curveEaseLength,0));
             Shader.SetGlobalTexture(SkyTextureId,recipe.skyPanorama);
             Shader.SetGlobalVector(SkyMappingId,ComicCityProjection.SkyMapping(recipe));
+            Shader.SetGlobalFloat(SkyScaleId,recipe.skyApparentScale);
             Shader.SetGlobalColor(SkyHazeId,ComicCityProjection.SkyHaze(recipe).linear);
         }
     }

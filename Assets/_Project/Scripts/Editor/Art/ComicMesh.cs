@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using CityScooter.Rendering;
 
 namespace CityScooter.EditorTools.Art
 {
@@ -10,6 +11,8 @@ namespace CityScooter.EditorTools.Art
         readonly List<Vector3> vertices = new List<Vector3>();
         readonly List<Vector3> normals = new List<Vector3>();
         readonly List<Color> colors = new List<Color>();
+        readonly List<ComicSurface> surfaces = new List<ComicSurface>();
+        public ComicSurface Surface = ComicSurface.Plain;
         // xy = quad coordinates, z = ink enabled. No triangle diagonals are inked.
         readonly List<Vector3> inkUV = new List<Vector3>();
         readonly List<int> triangles = new List<int>();
@@ -25,7 +28,7 @@ namespace CityScooter.EditorTools.Art
             int n = vertices.Count;
             Vector3 normal = Vector3.Cross(b - a, c - a).normalized;
             vertices.Add(a); vertices.Add(b); vertices.Add(c);
-            for (int i = 0; i < 3; i++) { normals.Add(normal); colors.Add(color.linear); triangles.Add(n + i); inkUV.Add(Vector3.zero); }
+            for (int i = 0; i < 3; i++) { normals.Add(normal); colors.Add(color.linear); triangles.Add(n + i); inkUV.Add(Vector3.zero); surfaces.Add(Surface); }
         }
 
         public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color, bool ink = true)
@@ -108,6 +111,7 @@ namespace CityScooter.EditorTools.Art
                 normals.Add((rotation * new Vector3(other.normals[i].x/scale.x,other.normals[i].y/scale.y,other.normals[i].z/scale.z)).normalized);
                 colors.Add(other.colors[i]);
                 inkUV.Add(other.inkUV[i]);
+                surfaces.Add(other.surfaces[i]);
             }
             foreach (int i in other.triangles) triangles.Add(n+i);
         }
@@ -132,6 +136,18 @@ namespace CityScooter.EditorTools.Art
             var mesh = new Mesh { name = name, indexFormat = vertices.Count > 65535 ? IndexFormat.UInt32 : IndexFormat.UInt16 };
             mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetColors(colors); mesh.SetTriangles(triangles,0); mesh.RecalculateBounds();
             mesh.SetUVs(0, inkUV);
+            // Metric dominant-face projection is baked after assembly/scaling, before GPU bending.
+            // UV2: metres U/V, stable material slice, repetitions per metre. UV1 remains outline normals.
+            var surfaceUV=new List<Vector4>(vertices.Count);
+            for(int i=0;i<vertices.Count;i++)
+            {
+                Vector3 p=vertices[i],n=normals[i];Vector2 uv;
+                if(Mathf.Abs(n.y)>=Mathf.Max(Mathf.Abs(n.x),Mathf.Abs(n.z)))uv=new Vector2(p.x,p.z);
+                else if(Mathf.Abs(n.x)>Mathf.Abs(n.z))uv=new Vector2(p.z,p.y);
+                else uv=new Vector2(p.x,p.y);
+                surfaceUV.Add(new Vector4(uv.x,uv.y,(int)surfaces[i],ComicSurfaceAssets.Tiling(surfaces[i])));
+            }
+            mesh.SetUVs(2,surfaceUV);
             // Weld by position only for silhouette extrusion; keep original flat normals for cel shading.
             var groups = new Dictionary<Vector3Int, HashSet<Vector3Int>>();
             Vector3Int Key(Vector3 v) => new Vector3Int(Mathf.RoundToInt(v.x*10000), Mathf.RoundToInt(v.y*10000), Mathf.RoundToInt(v.z*10000));

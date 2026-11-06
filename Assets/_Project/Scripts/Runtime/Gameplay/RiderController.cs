@@ -26,6 +26,9 @@ namespace CityScooter.Gameplay
         public bool Airborne { get; private set; }
         public bool Braking { get; private set; }
         public bool Running => _running;
+        public float RunTime => _runTime;
+        public float CurrentMaxSpeed => T.MaxSpeedAt(_runTime);
+        public float SpeedGrowth01 => T.SpeedGrowth01(_runTime);
         /// <summary>0..9, what "spd:N" carries.</summary>
         public int SpeedLevel { get; private set; } = -1;
 
@@ -49,10 +52,11 @@ namespace CityScooter.Gameplay
 
         public void ResetRider(Vector3 start)
         {
-            if (track != null) start.y = track.SurfaceHeightAt(start.z);
+            if (track != null) start.y = track.SurfaceHeightAt(start.x,start.z);
             transform.position = start;
             _startZ = start.z;
             Speed = 0f;
+            _runTime = 0f;
             _vx = _vy = _y = 0f;
             Airborne = false;
             Braking = false;
@@ -78,19 +82,25 @@ namespace CityScooter.Gameplay
         {
             if (!_running) return;
             float dt = Time.deltaTime;
+            if(dt<=0)return;
             _runTime += dt;
             RiderInput input = RiderInputSource.Read();
 
             // Forward speed: ramps with distance, brake pulls it down, then it recovers.
-            float target = Mathf.Lerp(T.startSpeed, T.maxSpeed, T.Difficulty01(Distance));
+            float target = Mathf.Lerp(T.startSpeed, CurrentMaxSpeed, T.Difficulty01(Distance));
             Braking = input.Brake;
             if (Braking) Speed = Mathf.Max(T.brakeMinSpeed, Speed - T.brakeDeceleration * dt);
             else Speed = Mathf.MoveTowards(Speed, target, T.acceleration * dt);
 
             // Sideways: eased towards the steer input, clamped to the lane.
-            float limit = Mathf.Max(0.5f, (track != null ? track.HalfWidthAt(transform.position.z) : PlaceholderTrack.HalfWidth) - radius);
+            Vector3 from=transform.position;
+            float nextZ=from.z+Speed*dt;
+            float limit = Mathf.Max(0.5f, (track != null ? track.RideableHalfWidthAt(nextZ) : PlaceholderTrack.HalfWidth) - radius);
             float targetVx = input.Steer * T.lateralMaxSpeed;
             _vx = Mathf.Lerp(_vx, targetVx, 1f - Mathf.Exp(-T.lateralResponse * dt));
+            float x=from.x+_vx*dt;
+            if(x>limit){x=limit;_vx=Mathf.Min(_vx,0);}
+            if(x<-limit){x=-limit;_vx=Mathf.Max(_vx,0);}
 
             // Jump arc.
             if (input.Jump && !Airborne && _runTime >= T.jumpLockAtStart)
@@ -102,6 +112,8 @@ namespace CityScooter.Gameplay
             {
                 _vy -= T.gravity * dt;
                 _y += _vy * dt;
+                // Crossing a curb in mid-air must not lift the entire jump by the curb height.
+                if(track!=null)_y-=track.SidewalkOffsetAt(x,nextZ)-track.SidewalkOffsetAt(from.x,from.z);
                 if (_y <= 0f)
                 {
                     _y = 0f;
@@ -110,16 +122,11 @@ namespace CityScooter.Gameplay
                 }
             }
 
-            Vector3 from = transform.position;
-            float x = from.x + _vx * dt;
-            if (x > limit) { x = limit; _vx = Mathf.Min(_vx, 0f); }
-            if (x < -limit) { x = -limit; _vx = Mathf.Max(_vx, 0f); }
-            float nextZ = from.z + Speed * dt;
-            Vector3 to = new Vector3(x, _y + (track != null ? track.SurfaceHeightAt(nextZ) : 0f), nextZ);
+            Vector3 to = new Vector3(x, _y + (track != null ? track.SurfaceHeightAt(x,nextZ) : 0f), nextZ);
             transform.position = to;
 
             if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(nextZ) : 0f, 0f, -_vx / Mathf.Max(0.01f, T.lateralMaxSpeed) * T.maxLean);
-            SetSpeedLevel(Mathf.RoundToInt(Speed / Mathf.Max(0.01f, T.maxSpeed) * Messages.MaxSpeedLevel));
+            SetSpeedLevel(Mathf.RoundToInt(Speed / Mathf.Max(0.01f, CurrentMaxSpeed) * Messages.MaxSpeedLevel));
             Sweep(from, to);
         }
 

@@ -12,7 +12,12 @@ namespace CityScooter.Gameplay
         [Header("Speed (m/s)")]
         public float startSpeed = 9f;
         public float maxSpeed = 22f;
-        [Tooltip("Distance in metres at which speed and obstacle density reach their maximum.")]
+        [Tooltip("Multiplier of the initial speed limit reached after speedRampSeconds. One disables the initial ramp.")]
+        [Min(1f)] public float maxSpeedMultiplier = 1f;
+        [Min(1f)] public float speedRampSeconds = 600f;
+        [Tooltip("After the ramp, add this fraction of the initial limit each minute. Zero holds the reached limit.")]
+        [Min(0)] public float postRampMultiplierPerMinute;
+        [Tooltip("Distance in metres at which acceleration target reaches the current speed limit and obstacle density reaches its maximum.")]
         public float difficultyDistance = 1500f;
         [Tooltip("How fast the scooter speeds back up after braking (m/s per second).")]
         public float acceleration = 3f;
@@ -59,6 +64,13 @@ namespace CityScooter.Gameplay
         }
 
         public float Difficulty01(float distance) => Mathf.Clamp01(distance / Mathf.Max(1f, difficultyDistance));
+        public float SpeedGrowth01(float runSeconds) => maxSpeedMultiplier>1?Mathf.Clamp01(runSeconds/Mathf.Max(1,speedRampSeconds)):0;
+        public float MaxSpeedAt(float runSeconds)
+        {
+            float multiplier=Mathf.Lerp(1,Mathf.Max(1,maxSpeedMultiplier),SpeedGrowth01(runSeconds));
+            multiplier+=Mathf.Max(0,runSeconds-Mathf.Max(1,speedRampSeconds))/60*Mathf.Max(0,postRampMultiplierPerMinute);
+            return Mathf.Max(startSpeed,maxSpeed)*multiplier;
+        }
 
         public int DifficultyLevel(float distance) => Mathf.Clamp(Mathf.FloorToInt(Difficulty01(distance) * 9.999f), 0, 9);
     }

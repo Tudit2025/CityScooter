@@ -4,6 +4,7 @@ Shader "CityScooter/Comic Panorama Sky"
     {
         [NoScaleOffset] _ComicSkyTexture("Perth comic panorama", 2D) = "grey" {}
         _ComicSkyMapping("Yaw, elevation, scale, enabled",Vector)=(0,.279253,.45,1)
+        _ComicSkyScale("Apparent skyline size",Range(.4,1))=.7
         _ComicSkyHaze("Atmospheric tint / strength",Color)=(.60,.74,.83,.12)
     }
     SubShader

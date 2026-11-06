@@ -16,6 +16,7 @@ namespace CityScooter.EditorTools.Art
                 float next=Mathf.Min(end,z+4);
                 void Strip(float left,float right,float height,Color color)
                 {
+                    mesh.Surface=color==r.asphalt?ComicSurface.Asphalt:color==r.pavement?ComicSurface.Paving:ComicSurface.Plain;
                     Vector3 P(float x,float at)=>new Vector3(x,-r.downhillGrade*at+height-.08f,at);
                     mesh.Quad(P(left,z),P(left,next),P(right,next),P(right,z),color,false);
                 }

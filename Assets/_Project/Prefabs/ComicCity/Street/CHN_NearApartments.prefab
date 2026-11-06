@@ -680,6 +680,9 @@ MonoBehaviour:
   length: 40
   endHeight: -3.1470692
   halfWidth: 4
+  sidewalkWidth: 4
+  sidewalkHeight: 0.2
+  curbTransitionWidth: 0.3
   roadType: 0
   weight: 1
   minDifficulty: 0
@@ -708,6 +711,101 @@ MonoBehaviour:
   - {fileID: 4300000, guid: 69a57e93062cf2b4fb8be132070c167c, type: 2}
   - {fileID: 4300000, guid: aab398f3006548840bc0de1767221a1f, type: 2}
   - {fileID: 4300000, guid: 4031ee7ee9f52e641b67c99d73a015e0, type: 2}
+  collisionLayouts:
+  - obstacles:
+    - id: Bollard
+      position: {x: 5.3709006, y: -2.452825, z: 33.71804}
+      rotation: {x: 0, y: -76.1696, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 0.4, y: 1, z: 0.4}
+      canJumpOver: 1
+  - obstacles: []
+  - obstacles:
+    - id: StreetLamp
+      position: {x: -4.6720295, y: -2.1053267, z: 29.30125}
+      rotation: {x: 0, y: 80.53221, z: 0}
+      centre: {x: 0, y: 2.5, z: 0}
+      size: {x: 0.35, y: 5, z: 0.35}
+      canJumpOver: 0
+  - obstacles:
+    - id: ConcreteBarrier
+      position: {x: -5.297243, y: -0.20701906, z: 5.1733093}
+      rotation: {x: 0, y: 103.4223, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.75}
+      canJumpOver: 1
+    - id: ParcelLocker
+      position: {x: 6.609342, y: -0.20018204, z: 5.086409}
+      rotation: {x: 0, y: -78.59217, z: 0}
+      centre: {x: 0, y: 1, z: 0}
+      size: {x: 2, y: 2, z: 0.6}
+      canJumpOver: 0
+  - obstacles:
+    - id: FlowerPot
+      position: {x: -7.271628, y: -0.09245827, z: 3.7172143}
+      rotation: {x: 0, y: 95.58816, z: 0}
+      centre: {x: 0, y: 0.6, z: 0}
+      size: {x: 0.8, y: 1.2, z: 0.8}
+      canJumpOver: 0
+    - id: Bench
+      position: {x: 5.4966807, y: -0.43651298, z: 8.090232}
+      rotation: {x: 0, y: -86.86718, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.8}
+      canJumpOver: 1
+    - id: Rail
+      position: {x: 5.3197503, y: -2.7572794, z: 37.587727}
+      rotation: {x: 0, y: -85.54079, z: 0}
+      centre: {x: 0, y: 0.5, z: 0}
+      size: {x: 2, y: 1, z: 0.3}
+      canJumpOver: 1
+  - obstacles:
+    - id: ParcelLocker
+      position: {x: -7.2558737, y: -2.337888, z: 32.25716}
+      rotation: {x: 0, y: 82.32692, z: 0}
+      centre: {x: 0, y: 1, z: 0}
+      size: {x: 2, y: 2, z: 0.6}
+      canJumpOver: 0
+    - id: StreetSign
+      position: {x: 5.00701, y: -2.1920884, z: 30.404015}
+      rotation: {x: 0, y: -102.44846, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.35, y: 3, z: 0.35}
+      canJumpOver: 0
+    - id: AirConditioner
+      position: {x: 6.698527, y: -0.39264786, z: 7.532696}
+      rotation: {x: 0, y: -76.58718, z: 0}
+      centre: {x: 0, y: 0.325, z: 0}
+      size: {x: 1, y: 0.65, z: 0.5}
+      canJumpOver: 1
+  - obstacles:
+    - id: ParkingMeter
+      position: {x: -4.637758, y: -2.5133493, z: 34.487316}
+      rotation: {x: 0, y: 78.94938, z: 0}
+      centre: {x: 0, y: 0.75, z: 0}
+      size: {x: 0.35, y: 1.5, z: 0.3}
+      canJumpOver: 0
+    - id: AirConditioner
+      position: {x: 7.152976, y: -0.362673, z: 7.151708}
+      rotation: {x: 0, y: -103.93098, z: 0}
+      centre: {x: 0, y: 0.325, z: 0}
+      size: {x: 1, y: 0.65, z: 0.5}
+      canJumpOver: 1
+  - obstacles:
+    - id: AirConditioner
+      position: {x: -7.3609304, y: -1.7012665, z: 24.16555}
+      rotation: {x: 0, y: 100.86072, z: 0}
+      centre: {x: 0, y: 0.325, z: 0}
+      size: {x: 1, y: 0.65, z: 0.5}
+      canJumpOver: 1
+  - obstacles:
+    - id: ParkingMeter
+      position: {x: 5.657114, y: -0.4725012, z: 8.54765}
+      rotation: {x: 0, y: -85.99468, z: 0}
+      centre: {x: 0, y: 0.75, z: 0}
+      size: {x: 0.35, y: 1.5, z: 0.3}
+      canJumpOver: 0
+  - obstacles: []
 --- !u!1 &3621869492216143146
 GameObject:
   m_ObjectHideFlags: 0

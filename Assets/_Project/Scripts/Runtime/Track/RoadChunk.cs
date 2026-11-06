@@ -28,8 +28,19 @@ namespace CityScooter.Track
 
         public float HeightAt(float localZ) => endHeight * localZ / Mathf.Max(1f, length);
 
-        [Tooltip("Half width of the area the rider can steer in (rider x stays within ±halfWidth).")]
+        [Tooltip("Half width of the road surface; rideable sidewalks extend outside this width.")]
         public float halfWidth = 4f;
+        [Tooltip("Additional rideable width on each side, outside the road. Zero keeps legacy chunks road-only.")]
+        [Min(0)] public float sidewalkWidth;
+        [Min(0)] public float sidewalkHeight;
+        [Min(.01f)] public float curbTransitionWidth = .3f;
+        public float RideableHalfWidth => halfWidth+Mathf.Max(0,sidewalkWidth);
+        public float SidewalkOffsetAt(float localX)
+        {
+            if(sidewalkWidth<=0)return 0;
+            float blend=Mathf.InverseLerp(halfWidth-curbTransitionWidth*.5f,halfWidth+curbTransitionWidth*.5f,Mathf.Abs(localX));
+            return Mathf.SmoothStep(0,sidewalkHeight,blend);
+        }
 
         public RoadType roadType = RoadType.Street;
 

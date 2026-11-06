@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a5c2767558bdfc4082375461b575cc6, type: 3}
   m_Name: ComicCityRecipe
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Rendering.ComicCityRecipe
-  schemaVersion: 5
+  schemaVersion: 7
   grid: 0.5
   chunkLength: 40
   roadHalfWidth: 4
@@ -31,6 +31,9 @@ MonoBehaviour:
   cameraFov: 76
   cameraMaxFov: 82
   cameraFovPerSpeed: 0.3
+  cameraDirectionalFollow: 1
+  cameraYawLimit: 22
+  cameraRotationResponse: 6
   cityBendStart: 32
   cityBendStrength: 0.0011
   horizonTaperStart: 180
@@ -43,6 +46,7 @@ MonoBehaviour:
   skyYaw: -28
   skyElevation: 12
   skyVerticalScale: 0.45
+  skyApparentScale: 0.7
   skyHaze: 0.12
   outlineColor: {r: 0.012, g: 0.014, b: 0.022, a: 1}
   outlinePixels: 1.8

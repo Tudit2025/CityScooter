@@ -1,0 +1,22 @@
+Audio import validation; source PCM: 48 kHz / 16-bit. All runtime references resolved.
+AMB_City_Loop: 24.000s, 2ch, 48000Hz, DecompressOnLoad, Vorbis, loop=True
+SCO_Roll_Loop: 1.468s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=True
+SCO_Wind_Loop: 7.750s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=True
+SCO_Frame_Loop: 3.900s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=True
+SCO_Brake_Loop: 2.800s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=True
+VEH_Horn_01: 1.600s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+VEH_Horn_02: 3.048s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+SCO_Scrape_01: 1.218s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+SCO_Scrape_02: 1.451s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+VEH_Pass_01: 3.500s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+VEH_Pass_02: 3.900s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+SCO_Land_01: 0.450s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+SCO_Crash_01: 1.300s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+SCO_Land_02: 0.530s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+SCO_Crash_02: 1.300s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+SCO_Jump: 0.270s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+UI_Pickup_01: 0.480s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+UI_Pickup_02: 0.480s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+UI_Start: 0.800s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+UI_Click: 0.070s, 1ch, 48000Hz, DecompressOnLoad, PCM, loop=False
+MUS_HotRoadway_160_Loop: 48.000s, 2ch, 48000Hz, Streaming, Vorbis, loop=True

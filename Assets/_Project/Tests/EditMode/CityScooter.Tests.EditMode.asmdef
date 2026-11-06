@@ -3,6 +3,7 @@
     "rootNamespace": "CityScooter.Tests",
     "references": [
         "CityScooter.Protocol",
+        "CityScooter.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

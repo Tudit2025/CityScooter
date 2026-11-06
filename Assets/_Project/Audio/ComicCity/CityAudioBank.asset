@@ -1,0 +1,257 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7630b39ece542f44ca298281b83e924e, type: 3}
+  m_Name: CityAudioBank
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Audio.CityAudioBank
+  schemaVersion: 1
+  master: 0.75
+  music: 0.45
+  ambience: 0.5
+  effects: 0.85
+  oneShotVoices: 8
+  maximumGainSum: 1.1
+  hornInterval: {x: 12, y: 24}
+  trafficInterval: {x: 8, y: 17}
+  randomSeed: 7301
+  musicMaxPlaybackRate: 1.5
+  cues:
+  - id: AMB_City_Loop
+    label: "\u57CE\u5E02\u8FDC\u5904\u4EA4\u901A\u5E95\u566A"
+    clip: {fileID: 8300000, guid: 5fcacf367d8405742adead2a5da09ff6, type: 3}
+    bus: 1
+    loop: 1
+    volume: 0.7
+    pitchMin: 1
+    pitchMax: 1
+    priority: 100
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: SCO_Roll_Loop
+    label: "\u8F6E\u5B50\u63A5\u5730\u6EDA\u52A8"
+    clip: {fileID: 8300000, guid: 38463dfdb42005a47b1d473827cb6b5f, type: 3}
+    bus: 2
+    loop: 1
+    volume: 0.8
+    pitchMin: 1
+    pitchMax: 1
+    priority: 100
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: SCO_Wind_Loop
+    label: "\u901F\u5EA6\u98CE\u566A"
+    clip: {fileID: 8300000, guid: 4a5ac774dd82ce04db1e09da5733c17a, type: 3}
+    bus: 2
+    loop: 1
+    volume: 0.46
+    pitchMin: 1
+    pitchMax: 1
+    priority: 100
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: SCO_Frame_Loop
+    label: "\u8F66\u67B6\u8F7B\u5FAE\u9707\u52A8"
+    clip: {fileID: 8300000, guid: 57b5ea88b19d38b42a7ecaf064599e1c, type: 3}
+    bus: 2
+    loop: 1
+    volume: 0.3
+    pitchMin: 1
+    pitchMax: 1
+    priority: 100
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: SCO_Brake_Loop
+    label: "\u5239\u8F66\u6301\u7EED\u6469\u64E6"
+    clip: {fileID: 8300000, guid: cdc74793c0c255d4cb2d5372e7031ff7, type: 3}
+    bus: 2
+    loop: 1
+    volume: 0.55
+    pitchMin: 1
+    pitchMax: 1
+    priority: 100
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: VEH_Horn_01
+    label: "\u8FDC\u5904\u8F66\u8F86\u5587\u53ED 1"
+    clip: {fileID: 8300000, guid: c4e58d2f4edbc164f93446da8c10b043, type: 3}
+    bus: 1
+    loop: 0
+    volume: 0.48
+    pitchMin: 0.94
+    pitchMax: 1.04
+    priority: 170
+    spatialBlend: 1
+    cooldown: 4
+  - id: VEH_Horn_02
+    label: "\u8FDC\u5904\u8F66\u8F86\u5587\u53ED 2"
+    clip: {fileID: 8300000, guid: 562ab53ab7e436b46b4477ec1f197792, type: 3}
+    bus: 1
+    loop: 0
+    volume: 0.48
+    pitchMin: 0.94
+    pitchMax: 1.04
+    priority: 170
+    spatialBlend: 1
+    cooldown: 4
+  - id: SCO_Scrape_01
+    label: "\u91D1\u5C5E\u522E\u64E6 1"
+    clip: {fileID: 8300000, guid: 65e1701aac14fea4fa26803e9d06f59c, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.55
+    pitchMin: 0.94
+    pitchMax: 1.06
+    priority: 70
+    spatialBlend: 0
+    cooldown: 0.7
+  - id: SCO_Scrape_02
+    label: "\u91D1\u5C5E\u522E\u64E6 2"
+    clip: {fileID: 8300000, guid: 22c7b373f73e2f04ea56233474f9231e, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.55
+    pitchMin: 0.94
+    pitchMax: 1.06
+    priority: 70
+    spatialBlend: 0
+    cooldown: 0.7
+  - id: VEH_Pass_01
+    label: "\u906E\u6321\u540E\u7684\u7ECF\u8FC7\u8F66\u8F86 1"
+    clip: {fileID: 8300000, guid: c4de9b725957cce4086606d06aac16cd, type: 3}
+    bus: 1
+    loop: 0
+    volume: 0.45
+    pitchMin: 0.9
+    pitchMax: 1.07
+    priority: 190
+    spatialBlend: 1
+    cooldown: 3
+  - id: VEH_Pass_02
+    label: "\u906E\u6321\u540E\u7684\u7ECF\u8FC7\u8F66\u8F86 2"
+    clip: {fileID: 8300000, guid: fb39922cd41e5c94f813e2ebd15d9be8, type: 3}
+    bus: 1
+    loop: 0
+    volume: 0.45
+    pitchMin: 0.9
+    pitchMax: 1.07
+    priority: 190
+    spatialBlend: 1
+    cooldown: 3
+  - id: SCO_Land_01
+    label: "\u843D\u5730\u8F6E\u80CE\u4E0E\u8F66\u67B6 1"
+    clip: {fileID: 8300000, guid: 1c3efec233486624ca4b73799e63d025, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.7
+    pitchMin: 0.94
+    pitchMax: 1.08
+    priority: 55
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: SCO_Crash_01
+    label: "\u78B0\u649E\u4E0E\u91D1\u5C5E\u6563\u54CD 1"
+    clip: {fileID: 8300000, guid: b7543a0ef65bbb740a1e14ed7fabb654, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.8
+    pitchMin: 0.96
+    pitchMax: 1.03
+    priority: 10
+    spatialBlend: 0
+    cooldown: 0.4
+  - id: SCO_Land_02
+    label: "\u843D\u5730\u8F6E\u80CE\u4E0E\u8F66\u67B6 2"
+    clip: {fileID: 8300000, guid: e11be809311acd4428aaa7f9d2795a1f, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.7
+    pitchMin: 0.94
+    pitchMax: 1.08
+    priority: 55
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: SCO_Crash_02
+    label: "\u78B0\u649E\u4E0E\u91D1\u5C5E\u6563\u54CD 2"
+    clip: {fileID: 8300000, guid: 952e8575b6862c14886c5a4fd052ea43, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.8
+    pitchMin: 0.96
+    pitchMax: 1.03
+    priority: 10
+    spatialBlend: 0
+    cooldown: 0.4
+  - id: SCO_Jump
+    label: "\u8D77\u8DF3\u77ED\u4FC3\u63A0\u98CE"
+    clip: {fileID: 8300000, guid: c851251ee51dd6c43a7d259ee7e45615, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.45
+    pitchMin: 1
+    pitchMax: 1
+    priority: 65
+    spatialBlend: 0
+    cooldown: 0.08
+  - id: UI_Pickup_01
+    label: "\u793C\u7269\u62FE\u53D6 1"
+    clip: {fileID: 8300000, guid: 9bafc9b029662334cbdfe4bd2952f549, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.53
+    pitchMin: 1
+    pitchMax: 1
+    priority: 45
+    spatialBlend: 0
+    cooldown: 0.07
+  - id: UI_Pickup_02
+    label: "\u793C\u7269\u62FE\u53D6 2"
+    clip: {fileID: 8300000, guid: 0672587c5ad393843a1adea905402239, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.53
+    pitchMin: 1
+    pitchMax: 1
+    priority: 45
+    spatialBlend: 0
+    cooldown: 0.07
+  - id: UI_Start
+    label: "\u5F00\u59CB\u4E0E\u91CD\u5F00\u63D0\u793A"
+    clip: {fileID: 8300000, guid: c33e226d3f8f73f4bb4dfb52537fadae, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.6
+    pitchMin: 1
+    pitchMax: 1
+    priority: 40
+    spatialBlend: 0
+    cooldown: 0.15
+  - id: UI_Click
+    label: "\u97F3\u91CF\u6309\u94AE\u786E\u8BA4"
+    clip: {fileID: 8300000, guid: 32314d41d1af62643a1857e2d50334f4, type: 3}
+    bus: 2
+    loop: 0
+    volume: 0.35
+    pitchMin: 1
+    pitchMax: 1
+    priority: 100
+    spatialBlend: 0
+    cooldown: 0.04
+  - id: MUS_HotRoadway_160_Loop
+    label: "Hot Roadway \xB7 160 BPM \xB7 32 \u5C0F\u8282"
+    clip: {fileID: 8300000, guid: 01303c3a684b18c4f8dbaa6040b3efd4, type: 3}
+    bus: 0
+    loop: 1
+    volume: 1
+    pitchMin: 1
+    pitchMax: 1
+    priority: 25
+    spatialBlend: 0
+    cooldown: 0.08
