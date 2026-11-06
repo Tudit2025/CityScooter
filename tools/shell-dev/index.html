@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CityScooter shell (dev)</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../../Assets/WebGLTemplates/CityScooter/TemplateData/shell.css">
+  <style>
+    #dev-tools { position: fixed; left: 12px; bottom: calc(var(--mon-h) + 12px); z-index: 5; display: flex; gap: 6px;
+      padding: 6px; border-radius: 8px; background: rgba(16, 20, 26, 0.85); border: 1px dashed #e3b341; }
+    #dev-tools::before { content: "game sends:"; color: #e3b341; font-size: 12px; align-self: center; margin: 0 4px; }
+  </style>
+</head>
+<body>
+  <!-- Develop the web shell without Unity. From the repo root:  python -m http.server 8000
+       then open http://localhost:8000/tools/shell-dev/  (localhost counts as secure, so Web Serial works).
+       It loads the real shell from Assets/WebGLTemplates/CityScooter/TemplateData/ and a fake Unity. -->
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="dev-tools"></div>
+
+  <script src="../../Assets/WebGLTemplates/CityScooter/TemplateData/shell.js"></script>
+  <script src="fake-unity.js"></script>
+  <script>
+    CityScooterShell.boot(document.querySelector("#unity-canvas"), {},
+      { starterUrl: "../../Assets/WebGLTemplates/CityScooter/TemplateData/starter.py" });
+  </script>
+</body>
+</html>

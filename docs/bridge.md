@@ -4,7 +4,8 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 外壳和 Unity 之间只走下面这些调用。改动这里要同时改两边，先在群里说一声。
 
 - Unity 侧：`Assets/_Project/Scripts/Runtime/Devices/DeviceHub.cs`、`WebShellBridge.cs`、`Assets/_Project/Plugins/WebGL/CityScooterBridge.jslib`
-- 外壳侧：`Assets/WebGLTemplates/CityScooter/`（`index.html` + `TemplateData/`）。现在是最小可用版 v0，完整版由 GPT #1 按 `docs/tasks/gpt1-web-shell.md` 来做。
+- 外壳侧：`Assets/WebGLTemplates/CityScooter/`（`index.html` + `TemplateData/`）。11/6 起是完整版，由 Claude 按 `docs/tasks/gpt1-web-shell.md` 完成，包括 USB、模拟器模式、串口监视器和帮助面板。页面结构由 `TemplateData/shell.js` 生成；模拟器模式预填 `TemplateData/starter.py`，它是 `microbit/starter.py` 的副本，改 starter 时两边要一起改。
+- 不用 Unity 也能开发外壳：在仓库根目录运行 `python -m http.server 8000`，打开 http://localhost:8000/tools/shell-dev/ 。这个页面用的是同一份 `shell.js`，配一个假的 Unity，还有按钮可以模拟游戏发 go/crash/gift/spd。
 
 ## 设备 ID
 

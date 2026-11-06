@@ -17,8 +17,9 @@
 | 你（老师） | 机房测试、MicroPython 代码和教材定稿、Vercel、合并 PR、上课 | `docs/lessons/` 最终审核 |
 | 技美 | 主场景、美术、灯光、UI 视觉、Web 性能；审核下面三个技美智能体的产出 | `Assets/_Project/Scenes/Main.unity`、`Art/`、`Prefabs/` |
 | Claude | 项目骨架、协议、设备桥、玩法核心、构建部署；每次合并前跑编译和测试 | `Scripts/Protocol`、`Scripts/Runtime/{Devices,Controls,Game,Track,DevTools}`、`Scripts/Editor/BuildScript.cs`、`Plugins/WebGL`、`docs/protocol.md`、`docs/bridge.md` |
-| GPT #1 | 网页外壳（`docs/tasks/gpt1-web-shell.md`） | `Assets/WebGLTemplates/CityScooter/`、`tools/shell-dev/` |
-| GPT #2 | MicroPython 代码和第一课教材（`docs/tasks/gpt2-micropython-lesson1.md`） | `microbit/`、`docs/lessons/` |
+| Claude（11/6 起接手 GPT #1 的任务） | 网页外壳（`docs/tasks/gpt1-web-shell.md`） | `Assets/WebGLTemplates/CityScooter/`、`tools/shell-dev/` |
+| Claude（11/6 起接手 GPT #2 的代码部分） | MicroPython starter、T1–T6 答案、合作模式（`docs/tasks/gpt2-micropython-lesson1.md`） | `microbit/` |
+| 老师或 GPT #2 | 第一课英文教材：作业单、教师笔记、排错卡、协议速查表 | `docs/lessons/` |
 | 技美智能体：天际线 | 珀斯天际线剪影分层图和生成器 | `art-src/skyline/` |
 | 技美智能体：资源管线 | Kenney CC0 素材导入、带碰撞体的预制体、Street 路段、预算检查 | `Art/ThirdParty/`、`Prefabs/{Kit,Road,Obstacles,Pickups}/`、`Scripts/Editor/Art/` |
 | 技美智能体：画面与性能 | Web 版 URP 设置、天空和光照、天际线视差架子、特效、自动降画质 | `Assets/Settings/`、`Art/{Shaders,Materials,Looks,Textures/Generated}/`、`Prefabs/{Environment,VFX}/`、`Scripts/Runtime/Rendering/`、`Scripts/Editor/LookDev/`、`Scenes/LookDev.unity`、`docs/art/` |
