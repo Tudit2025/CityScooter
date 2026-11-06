@@ -32,14 +32,15 @@
 
 ## 分支
 
-- 骨架在 `sprint/day1-skeleton`，合进 `main` 以后大家都从 `main` 拉分支：`feat/...`、`art/...`。
+- **11/6 起 `main` 就是基础**，包含骨架、玩法、设备桥、街景美术和 Unity 6.3 升级。大家都从 `main` 拉分支：`feat/...`、`art/...`。`sprint/day1-skeleton`、`art/lookdev`、`art/pipeline`、`art/skyline` 都已合进 `main`，不要再在上面开发。
+- 线上 https://cityscooter.vercel.app 从 `main` 打包部署（`node tools/deploy-web.mjs --build`）。
 - PR 要小，每天至少合两次。Claude 合并前在本机用批处理模式跑编译和 EditMode 测试。
 
 ## 每天的节点
 
 | 日期 | 交付 |
 |---|---|
-| 周四 11/5 | 骨架和契约合入；机房体检（https://cityscooter-labcheck.vercel.app）结果出来 |
+| 周四 11/5 | 骨架和契约合入；机房体检（https://cityscooter-labcheck.vercel.app）结果出来。**实际完成**：骨架、玩法、街景美术合进 `main`；升级到 Unity 6.3；街景版网页包已上线，键盘和 V2 真板子都测过 |
 | 周五 11/6 | GPT #2 中午交 starter 和答案，老师在机房用真板子测；GPT #1 18:00 前交外壳 P0；**晚上第一个完整 Web 包上 Vercel**，键盘和真板子都能玩一局 |
 | 周六 11/7 | 功能做完：模拟器模式、栏杆、特效、开始/结束界面、远景地标；晚上用 V1、V2、模拟器三种方式彩排 |
 | 周日 11/8 | 中午功能冻结，之后只修 bug；调性能、正式部署、打印教材、准备 Plan B（GitHub Pages 镜像；如果机房允许运行 exe，再打一个 Windows 版） |
