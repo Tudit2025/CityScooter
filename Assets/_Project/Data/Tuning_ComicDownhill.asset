@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: effb5474aa05a89439e21dba8df5516e, type: 3}
+  m_Name: Tuning_ComicDownhill
+  m_EditorClassIdentifier: 
+  startSpeed: 9
+  maxSpeed: 44
+  maxSpeedMultiplier: 5
+  speedRampSeconds: 600
+  postRampMultiplierPerMinute: 0.1
+  difficultyDistance: 1500
+  acceleration: 9
+  brakeDeceleration: 14
+  brakeMinSpeed: 4
+  lateralMaxSpeed: 7
+  lateralResponse: 10
+  maxLean: 18
+  jumpVelocity: 6.5
+  gravity: 20
+  jumpLockAtStart: 0.3
+  safeStartDistance: 50
+  obstacleChanceStart: 0.15
+  obstacleChanceMax: 0.5
+  giftChance: 0.25
+  jumpObstacleChance: 0
+  jumpObstacleMinLevel: 1
+  pointsPerMetre: 1
+  restartDelay: 1

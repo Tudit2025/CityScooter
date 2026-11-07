@@ -5,6 +5,9 @@ their micro:bit as the controller (tilt to steer, buttons, sound, pins) and reac
 and speaker. Unity 6000.3.28f1 (Unity 6.3 LTS) + URP 17.3, shipped as a Web build (Chrome/Edge, Web Serial).
 
 - Sprint plan, ownership, how-tos: [docs/sprint.md](docs/sprint.md)
+- Comic city prototype, asset recipe and rebuild workflow: [docs/art/comic-city-standard.md](docs/art/comic-city-standard.md)
+- Audio kit, gameplay mix, source credits and rebuild workflow: [docs/audio/comic-city-audio-standard.md](docs/audio/comic-city-audio-standard.md)
+- Bounded camera, speed progression, music rate and sidewalk riding: [docs/gameplay/comic-city-riding.md](docs/gameplay/comic-city-riding.md)
 - Message protocol (micro:bit ↔ game): [docs/protocol.md](docs/protocol.md)
 - Web shell ↔ Unity contract, simulator rules: [docs/bridge.md](docs/bridge.md)
 - Task briefs: [docs/tasks/](docs/tasks/)

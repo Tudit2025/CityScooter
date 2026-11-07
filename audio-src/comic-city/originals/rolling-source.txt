@@ -1,0 +1,13 @@
+CityScooter audio source metadata (not a page archive)
+
+id: rolling
+title: SkateRolling.wav
+author: Lanterr
+page: https://freesound.org/people/Lanterr/sounds/688733/
+download: https://cdn.freesound.org/previews/688/688733_14949144-hq.mp3
+file: originals/rolling.mp3
+license: CC0 1.0
+license_url: https://creativecommons.org/publicdomain/zero/1.0/
+retrieved: 2026-11-06
+sha256: 66f4e85801e8ed199bd69c6b77ddd50947e278652908699aa081a2b5af5498d0
+delivery: public HQ MP3 preview (lossy)

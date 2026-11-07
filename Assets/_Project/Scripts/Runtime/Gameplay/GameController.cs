@@ -75,6 +75,7 @@ namespace CityScooter.Gameplay
 
         void Start()
         {
+            EnterReady();
             Camera cam = Camera.main;
             if (cam != null && rider != null)
             {
@@ -83,7 +84,6 @@ namespace CityScooter.Gameplay
                 if (follow.target == null) follow.target = rider.transform;
                 follow.SnapToTarget();
             }
-            EnterReady();
         }
 
         void Update()
@@ -118,6 +118,7 @@ namespace CityScooter.Gameplay
             Gifts = 0;
             _giftPoints = 0;
             rider?.Begin();
+            Camera.main?.GetComponent<FollowCamera>()?.SnapToTarget();
             SetState(RunState.Running);
             GameEvents.RaiseRunStarted();
             hud?.ShowRunning();

@@ -1,0 +1,13 @@
+CityScooter audio source metadata (not a page archive)
+
+id: horn_b
+title: Car Horn Honk.wav
+author: DeVern
+page: https://freesound.org/people/DeVern/sounds/349922/
+download: https://cdn.freesound.org/previews/349/349922_2866779-hq.mp3
+file: originals/horn_b.mp3
+license: CC0 1.0
+license_url: https://creativecommons.org/publicdomain/zero/1.0/
+retrieved: 2026-11-06
+sha256: 9c273b1dbabd7286e84ee3814c4219b3a36ad714714a1307371307a8eb56f5ba
+delivery: public HQ MP3 preview (lossy)

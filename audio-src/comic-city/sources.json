@@ -1,0 +1,80 @@
+[
+  {
+    "id": "city",
+    "title": "City ambience",
+    "author": "DCphotofilm",
+    "page": "https://freesound.org/people/DCphotofilm/sounds/411604/",
+    "download": "https://cdn.freesound.org/previews/411/411604_3558234-hq.mp3",
+    "file": "originals/city.mp3",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "retrieved": "2026-11-06",
+    "sha256": "c3fa5293569b96c4f866a8c13c91feffede4bed26e5f5f6fc7922477eaf49b76",
+    "delivery": "public HQ MP3 preview (lossy)"
+  },
+  {
+    "id": "rolling",
+    "title": "SkateRolling.wav",
+    "author": "Lanterr",
+    "page": "https://freesound.org/people/Lanterr/sounds/688733/",
+    "download": "https://cdn.freesound.org/previews/688/688733_14949144-hq.mp3",
+    "file": "originals/rolling.mp3",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "retrieved": "2026-11-06",
+    "sha256": "66f4e85801e8ed199bd69c6b77ddd50947e278652908699aa081a2b5af5498d0",
+    "delivery": "public HQ MP3 preview (lossy)"
+  },
+  {
+    "id": "horn_a",
+    "title": "Car Horn",
+    "author": "danlucaz",
+    "page": "https://freesound.org/people/danlucaz/sounds/517673/",
+    "download": "https://cdn.freesound.org/previews/517/517673_9996727-hq.mp3",
+    "file": "originals/horn_a.mp3",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "retrieved": "2026-11-06",
+    "sha256": "14d3f4fe233acc82a5564032a10d00c301e5e115c6ae98de58d398cfa8e63ddc",
+    "delivery": "public HQ MP3 preview (lossy)"
+  },
+  {
+    "id": "horn_b",
+    "title": "Car Horn Honk.wav",
+    "author": "DeVern",
+    "page": "https://freesound.org/people/DeVern/sounds/349922/",
+    "download": "https://cdn.freesound.org/previews/349/349922_2866779-hq.mp3",
+    "file": "originals/horn_b.mp3",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "retrieved": "2026-11-06",
+    "sha256": "9c273b1dbabd7286e84ee3814c4219b3a36ad714714a1307371307a8eb56f5ba",
+    "delivery": "public HQ MP3 preview (lossy)"
+  },
+  {
+    "id": "scrape",
+    "title": "Metal Scrape",
+    "author": "magnuswaker",
+    "page": "https://freesound.org/people/magnuswaker/sounds/530075/",
+    "download": "https://cdn.freesound.org/previews/530/530075_11537497-hq.mp3",
+    "file": "originals/scrape.mp3",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "retrieved": "2026-11-06",
+    "sha256": "ae8e0f6fe04664df684de19ddab2db411793cba3a543c05ac656a0a7209dbd6f",
+    "delivery": "public HQ MP3 preview (lossy)"
+  },
+  {
+    "id": "music",
+    "title": "Hot Roadway (160 BPM)",
+    "author": "MintoDog",
+    "page": "https://opengameart.org/content/hot-roadway",
+    "download": "https://opengameart.org/sites/default/files/hot_roadway_bpm160.flac",
+    "file": "originals/music.flac",
+    "license": "CC0 1.0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "retrieved": "2026-11-06",
+    "sha256": "0c8b5b2396d352c3d9bf239fa55582f3ed526c80ed089cfb6ef13d81fc5dcb27",
+    "delivery": "lossless FLAC"
+  }
+]

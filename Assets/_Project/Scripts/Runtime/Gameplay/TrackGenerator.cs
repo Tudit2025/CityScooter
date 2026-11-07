@@ -21,6 +21,8 @@ namespace CityScooter.Gameplay
         public float keepBehind = 30f;
         [Tooltip("0 = different track every run.")]
         public int seed;
+        [Tooltip("Ordered themes: also build the previous chunk behind the start so the chase camera never sees a cut edge.")]
+        public bool buildLeadIn;
 
         sealed class Placed
         {
@@ -43,9 +45,12 @@ namespace CityScooter.Gameplay
         System.Random _rng = new System.Random(1);
         Transform _poolRoot;
         float _nextZ;
+        float _nextY;
         float _runStartZ;
         int _chunkCounter;
+        int _runSeed;
         object _lastChunkKey;
+        bool _collisionTransformsDirty;
 
         GameTuning T => tuning != null ? tuning : GameTuning.Default;
 
@@ -55,12 +60,25 @@ namespace CityScooter.Gameplay
         public void ResetTrack(float startZ)
         {
             for (int i = _active.Count - 1; i >= 0; i--) Recycle(i);
-            _rng = new System.Random(seed != 0 ? seed : System.Environment.TickCount);
+            _runSeed = seed != 0 ? seed : System.Environment.TickCount;
+            _rng = new System.Random(_runSeed);
             _nextZ = startZ;
+            _nextY = 0f;
             _runStartZ = startZ;
             _chunkCounter = 0;
             _lastChunkKey = null;
+            if (buildLeadIn && theme != null && theme.orderedChunks && theme.HasChunks)
+            {
+                RoadChunk previous = theme.chunks[theme.chunks.Length - 1];
+                if (previous != null)
+                {
+                    _nextZ -= Mathf.Max(1f, previous.length);
+                    _nextY = -previous.endHeight;
+                    _chunkCounter = -1;
+                }
+            }
             BuildAhead(startZ);
+            SyncCollisionTransforms();
         }
 
         void Update()
@@ -69,6 +87,13 @@ namespace CityScooter.Gameplay
             float z = rider.position.z;
             BuildAhead(z);
             while (_active.Count > 1 && _active[0].StartZ + _active[0].Chunk.length < z - keepBehind) Recycle(0);
+            SyncCollisionTransforms();
+        }
+
+        void SyncCollisionTransforms()
+        {
+            if(!_collisionTransformsDirty)return;
+            Physics.SyncTransforms();_collisionTransformsDirty=false;
         }
 
         void BuildAhead(float riderZ)
@@ -77,7 +102,7 @@ namespace CityScooter.Gameplay
             while (_nextZ < riderZ + buildAhead && guard++ < 64) SpawnChunk();
         }
 
-        /// <summary>Half width of the drivable lane at world z (rider clamps to it).</summary>
+        /// <summary>Half width of the road, excluding sidewalks.</summary>
         public float HalfWidthAt(float z)
         {
             for (int i = 0; i < _active.Count; i++)
@@ -88,17 +113,42 @@ namespace CityScooter.Gameplay
             return PlaceholderTrack.HalfWidth;
         }
 
+        RoadChunk SurfaceChunkAt(float z)
+        {
+            if(_active.Count==0)return null;
+            for(int i=0;i<_active.Count;i++)if(z<_active[i].StartZ+_active[i].Chunk.length)return _active[i].Chunk;
+            return _active[_active.Count-1].Chunk;
+        }
+        public float RideableHalfWidthAt(float z)=>SurfaceChunkAt(z)?.RideableHalfWidth??PlaceholderTrack.HalfWidth;
+        public float SidewalkOffsetAt(float x,float z)=>SurfaceChunkAt(z)?.SidewalkOffsetAt(x)??0;
+        public float SurfaceHeightAt(float x,float z)=>SurfaceHeightAt(z)+SidewalkOffsetAt(x,z);
+
+        // Extrapolate the end chunks for the chase camera just behind / ahead of built track.
+        public float SurfaceHeightAt(float z)
+        {
+            if (_active.Count == 0) return 0f;
+            Active a = _active[_active.Count - 1];
+            for (int i = 0; i < _active.Count; i++)
+                if (z < _active[i].StartZ + _active[i].Chunk.length) { a = _active[i]; break; }
+            return a.Chunk.transform.position.y + a.Chunk.HeightAt(z - a.StartZ);
+        }
+
+        public float SurfacePitchAt(float z) => -Mathf.Atan2(SurfaceHeightAt(z + 0.1f) - SurfaceHeightAt(z), 0.1f) * Mathf.Rad2Deg;
+
         void SpawnChunk()
         {
             object key = PickChunk();
             GameObject go = Get(key, () => CreateChunk(key));
             var chunk = go.GetComponent<RoadChunk>();
             go.transform.SetParent(transform, false);
-            go.transform.SetPositionAndRotation(new Vector3(0f, 0f, _nextZ), Quaternion.identity);
+            go.transform.SetPositionAndRotation(new Vector3(0f, _nextY, _nextZ), Quaternion.identity);
+            go.GetComponent<StreetDressing>()?.ApplyLayout(_runSeed, _chunkCounter);
+            _collisionTransformsDirty=true;
             var active = new Active { Key = key, Chunk = chunk, StartZ = _nextZ };
             _active.Add(active);
             Populate(active);
             _nextZ += Mathf.Max(1f, chunk.length);
+            _nextY += chunk.endHeight;
             _chunkCounter++;
             _lastChunkKey = key;
         }
@@ -111,6 +161,15 @@ namespace CityScooter.Gameplay
                 return "placeholder-chunk-" + variant;
             }
             int level = T.DifficultyLevel(_nextZ - _runStartZ);
+            if (theme.orderedChunks)
+            {
+                for (int i = 0; i < theme.chunks.Length; i++)
+                {
+                    RoadChunk candidate = theme.chunks[(_chunkCounter + i + theme.chunks.Length) % theme.chunks.Length];
+                    if (candidate != null && candidate.minDifficulty <= level) return candidate.gameObject;
+                }
+                return FirstChunk();
+            }
             float total = 0f;
             foreach (RoadChunk c in theme.chunks)
                 if (c != null && c.minDifficulty <= level && (object)c.gameObject != _lastChunkKey) total += Mathf.Max(0f, c.weight);
@@ -254,6 +313,7 @@ namespace CityScooter.Gameplay
                 if (worldPos.z >= a.StartZ && worldPos.z < a.StartZ + a.Chunk.length)
                 {
                     Place(a, key, a.Chunk.transform.InverseTransformPoint(worldPos));
+                    Physics.SyncTransforms();
                     return a.Spawned[a.Spawned.Count - 1].Instance;
                 }
             }

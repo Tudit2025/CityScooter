@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36c9a72dc92dc3840b2d7c6c544d060a, type: 3}
+  m_Name: Theme_ComicDownhill
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Gameplay.TrackTheme
+  chunks:
+  - {fileID: 7381382107061198399, guid: cf4d439be31b83243b7cb266f8e1e89b, type: 3}
+  - {fileID: 8768094228567720254, guid: e631ec6b4984f914b86c79c68388f3e1, type: 3}
+  - {fileID: 3366124513408452093, guid: b592e0e91457ce34eb30c1dcbf60cad6, type: 3}
+  - {fileID: 2996215296501985466, guid: 02829d6261c1381499e2dcb0669104ca, type: 3}
+  orderedChunks: 1
+  obstacles:
+  - {fileID: 530483984839865605, guid: b01751fc203ce684c8d98b1c90370f49, type: 3}
+  - {fileID: 534185336433319250, guid: ce5c61c811b2ff446b2a46bab0ce5f5e, type: 3}
+  - {fileID: 6246465025506993840, guid: 6155db4ab763d9d47adbc66494c2add5, type: 3}
+  - {fileID: 3252785564823809802, guid: eef0a39a68ecfdb43a6831f7c8928987, type: 3}
+  jumpObstacles: []
+  gifts:
+  - {fileID: 1958351135698532571, guid: 979de83145a1efd45ad0c115c12d10fc, type: 3}
+  - {fileID: 541098976610873748, guid: 95b10362975463b4dac73b186e88d440, type: 3}
+  - {fileID: 671617113920802668, guid: 30784fb2da008464bbfdb4ec3c07b442, type: 3}
+  - {fileID: 815583598194828538, guid: ae222f6bb181fef4a881ee918e6dc4ab, type: 3}
+  - {fileID: 2176563685798402813, guid: 0aaac1935dbc3a54e8b68e06cac6e943, type: 3}
+  - {fileID: 5034289025256511863, guid: fcecb0e04757e0245bf8bc7591d54964, type: 3}

@@ -1,0 +1,19 @@
+Perth image sky attribution
+==========================
+Original photo: Perth Panorama Kings Park.jpg
+Author: Luxure
+Date of photograph: 13 January 2014
+Source: https://commons.wikimedia.org/wiki/File:Perth_Panorama_Kings_Park.jpg
+Downloaded preview: https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6f/Perth_Panorama_Kings_Park.jpg/1280px-Perth_Panorama_Kings_Park.jpg
+License: Creative Commons Attribution 3.0 Australia (CC BY 3.0 AU)
+License link: https://creativecommons.org/licenses/by/3.0/au/
+Retrieved: 2026-11-06
+
+Changes: AI-assisted comic style transfer and panoramic expansion using built-in
+image_gen; simplified architecture, redrawn clouds, adjusted palette, expanded sky
+and ground haze. This is an artistic game environment, not a current photographic
+or geographically exact 360-degree record of Perth. No endorsement by Luxure.
+
+Edited texture: Assets/_Project/Art/ComicCity/Textures/Perth_Comic_Panorama.png
+Prompt and workflow: ../perth-sky-prompt.txt
+Keep this attribution and the license link when distributing the derived texture.

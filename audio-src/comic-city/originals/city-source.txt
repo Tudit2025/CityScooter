@@ -1,0 +1,13 @@
+CityScooter audio source metadata (not a page archive)
+
+id: city
+title: City ambience
+author: DCphotofilm
+page: https://freesound.org/people/DCphotofilm/sounds/411604/
+download: https://cdn.freesound.org/previews/411/411604_3558234-hq.mp3
+file: originals/city.mp3
+license: CC0 1.0
+license_url: https://creativecommons.org/publicdomain/zero/1.0/
+retrieved: 2026-11-06
+sha256: c3fa5293569b96c4f866a8c13c91feffede4bed26e5f5f6fc7922477eaf49b76
+delivery: public HQ MP3 preview (lossy)

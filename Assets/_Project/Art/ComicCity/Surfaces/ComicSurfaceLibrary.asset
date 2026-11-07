@@ -1,0 +1,237 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61eccba7271304840a67ca264ee0dd96, type: 3}
+  m_Name: ComicSurfaceLibrary
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Rendering.ComicSurfaceLibrary
+  schemaVersion: 1
+  shadeStrength: 1
+  normalStrength: 1
+  highlightStrength: 0.32
+  distanceFade: {x: 24, y: 100}
+  profiles:
+  - surface: 0
+    label: Clean paint / decals
+    tileMetres: 2
+    roughness: 1
+    shadeContrast: 0
+    reliefMetres: 0
+    seed: 7301
+    previewColor: {r: 0.98, g: 0.89, b: 0.67, a: 1}
+  - surface: 1
+    label: Painted plaster
+    tileMetres: 2
+    roughness: 0.87
+    shadeContrast: 0.12
+    reliefMetres: 0.003
+    seed: 7402
+    previewColor: {r: 0.78, g: 0.64, b: 0.43, a: 1}
+  - surface: 2
+    label: Painted brick / recessed mortar
+    tileMetres: 2.56
+    roughness: 0.9
+    shadeContrast: 0.19
+    reliefMetres: 0.012
+    seed: 7503
+    previewColor: {r: 0.75, g: 0.37, b: 0.27, a: 1}
+  - surface: 3
+    label: Cast concrete
+    tileMetres: 2
+    roughness: 0.91
+    shadeContrast: 0.13
+    reliefMetres: 0.003
+    seed: 7604
+    previewColor: {r: 0.63, g: 0.65, b: 0.6, a: 1}
+  - surface: 4
+    label: Dry asphalt aggregate
+    tileMetres: 2
+    roughness: 0.96
+    shadeContrast: 0.19
+    reliefMetres: 0.004
+    seed: 7705
+    previewColor: {r: 0.34, g: 0.39, b: 0.47, a: 1}
+  - surface: 5
+    label: Square paving slabs
+    tileMetres: 2
+    roughness: 0.89
+    shadeContrast: 0.14
+    reliefMetres: 0.009
+    seed: 7806
+    previewColor: {r: 0.78, g: 0.76, b: 0.67, a: 1}
+  - surface: 6
+    label: Painted metal / fine orange peel
+    tileMetres: 1
+    roughness: 0.39
+    shadeContrast: 0.055
+    reliefMetres: 0.0007
+    seed: 7907
+    previewColor: {r: 0.91, g: 0.12, b: 0.15, a: 1}
+  - surface: 7
+    label: Brushed metal
+    tileMetres: 1
+    roughness: 0.28
+    shadeContrast: 0.07
+    reliefMetres: 0.0005
+    seed: 8008
+    previewColor: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  - surface: 8
+    label: Wood grain / boards
+    tileMetres: 2
+    roughness: 0.78
+    shadeContrast: 0.19
+    reliefMetres: 0.004
+    seed: 8109
+    previewColor: {r: 0.65, g: 0.39, b: 0.21, a: 1}
+  - surface: 9
+    label: Rubber fine grain
+    tileMetres: 0.5
+    roughness: 0.97
+    shadeContrast: 0.07
+    reliefMetres: 0.0006
+    seed: 8210
+    previewColor: {r: 0.16, g: 0.18, b: 0.19, a: 1}
+  - surface: 10
+    label: Cloth weave
+    tileMetres: 0.5
+    roughness: 0.94
+    shadeContrast: 0.07
+    reliefMetres: 0.0004
+    seed: 8311
+    previewColor: {r: 0.91, g: 0.12, b: 0.15, a: 1}
+  - surface: 11
+    label: Stylized smooth glass
+    tileMetres: 2
+    roughness: 0.17
+    shadeContrast: 0.018
+    reliefMetres: 0.0001
+    seed: 8412
+    previewColor: {r: 0.19, g: 0.45, b: 0.55, a: 1}
+  - surface: 12
+    label: Leaf mass breakup
+    tileMetres: 2
+    roughness: 0.93
+    shadeContrast: 0.1
+    reliefMetres: 0.002
+    seed: 8513
+    previewColor: {r: 0.36, g: 0.58, b: 0.29, a: 1}
+  - surface: 13
+    label: Moulded plastic
+    tileMetres: 1
+    roughness: 0.53
+    shadeContrast: 0.05
+    reliefMetres: 0.0006
+    seed: 8614
+    previewColor: {r: 1, g: 0.69, b: 0.16, a: 1}
+  assignments:
+  - assetId: Hydrant
+    primarySurface: 6
+  - assetId: Bin
+    primarySurface: 6
+  - assetId: RecycleBins
+    primarySurface: 13
+  - assetId: NewspaperBox
+    primarySurface: 6
+  - assetId: Mailbox
+    primarySurface: 6
+  - assetId: ParcelLocker
+    primarySurface: 6
+  - assetId: UtilityBox
+    primarySurface: 6
+  - assetId: AirConditioner
+    primarySurface: 6
+  - assetId: TreePit
+    primarySurface: 3
+  - assetId: Planter
+    primarySurface: 3
+  - assetId: FlowerPot
+    primarySurface: 3
+  - assetId: StonePost
+    primarySurface: 3
+  - assetId: Bollard
+    primarySurface: 6
+  - assetId: Rail
+    primarySurface: 7
+  - assetId: StreetLamp
+    primarySurface: 6
+  - assetId: StreetSign
+    primarySurface: 6
+  - assetId: ParkingMeter
+    primarySurface: 6
+  - assetId: Bench
+    primarySurface: 8
+  - assetId: BikeRack
+    primarySurface: 7
+  - assetId: ShopBoard
+    primarySurface: 8
+  - assetId: VendingMachine
+    primarySurface: 6
+  - assetId: Crates
+    primarySurface: 8
+  - assetId: Cones
+    primarySurface: 13
+  - assetId: WorkBarrier
+    primarySurface: 6
+  - assetId: ConcreteBarrier
+    primarySurface: 3
+  - assetId: BusShelter
+    primarySurface: 6
+  - assetId: CornerStore
+    primarySurface: 2
+  - assetId: Cafe
+    primarySurface: 1
+  - assetId: Bakery
+    primarySurface: 2
+  - assetId: PizzaShop
+    primarySurface: 2
+  - assetId: Diner
+    primarySurface: 1
+  - assetId: Barber
+    primarySurface: 1
+  - assetId: Laundry
+    primarySurface: 1
+  - assetId: Bookshop
+    primarySurface: 2
+  - assetId: ScooterShop
+    primarySurface: 1
+  - assetId: Pharmacy
+    primarySurface: 3
+  - assetId: Hardware
+    primarySurface: 2
+  - assetId: Garage
+    primarySurface: 1
+  - assetId: Market
+    primarySurface: 1
+  - assetId: PostOffice
+    primarySurface: 2
+  - assetId: Bank
+    primarySurface: 3
+  - assetId: Clinic
+    primarySurface: 3
+  - assetId: Cinema
+    primarySurface: 1
+  - assetId: RowHouse
+    primarySurface: 2
+  - assetId: ShopApartment
+    primarySurface: 1
+  - assetId: CornerApartment
+    primarySurface: 1
+  - assetId: Office
+    primarySurface: 3
+  - assetId: Hotel
+    primarySurface: 1
+  - assetId: Warehouse
+    primarySurface: 3
+  - assetId: ParkingGarage
+    primarySurface: 3
+  - assetId: Tower
+    primarySurface: 3
+  - assetId: BackgroundBlock
+    primarySurface: 3

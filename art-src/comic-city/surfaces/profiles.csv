@@ -1,0 +1,15 @@
+surface,label,tile_metres,roughness,shade_contrast,relief_metres,seed
+Plain,Clean paint / decals,2,1,0,0,7301
+Plaster,Painted plaster,2,0.87,0.12,0.003,7402
+Brick,Painted brick / recessed mortar,2.56,0.9,0.19,0.012,7503
+Concrete,Cast concrete,2,0.91,0.13,0.003,7604
+Asphalt,Dry asphalt aggregate,2,0.96,0.19,0.004,7705
+Paving,Square paving slabs,2,0.89,0.14,0.009,7806
+PaintedMetal,Painted metal / fine orange peel,1,0.39,0.055,0.0007,7907
+Metal,Brushed metal,1,0.28,0.07,0.0005,8008
+Wood,Wood grain / boards,2,0.78,0.19,0.004,8109
+Rubber,Rubber fine grain,0.5,0.97,0.07,0.0006,8210
+Fabric,Cloth weave,0.5,0.94,0.07,0.0004,8311
+Glass,Stylized smooth glass,2,0.17,0.018,0.0001,8412
+Foliage,Leaf mass breakup,2,0.93,0.1,0.002,8513
+Plastic,Moulded plastic,1,0.53,0.05,0.0006,8614

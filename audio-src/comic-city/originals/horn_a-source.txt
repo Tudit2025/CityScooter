@@ -1,0 +1,13 @@
+CityScooter audio source metadata (not a page archive)
+
+id: horn_a
+title: Car Horn
+author: danlucaz
+page: https://freesound.org/people/danlucaz/sounds/517673/
+download: https://cdn.freesound.org/previews/517/517673_9996727-hq.mp3
+file: originals/horn_a.mp3
+license: CC0 1.0
+license_url: https://creativecommons.org/publicdomain/zero/1.0/
+retrieved: 2026-11-06
+sha256: 14d3f4fe233acc82a5564032a10d00c301e5e115c6ae98de58d398cfa8e63ddc
+delivery: public HQ MP3 preview (lossy)

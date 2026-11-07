@@ -1,0 +1,5 @@
+Baseline small props across layout bank: 880
+Generated small props: 88
+Density ratio: 0.1000
+Layout choices per chunk: 10
+Seed: 7301

@@ -1,0 +1,4 @@
+14 periodic 256x256 slices (13 textured families + plain); linear RGBA32 arrays with mipmaps.
+Mask: R shade, G roughness (not smoothness), B height, A cavity. Normal: RGB tangent-space XYZ, +Y.
+All normal vectors finite/unit length; periodic height/noise validated at UV wrap.
+Two arrays: approximately 9.33 MiB GPU + readable CPU copy; 2 detail samples per shaded fragment.

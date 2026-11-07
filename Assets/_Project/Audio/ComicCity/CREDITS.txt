@@ -1,0 +1,22 @@
+CityScooter audio kit v1 — 2026-11-06
+External sources: CC0 1.0 Universal
+https://creativecommons.org/publicdomain/zero/1.0/
+
+City ambience — DCphotofilm (Brisbane field recording)
+https://freesound.org/people/DCphotofilm/sounds/411604/
+SkateRolling.wav — Lanterr
+https://freesound.org/people/Lanterr/sounds/688733/
+Car Horn — danlucaz / Daniel Lucas
+https://freesound.org/people/danlucaz/sounds/517673/
+Car Horn Honk.wav — DeVern
+https://freesound.org/people/DeVern/sounds/349922/
+Metal Scrape — magnuswaker
+https://freesound.org/people/magnuswaker/sounds/530075/
+Hot Roadway — MintoDog
+https://opengameart.org/content/hot-roadway
+
+Freesound delivery: public HQ lossy MP3 previews, edited into PCM WAV files.
+Music delivery: lossless FLAC; edited 48-second / 32-bar loop at 160 BPM.
+Other effects: original offline synthesis in tools/prepare-comic-audio.py.
+Crash effects also contain the credited metal recording.
+Full provenance: audio-src/comic-city/CREDITS.md and sources.json.

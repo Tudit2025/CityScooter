@@ -49,3 +49,6 @@ Desktop.ini
 
 # Local web builds and deploy staging
 /deploy/
+
+# Audio provenance uses selected metadata, not raw third-party website scripts.
+/audio-src/comic-city/originals/*.html
