@@ -25,6 +25,10 @@ namespace CityScooter.Gameplay
         Camera _cam;
         RiderController _rider;
         Quaternion _base = Quaternion.identity; // rotation before the fake-turn bank, so the bank never feeds back
+        float _shake;
+
+        /// <summary>Crash jolt: 0..1, fades out in about half a second.</summary>
+        public void Shake(float strength) => _shake = Mathf.Max(_shake, Mathf.Clamp01(strength));
 
         void Awake() { _cam = GetComponent<Camera>(); _base = transform.rotation; }
 
@@ -86,6 +90,13 @@ namespace CityScooter.Gameplay
             float turn=directionalFollow?1-Mathf.Exp(-rotationResponse*Time.deltaTime):k;
             _base = Quaternion.Slerp(_base, DesiredRotation(pos), turn);
             transform.rotation = WithTurn(_base);
+            if (_shake > 0.001f)
+            {
+                float t = Time.time * 40f;
+                transform.position += transform.rotation * new Vector3(Mathf.PerlinNoise(t, 0.3f) - 0.5f, Mathf.PerlinNoise(0.7f, t) - 0.5f, 0f) * (_shake * 0.6f);
+                transform.rotation *= Quaternion.Euler(0f, 0f, (Mathf.PerlinNoise(t, 3.1f) - 0.5f) * _shake * 6f);
+                _shake = Mathf.MoveTowards(_shake, 0f, Time.deltaTime * 2f);
+            }
             if (_cam != null && _rider != null)
             {
                 float fov = Mathf.Min(maxFov, baseFov + _rider.Speed * fovPerMetrePerSecond);

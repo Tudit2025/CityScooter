@@ -51,6 +51,13 @@ namespace CityScooter.Controls
             return (k != null && k.fKey.wasPressedThisFrame) || (g != null && g.buttonWest.wasPressedThisFrame);
         }
 
+        /// <summary>v1 cartoon mode toggle: T.</summary>
+        public static bool ToonTogglePressed()
+        {
+            Keyboard k = Keyboard.current;
+            return k != null && k.tKey.wasPressedThisFrame;
+        }
+
         /// <summary>v1 bell: R (ring; B is the micro:bit brake button in every hint), gamepad north button.</summary>
         public static bool BellPressed()
         {

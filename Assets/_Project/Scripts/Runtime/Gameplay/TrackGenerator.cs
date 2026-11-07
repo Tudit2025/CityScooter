@@ -181,6 +181,7 @@ namespace CityScooter.Gameplay
             _active.Add(active);
             Populate(active);
             PlacePending(active);
+            PlaceStreetLife(active);
             _nextZ += Mathf.Max(1f, chunk.length);
             _nextY += chunk.endHeight;
             _chunkCounter++;
@@ -340,6 +341,38 @@ namespace CityScooter.Gameplay
             go.transform.localRotation = Quaternion.Euler(pitch, yaw, 0f);
             go.SetActive(true);
             a.Spawned.Add(new Placed { Key = key, Instance = go });
+        }
+
+        // ---------------- street life: people strolling or standing on the sidewalks
+
+        readonly Collider[] _overlap = new Collider[4];
+
+        void PlaceStreetLife(Active a)
+        {
+            RoadChunk c = a.Chunk;
+            if (theme == null || theme.pedestrians == null || theme.pedestrians.Length == 0 || c.sidewalkWidth <= 1f) return;
+            int count = _rng.Next(Mathf.RoundToInt(T.sidewalkPeople.x), Mathf.RoundToInt(T.sidewalkPeople.y) + 1);
+            if (count <= 0) return;
+            Physics.SyncTransforms(); // this chunk's sidewalk props were just laid out
+            _collisionTransformsDirty = false;
+            for (int i = 0, tries = 0; i < count && tries < count * 4; tries++)
+            {
+                float side = _rng.NextDouble() < 0.5 ? -1f : 1f;
+                float x = side * Mathf.Lerp(c.halfWidth + 0.8f, c.halfWidth + c.sidewalkWidth - 0.6f, (float)_rng.NextDouble());
+                float z = Mathf.Lerp(2f, Mathf.Max(3f, c.length - 2f), (float)_rng.NextDouble());
+                Vector3 local = new Vector3(x, c.HeightAt(z) + c.SidewalkOffsetAt(x), z);
+                Vector3 world = c.transform.TransformPoint(local);
+                // Not inside a bench, a bin, a bus shelter or another person.
+                if (Physics.OverlapBoxNonAlloc(world + Vector3.up * 0.95f, new Vector3(0.5f, 0.8f, 0.6f), _overlap, Quaternion.identity, Physics.AllLayers, QueryTriggerInteraction.Ignore) > 0) continue;
+                GameObject prefab = theme.pedestrians[_rng.Next(theme.pedestrians.Length)];
+                if (prefab == null) continue;
+                Place(a, prefab, local, 0f, true);
+                GameObject go = a.Spawned[a.Spawned.Count - 1].Instance;
+                float walk = _rng.NextDouble() < T.sidewalkPeopleWalking ? (_rng.NextDouble() < 0.5 ? -1f : 1f) * Mathf.Lerp(0.7f, 1.5f, (float)_rng.NextDouble()) : 0f;
+                go.GetComponent<Pedestrian>()?.Configure(walk);
+                Physics.SyncTransforms();
+                i++;
+            }
         }
 
         // ---------------- hazard patterns

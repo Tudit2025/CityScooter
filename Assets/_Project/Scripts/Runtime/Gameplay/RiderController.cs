@@ -34,6 +34,11 @@ namespace CityScooter.Gameplay
 
         public event Action<Obstacle> HitObstacle;
         public event Action<Gift> GotGift;
+        /// <summary>v1 cartoon mode: rode into a person, who goes flying instead of ending the run.</summary>
+        public event Action<Obstacle> BouncedPerson;
+
+        /// <summary>Lose some speed (cartoon bumps).</summary>
+        public void Bump(float keep) => Speed = Mathf.Max(T.brakeMinSpeed, Speed * Mathf.Clamp01(keep));
 
         readonly Collider[] _hits = new Collider[32];
         bool _running;
@@ -151,6 +156,11 @@ namespace CityScooter.Gameplay
                 Obstacle obstacle = c.GetComponentInParent<Obstacle>();
                 if (obstacle == null) continue;
                 if (Airborne && obstacle.canJumpOver) continue;
+                if (obstacle.kind == ObstacleKind.Person && RiderActions.CartoonMode)
+                {
+                    BouncedPerson?.Invoke(obstacle);
+                    continue;
+                }
                 HitObstacle?.Invoke(obstacle);
                 return;
             }

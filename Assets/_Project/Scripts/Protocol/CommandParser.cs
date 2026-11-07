@@ -23,6 +23,7 @@ namespace CityScooter.Protocol
             if (lower == Messages.Brake) return new Command(CommandKind.Brake);
             if (lower == Messages.Punch) return new Command(CommandKind.Punch);
             if (lower == Messages.Bell) return new Command(CommandKind.Bell);
+            if (lower == Messages.Toon) return new Command(CommandKind.Toon, 1f);
 
             int colon = lower.IndexOf(':');
             if (colon <= 0) return new Command(CommandKind.Unknown, 0f, s);
@@ -52,6 +53,13 @@ namespace CityScooter.Protocol
                     return new Command(CommandKind.Punch);
                 case Messages.Bell:
                     return new Command(CommandKind.Bell);
+                case Messages.Toon:
+                    switch (arg.ToLowerInvariant())
+                    {
+                        case "1": case "on": case "true": return new Command(CommandKind.Toon, 1f);
+                        case "0": case "off": case "false": return new Command(CommandKind.Toon, 0f);
+                        default: return new Command(CommandKind.Malformed, 0f, s);
+                    }
                 default:
                     return new Command(CommandKind.Unknown, 0f, s);
             }

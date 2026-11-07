@@ -20,6 +20,9 @@ namespace CityScooter.Protocol
         int _pendingPunches;
         int _pendingBells;
 
+        /// <summary>v1 cartoon mode: the last "toon:" any device sent (off until a program turns it on).</summary>
+        public bool Toon { get; private set; }
+
         public void Apply(in Command command, double now)
         {
             switch (command.Kind)
@@ -39,6 +42,9 @@ namespace CityScooter.Protocol
                     break;
                 case CommandKind.Bell:
                     _pendingBells++;
+                    break;
+                case CommandKind.Toon:
+                    Toon = command.Value > 0.5f;
                     break;
             }
         }
@@ -79,6 +85,7 @@ namespace CityScooter.Protocol
 
         public void Reset()
         {
+            Toon = false;
             _pendingPunches = 0;
             _pendingBells = 0;
             _steer = 0f;

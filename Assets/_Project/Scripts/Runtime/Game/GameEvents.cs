@@ -16,6 +16,8 @@ namespace CityScooter.Game
         public static event Action<int> SpeedLevelChanged;
         /// <summary>v1: a punch hit something ("ko").</summary>
         public static event Action PunchLanded;
+        /// <summary>v1 cartoon mode: the rider bumped a person, who went flying ("boing").</summary>
+        public static event Action PersonBounced;
         /// <summary>v1: something is in the rider's lane ahead; the argument is the whole message ("warn:car").</summary>
         public static event Action<string> Warning;
         /// <summary>v1: the fake road turns: -1 left, 0 straight, 1 right.</summary>
@@ -26,6 +28,7 @@ namespace CityScooter.Game
         public static void RaiseGiftCollected() => GiftCollected?.Invoke();
         public static void RaiseSpeedLevel(int level) => SpeedLevelChanged?.Invoke(level);
         public static void RaisePunchLanded() => PunchLanded?.Invoke();
+        public static void RaisePersonBounced() => PersonBounced?.Invoke();
         public static void RaiseWarning(string message) => Warning?.Invoke(message);
         public static void RaiseTurnChanged(int direction) => TurnChanged?.Invoke(direction);
 
@@ -38,6 +41,7 @@ namespace CityScooter.Game
             GiftCollected = null;
             SpeedLevelChanged = null;
             PunchLanded = null;
+            PersonBounced = null;
             Warning = null;
             TurnChanged = null;
         }

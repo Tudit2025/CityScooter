@@ -69,7 +69,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("cs_on_message", { x: 500, y: 460, fields: { MSG: "go" }, inputs: { DO: chain(B("mb_clear")) } }),
   // protocol v1: punch, bell, gesture, ko / warn: / turn:
   B("mb_on_gesture", { x: 900, y: 10, fields: { GESTURE: "shake" }, inputs: { DO: chain(B("cs_punch")) } }),
-  B("cs_on_message", { x: 900, y: 120, fields: { MSG: "warn:ped" }, inputs: { DO: chain(B("cs_bell")) } }),
+  B("cs_on_message", { x: 900, y: 120, fields: { MSG: "warn:ped" }, inputs: { DO: chain(B("cs_bell"), B("cs_toon", { fields: { ON: "1" } })) } }),
+  B("cs_on_message", { x: 900, y: 420, fields: { MSG: "boing" }, inputs: { DO: chain(B("cs_toon", { fields: { ON: "0" } })) } }),
   B("cs_on_message", { x: 900, y: 220, fields: { MSG: "ko" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "YES" } })) } }),
   B("cs_on_message", { x: 900, y: 320, fields: { MSG: "turn:-1" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "ARROW_W" } })) } }),
   B("cs_on_speed", { x: 500, y: 540, inputs: { DO: chain(B("mb_clear"),
@@ -144,7 +145,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   check("all blocks: valid Python", !syn2, syn2);
   for (const want of ["import music", "import random", "(pin_logo.is_touched() if VERSION == \"v2\" else False)",
     "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
-    'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"']) {
+    'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"']) {
     check("all blocks make: " + want, allPy.includes(want));
   }
   const disabledOrphans = await ev(() => window.Blockly.getMainWorkspace().getAllBlocks(false).filter((b) => !b.isEnabled()).length);
@@ -175,6 +176,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": steers", lines.some((l) => /^sim\|st:-?\d+$/.test(l)));
     check(label + ": crash and gift handlers ran", log.some((x) => x.includes("got crash")) && log.some((x) => x.includes("got gift")));
     check(label + ": warn:ped rings the bell (bl)", lines.includes("sim|bl"), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
+    check(label + ": warn:ped turns cartoon mode on (toon:1)", lines.includes("sim|toon:1"));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));
     return lines;
   }

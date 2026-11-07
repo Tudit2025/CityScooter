@@ -46,6 +46,11 @@ namespace CityScooter.Gameplay
         [Range(0f, 1f)] public float jumpObstacleChance = 0.5f;
         [Range(0, 9)] public int jumpObstacleMinLevel = 1;
 
+        [Header("Street life")]
+        [Tooltip("People on the sidewalks of every 40 m chunk (min, max). They are obstacles for riders on the sidewalk.")]
+        public Vector2 sidewalkPeople = new Vector2(2f, 4f);
+        [Range(0f, 1f)] public float sidewalkPeopleWalking = 0.65f;
+
         [Header("Hazard patterns (roadworks, police, traffic)")]
         [Tooltip("No hazard patterns in the first metres of a run.")]
         public float hazardStartDistance = 250f;

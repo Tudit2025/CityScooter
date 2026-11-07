@@ -23,6 +23,7 @@ namespace CityScooter.Tests
         void OnWarn(string m) => _events.Add(m);
         void OnTurn(int d) => _events.Add("turn:" + d);
         void OnCrash() => _events.Add("crash");
+        void OnBoing() => _events.Add("boing");
 
         IEnumerator LoadMain()
         {
@@ -38,6 +39,7 @@ namespace CityScooter.Tests
             GameEvents.Warning += OnWarn;
             GameEvents.TurnChanged += OnTurn;
             GameEvents.Crashed += OnCrash;
+            GameEvents.PersonBounced += OnBoing;
         }
 
         HazardPattern Pattern(string name)
@@ -144,6 +146,84 @@ namespace CityScooter.Tests
             }
         }
 
+        void PersonAhead(float dz, out GameObject person)
+        {
+            Vector3 p = _game.rider.transform.position;
+            float z = p.z + dz;
+            person = _game.track.PlaceAt(Prefab(Pattern("HZ_SidewalkStroll"), "HZ_PedWalkerA"), new Vector3(p.x, _game.track.SurfaceHeightAt(p.x, z), z));
+            person.GetComponent<Pedestrian>().Configure(0f); // stands still in the rider's line
+        }
+
+        [UnityTest]
+        public IEnumerator StreetLife_PutsPeopleOnTheSidewalks()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return null;
+            int onSidewalk = 0;
+            foreach (Pedestrian ped in Pedestrian.Active) if (Mathf.Abs(ped.transform.position.x) > 4.3f) onSidewalk++;
+            Assert.GreaterOrEqual(onSidewalk, 12, "about 2-4 people per 40 m along the built street");
+            Assert.That(_game.track.theme.pedestrians.Length, Is.GreaterThanOrEqualTo(10), "a whole set of people");
+        }
+
+        [UnityTest]
+        public IEnumerator CartoonOff_BumpingSomeoneEndsTheRide_AndThrowsTheRider()
+        {
+            yield return LoadMain();
+            DeviceHub.Instance?.Receive("test", "toon:0");
+            _game.StartRun();
+            yield return null;
+            PersonAhead(6f, out GameObject person);
+            float t = 0f;
+            while (_game.State == RunState.Running && t < 4f) { t += Time.deltaTime; yield return null; }
+            Assert.AreEqual(RunState.Crashed, _game.State);
+            Assert.IsTrue(person.activeInHierarchy, "people do not fly unless cartoon mode is on");
+            var actions = _game.GetComponent<RiderActions>();
+            Assert.NotNull(actions.CrashRider, "the rider is thrown off the scooter");
+            Assert.IsTrue(actions.CrashRider.gameObject.activeSelf);
+            Assert.IsFalse(_game.rider.model.gameObject.activeSelf, "the riding model is hidden while the crash plays");
+            yield return new WaitForSeconds(1.2f);
+            _game.StartRun();
+            yield return null;
+            Assert.IsTrue(_game.rider.model.gameObject.activeSelf, "a new ride brings the rider back on the scooter");
+            Assert.IsFalse(actions.CrashRider.gameObject.activeSelf);
+        }
+
+        [UnityTest]
+        public IEnumerator CartoonOn_PeopleGoFlying_SendsBoing_AndTheRideGoesOn()
+        {
+            yield return LoadMain();
+            DeviceHub.Instance?.Receive("test", "toon:1");
+            _game.StartRun();
+            yield return null;
+            Assert.IsTrue(RiderActions.CartoonMode, "toon:1 from a board turns cartoon mode on");
+            PersonAhead(6f, out GameObject person);
+            yield return new WaitForSeconds(2.2f);
+            Assert.AreEqual(RunState.Running, _game.State, "no crash in cartoon mode");
+            Assert.Contains("boing", _events);
+            Assert.IsFalse(person.activeSelf, "the person flew off");
+            DeviceHub.Instance?.Receive("test", "toon:0");
+            yield return null;
+            Assert.IsFalse(RiderActions.CartoonMode);
+        }
+
+        [UnityTest]
+        public IEnumerator Manhole_StopsTheScooterInTheHole_RiderFliesOn()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return null;
+            Vector3 p = _game.rider.transform.position;
+            _game.track.PlaceAt(Prefab(Pattern("HZ_Manhole"), "HZ_Manhole"), new Vector3(p.x, p.y, p.z + 8f));
+            float t = 0f;
+            while (_game.State == RunState.Running && t < 4f) { t += Time.deltaTime; yield return null; }
+            Assert.AreEqual(RunState.Crashed, _game.State);
+            float crashZ = _game.rider.transform.position.z;
+            yield return new WaitForSeconds(1.5f);
+            var actions = _game.GetComponent<RiderActions>();
+            Assert.Greater(actions.CrashRider.transform.position.z, crashZ + 1.5f, "over the handlebars");
+        }
+
         /// <summary>Not part of the normal run: renders previews of the new hazards into art-src/hazards/.</summary>
         [UnityTest, Explicit]
         public IEnumerator Previews()
@@ -189,6 +269,22 @@ namespace CityScooter.Tests
                 GameObject go = _game.track.PlaceAt(Prefab(src, name), new Vector3(x, _game.track.SurfaceHeightAt(x, p.z + z), p.z + z));
                 go.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             }
+            string[] people = { "Office", "Student", "Surfer", "Jogger", "Elder", "Tourist", "Barista", "Skater", "DogWalker", "Shopper", "Kid", "Courier" };
+            var crowd = new System.Collections.Generic.List<GameObject>();
+            for (int i = 0; i < people.Length; i++)
+            {
+                GameObject prefab = System.Array.Find(_game.track.theme.pedestrians, g => g.name == "HZ_Ped_" + people[i]);
+                float x = -3.4f + (i % 6) * 1.36f, zz = 6.5f + (i / 6) * 2.6f;
+                GameObject go = _game.track.PlaceAt(prefab, new Vector3(x, _game.track.SurfaceHeightAt(x, p.z + zz), p.z + zz));
+                go.GetComponent<Pedestrian>().Configure(0f);
+                crowd.Add(go);
+            }
+            _game.rider.Stop();
+            for (int f = 0; f < 3; f++) yield return null;
+            Camera.main.GetComponent<FollowCamera>().SnapToTarget();
+            Capture(Camera.main, "people");
+            foreach (GameObject go in crowd) go.SetActive(false);
+            _game.rider.Begin();
             Put(works, "HZ_SignRoadWork", -3.6f, 9f);
             Put(works, "HZ_SignDetourRight", 3.4f, 9f);
             Put(works, "HZ_TrafficController", -1.2f, 7f);
@@ -272,6 +368,8 @@ namespace CityScooter.Tests
             GameEvents.Warning -= OnWarn;
             GameEvents.TurnChanged -= OnTurn;
             GameEvents.Crashed -= OnCrash;
+            GameEvents.PersonBounced -= OnBoing;
+            DeviceHub.Instance?.Receive("test", "toon:0");
             if (_main.IsValid() && _main.isLoaded) yield return SceneManager.UnloadSceneAsync(_main);
             DeviceHub.Instance?.Mixer.Reset();
         }

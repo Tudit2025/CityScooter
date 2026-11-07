@@ -104,6 +104,15 @@ namespace CityScooter.Tests
                     if (e.mirrorPrefab != null && seen.Add(e.mirrorPrefab)) AssertBends(e.mirrorPrefab);
                 }
             foreach (Obstacle o in Theme().obstacles) AssertBends(o.gameObject);
+            Assert.That(Theme().pedestrians.Length, Is.GreaterThanOrEqualTo(10));
+            foreach (GameObject person in Theme().pedestrians)
+            {
+                AssertBends(person);
+                Assert.NotNull(person.GetComponent<Pedestrian>(), person.name);
+                Assert.AreEqual(ObstacleKind.Person, person.GetComponent<Obstacle>().kind, person.name);
+            }
+            AssertBends(Theme().crashRider);
+            AssertBends(Theme().crashScooter);
         }
 
         static void AssertBends(GameObject prefab)

@@ -11,7 +11,8 @@
   // What the game sends (docs/protocol.md). v1 added ko, warn:* and turn:*; old programs simply ignore them.
   const MESSAGE_OPTIONS = [["crash", "crash"], ["gift", "gift"], ["go (new ride)", "go"], ["ko (punch landed)", "ko"],
     ["warn:car (car ahead)", "warn:car"], ["warn:ped (person ahead)", "warn:ped"], ["warn:hole (hole ahead)", "warn:hole"],
-    ["turn:-1 (road turns left)", "turn:-1"], ["turn:1 (road turns right)", "turn:1"], ["turn:0 (road straight)", "turn:0"]];
+    ["turn:-1 (road turns left)", "turn:-1"], ["turn:1 (road turns right)", "turn:1"], ["turn:0 (road straight)", "turn:0"],
+    ["boing (bumped someone in cartoon mode)", "boing"]];
 
   const BLOCKS = [
     { type: "cs_steer", message0: "steer %1", args0: [{ type: "input_value", name: "VALUE", check: "Number" }],
@@ -25,6 +26,9 @@
       tooltip: "Punch boxes, bins and cones out of your way. One punch at a time: punching again within 0.4 s does nothing. Python: print(\"pu\")" },
     { type: "cs_bell", message0: "ring the bell", previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "Ring your bell: people ahead step out of your way. Python: print(\"bl\")" },
+    { type: "cs_toon", message0: "cartoon mode %1", args0: [{ type: "field_dropdown", name: "ON", options: [["on", "1"], ["off", "0"]] }],
+      previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Cartoon mode on: people you bump into go flying (BOING!) and you only slow down. Off: bumping into someone ends the ride. The game remembers the last one you sent, so send it after the game has started (e.g. in forever, or on a button). Python: print(\"toon:1\")" },
     { type: "cs_on_message", message0: "when the game says %1 %2 %3",
       args0: [{ type: "field_dropdown", name: "MSG", options: MESSAGE_OPTIONS },
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
@@ -42,6 +46,7 @@
     cs_brake: () => 'print("br")\n',
     cs_punch: () => 'print("pu")\n',
     cs_bell: () => 'print("bl")\n',
+    cs_toon: (b) => 'print("toon:' + b.getFieldValue("ON") + '")\n',
     cs_speed: () => { MB.setFlag("usesSpeed"); return ["game_speed", Order.ATOMIC]; },
     cs_on_message: (b) => { MB.addSection("msg:" + b.getFieldValue("MSG"), MB.statements(b, "DO")); return ""; },
     cs_on_speed: (b) => { MB.setFlag("usesSpeed"); MB.addSection("msg:spd", MB.statements(b, "DO")); return ""; },
@@ -95,7 +100,7 @@
     },
     toolbox: (blk, num) => [{
       kind: "category", name: "CityScooter", categorystyle: "game_category", contents: [
-        blk("cs_steer", { inputs: { VALUE: num(0) } }), blk("cs_jump"), blk("cs_brake"), blk("cs_punch"), blk("cs_bell"),
+        blk("cs_steer", { inputs: { VALUE: num(0) } }), blk("cs_jump"), blk("cs_brake"), blk("cs_punch"), blk("cs_bell"), blk("cs_toon"),
         blk("cs_on_message"), blk("cs_on_message", { fields: { MSG: "gift" } }), blk("cs_on_message", { fields: { MSG: "warn:ped" } }),
         blk("cs_on_speed"), blk("cs_speed"),
       ],

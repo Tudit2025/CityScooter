@@ -50,6 +50,15 @@ namespace CityScooter.Track
 
         void OnDisable() => Active.Remove(this);
 
+        /// <summary>Street life placed by the generator: stroll at this speed (0 = stand and chat), facing the way it goes.</summary>
+        public void Configure(float walk)
+        {
+            walkSpeed = walk;
+            crosses = false;
+            _state = State.Walking;
+            _walk = walk;
+        }
+
         /// <summary>The bell: step away from the rider's line, to the nearer free side.</summary>
         public void Startle(float riderX)
         {

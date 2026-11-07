@@ -31,6 +31,14 @@ namespace CityScooter.Gameplay
         public GameObject bellPopup;
         public GameObject startlePopup;
         public GameObject sorryPopup;
+        public GameObject boingPopup;
+        public GameObject crashPopup;
+        [Header("Street life and crashes (optional)")]
+        [Tooltip("People the generator puts on the sidewalks of every chunk (root has Pedestrian).")]
+        public GameObject[] pedestrians;
+        [Tooltip("Thrown off the scooter in a crash (CrashTumble).")]
+        public GameObject crashRider;
+        public GameObject crashScooter;
 
         public bool HasChunks => chunks != null && chunks.Length > 0;
     }

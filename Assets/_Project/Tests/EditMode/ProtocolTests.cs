@@ -177,6 +177,25 @@ namespace CityScooter.Tests
         }
 
         [Test]
+        public void V1_ToonModeIsLatchedUntilChanged()
+        {
+            var mixer = new ControlMixer();
+            Assert.IsFalse(mixer.Toon, "cartoon mode starts off");
+            mixer.Apply(CommandParser.Parse("toon:1"), 0);
+            Assert.IsTrue(mixer.Toon);
+            mixer.Apply(CommandParser.Parse("st:20"), 1);
+            Assert.IsTrue(mixer.Toon, "stays on until a program turns it off");
+            mixer.Apply(CommandParser.Parse("TOON : 0"), 2);
+            Assert.IsFalse(mixer.Toon);
+            mixer.Apply(CommandParser.Parse("toon"), 3);
+            Assert.IsTrue(mixer.Toon);
+            Assert.AreEqual(CommandKind.Malformed, CommandParser.Parse("toon:maybe").Kind);
+            mixer.Reset();
+            Assert.IsFalse(mixer.Toon);
+            Assert.AreEqual("boing", Messages.Boing);
+        }
+
+        [Test]
         public void V1_MixerCountsPunchAndBellOnce()
         {
             var mixer = new ControlMixer();

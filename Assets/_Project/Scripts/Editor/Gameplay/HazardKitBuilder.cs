@@ -67,15 +67,19 @@ namespace CityScooter.EditorTools
                 ["CarOncomingBlue"] = Car("CarOncomingBlue", new Color(.2f, .5f, .85f), false, -16f, 0f),
                 ["CarSlowYellow"] = Car("CarSlowYellow", _r.yellow, false, 0f, .3f),
                 ["CarSlowGreen"] = Car("CarSlowGreen", _r.green, false, 0f, .35f),
-                ["PedWalkerA"] = Person("PedWalkerA", _r.red, new Color(.2f, .3f, .55f), -1.2f, false, 0),
-                ["PedWalkerB"] = Person("PedWalkerB", _r.green, new Color(.45f, .35f, .25f), 1.1f, false, 1),
-                ["PedWalkerC"] = Person("PedWalkerC", new Color(.55f, .35f, .75f), _r.ink, -1.4f, false, 2),
-                ["PedCrosserA"] = Person("PedCrosserA", _r.yellow, new Color(.2f, .3f, .55f), 1f, true, 1),
-                ["PedCrosserB"] = Person("PedCrosserB", new Color(.2f, .6f, .75f), new Color(.3f, .3f, .32f), -1f, true, 0),
+                ["PedWalkerA"] = Person("PedWalkerA", Looks["Office"], -1.2f, false),
+                ["PedWalkerB"] = Person("PedWalkerB", Looks["Shopper"], 1.1f, false),
+                ["PedWalkerC"] = Person("PedWalkerC", Looks["Jogger"], -1.6f, false),
+                ["PedCrosserA"] = Person("PedCrosserA", Looks["Student"], 1f, true),
+                ["PedCrosserB"] = Person("PedCrosserB", Looks["Elder"], -0.8f, true),
                 ["Zebra"] = Zebra(),
             };
             GameObject[] popups = { Popup("FxPow", "POW", _r.yellow, _r.red, 1f), Popup("FxDing", "DING", White, PoliceBlue, .55f),
-                Popup("FxBang", "!", _r.yellow, _r.ink, .55f), Popup("FxSorry", "SORRY", White, _r.red, .9f) };
+                Popup("FxBang", "!", _r.yellow, _r.ink, .55f), Popup("FxSorry", "SORRY", White, _r.red, .9f),
+                Popup("FxBoing", "BOING", _r.yellow, PoliceBlue, .9f), Popup("FxCrash", "CRASH!", White, _r.red, 1f) };
+            foreach (KeyValuePair<string, Look> look in Looks) Person("Ped_" + look.Key, look.Value, 1f, false);
+            CrashRider();
+            CrashScooter();
             Gift[] gifts =
             {
                 Present("GiftRed", _r.red, _r.yellow), Present("GiftBlue", new Color(.2f, .5f, .85f), _r.cream),
@@ -86,7 +90,7 @@ namespace CityScooter.EditorTools
             var theme = AssetDatabase.LoadAssetAtPath<TrackTheme>(ComicCityBuilder.ThemePath);
             if (theme != null) ApplyTo(theme);
             AssetDatabase.SaveAssets();
-            if (popups.Length != 4) throw new InvalidOperationException("pop-ups");
+            if (popups.Length != 6) throw new InvalidOperationException("pop-ups");
             Debug.Log("[Hazards] built " + p.Count + " hazards, " + gifts.Length + " gifts, " + patterns.Length + " patterns");
         }
 
@@ -107,6 +111,11 @@ namespace CityScooter.EditorTools
             theme.hazards = patterns.ToArray();
             GameObject Fx(string id) => AssetDatabase.LoadAssetAtPath<GameObject>(Prefabs + "/HZ_" + id + ".prefab");
             theme.punchPopup = Fx("FxPow"); theme.bellPopup = Fx("FxDing"); theme.startlePopup = Fx("FxBang"); theme.sorryPopup = Fx("FxSorry");
+            theme.boingPopup = Fx("FxBoing"); theme.crashPopup = Fx("FxCrash");
+            theme.crashRider = Fx("CrashRider"); theme.crashScooter = Fx("CrashScooter");
+            var people = new List<GameObject>();
+            foreach (string id in LookIds) { GameObject p = Fx("Ped_" + id); if (p != null) people.Add(p); }
+            theme.pedestrians = people.ToArray();
             // Light props can be punched out of the way ("ko"); people, vehicles, barriers and signs cannot.
             if (theme.obstacles != null)
                 foreach (Obstacle o in theme.obstacles)
@@ -215,14 +224,14 @@ namespace CityScooter.EditorTools
 
         static void B(ComicMesh m, float x, float y, float z, float w, float h, float d, Color c) => m.Box(new Vector3(x, y, z), new Vector3(w, h, d), c);
 
-        static GameObject Save(string id, Kit kit, Vector3 colliderCentre, Vector3 colliderSize, Action<GameObject> configure, bool trigger = false, bool decor = false)
+        static GameObject Save(string id, Kit kit, Vector3 colliderCentre, Vector3 colliderSize, Action<GameObject> configure, bool trigger = false, bool decor = false, bool? outline = null)
         {
             var root = new GameObject("HZ_" + id);
             try
             {
                 var art = new GameObject("Art");
                 art.transform.SetParent(root.transform, false);
-                AddRenderer(art, "HZ_" + id, kit.Body, !decor);
+                AddRenderer(art, "HZ_" + id, kit.Body, outline ?? !decor);
                 foreach (KeyValuePair<string, ComicMesh> part in kit.Parts)
                 {
                     var go = new GameObject(part.Key);
@@ -293,7 +302,7 @@ namespace CityScooter.EditorTools
             ['H'] = "101101111101101", ['I'] = "111010010010111", ['K'] = "101101110101101", ['L'] = "100100100100111",
             ['O'] = "010101101101010", ['P'] = "110101110100100", ['R'] = "110101110101101", ['S'] = "011100010001110",
             ['T'] = "111010010010010", ['U'] = "101101101101111", ['W'] = "101101101111101",
-            ['G'] = "011100101101011", ['N'] = "110101101101101", ['Y'] = "101101010010010", ['!'] = "010010010000010",
+            ['B'] = "110101110101110", ['G'] = "011100101101011", ['N'] = "110101101101101", ['Y'] = "101101010010010", ['!'] = "010010010000010",
         };
 
         static void Text(ComicMesh m, string text, float cx, float cy, float z, float px, Color c)
@@ -503,31 +512,134 @@ namespace CityScooter.EditorTools
             });
         }
 
-        // A person facing -Z (towards the rider). Casual clothes; hair style 0..2. Root: Obstacle + Pedestrian.
-        static GameObject Person(string id, Color shirt, Color pants, float walk, bool crosses, int hair)
+        // ---------------------------------------------------------------- people: one comic set for the whole street
+
+        sealed class Look
+        {
+            public Color Skin, Top, Bottom, Shoes, Hair, Prop;
+            public int HairStyle;          // 0 short, 1 long, 2 ponytail, 3 thin grey, 4 beanie, 5 cap, 6 sun hat, 7 curls
+            public float Scale = 1f;       // kids ~0.72
+            public bool Shorts, Skirt, Apron;
+            public string Item;            // backpack, briefcase, coffee, surfboard, stick, bags, camera, dog, skateboard, balloon, delivery, headphones
+        }
+
+        static readonly Color SkinLight = new Color(.96f, .8f, .69f), SkinPink = new Color(.98f, .74f, .64f), SkinMedium = new Color(.86f, .64f, .5f),
+            SkinTan = new Color(.74f, .53f, .37f), SkinBrown = new Color(.55f, .38f, .26f), SkinDark = new Color(.38f, .26f, .18f);
+        static readonly Color HairDark = new Color(.16f, .11f, .09f), HairBlond = new Color(.9f, .72f, .35f), HairGrey = new Color(.78f, .78f, .76f),
+            Denim = new Color(.24f, .36f, .6f), Khaki = new Color(.7f, .62f, .42f), Charcoal = new Color(.25f, .26f, .3f);
+
+        static readonly string[] LookIds = { "Office", "Student", "Surfer", "Jogger", "Elder", "Tourist", "Barista", "Skater", "DogWalker", "Shopper", "Kid", "Courier" };
+
+        // Perth street life, drawn like the rest of the comic city: flat colours, ink edges, simple blocks.
+        static Dictionary<string, Look> Looks => new Dictionary<string, Look>
+        {
+            ["Office"] = new Look { Skin = SkinMedium, Top = Navy, Bottom = Navy, Shoes = _r.ink, Hair = HairDark, HairStyle = 0, Item = "briefcase", Prop = new Color(.4f, .25f, .15f) },
+            ["Student"] = new Look { Skin = SkinLight, Top = new Color(.55f, .75f, .92f), Bottom = Charcoal, Shoes = _r.ink, Hair = Navy, HairStyle = 5, Scale = .76f, Shorts = true, Item = "backpack", Prop = _r.red },
+            ["Surfer"] = new Look { Skin = SkinTan, Top = _r.yellow, Bottom = new Color(.1f, .6f, .62f), Shoes = _r.cream, Hair = HairBlond, HairStyle = 1, Shorts = true, Item = "surfboard", Prop = White },
+            ["Jogger"] = new Look { Skin = SkinBrown, Top = new Color(1f, .42f, .62f), Bottom = _r.ink, Shoes = White, Hair = HairDark, HairStyle = 2, Item = "headphones", Prop = _r.yellow },
+            ["Elder"] = new Look { Skin = SkinLight, Top = new Color(.86f, .76f, .56f), Bottom = new Color(.5f, .5f, .52f), Shoes = new Color(.4f, .25f, .15f), Hair = _r.cream, HairStyle = 6, Item = "stick", Prop = new Color(.45f, .3f, .18f) },
+            ["Tourist"] = new Look { Skin = SkinPink, Top = _r.red, Bottom = Khaki, Shoes = White, Hair = _r.green, HairStyle = 5, Shorts = true, Item = "camera", Prop = _r.ink },
+            ["Barista"] = new Look { Skin = SkinDark, Top = new Color(.15f, .15f, .18f), Bottom = Denim, Shoes = _r.ink, Hair = HairDark, HairStyle = 7, Apron = true, Item = "coffee", Prop = _r.green },
+            ["Skater"] = new Look { Skin = SkinMedium, Top = new Color(.55f, .35f, .75f), Bottom = Denim, Shoes = _r.red, Hair = new Color(1f, .5f, .1f), HairStyle = 4, Item = "skateboard", Prop = _r.yellow },
+            ["DogWalker"] = new Look { Skin = SkinDark, Top = _r.green, Bottom = Denim, Shoes = _r.cream, Hair = HairGrey, HairStyle = 3, Item = "dog", Prop = new Color(.85f, .6f, .3f) },
+            ["Shopper"] = new Look { Skin = SkinTan, Top = new Color(1f, .6f, .2f), Bottom = _r.red, Shoes = _r.ink, Hair = HairDark, HairStyle = 1, Skirt = true, Item = "bags", Prop = new Color(.3f, .7f, .85f) },
+            ["Kid"] = new Look { Skin = SkinMedium, Top = _r.yellow, Bottom = new Color(.2f, .45f, .8f), Shoes = _r.red, Hair = HairDark, HairStyle = 0, Scale = .7f, Shorts = true, Item = "balloon", Prop = _r.red },
+            ["Courier"] = new Look { Skin = SkinLight, Top = new Color(.1f, .62f, .6f), Bottom = _r.ink, Shoes = _r.ink, Hair = new Color(.1f, .62f, .6f), HairStyle = 5, Item = "delivery", Prop = new Color(.1f, .62f, .6f) },
+        };
+
+        // Facing -Z (towards the rider), feet at the pivot. Root: Obstacle (Person) + Pedestrian; the Art child bobs.
+        static GameObject Person(string id, Look l, float walk, bool crosses)
         {
             var k = new Kit();
-            ComicMesh m = k.Body;
-            Color hairColor = hair == 1 ? new Color(.85f, .65f, .3f) : new Color(.18f, .12f, .1f);
+            var m = new ComicMesh();
             for (int s = -1; s <= 1; s += 2)
             {
-                B(m, s * .11f, .06f, -.03f, .16f, .12f, .28f, hair == 2 ? _r.red : _r.cream);
-                B(m, s * .11f, .48f, 0, .17f, .74f, .2f, pants);
-                B(m, s * .31f, 1.12f, 0, .13f, .5f, .16f, shirt);
-                B(m, s * .31f, .8f, 0, .11f, .14f, .12f, Skin);
+                B(m, s * .11f, .05f, -.03f, .16f, .1f, .28f, l.Shoes);
+                if (l.Shorts || l.Skirt) { B(m, s * .11f, .7f, 0, .18f, .36f, .21f, l.Bottom); B(m, s * .11f, .32f, 0, .15f, .5f, .17f, l.Skin); }
+                else B(m, s * .11f, .48f, 0, .17f, .82f, .2f, l.Bottom);
+                B(m, s * .31f, 1.12f, 0, .13f, .5f, .16f, l.Top);
+                B(m, s * .31f, .82f, 0, .11f, .12f, .12f, l.Skin);
             }
-            B(m, 0, 1.12f, 0, .48f, .6f, .27f, shirt);
-            B(m, 0, 1.55f, 0, .25f, .27f, .25f, Skin);
+            if (l.Skirt) B(m, 0, .72f, 0, .5f, .4f, .32f, l.Bottom);
+            B(m, 0, 1.12f, 0, .48f, .6f, .27f, l.Top);
+            if (l.Apron) B(m, 0, 1f, -.145f, .4f, .62f, .02f, l.Prop);
+            B(m, 0, 1.55f, 0, .25f, .27f, .25f, l.Skin);
             B(m, -.06f, 1.58f, -.13f, .04f, .05f, .02f, _r.ink); B(m, .06f, 1.58f, -.13f, .04f, .05f, .02f, _r.ink);
-            if (hair == 0) B(m, 0, 1.71f, .02f, .28f, .08f, .29f, hairColor);
-            else if (hair == 1) { B(m, 0, 1.7f, .03f, .28f, .1f, .3f, hairColor); B(m, 0, 1.5f, .13f, .27f, .35f, .06f, hairColor); }
-            else { m.Cylinder(new Vector3(0, 1.73f, 0), .15f, .1f, shirt, 8, .9f); B(m, 0, 1.69f, -.15f, .26f, .03f, .16f, shirt); }
-            return Save(id, k, new Vector3(0, .9f, 0), new Vector3(.62f, 1.8f, .45f), r =>
+            switch (l.HairStyle)
+            {
+                case 0: B(m, 0, 1.71f, .02f, .28f, .08f, .29f, l.Hair); break;
+                case 1: B(m, 0, 1.7f, .03f, .28f, .1f, .3f, l.Hair); B(m, 0, 1.5f, .13f, .27f, .35f, .06f, l.Hair); break;
+                case 2: B(m, 0, 1.71f, .02f, .28f, .08f, .29f, l.Hair); B(m, 0, 1.58f, .19f, .08f, .22f, .08f, l.Hair); break;
+                case 3: B(m, 0, 1.69f, .04f, .27f, .05f, .26f, l.Hair); break;
+                case 4: m.Cylinder(new Vector3(0, 1.73f, 0), .15f, .13f, l.Hair, 8, .8f); break;
+                case 5: m.Cylinder(new Vector3(0, 1.73f, 0), .15f, .1f, l.Hair, 8, .9f); B(m, 0, 1.69f, -.15f, .26f, .03f, .16f, l.Hair); break;
+                case 6: m.Cylinder(new Vector3(0, 1.74f, 0), .14f, .1f, l.Hair, 8, .9f); m.Cylinder(new Vector3(0, 1.69f, 0), .3f, .03f, l.Hair, 10); break;
+                default: m.Ellipsoid(new Vector3(0, 1.72f, .02f), new Vector3(.36f, .26f, .36f), l.Hair); break;
+            }
+            float width = .62f;
+            switch (l.Item)
+            {
+                case "backpack": B(m, 0, 1.15f, .2f, .4f, .46f, .18f, l.Prop); B(m, 0, 1.28f, .3f, .3f, .1f, .04f, _r.ink); break;
+                case "briefcase": B(m, .33f, .62f, 0, .09f, .3f, .42f, l.Prop); B(m, .33f, .8f, 0, .04f, .06f, .14f, _r.ink); break;
+                case "coffee": m.Cylinder(new Vector3(.33f, .93f, -.06f), .05f, .13f, White, 8, 1.2f); B(m, .33f, .93f, -.06f, .11f, .04f, .11f, l.Prop); break;
+                case "surfboard": m.Ellipsoid(new Vector3(.45f, 1f, 0), new Vector3(.08f, 1.95f, .5f), l.Prop); B(m, .45f, 1f, 0, .09f, 1.6f, .05f, _r.red); width = 1f; break;
+                case "stick": B(m, .38f, .44f, -.06f, .04f, .82f, .04f, l.Prop); B(m, .35f, .84f, -.06f, .1f, .04f, .04f, l.Prop); break;
+                case "bags": B(m, -.37f, .6f, 0, .24f, .3f, .12f, l.Prop); B(m, .37f, .6f, 0, .22f, .28f, .12f, White); B(m, .37f, .78f, 0, .12f, .06f, .02f, _r.ink); width = .9f; break;
+                case "camera": B(m, 0, 1.28f, -.16f, .18f, .12f, .08f, l.Prop); m.Cylinder(new Vector3(0, 1.28f, -.22f), .04f, .06f, Silver, 8, 1, Quaternion.Euler(90, 0, 0)); break;
+                case "headphones": B(m, 0, 1.73f, 0, .3f, .05f, .06f, _r.ink); B(m, -.14f, 1.57f, 0, .06f, .12f, .1f, l.Prop); B(m, .14f, 1.57f, 0, .06f, .12f, .1f, l.Prop); break;
+                case "skateboard": B(m, .4f, .95f, 0, .05f, .2f, .78f, l.Prop); B(m, .43f, .95f, .25f, .04f, .1f, .08f, _r.ink); B(m, .43f, .95f, -.25f, .04f, .1f, .08f, _r.ink); break;
+                case "balloon": m.Beam(new Vector3(.31f, .85f, 0), new Vector3(.42f, 2.1f, 0), .015f, _r.ink); m.Ellipsoid(new Vector3(.42f, 2.36f, 0), new Vector3(.4f, .5f, .4f), l.Prop); break;
+                case "delivery": B(m, 0, 1.25f, .29f, .52f, .52f, .44f, l.Prop); B(m, 0, 1.25f, .52f, .3f, .14f, .02f, White); break;
+                case "dog":
+                    Color fur = l.Prop;
+                    B(m, .6f, .3f, -.25f, .22f, .2f, .52f, fur); B(m, .6f, .44f, -.55f, .18f, .18f, .2f, fur); B(m, .6f, .4f, -.66f, .08f, .07f, .06f, _r.ink);
+                    for (int x = -1; x <= 1; x += 2) for (int z = -1; z <= 1; z += 2) B(m, .6f + x * .07f, .1f, -.25f + z * .18f, .06f, .2f, .06f, fur);
+                    B(m, .6f, .4f, .04f, .05f, .05f, .16f, fur);
+                    m.Beam(new Vector3(.31f, .82f, 0), new Vector3(.6f, .45f, -.48f), .015f, _r.red);
+                    width = 1f; break;
+            }
+            k.Body.Add(m, Vector3.zero, Quaternion.identity, Vector3.one * l.Scale);
+            float h = 1.8f * l.Scale;
+            return Save(id, k, new Vector3(width > .7f ? (width - .62f) * .5f : 0f, h / 2, 0), new Vector3(width, h, .45f), r =>
             {
                 MakeObstacle(r, ObstacleKind.Person, false);
                 var ped = r.AddComponent<Pedestrian>();
                 ped.walkSpeed = walk; ped.crosses = crosses; ped.art = r.transform.Find("Art");
             });
+        }
+
+        // The rider thrown off in a crash, standing pose (feet at the pivot, facing +Z like the riding model).
+        static void CrashRider()
+        {
+            var k = new Kit();
+            ComicMesh m = k.Body;
+            Color pants = new Color(.38f, .42f, .27f);
+            for (int s = -1; s <= 1; s += 2)
+            {
+                B(m, s * .12f, .07f, .03f, .18f, .14f, .34f, _r.cream);
+                B(m, s * .12f, .52f, 0, .22f, .8f, .25f, pants);
+                B(m, s * .37f, 1.28f, 0, .16f, .56f, .18f, _r.ink);
+                m.Ellipsoid(new Vector3(s * .37f, .98f, 0), Vector3.one * .17f, _r.cream);
+            }
+            B(m, 0, 1.0f, 0, .5f, .17f, .3f, _r.cream);
+            B(m, 0, 1.33f, 0, .54f, .6f, .32f, _r.ink);
+            m.Cylinder(new Vector3(0, 1.66f, 0), .2f, .13f, _r.red);
+            m.Ellipsoid(new Vector3(0, 1.92f, 0), new Vector3(.49f, .49f, .52f), _r.cream);
+            B(m, 0, 1.88f, .26f, .28f, .06f, .03f, _r.ink);
+            Save("CrashRider", k, Vector3.zero, Vector3.zero, r => r.AddComponent<CrashTumble>(), decor: true, outline: true);
+        }
+
+        // The scooter on its own (the riding model is one mesh), front at +Z.
+        static void CrashScooter()
+        {
+            var k = new Kit();
+            ComicMesh m = k.Body;
+            B(m, 0, .22f, 0, .34f, .12f, 1.2f, _r.ink);
+            B(m, 0, .29f, 0, .28f, .04f, 1f, _r.red);
+            for (int i = -1; i <= 1; i += 2) m.Cylinder(new Vector3(0, .18f, i * .52f), .18f, .12f, _r.ink, 12, 1, Quaternion.Euler(0, 0, 90));
+            m.Beam(new Vector3(0, .3f, .48f), new Vector3(0, 1.22f, .65f), .055f, _r.cream);
+            B(m, 0, 1.23f, .65f, .85f, .065f, .065f, _r.ink);
+            Save("CrashScooter", k, Vector3.zero, Vector3.zero, r => r.AddComponent<CrashTumble>(), decor: true, outline: true);
         }
 
         static GameObject Zebra()

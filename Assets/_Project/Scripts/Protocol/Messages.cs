@@ -20,12 +20,14 @@ namespace CityScooter.Protocol
         public const string Echo = "echo";
         public const string Punch = "pu";
         public const string Bell = "bl";
+        public const string Toon = "toon";
 
         // game → micro:bit
         public const string Go = "go";
         public const string Crash = "crash";
         public const string Gift = "gift";
         public const string Ko = "ko";
+        public const string Boing = "boing";
         public const string WarnPrefix = "warn:";
         public const string WarnCar = "warn:car";
         public const string WarnPerson = "warn:ped";

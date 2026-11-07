@@ -128,7 +128,8 @@ namespace CityScooter.Tests
                 dressing.ApplyLayout(7301,i);Physics.SyncTransforms();
                 Assert.AreSame(dressing.layouts[dressing.CurrentLayout],dressing.surface.sharedMesh);
                 var expected=dressing.collisionLayouts[dressing.CurrentLayout].obstacles;
-                var active=dressing.GetComponentsInChildren<Obstacle>();Assert.AreEqual(expected.Length,active.Length);
+                // Only the dressing's own sidewalk props: street-life people (v0.2) are chunk children too.
+                var active=dressing.GetComponentsInChildren<Obstacle>().Where(o=>o.name.StartsWith("SidewalkObstacle_")).ToArray();Assert.AreEqual(expected.Length,active.Length);
                 foreach(var obstacle in active)
                 {
                     var box=obstacle.GetComponent<BoxCollider>();Assert.IsNotNull(box);

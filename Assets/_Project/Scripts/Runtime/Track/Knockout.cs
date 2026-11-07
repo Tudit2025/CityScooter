@@ -13,8 +13,13 @@ namespace CityScooter.Track
 
         void Awake() { _colliders = GetComponentsInChildren<Collider>(true); }
 
-        // The pool re-activates the object later: make it solid again.
-        void OnDisable() { _left = 0f; SetColliders(true); }
+        // The pool re-activates the object later: make it solid again (and let a pedestrian walk again).
+        void OnDisable()
+        {
+            _left = 0f;
+            SetColliders(true);
+            if (TryGetComponent(out Pedestrian ped)) ped.enabled = true;
+        }
 
         public void Launch(Vector3 velocity)
         {
@@ -23,6 +28,7 @@ namespace CityScooter.Track
             _spin = new Vector3(Random.Range(-720f, 720f), Random.Range(-540f, 540f), Random.Range(-720f, 720f));
             _left = 0.9f;
             SetColliders(false);
+            if (TryGetComponent(out Pedestrian ped)) { ped.enabled = false; _left = 1.4f; } // people fly higher and longer
             Mover.MovedThisFrame = true;
         }
 

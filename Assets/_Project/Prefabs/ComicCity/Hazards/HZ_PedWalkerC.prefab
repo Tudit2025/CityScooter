@@ -266,7 +266,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9295c6c30f06a34a9339d3a9125edab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.Pedestrian
-  walkSpeed: -1.4
+  walkSpeed: -1.6
   crosses: 0
   crossSpeed: 1.7
   crossLeadSeconds: 2.4
