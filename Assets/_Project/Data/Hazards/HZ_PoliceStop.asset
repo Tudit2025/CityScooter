@@ -33,6 +33,11 @@ MonoBehaviour:
     x: -2.5
     z: 30
     yaw: 0
+  - prefab: {fileID: 1648136005807590029, guid: abe4aab41d010b049b71443ccea884de, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -1.05
+    z: 31.5
+    yaw: 0
   length: 40
   minLevel: 0
   weight: 0.9

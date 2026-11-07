@@ -18,6 +18,11 @@ MonoBehaviour:
     x: -2.6
     z: 20
     yaw: 0
+  - prefab: {fileID: 1648136005807590029, guid: abe4aab41d010b049b71443ccea884de, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.4
+    z: 21
+    yaw: 0
   - prefab: {fileID: 1408607636457091738, guid: 5fce168650bf26e488993aa2e6d966bf, type: 3}
     mirrorPrefab: {fileID: 0}
     x: 2

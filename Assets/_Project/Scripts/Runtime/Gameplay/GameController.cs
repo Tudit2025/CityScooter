@@ -52,6 +52,8 @@ namespace CityScooter.Gameplay
         /// <summary>Tests and scripted moments.</summary>
         public void GrantGifts(int count) => Gifts += Mathf.Max(0, count);
         public float StateTime => _stateTime;
+        /// <summary>The big title of the last end-of-ride screen ("CRASH!", "SORRY!", "ARRESTED!", "BUSTED!").</summary>
+        public string EndTitle { get; private set; }
 
         float _stateTime;
         int _giftPoints;
@@ -99,6 +101,10 @@ namespace CityScooter.Gameplay
             var actions = GetComponent<RiderActions>();
             if (actions == null && rider != null) actions = gameObject.AddComponent<RiderActions>();
             if (actions != null) { if (actions.rider == null) actions.rider = rider; if (actions.theme == null && track != null) actions.theme = track.theme; }
+            // WA police (wanted level, chase, helicopter), also without scene changes.
+            var police = GetComponent<PoliceChase>();
+            if (police == null && rider != null) police = gameObject.AddComponent<PoliceChase>();
+            if (police != null) { if (police.rider == null) police.rider = rider; if (police.theme == null && track != null) police.theme = track.theme; }
             EnterReady();
             Camera cam = Camera.main;
             if (cam != null && rider != null)
@@ -152,18 +158,42 @@ namespace CityScooter.Gameplay
         void OnHitObstacle(Obstacle obstacle)
         {
             if (State != RunState.Running) return;
+            RiderActions actions = GetComponent<RiderActions>();
+            Finish(actions != null ? actions.EndTitle(obstacle) : "CRASH!", true);
+        }
+
+        /// <summary>
+        /// End the ride without hitting anything (WA police: "ARRESTED!", a paint pellet: "BUSTED!"). With crash the
+        /// usual crash happens too (crash sound, "crash" to the boards); without it the ride just stops.
+        /// </summary>
+        public void EndRun(string title, bool crash = true)
+        {
+            if (State != RunState.Running) return;
+            Finish(title, crash);
+        }
+
+        void Finish(string title, bool crash)
+        {
             rider.Stop();
             SetState(RunState.Crashed);
-            if (crashEffect != null) Destroy(Instantiate(crashEffect, rider.transform.position, Quaternion.identity), 4f);
+            if (crash && crashEffect != null) Destroy(Instantiate(crashEffect, rider.transform.position, Quaternion.identity), 4f);
             int score = Score;
             if (score > Best)
             {
                 Best = score;
                 try { PlayerPrefs.SetInt(BestKey, Best); PlayerPrefs.Save(); } catch (System.Exception) { /* storage blocked */ }
             }
-            GameEvents.RaiseCrashed();
+            EndTitle = title;
+            if (crash) GameEvents.RaiseCrashed();
+            hud?.ShowCrashed(score, Best, title, EndNote());
+        }
+
+        string EndNote()
+        {
             RiderActions actions = GetComponent<RiderActions>();
-            hud?.ShowCrashed(score, Best, actions != null ? actions.EndTitle(obstacle) : "CRASH!", actions != null ? actions.EndNote() : null);
+            PoliceChase police = GetComponent<PoliceChase>();
+            string a = actions != null ? actions.EndNote() : null, p = police != null ? police.EndNote() : null;
+            return string.IsNullOrEmpty(a) ? p : string.IsNullOrEmpty(p) ? a : a + "  ·  " + p;
         }
 
         void OnGotGift(Gift gift)

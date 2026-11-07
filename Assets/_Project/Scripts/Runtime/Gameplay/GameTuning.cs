@@ -108,6 +108,65 @@ namespace CityScooter.Gameplay
         [Range(0f, 0.5f)] public float turnDrift = 0.15f;
         [Range(0, 9)] public int turnDriftMinLevel = 3;
 
+        [Header("WA police: wanted level and chase (attacking police adds a star)")]
+        [Range(1, 5)] public int wantedMax = 5;
+        [Tooltip("One punch or bump on the police counts once within this many seconds.")]
+        public float policeAttackCooldown = 0.6f;
+        [Tooltip("No new attack on the police for this long: lose a star.")]
+        public float wantedDecaySeconds = 30f;
+        [Tooltip("The police car gone, or at least escapeDistance metres behind, for escapeSeconds in total: lose a star.")]
+        public float escapeDistance = 120f;
+        public float escapeSeconds = 12f;
+        [Tooltip("LOST THEM! bonus: this many points per star of the highest wanted level of the chase.")]
+        public int lostBonusPerStar = 100;
+        [Tooltip("Seconds from the first star until the police car turns up, and how far behind the rider it appears (m).")]
+        public float copFirstDelay = 1.5f;
+        public float copSpawnBehind = 80f;
+        [Tooltip("How much faster than the rider the police car closes in at 1 star, plus this much for every extra star (m/s).")]
+        public float copClosingSpeed = 3f;
+        public float copClosingPerStar = 1.2f;
+        [Tooltip("Sideways speed of the police car (m/s), plus this much per extra star; never above 75% of lateralMaxSpeed, so a sidestep always works.")]
+        public float copLateralSpeed = 3f;
+        public float copLateralPerStar = 0.4f;
+        [Tooltip("Pulling alongside: metres to the side of the rider.")]
+        public float copAlongsideOffset = 2.4f;
+        [Tooltip("Ramming: the police car stops steering this many seconds before it would hit (the warning), then lunges this much faster (m/s).")]
+        public float copLungeWarning = 1f;
+        public float copLungeBoost = 4f;
+        [Tooltip("After a spin-out the next police car comes this many seconds later, this much sooner per extra star (at least 4 s).")]
+        public float copRespawnSeconds = 12.5f;
+        public float copRespawnPerStar = 2f;
+        [Tooltip("ARRESTED: slower than pullOverSpeed (m/s), or boxed in alongside, for this many seconds while chased.")]
+        public float arrestSeconds = 1.5f;
+        public float pullOverSpeed = 3f;
+        [Tooltip("Boxed in: the police car within alongsideZ metres front/back and alongsideX (min, max) metres to the side.")]
+        public float alongsideZ = 2.5f;
+        public Vector2 alongsideX = new Vector2(1.2f, 3.6f);
+
+        [Header("WA police helicopter: paint pellets and the red dot")]
+        [Range(1, 5)] public int heliMinStars = 3;
+        [Range(1, 5)] public int sniperMinStars = 4;
+        [Tooltip("Where it hovers: metres ahead of and above the rider (high enough to stay clear of the far road, where obstacles appear).")]
+        public float heliAhead = 16f;
+        public float heliHeight = 9f;
+        [Tooltip("Seconds after the helicopter arrives before its first paint pellet (the red dot comes 1.5 s later).")]
+        public float heliFirstShotSeconds = 2f;
+        [Tooltip("Seconds from the target ring appearing to the pellet landing (never below 0.8 s), and the ring's radius (m).")]
+        public float pelletWarnSeconds = 1.1f;
+        public float pelletRadius = 1.3f;
+        [Tooltip("Seconds between pellets at heliMinStars, this much less per extra star (at least 1.6 s).")]
+        public float pelletInterval = 3.6f;
+        public float pelletIntervalPerStar = 0.6f;
+        [Range(1, 2)] public int pelletsAtFiveStars = 2;
+        [Tooltip("The red dot follows the rider this long, then locks (blinks) for sniperLockSeconds before the shot.")]
+        public float sniperTrackSeconds = 2.4f;
+        public float sniperLockSeconds = 0.7f;
+        public float sniperLockAtFiveStars = 0.55f;
+        public float sniperRadius = 0.55f;
+        [Tooltip("How fast the red dot slides sideways after the rider (m/s), slower than the rider; seconds between two shots.")]
+        public float sniperFollowSpeed = 4f;
+        public float sniperInterval = 5f;
+
         [Header("Score / flow")]
         public float pointsPerMetre = 1f;
         [Tooltip("Seconds after a crash before a press can start the next run.")]

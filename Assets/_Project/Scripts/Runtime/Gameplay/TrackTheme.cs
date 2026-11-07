@@ -49,6 +49,27 @@ namespace CityScooter.Gameplay
         public GameObject crashRider;
         public GameObject crashScooter;
 
+        [Header("WA police: wanted level, chase, helicopter (optional; PoliceChase)")]
+        [Tooltip("Drives after the rider while the wanted level is 1 or more (the parked police car prefab is fine).")]
+        public GameObject policeCar;
+        [Tooltip("A police officer (Obstacle.police, kind Person) for scripted moments and tests; patterns place their own.")]
+        public GameObject policeOfficer;
+        [Tooltip("The cap that flies off when an officer is punched with cartoon mode off.")]
+        public GameObject policeCap;
+        [Tooltip("The police helicopter (decoration only: no colliders).")]
+        public GameObject policeHeli;
+        [Tooltip("What the helicopter drops: one prefab, swap it to change the look (comic paint pellet).")]
+        public GameObject paintPellet;
+        [Tooltip("The paint left on the road (and on the rider when it hits).")]
+        public GameObject paintSplat;
+        [Tooltip("The ring on the road where a pellet will land; its Art/Pulse child closes in until it lands.")]
+        public GameObject targetRing;
+        [Tooltip("The sniper's red dot on the road; its Art/Blink child blinks when it locks.")]
+        public GameObject sniperDot;
+        public GameObject oiPopup;
+        public GameObject splatPopup;
+        public GameObject screechPopup;
+
         public bool HasChunks => chunks != null && chunks.Length > 0;
     }
 }

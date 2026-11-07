@@ -72,6 +72,7 @@ MonoBehaviour:
   canJumpOver: 0
   spansRoad: 0
   punchable: 0
+  police: 0
   spawnWeight: 1
 --- !u!114 &7207532613347683628
 MonoBehaviour:

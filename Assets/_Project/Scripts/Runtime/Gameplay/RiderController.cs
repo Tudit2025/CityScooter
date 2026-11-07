@@ -56,6 +56,11 @@ namespace CityScooter.Gameplay
             return true;
         }
 
+        /// <summary>WA police: while chased, braking may slow right down to this (0 = stop, i.e. pull over); below 0 uses brakeMinSpeed.</summary>
+        public float BrakeFloor { get; set; } = -1f;
+        /// <summary>WA police: brake as if B were held ("sur", surrender).</summary>
+        public bool HoldBrake { get; set; }
+
         /// <summary>Lose some speed (cartoon bumps).</summary>
         public void Bump(float keep) => Speed = Mathf.Max(T.brakeMinSpeed, Speed * Mathf.Clamp01(keep));
 
@@ -88,6 +93,8 @@ namespace CityScooter.Gameplay
             _twist = 0f;
             _boostUntil = -1f;
             _boostReadyAt = 0f;
+            BrakeFloor = -1f;
+            HoldBrake = false;
             if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(start.z) : 0f, 0f, 0f);
             SetSpeedLevel(0);
         }
@@ -116,8 +123,8 @@ namespace CityScooter.Gameplay
             // Forward speed: ramps with distance, brake pulls it down, then it recovers.
             float target = Mathf.Lerp(T.startSpeed, CurrentMaxSpeed, T.Difficulty01(Distance));
             bool boosting = Time.time < _boostUntil;
-            Braking = input.Brake;
-            if (Braking) Speed = Mathf.Max(T.brakeMinSpeed, Speed - T.brakeDeceleration * dt);
+            Braking = input.Brake || HoldBrake;
+            if (Braking) Speed = Mathf.Max(BrakeFloor >= 0f ? BrakeFloor : T.brakeMinSpeed, Speed - T.brakeDeceleration * dt);
             else if (boosting) Speed = Mathf.MoveTowards(Speed, target * T.boostFactor, T.acceleration * 4f * dt);
             else Speed = Mathf.MoveTowards(Speed, target, T.acceleration * (Speed > target ? 2f : 1f) * dt);
 

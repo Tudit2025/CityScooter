@@ -71,6 +71,7 @@ MonoBehaviour:
   canJumpOver: 0
   spansRoad: 0
   punchable: 0
+  police: 0
   spawnWeight: 1
 --- !u!1 &7004063706269253622
 GameObject:

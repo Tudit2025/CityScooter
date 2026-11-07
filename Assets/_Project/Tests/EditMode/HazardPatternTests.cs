@@ -115,6 +115,40 @@ namespace CityScooter.Tests
             AssertBends(Theme().crashScooter);
         }
 
+        [Test]
+        public void PoliceKit_IsMarked_StandsByTheCars_AndFollowsTheCityBend()
+        {
+            TrackTheme t = Theme();
+            GameObject[] kit = { t.policeCar, t.policeOfficer, t.policeCap, t.policeHeli, t.paintPellet, t.paintSplat, t.targetRing, t.sniperDot, t.oiPopup, t.splatPopup, t.screechPopup };
+            foreach (GameObject g in kit)
+            {
+                Assert.NotNull(g, "theme police slot is empty (run CityScooter/Hazards/Build hazard kit)");
+                AssertBends(g);
+            }
+            var car = t.policeCar.GetComponent<Obstacle>();
+            Assert.IsTrue(car.police, "the police car is marked as police");
+            Assert.AreEqual(ObstacleKind.Vehicle, car.kind);
+            var officer = t.policeOfficer.GetComponent<Obstacle>();
+            Assert.IsTrue(officer.police);
+            Assert.AreEqual(ObstacleKind.Person, officer.kind);
+            Assert.IsFalse(officer.punchable, "officers never get punched out of the way (cartoon mode only, and that costs a star)");
+            Assert.NotNull(t.policeOfficer.GetComponent<PoliceOfficer>().cap, "the cap is its own piece so a punch can knock it off");
+            // Decoration never blocks the road.
+            foreach (GameObject g in new[] { t.policeCap, t.policeHeli, t.paintPellet, t.paintSplat, t.targetRing, t.sniperDot })
+                Assert.IsEmpty(g.GetComponentsInChildren<Collider>(true), g.name + " must have no colliders");
+            Assert.NotNull(t.policeHeli.transform.Find("Art/Rotor"), "spinning main rotor");
+            Assert.NotNull(t.policeHeli.transform.Find("Art/TailRotor"));
+            Assert.NotNull(t.targetRing.transform.Find("Art/Pulse"), "the closing ring shows when the pellet lands");
+            Assert.NotNull(t.sniperDot.transform.Find("Art/Blink"));
+            foreach (string name in new[] { "HZ_PoliceStop", "HZ_PoliceAndOncoming" })
+            {
+                HazardPattern p = System.Array.Find(t.hazards, h => h != null && h.name == name);
+                Assert.NotNull(p, name);
+                Assert.IsTrue(System.Array.Exists(p.entries, e => e.prefab == t.policeOfficer), name + ": an officer stands by the police car");
+                Assert.IsTrue(System.Array.Exists(p.entries, e => e.prefab == t.policeCar), name);
+            }
+        }
+
         static void AssertBends(GameObject prefab)
         {
             var renderers = prefab.GetComponentsInChildren<Renderer>(true);
