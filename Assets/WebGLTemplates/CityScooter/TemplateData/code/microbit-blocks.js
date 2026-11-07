@@ -26,6 +26,7 @@
   const COLOURS = {
     events: "#30738c", input: "#7a5f96", led: "#2f7d7d", sound: "#c4532f", basic: "#5a6b80",
     logic: "#4a7f3a", loops: "#a3542a", math: "#8a6a1f", text: "#7d6e58", variables: "#9b4f8c", game: "#e81f26",
+    radio: "#b8407a",
   };
 
   const IMAGES = ["HAPPY", "SAD", "HEART", "SMILE", "CONFUSED", "ANGRY", "SURPRISED", "ASLEEP", "YES", "NO",
@@ -50,6 +51,22 @@
         { type: "field_dropdown", name: "TIMES", options: [["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"]] },
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "mb_events", tooltip: "Runs on the 2nd (3rd, ...) quick press in a row: each press less than 0.4 s after the one before. Look at the Python: it counts presses and remembers when the last one was (running_time)." },
+    { type: "mb_broadcast", message0: "broadcast %1", args0: [{ type: "field_input", name: "NAME", text: "message1" }],
+      previousStatement: null, nextStatement: null, style: "mb_events",
+      tooltip: "Send a message to your own program: every \"when I receive\" block with the same name runs (later in this loop). Like broadcast in Scratch." },
+    { type: "mb_on_receive", message0: "when I receive %1 %2 %3",
+      args0: [{ type: "field_input", name: "NAME", text: "message1" }, { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "mb_events", tooltip: "Runs when your program broadcasts this message. Several of these can listen to the same message." },
+    { type: "mb_radio_group", message0: "radio: set group %1", args0: [{ type: "input_value", name: "GROUP", check: "Number" }],
+      previousStatement: null, nextStatement: null, style: "mb_radio",
+      tooltip: "micro:bits only hear each other in the same group (0-255). Put it in \"on start\". Pick a group number that no other team uses." },
+    { type: "mb_radio_send", message0: "radio: send %1", args0: [{ type: "input_value", name: "VALUE" }],
+      previousStatement: null, nextStatement: null, style: "mb_radio",
+      tooltip: "Broadcast a short text by radio to every micro:bit in your group (it is not sent to the game). Python: radio.send(...)" },
+    { type: "mb_on_radio", message0: "when radio receives a message %1 %2", args0: [{ type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "mb_radio", tooltip: "Runs when another micro:bit in your group sends something. Use \"radio message\" to see what it was." },
+    { type: "mb_radio_msg", message0: "radio message", output: "String", style: "mb_radio",
+      tooltip: "The last text received by radio (empty before the first one)." },
     { type: "mb_on_hold", message0: "when button %1 is held down for %2 seconds %3 %4",
       args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }, { type: "field_dropdown", name: "MS", options: HOLD_TIMES },
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
@@ -131,6 +148,22 @@
     ctx.flags["presses_" + btn] = true;
     g.definitions_["presses_" + btn] = "presses_" + btn + " = 0  # quick presses of button " + btn.toUpperCase() + " in a row\nlast_press_" + btn + " = -1000  # when it was last pressed (ms)";
   };
+  // Scratch-style broadcasts inside one program: a list of messages handled at the end of each loop.
+  const pyString = (s) => '"' + String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+  const useBroadcasts = (g) => { ctx.flags.broadcasts = true; g.definitions_.broadcasts = "broadcasts = []  # messages your blocks broadcast, handled at the end of each loop"; };
+  G.mb_broadcast = (b, g) => { useBroadcasts(g); return "broadcasts.append(" + pyString(b.getFieldValue("NAME")) + ")\n"; };
+  G.mb_on_receive = (b, g) => { useBroadcasts(g); addSection("receive:" + b.getFieldValue("NAME"), body(b, "DO")); return ""; };
+  // Radio between micro:bits (V1 and V2).
+  const useRadio = (g) => {
+    ctx.flags.radio = true;
+    g.definitions_.import_radio = "import radio";
+    g.definitions_.radio = "radio.on()  # micro:bits in the same group hear each other\nradio.config(group=1)\nradio_msg = \"\"  # the last text received by radio";
+  };
+  G.mb_radio_group = (b, g) => { useRadio(g); return "radio.config(group=int(" + (g.valueToCode(b, "GROUP", Order.NONE) || "1") + "))\n"; };
+  G.mb_radio_send = (b, g) => { useRadio(g); return "radio.send(str(" + (g.valueToCode(b, "VALUE", Order.NONE) || '""') + "))\n"; };
+  G.mb_on_radio = (b, g) => { useRadio(g); addSection("radio", body(b, "DO")); return ""; };
+  G.mb_radio_msg = (b, g) => { useRadio(g); return ["radio_msg", Order.ATOMIC]; };
+
   // Holding a button: tracked in the main loop (see "held" in generate()).
   const trackHold = (btn, g) => {
     ctx.flags["held_" + btn] = true;
@@ -179,7 +212,7 @@
   // Student variables must not reuse these names. Blockly builds its name table on the first init(), so the
   // words are added now and in registerPack(), never later.
   gen.addReservedWords("VERSION,SOUND_PIN,microbit,microphone,display,button_a,button_b,accelerometer,pin0,pin1,pin2,pin_logo,Image,music," +
-    "uart,sleep,running_time,random,speaker,audio,Sound");
+    "uart,sleep,running_time,random,speaker,audio,Sound,radio,radio_msg,got_radio,broadcasts,got,handled");
 
   // ------------------------------------------------------------------ packs
   let pack = null;
@@ -258,7 +291,19 @@
     for (const [, g] of GESTURES) {
       if (s("gesture:" + g)) loopParts.push('    if accelerometer.was_gesture("' + g + '"):\n' + indent(s("gesture:" + g), 4));
     }
+    if (c.flags.radio) {
+      loopParts.push("    # radio from other micro:bits\n    got_radio = radio.receive()\n    if got_radio:\n        radio_msg = got_radio\n"
+        + indent(s("radio"), 4));
+    }
     if (pack && pack.loopTail) loopParts.push(indent(pack.loopTail(c, s), 4));
+    if (c.flags.broadcasts) {
+      const names = Object.keys(c.sections).filter((k) => k.startsWith("receive:")).map((k) => k.slice(8));
+      let code = "    # broadcasts: run the \"when I receive\" blocks (at most 20 a loop, so two blocks cannot ping-pong forever)\n"
+        + "    handled = 0\n    while broadcasts and handled < 20:\n        handled += 1\n        got = broadcasts.pop(0)\n";
+      names.forEach((name, i) => { code += "        " + (i ? "elif" : "if") + " got == " + pyString(name) + ":\n" + indent(s("receive:" + name), 8); });
+      code += "    del broadcasts[:]  # anything left after 20\n";
+      loopParts.push(code);
+    }
     loopParts.push("    sleep(50)\n");
     L.push(loopParts.join("").replace(/\n$/, ""));
     gen.finish(""); // resets the generator's name database and definitions
@@ -272,7 +317,7 @@
       logic_blocks: style(COLOURS.logic), loop_blocks: style(COLOURS.loops), math_blocks: style(COLOURS.math),
       text_blocks: style(COLOURS.text), variable_blocks: style(COLOURS.variables), variable_dynamic_blocks: style(COLOURS.variables),
       mb_events: style(COLOURS.events), mb_input: style(COLOURS.input), mb_led: style(COLOURS.led), mb_sound: style(COLOURS.sound),
-      mb_basic: style(COLOURS.basic), game_blocks: style(pack && pack.colour ? pack.colour : COLOURS.game),
+      mb_basic: style(COLOURS.basic), mb_radio: style(COLOURS.radio), game_blocks: style(pack && pack.colour ? pack.colour : COLOURS.game),
     };
     const categoryStyles = {};
     for (const k of Object.keys(COLOURS)) categoryStyles[k + "_category"] = { colour: COLOURS[k] };
@@ -295,7 +340,8 @@
     const cats = [];
     if (pack && pack.toolbox) cats.push(...pack.toolbox(blk, num));
     cats.push(
-      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button"), blk("mb_on_presses"), blk("mb_on_hold"), blk("mb_on_release"), blk("mb_on_gesture")] },
+      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button"), blk("mb_on_presses"), blk("mb_on_hold"), blk("mb_on_release"), blk("mb_on_gesture"),
+        blk("mb_broadcast"), blk("mb_on_receive")] },
       { kind: "category", name: "Input", categorystyle: "input_category", contents: [
         blk("mb_tilt"), blk("mb_button_pressed"), blk("mb_presses"), blk("mb_held"), blk("mb_pin_touched"), blk("mb_logo_touched"), blk("mb_sound_level"),
         blk("mb_version"), blk("mb_running_time")] },
@@ -303,6 +349,9 @@
         blk("mb_show_icon"), blk("mb_show", { inputs: { VALUE: num(5) } }), blk("mb_clear"),
         blk("mb_plot", { inputs: { X: num(0), Y: num(0), B: num(9) } })] },
       { kind: "category", name: "Sound", categorystyle: "sound_category", contents: [blk("mb_play"), blk("mb_stop_sound")] },
+      { kind: "category", name: "Radio", categorystyle: "radio_category", contents: [
+        blk("mb_radio_group", { inputs: { GROUP: num(1) } }), blk("mb_radio_send", { inputs: { VALUE: { shadow: { type: "text", fields: { TEXT: "hello" } } } } }),
+        blk("mb_on_radio"), blk("mb_radio_msg")] },
       { kind: "category", name: "Basic", categorystyle: "basic_category", contents: [
         blk("mb_pause", { inputs: { MS: num(100) } }), blk("mb_print", { inputs: { VALUE: { shadow: { type: "text", fields: { TEXT: "hello" } } } } })] },
       { kind: "category", name: "Logic", categorystyle: "logic_category", contents: [

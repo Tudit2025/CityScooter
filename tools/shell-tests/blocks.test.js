@@ -69,7 +69,11 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("mb_on_button", { x: 500, y: 120, fields: { BTN: "a" }, inputs: { DO: chain(B("cs_jump")) } }),
   B("cs_on_message", { x: 500, y: 220, fields: { MSG: "crash" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "SAD" } }),
     B("mb_play", { fields: { TUNE: "WAWAWAWAA" } }), B("mb_print", { inputs: { VALUE: t("got crash") } })) } }),
-  B("cs_on_message", { x: 500, y: 380, fields: { MSG: "gift" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("got gift") } })) } }),
+  B("cs_on_message", { x: 500, y: 380, fields: { MSG: "gift" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("got gift") } }), B("mb_broadcast", { fields: { NAME: "party" } })) } }),
+  // broadcast (11/8): two listeners for one message, and radio between boards
+  B("mb_on_receive", { x: 2100, y: 10, fields: { NAME: "party" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("party time") } })) } }),
+  B("mb_on_receive", { x: 2100, y: 120, fields: { NAME: "party" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("second listener") } }), B("mb_radio_send", { inputs: { VALUE: { shadow: { type: "text", fields: { TEXT: "gift!" } } } } })) } }),
+  B("mb_on_radio", { x: 2100, y: 240, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("mb_radio_msg")) } })) } }),
   B("cs_on_message", { x: 500, y: 460, fields: { MSG: "go" }, inputs: { DO: chain(B("mb_clear")) } }),
   // protocol v1: punch, bell, gesture, ko / warn: / turn:
   B("mb_on_gesture", { x: 900, y: 10, fields: { GESTURE: "shake" }, inputs: { DO: chain(B("cs_punch")) } }),
@@ -163,6 +167,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
     'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"',
     'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:',
+    'broadcasts.append("party")', 'if got == "party":', 'import radio', 'radio.config(group=1)', "radio.send(str('gift!'))", 'got_radio = radio.receive()', 'del broadcasts[:]',
     'held_since_b = -1', 'if held_b >= 1000 and held_done_b < 1000:', 'elif held_since_b >= 0:',
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
     'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:']) {
@@ -214,6 +219,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": 2nd quick press of A boosts (bo)", lines.includes("sim|bo"), lines.filter((l) => !/st:/.test(l)).slice(-10).join(" "));
     check(label + ": holding B for 1 s runs the hold block once", log.filter((x) => x.includes("held B 1s")).length === 1, log.filter((x) => /held B|released/.test(x)).slice(-4).join(" | "));
     check(label + ": letting go of B runs the release block with the hold time", log.some((x) => /released after (1[1-9]\d\d|[2-9]\d\d\d)/.test(x)), log.filter((x) => /released/.test(x)).slice(-2).join(" | "));
+    check(label + ": gift broadcasts party, both listeners run", log.some((x) => x.includes("party time")) && log.some((x) => x.includes("second listener")), log.filter((x) => /party|listener/.test(x)).slice(-3).join(" | "));
     check(label + ": 3rd quick press runs the 3-times block", log.some((x) => x.includes("presses 3")), log.filter((x) => /presses/.test(x)).slice(-3).join(" | "));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));
     return lines;
