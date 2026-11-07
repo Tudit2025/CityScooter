@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CityScooter.Devices;
 using CityScooter.Game;
 using CityScooter.Gameplay;
 using UnityEngine;
@@ -124,6 +125,7 @@ namespace CityScooter.Audio
             if(!loadPlayerPreferences)return;
             StorePreferences();try { PlayerPrefs.Save(); } catch(Exception) { /* Session settings still work. */ }
         }
+        static bool Loaded(AudioClip clip)=>clip!=null&&clip.loadState==AudioDataLoadState.Loaded;
         public bool PlayCue(string id,float gain=1,Vector3? position=null,Vector3 velocity=default)
         {
             if(!initialized||!isActiveAndEnabled||suspended||!cues.TryGetValue(id,out var cue)||cue.loop)return false;
@@ -140,7 +142,10 @@ namespace CityScooter.Audio
             slot.source.clip=cue.clip;slot.source.pitch=Range(new Vector2(cue.pitchMin,cue.pitchMax));
             slot.source.priority=cue.priority;slot.source.spatialBlend=position.HasValue?cue.spatialBlend:0;
             slot.source.transform.position=position??(rider!=null?rider.transform.position:transform.position);
-            slot.until=now+cue.clip.length/slot.source.pitch;cooldowns[id]=now+cue.cooldown;
+            // Web builds decode audio asynchronously: length is 0 (with a warning) until the clip has loaded, which would
+            // mark this voice free at once and let the next cue cut it off. Assume one second until then.
+            float length=Loaded(cue.clip)?cue.clip.length:1f;
+            slot.until=now+length/slot.source.pitch;cooldowns[id]=now+cue.cooldown;
             LastCueId=id;PlayedCueCount++;engaged=true;ApplyVolumes();slot.source.Play();return true;
         }
         void Variant(string prefix,int count,float gain=1,Vector3? position=null,Vector3 velocity=default)
@@ -154,7 +159,8 @@ namespace CityScooter.Audio
             if(!initialized)return;
             Engage();everRun=true;wasAirborne=false;airTime=0;duckUntil=0;cooldowns.Clear();
             foreach(var v in voices){v.source.Stop();v.cue=null;}
-            if(loops.TryGetValue("MUS_HotRoadway_160_Loop",out var music)){music.source.Stop();music.source.time=0;music.source.pitch=1;}
+            // Stop() rewinds to the start. (Setting time=0 here warned in Web builds while the music was still decoding.)
+            if(loops.TryGetValue("MUS_HotRoadway_160_Loop",out var music)){music.source.Stop();music.source.pitch=1;}
             nextHorn=Time.unscaledTime+Range(bank.hornInterval);nextTraffic=Time.unscaledTime+Range(bank.trafficInterval);nextScrape=Time.unscaledTime+1;
             PlayCue("UI_Start");
         }
@@ -167,7 +173,10 @@ namespace CityScooter.Audio
         void LateUpdate()
         {
             if(!initialized)return;
-            if(Keyboard.current!=null&&Keyboard.current.mKey.wasPressedThisFrame)SetMuted(!Muted);
+            // In the web shell's Simulator mode the keyboard drives the virtual micro:bit (hold M = shout) and the shell
+            // turns game keys off (DeviceHub.KeyboardEnabled); M must not also toggle mute then.
+            bool gameKeys=DeviceHub.Instance==null||DeviceHub.Instance.KeyboardEnabled;
+            if(gameKeys&&Keyboard.current!=null&&Keyboard.current.mKey.wasPressedThisFrame)SetMuted(!Muted);
             SetSuspended(focusPaused||appPaused||Time.timeScale<=0);
             if(suspended)return;
             float dt=Mathf.Min(Time.unscaledDeltaTime,.1f),now=Time.unscaledTime;
