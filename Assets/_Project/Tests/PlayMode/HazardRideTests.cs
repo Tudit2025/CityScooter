@@ -213,6 +213,30 @@ namespace CityScooter.Tests
             Assert.NotNull(cone);
         }
 
+        /// <summary>Not part of the normal run: a right turn appears far ahead, comes closer, is ridden through.</summary>
+        [UnityTest, Explicit]
+        public IEnumerator TurnSequence()
+        {
+            yield return LoadMain();
+            GameTuning calm = Object.Instantiate(_game.track.tuning != null ? _game.track.tuning : GameTuning.Default);
+            calm.obstacleChanceStart = calm.obstacleChanceMax = 0f;
+            calm.hazardChanceStart = calm.hazardChanceMax = 0f;
+            calm.fakeTurns = false; // only the turn requested below
+            _game.track.tuning = calm;
+            var turns = _game.GetComponent<FakeTurnDirector>();
+            turns.tuning = calm;
+            _game.StartRun();
+            yield return null;
+            float z = _game.rider.transform.position.z;
+            Assert.IsTrue(turns.RequestTurn(z + 150f, 1, 1f, 200f));
+            for (int i = 0; i < 16; i++)
+            {
+                yield return new WaitForSeconds(1.5f);
+                Capture(Camera.main, "turn_" + i.ToString("00") + "_z" + Mathf.RoundToInt(_game.rider.transform.position.z - z) + "_h" + Mathf.RoundToInt(turns.Heading * Mathf.Rad2Deg));
+            }
+            Object.Destroy(calm);
+        }
+
         static void Capture(Camera camera, string name)
         {
             var rt = RenderTexture.GetTemporary(1280, 720, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 4);

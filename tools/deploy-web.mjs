@@ -5,6 +5,9 @@
 //   node tools/deploy-web.mjs                  # deploy the existing Builds/Web to production
 //   node tools/deploy-web.mjs --preview        # deploy as a preview URL instead
 //   node tools/deploy-web.mjs --dry-run        # stage deploy/web and print vercel.json, no upload
+//   node tools/deploy-web.mjs --preview --alias cityscooter-v02.vercel.app
+//                                              # also give the preview a fixed address: Chrome remembers the
+//                                              # micro:bit permission per address, and each preview URL is new
 //
 // --build needs the Unity Editor CLOSED for this project (batchmode cannot open a locked project);
 // otherwise use the menu CityScooter/Build Web first. Requires `npx vercel login` done once.
@@ -15,7 +18,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const args = new Set(argv);
+const aliasHost = argv.includes("--alias") ? argv[argv.indexOf("--alias") + 1] : null;
 const buildDir = path.join(repo, "Builds", "Web");
 const stageDir = path.join(repo, "deploy", "web");
 const project = process.env.VERCEL_PROJECT || "cityscooter";
@@ -86,3 +91,7 @@ const out = vercel("deploy", "--yes", ...(args.has("--preview") ? [] : ["--prod"
 const urls = out.match(/https:\/\/[^\s"']+\.vercel\.app/g) || [];
 console.log(out.trim().split("\n").slice(-3).join("\n"));
 console.log("✓ Done. " + (args.has("--preview") ? "Preview" : "Production") + ": " + (args.has("--preview") ? urls[0] : "https://" + project + ".vercel.app") + (urls.length ? "" : "  (check the Vercel output above)"));
+if (aliasHost && args.has("--preview") && urls[0]) {
+  vercel("alias", "set", urls[0], aliasHost);
+  console.log("✓ Alias: https://" + aliasHost);
+}

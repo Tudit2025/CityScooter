@@ -54,16 +54,9 @@ namespace CityScooter.Gameplay
             public float Speed;
         }
 
-        struct TurnTrigger
-        {
-            public float Z, Strength, Seconds;
-            public int Direction;
-        }
-
         readonly List<PendingEntry> _pending = new List<PendingEntry>();
         readonly List<PendingEntry> _pendingMovers = new List<PendingEntry>();
         readonly List<Moving> _moving = new List<Moving>();
-        readonly List<TurnTrigger> _turnTriggers = new List<TurnTrigger>();
         float _reservedFrom = float.MinValue, _reservedUntil = float.MinValue, _nextHazardZ;
         RiderController _riderController;
 
@@ -96,7 +89,6 @@ namespace CityScooter.Gameplay
             _moving.Clear();
             _pending.Clear();
             _pendingMovers.Clear();
-            _turnTriggers.Clear();
             _reservedFrom = _reservedUntil = float.MinValue;
             _nextHazardZ = startZ + T.hazardStartDistance;
             _runSeed = seed != 0 ? seed : System.Environment.TickCount;
@@ -402,7 +394,12 @@ namespace CityScooter.Gameplay
                 (pending.Mover != null ? _pendingMovers : _pending).Add(pending);
             }
             if (p.turnDirection != 0)
-                _turnTriggers.Add(new TurnTrigger { Z = start + p.turnAtZ, Direction = mirror ? -p.turnDirection : p.turnDirection, Strength = p.turnStrength, Seconds = p.turnSeconds });
+            {
+                // The turn is fixed in the world now, so it shows up in the distance like the rest of the pattern.
+                if (_riderController == null && rider != null) _riderController = rider.GetComponent<RiderController>();
+                float speed = _riderController != null ? Mathf.Max(T.startSpeed, _riderController.Speed) : T.startSpeed;
+                FakeTurnDirector.Instance?.RequestTurn(start + p.turnAtZ, mirror ? -p.turnDirection : p.turnDirection, p.turnStrength, Mathf.Max(T.turnMinLength, speed * p.turnSeconds));
+            }
         }
 
         HazardPattern PickPattern(int level)
@@ -473,13 +470,6 @@ namespace CityScooter.Gameplay
                 _collisionTransformsDirty = true;
             }
 
-            for (int i = 0; i < _turnTriggers.Count; i++)
-            {
-                TurnTrigger t = _turnTriggers[i];
-                if (riderZ < t.Z) continue;
-                _turnTriggers.RemoveAt(i--);
-                FakeTurnDirector.Instance?.ForceTurn(t.Direction, t.Strength, t.Seconds);
-            }
         }
 
         /// <summary>Puts an obstacle at a world position on the current track (tests, scripted moments).</summary>

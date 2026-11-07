@@ -57,22 +57,26 @@ namespace CityScooter.Gameplay
         public float moverLeadSeconds = 5f;
 
         [Header("Fake turns (visual; the road stays straight for physics)")]
-        [Tooltip("Sideways swing of the far city per squared metre at a full turn. Zero turns fake turns off.")]
-        [Range(0f, 0.004f)] public float turnCurvature = 0.0016f;
-        [Tooltip("How fast the sky turns at a full turn, at the reference speed (degrees per second).")]
-        public float turnHeadingDegreesPerSecond = 9f;
-        public float turnReferenceSpeed = 30f;
-        [Tooltip("Seconds to ease into and out of a turn.")]
-        public float turnEaseSeconds = 1.1f;
-        public float turnFirstStraight = 5f;
-        public Vector2 turnStraightSeconds = new Vector2(3f, 7f);
-        public Vector2 turnHoldSeconds = new Vector2(3f, 7f);
+        [Tooltip("Turns are stretches of road fixed in the world: they appear far ahead, come closer, and the sky turns while you ride through.")]
+        public bool fakeTurns = true;
+        [Tooltip("How far the road turns over a full-strength turn (degrees of heading).")]
+        [Range(0f, 60f)] public float turnMaxDegrees = 30f;
+        [Tooltip("The first turn starts this many metres into a run.")]
+        public float turnFirstAt = 300f;
+        [Tooltip("Straight road between turns: seconds of riding at the current speed (at least turnMinStraight metres).")]
+        public Vector2 turnStraightSeconds = new Vector2(9f, 16f);
+        public float turnMinStraight = 220f;
+        [Tooltip("Length of one turn: seconds of riding at the current speed (at least turnMinLength metres).")]
+        public Vector2 turnLengthSeconds = new Vector2(5f, 8f);
+        public float turnMinLength = 160f;
+        [Tooltip("Seconds for the camera bank and rider lean to follow into and out of a turn.")]
+        public float turnEaseSeconds = 1.6f;
         [Tooltip("Camera bank and look into the turn, and rider lean, at a full turn (degrees).")]
-        public float turnCameraRoll = 4f;
-        public float turnCameraLook = 4f;
-        public float turnRiderLean = 10f;
+        public float turnCameraRoll = 2.5f;
+        public float turnCameraLook = 3f;
+        public float turnRiderLean = 7f;
         [Tooltip("Push towards the outside of a turn as a fraction of lateralMaxSpeed (students must steer against it).")]
-        [Range(0f, 0.5f)] public float turnDrift = 0.2f;
+        [Range(0f, 0.5f)] public float turnDrift = 0.15f;
         [Range(0, 9)] public int turnDriftMinLevel = 3;
 
         [Header("Score / flow")]

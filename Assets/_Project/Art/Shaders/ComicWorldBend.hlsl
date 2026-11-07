@@ -9,17 +9,28 @@ float4 _ComicHorizon;
 float4 _ComicCurveTail;
 #ifndef CITYSCOOTER_COMIC_TURN_DECL
 #define CITYSCOOTER_COMIC_TURN_DECL
-// Fake turn (FakeTurnDirector): x: sideways metres per squared metre (+ = right), y: sky heading radians.
+// Fake turns (FakeTurnDirector). A turn is a stretch of road fixed in the world, from z start to z end, that
+// curves sideways by x metres per squared metre (+ = right). _ComicTurn: x curvature, y start z, z end z,
+// w sky heading radians. _ComicTurn2: the next turn (x, y, z), or zero.
 float4 _ComicTurn;
+float4 _ComicTurn2;
 #endif
-// Sideways offset of the fake turn: same unaffected distance as the rise, quadratic, then straight on.
+// Only the part of a turn beyond the unaffected distance bends: a turn far ahead curves the road from its start;
+// once the rider reaches it, the bend starts at the unaffected distance and the rest of the turn shrinks until the
+// road ahead is straight again. Beyond the turn's end the road continues straight in the new direction.
+float ComicTurnSegment(float z, float4 turn, out float slope)
+{
+    float from=max(turn.y,_ComicWorldBend.x+_ComicWorldBend.y);
+    float span=max(0,turn.z-from);
+    float q=clamp(z-from,0,span);
+    slope=2*turn.x*q;
+    return turn.x*(q*q+2*span*max(0,z-turn.z));
+}
 void ComicTurnOffset(float distanceZ, out float offset, out float slope)
 {
-    float d=max(0,distanceZ-_ComicWorldBend.y);
-    float a=max(1,_ComicCurveTail.x-_ComicWorldBend.y);
-    float q=min(d,a);
-    offset=_ComicTurn.x*(q*q+2*a*max(0,d-a));
-    slope=2*_ComicTurn.x*q;
+    float z=distanceZ+_ComicWorldBend.x,s0,s1;
+    offset=ComicTurnSegment(z,_ComicTurn,s0)+ComicTurnSegment(z,_ComicTurn2,s1);
+    slope=s0+s1;
 }
 void ComicCurve(float distanceZ, out float rise, out float slope)
 {

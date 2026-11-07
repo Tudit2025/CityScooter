@@ -123,12 +123,12 @@ namespace CityScooter.Gameplay
 
         public void StartRun()
         {
+            _turns?.Restart(System.Environment.TickCount); // before the track: a roadworks pattern may ask for a turn
             track?.ResetTrack(startPosition.z - 2f);
             rider?.ResetRider(startPosition);
             Gifts = 0;
             _giftPoints = 0;
             rider?.Begin();
-            _turns?.Restart(System.Environment.TickCount);
             Camera.main?.GetComponent<FollowCamera>()?.SnapToTarget();
             SetState(RunState.Running);
             GameEvents.RaiseRunStarted();
