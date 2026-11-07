@@ -28,6 +28,11 @@ namespace CityScooter.Protocol
         public const string Say = "say";
         public const int MaxSayLength = 16;
 
+        /// <summary>"do:event": a program triggers one of the game's own events.</summary>
+        public const string Do = "do";
+        public const string DoChase = "chase", DoStars = "stars", DoHeli = "heli", DoCalm = "calm", DoTurn = "turn",
+            DoCar = "car", DoSlowCar = "slowcar", DoRoadworks = "roadworks", DoPolice = "police", DoCrossing = "crossing", DoManhole = "manhole";
+
         /// <summary>A word the game itself sends (crash, gift, ...): a board may not make the game say these.</summary>
         public static bool IsGameMessage(string word)
         {

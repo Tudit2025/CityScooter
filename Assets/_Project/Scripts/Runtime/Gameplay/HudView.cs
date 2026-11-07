@@ -220,11 +220,14 @@ namespace CityScooter.Gameplay
         void OnDestroy() => Game.GameEvents.BoardSaid -= OnBoardSaid;
 
         // "say:party" from a board: show who said what for a moment (the game also repeats it to every board).
-        void OnBoardSaid(string deviceId, string word)
+        void OnBoardSaid(string deviceId, string word) => Caption("\u201c" + word + "\u201d  \u2014 " + (deviceId == "sim" ? "Simulator" : deviceId));
+
+        /// <summary>A short line above the hint for a moment (what a board said or triggered).</summary>
+        public void Caption(string text, float seconds = 1.8f)
         {
             if (_say == null) return;
-            _say.text = "\u201c" + word + "\u201d  \u2014 " + (deviceId == "sim" ? "Simulator" : deviceId);
-            _sayUntil = Time.unscaledTime + 1.5f;
+            _say.text = text;
+            _sayUntil = Time.unscaledTime + seconds;
         }
 
         void Update()

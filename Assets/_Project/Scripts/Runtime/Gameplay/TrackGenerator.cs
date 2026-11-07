@@ -471,6 +471,35 @@ namespace CityScooter.Gameplay
             SchedulePattern(p, start, p.allowMirror && _rng.NextDouble() < 0.5, Mathf.Max(0f, a.Chunk.halfWidth - p.roadHalfWidth));
         }
 
+        /// <summary>
+        /// Programs ("do:car", "do:roadworks", ...): place a pattern at least <paramref name="ahead"/> metres in front of
+        /// the rider, after any pattern already there, inside the built street and never across a boulevard transition.
+        /// False when there is no room right now.
+        /// </summary>
+        public bool TryPlacePatternAhead(HazardPattern p, float ahead)
+        {
+            if (p == null || rider == null) return false;
+            float start = Mathf.Max(rider.position.z + ahead, _reservedUntil + 8f);
+            for (int tries = 0; tries < 6; tries++)
+            {
+                float end = start + p.length;
+                if (end + 6f > _nextZ) return false;
+                bool moved = false;
+                for (float z = start - 6f; z <= end + 6f; z += 5f)
+                {
+                    RoadChunk c = ChunkAt(z, out float chunkStart);
+                    if (c == null || !c.ChangesWidth) continue;
+                    start = chunkStart + c.length + 8f;
+                    moved = true;
+                    break;
+                }
+                if (moved) continue;
+                PlacePattern(p, start, p.allowMirror && _rng.NextDouble() < 0.5);
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>Places a whole hazard pattern starting at world z (tests, scripted moments). Built chunks get
         /// their entries now; moving cars appear when the rider gets near, as in a normal run.</summary>
         public void PlacePattern(HazardPattern p, float startZ, bool mirror = false)

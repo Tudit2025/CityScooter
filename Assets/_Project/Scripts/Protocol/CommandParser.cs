@@ -10,6 +10,29 @@ namespace CityScooter.Protocol
     /// </summary>
     public static class CommandParser
     {
+        // "do:chase", "do:stars:3", "do:turn:L" ...: event name and its number (stars 0..5, turn -1/1).
+        static Command ParseDo(string arg, string raw)
+        {
+            string a = arg.Trim().ToLowerInvariant();
+            int colon = a.IndexOf(':');
+            string name = (colon < 0 ? a : a.Substring(0, colon)).Trim(), param = colon < 0 ? "" : a.Substring(colon + 1).Trim();
+            switch (name)
+            {
+                case Messages.DoChase: case Messages.DoHeli: case Messages.DoCalm: case Messages.DoCar: case Messages.DoSlowCar:
+                case Messages.DoRoadworks: case Messages.DoPolice: case Messages.DoCrossing: case Messages.DoManhole:
+                    return param.Length == 0 ? new Command(CommandKind.Trigger, 0f, name) : new Command(CommandKind.Malformed, 0f, raw);
+                case Messages.DoStars:
+                    return int.TryParse(param, NumberStyles.Integer, CultureInfo.InvariantCulture, out int stars) && stars >= 0 && stars <= 5
+                        ? new Command(CommandKind.Trigger, stars, name) : new Command(CommandKind.Malformed, 0f, raw);
+                case Messages.DoTurn:
+                    if (param == "l" || param == "left" || param == "-1") return new Command(CommandKind.Trigger, -1f, name);
+                    if (param == "r" || param == "right" || param == "1") return new Command(CommandKind.Trigger, 1f, name);
+                    return new Command(CommandKind.Malformed, 0f, raw);
+                default:
+                    return new Command(CommandKind.Malformed, 0f, raw);
+            }
+        }
+
         public const float SteerLimit = 100f;
 
         public static Command Parse(string line)
@@ -57,6 +80,8 @@ namespace CityScooter.Protocol
                     return new Command(CommandKind.Bell);
                 case Messages.Boost:
                     return new Command(CommandKind.Boost);
+                case Messages.Do:
+                    return ParseDo(arg, s);
                 case Messages.Say:
                     return Messages.IsSayWord(arg) ? new Command(CommandKind.Say, 0f, arg) : new Command(CommandKind.Malformed, 0f, s);
                 case Messages.Surrender:

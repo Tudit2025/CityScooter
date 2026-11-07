@@ -21,6 +21,9 @@ namespace CityScooter.Protocol
         Boost,
         /// <summary>v1: "say:party" makes the game say "party" to every board (Text holds the word).</summary>
         Say,
+        /// <summary>v1: "do:chase", "do:stars:3", "do:turn:L", "do:car" ... trigger one of the game's own events
+        /// (Text = event name, Value = stars 0..5 or turn -1/1).</summary>
+        Trigger,
         /// <summary>v1 police: "sur" surrender, pull over now (ignored unless the police are chasing).</summary>
         Surrender,
     }

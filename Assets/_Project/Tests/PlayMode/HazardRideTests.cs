@@ -191,6 +191,39 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
+        public IEnumerator Do_TriggersTheGamesOwnEvents_OncePerSecondPerBoard()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return new WaitForSeconds(0.5f);
+            var hub = DeviceHub.Instance;
+            PoliceChase police = PoliceChase.Instance;
+            Assert.NotNull(police);
+            Assert.NotNull(_game.GetComponent<ProgramTriggers>(), "GameController adds the trigger handler");
+            hub.Receive("usb1", "do:chase");
+            yield return null;
+            Assert.AreEqual(1, police.Wanted, "do:chase starts a police chase");
+            hub.Receive("usb1", "do:stars:3");
+            yield return null;
+            Assert.AreEqual(1, police.Wanted, "one trigger a second per board");
+            yield return new WaitForSeconds(1.05f);
+            hub.Receive("usb1", "do:stars:3");
+            yield return null;
+            Assert.AreEqual(3, police.Wanted);
+            float z = _game.rider.transform.position.z;
+            hub.Receive("usb2", "do:turn:R");
+            yield return null;
+            Assert.IsTrue(System.Linq.Enumerable.Any(FakeTurnDirector.Instance.Planned, t => t.Direction == 1 && t.Start > z + 100f), "a right turn is planned ahead");
+            yield return new WaitForSeconds(1.05f);
+            hub.Receive("usb1", "do:calm");
+            hub.Receive("usb2", "do:car");
+            yield return null;
+            Assert.AreEqual(0, police.Wanted, "do:calm: the police give up");
+            Assert.Greater(_game.track.LastHazardRange.x, _game.rider.transform.position.z + 100f, "the oncoming car is placed out of sight ahead");
+            Assert.AreEqual(RunState.Running, _game.State);
+        }
+
+        [UnityTest]
         public IEnumerator Boost_GoesPastTheSpeedLimit_ThenRecharges()
         {
             yield return LoadMain();

@@ -105,6 +105,10 @@ namespace CityScooter.Gameplay
             var police = GetComponent<PoliceChase>();
             if (police == null && rider != null) police = gameObject.AddComponent<PoliceChase>();
             if (police != null) { if (police.rider == null) police.rider = rider; if (police.theme == null && track != null) police.theme = track.theme; }
+            // Programs triggering the game's own events ("do:chase", "do:car", ...).
+            var triggers = GetComponent<ProgramTriggers>();
+            if (triggers == null && rider != null) triggers = gameObject.AddComponent<ProgramTriggers>();
+            if (triggers != null) { if (triggers.rider == null) triggers.rider = rider; if (triggers.track == null) triggers.track = track; }
             EnterReady();
             Camera cam = Camera.main;
             if (cam != null && rider != null)

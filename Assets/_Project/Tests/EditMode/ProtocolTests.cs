@@ -198,6 +198,31 @@ namespace CityScooter.Tests
             Assert.AreEqual(CommandKind.Malformed, CommandParser.Parse(line).Kind);
         }
 
+        [TestCase("do:chase", "chase", 0)]
+        [TestCase("DO : Stars : 3", "stars", 3)]
+        [TestCase("do:turn:L", "turn", -1)]
+        [TestCase("do:turn:right", "turn", 1)]
+        [TestCase("do:car", "car", 0)]
+        [TestCase("do:roadworks", "roadworks", 0)]
+        public void V1_DoTriggersAGameEvent(string line, string name, int value)
+        {
+            Command c = CommandParser.Parse(line);
+            Assert.AreEqual(CommandKind.Trigger, c.Kind);
+            Assert.AreEqual(name, c.Text);
+            Assert.AreEqual(value, (int)c.Value);
+        }
+
+        [TestCase("do:")]
+        [TestCase("do:fireworks")]
+        [TestCase("do:stars:9")]
+        [TestCase("do:stars")]
+        [TestCase("do:turn:up")]
+        [TestCase("do:chase:now")]
+        public void V1_DoRefusesUnknownEvents(string line)
+        {
+            Assert.AreEqual(CommandKind.Malformed, CommandParser.Parse(line).Kind);
+        }
+
         [Test]
         public void V1_ToonModeIsLatchedUntilChanged()
         {

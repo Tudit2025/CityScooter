@@ -232,6 +232,8 @@
       case "pu": return { kind: "punch" };
       case "bl": return { kind: "bell" };
       case "bo": return { kind: "boost" };
+      case "do": return /^(chase|heli|calm|car|slowcar|roadworks|police|crossing|manhole|stars\s*:\s*[0-5]|turn\s*:\s*(l|r|left|right|-1|1))$/i.test(arg)
+        ? { kind: "trigger", value: arg.toLowerCase() } : { kind: "malformed" };
       case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo)$/i.test(arg)
         ? { kind: "say", value: arg } : { kind: "malformed" };
       case "sur": return { kind: "surrender" };
@@ -318,6 +320,9 @@
         break;
       case "say":
         break; // the game repeats it to every board; the monitor shows that as a game line
+      case "trigger":
+        logLine("game", d.id, "asks the game for: " + c.value, "");
+        break;
       case "surrender":
         d.surUntil = t + 600;
         break;
@@ -332,6 +337,7 @@
       case "malformed":
         logLine("warn", d.id, line, /^\s*toon/i.test(line) ? "toon: needs 1 (on) or 0 (off), e.g. toon:1"
           : /^\s*say/i.test(line) ? "say: one word of your own (letters, digits, _ - ! ?, up to 16), not a game word like crash"
+          : /^\s*do/i.test(line) ? "do: one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole"
           : "st: needs a number, e.g. st:-35");
         break;
       default: {
