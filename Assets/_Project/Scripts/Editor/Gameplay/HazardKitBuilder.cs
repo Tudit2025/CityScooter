@@ -18,7 +18,8 @@ namespace CityScooter.EditorTools
     /// Also writes the hazard patterns (roadworks zone, police stop, traffic...) and puts them in the theme.
     ///   Menu: CityScooter/Hazards/Build hazard kit       Batch: -executeMethod CityScooter.EditorTools.HazardKitBuilder.BuildBatch
     /// WA police (11/8, the teacher's decision for class): "WA POLICE" text, blue/white checks, a police officer, the
-    /// police helicopter and its comic paint pellets (target ring, red dot, splat). Still no real crest or logo.
+    /// police helicopter with its net (target ring, falling net, net on the road) and sniper (red dot, BANG!, tracer,
+    /// dust puff). Still no real crest or logo, nothing gory: comic shapes only.
     /// </summary>
     public static class HazardKitBuilder
     {
@@ -42,8 +43,9 @@ namespace CityScooter.EditorTools
         static readonly Color LampOff = new Color(.35f, .3f, .12f);
         static readonly Color UniformNavy = new Color(.1f, .13f, .24f);
         static readonly Color TrouserNavy = new Color(.07f, .09f, .17f);
-        static readonly Color Paint = new Color(1f, .22f, .68f);
-        static readonly Color PaintDark = new Color(.72f, .08f, .46f);
+        static readonly Color RopeTan = new Color(.88f, .74f, .46f);
+        static readonly Color Tracer = new Color(1f, .95f, .55f);
+        static readonly Color Dust = new Color(.86f, .8f, .68f);
 
         [MenuItem("CityScooter/Hazards/Build hazard kit")]
         public static void Build()
@@ -80,14 +82,14 @@ namespace CityScooter.EditorTools
                 ["Zebra"] = Zebra(),
                 ["PoliceOfficer"] = PoliceOfficer(),
             };
-            PoliceCap(); PoliceHeli(); TargetRing(); SniperDot(); PaintPellet(); PaintSplat();
+            PoliceCap(); PoliceHeli(); TargetRing(); SniperDot(); PoliceNet(); NetOnRoad(); NetRope(); SniperTracer(); DustPuff();
             GameObject[] popups = { Popup("FxPow", "POW", _r.yellow, _r.red, 1f), Popup("FxDing", "DING", White, PoliceBlue, .55f),
                 Popup("FxBang", "!", _r.yellow, _r.ink, .55f), Popup("FxSorry", "SORRY", White, _r.red, .9f),
                 Popup("FxBoing", "BOING", _r.yellow, PoliceBlue, .9f), Popup("FxCrash", "CRASH!", White, _r.red, 1f),
                 Popup("FxBonk", "BONK!", White, _r.ink, .8f), Swish(), Impact(), Popup("FxIgnore", "...", White, _r.ink, .5f),
                 Popup("FxZoom", "ZOOM!", new Color(.3f, .85f, 1f), _r.ink, .85f),
-                Popup("FxOi", "OI!", _r.yellow, PoliceBlue, .7f), Popup("FxSplat", "SPLAT!", Paint, White, 1f),
-                Popup("FxScreech", "SCREECH!", White, _r.ink, 1.05f) };
+                Popup("FxOi", "OI!", _r.yellow, PoliceBlue, .7f), Popup("FxNetted", "NETTED!", White, PoliceBlue, 1.15f),
+                Popup("FxBangShot", "BANG!", _r.yellow, _r.red, 2.4f), Popup("FxScreech", "SCREECH!", White, _r.ink, 1.05f) };
             PunchArmKit();
             foreach (KeyValuePair<string, Look> look in Looks) Person("Ped_" + look.Key, look.Value, 1f, false);
             CrashRider();
@@ -102,7 +104,7 @@ namespace CityScooter.EditorTools
             var theme = AssetDatabase.LoadAssetAtPath<TrackTheme>(ComicCityBuilder.ThemePath);
             if (theme != null) ApplyTo(theme);
             AssetDatabase.SaveAssets();
-            if (popups.Length != 14) throw new InvalidOperationException("pop-ups");
+            if (popups.Length != 15) throw new InvalidOperationException("pop-ups");
             Debug.Log("[Hazards] built " + p.Count + " hazards, " + gifts.Length + " gifts, " + patterns.Length + " patterns");
         }
 
@@ -128,8 +130,10 @@ namespace CityScooter.EditorTools
             theme.punchArm = Fx("PunchArm");
             theme.crashRider = Fx("CrashRider"); theme.crashScooter = Fx("CrashScooter");
             theme.policeCar = Fx("PoliceCar"); theme.policeOfficer = Fx("PoliceOfficer"); theme.policeCap = Fx("PoliceCap"); theme.policeHeli = Fx("PoliceHeli");
-            theme.paintPellet = Fx("PaintPellet"); theme.paintSplat = Fx("PaintSplat"); theme.targetRing = Fx("TargetRing"); theme.sniperDot = Fx("SniperDot");
-            theme.oiPopup = Fx("FxOi"); theme.splatPopup = Fx("FxSplat"); theme.screechPopup = Fx("FxScreech");
+            theme.policeNet = Fx("PoliceNet"); theme.netOnRoad = Fx("NetOnRoad"); theme.netRope = Fx("NetRope");
+            theme.targetRing = Fx("TargetRing"); theme.sniperDot = Fx("SniperDot"); theme.sniperTracer = Fx("SniperTracer");
+            theme.oiPopup = Fx("FxOi"); theme.nettedPopup = Fx("FxNetted"); theme.bangPopup = Fx("FxBangShot"); theme.dustPopup = Fx("FxDust");
+            theme.screechPopup = Fx("FxScreech");
             var people = new List<GameObject>();
             foreach (string id in LookIds) { GameObject p = Fx("Ped_" + id); if (p != null) people.Add(p); }
             theme.pedestrians = people.ToArray();
@@ -855,7 +859,7 @@ namespace CityScooter.EditorTools
                         else m.Quad(new Vector3(x, y, z + cell), new Vector3(x, y, z), new Vector3(x, y + cell, z), new Vector3(x, y + cell, z + cell), c, false);
                     }
                 TextSide(m, "WA POLICE", s, s * .862f, 1.66f, -.1f, .066f, PoliceBlue);
-                // skids and struts
+                // skids and struts (the sniper's rifle pokes out of the door on the +X side, which faces the camera)
                 m.Beam(new Vector3(s * .85f, .12f, -1.2f), new Vector3(s * .85f, .12f, 1.7f), .09f, _r.ink);
                 m.Beam(new Vector3(s * .62f, .72f, -.7f), new Vector3(s * .85f, .14f, -.7f), .07f, _r.ink);
                 m.Beam(new Vector3(s * .62f, .72f, .9f), new Vector3(s * .85f, .14f, .9f), .07f, _r.ink);
@@ -880,7 +884,15 @@ namespace CityScooter.EditorTools
             B(tail, 0, 0, 0, .04f, 1.2f, .14f, Steel);
             B(tail, 0, 0, 0, .04f, .14f, 1.2f, Steel);
             k.Pivots["TailRotor"] = new Vector3(.12f, 2.35f, -5.3f);
-            Save("PoliceHeli", k, Vector3.zero, Vector3.zero, r => Blink(r, "LightRed", "LightBlue", 2.5f), decor: true, outline: true);
+            m.Beam(new Vector3(.62f, 1.24f, .78f), new Vector3(1.5f, 1.1f, 1.05f), .08f, _r.ink);   // rifle barrel
+            B(m, .78f, 1.33f, .83f, .3f, .08f, .08f, _r.ink);                                       // scope
+            Save("PoliceHeli", k, Vector3.zero, Vector3.zero, r =>
+            {
+                Blink(r, "LightRed", "LightBlue", 2.5f);
+                var muzzle = new GameObject("Muzzle"); // where the shot's BANG! and streak start
+                muzzle.transform.SetParent(r.transform.Find("Art"), false);
+                muzzle.transform.localPosition = new Vector3(1.55f, 1.09f, 1.07f);
+            }, decor: true, outline: true);
         }
 
         // A flat ring on the road (faces +Y).
@@ -905,7 +917,7 @@ namespace CityScooter.EditorTools
             }
         }
 
-        // Where a paint pellet will land: red and white target, crosshair ticks; Art/Pulse closes in until it lands.
+        // Where a net will land: red and white target, crosshair ticks; Art/Pulse closes in until it lands.
         static void TargetRing()
         {
             var k = new Kit();
@@ -940,41 +952,106 @@ namespace CityScooter.EditorTools
             Save("SniperDot", k, Vector3.zero, Vector3.zero, r => { }, decor: true);
         }
 
-        // What the helicopter drops: a comic paint ball (one swappable prefab: theme.paintPellet).
-        static void PaintPellet()
+        // The net, built around zero: an ink grid (on a dome, or lying almost flat), a rope rim and small weights round
+        // the edge. The dome is what falls and what lies over a caught rider; its top is at height + .04.
+        static void NetShape(ComicMesh m, float radius, float height, bool onRoad)
         {
-            var k = new Kit();
-            k.Body.Ellipsoid(Vector3.zero, new Vector3(.66f, .66f, .66f), Paint);
-            k.Body.Ellipsoid(new Vector3(0f, .32f, 0f), new Vector3(.36f, .48f, .36f), Paint);
-            k.Body.Ellipsoid(new Vector3(-.13f, .12f, -.22f), new Vector3(.18f, .14f, .1f), White);
-            Save("PaintPellet", k, Vector3.zero, Vector3.zero, r => { }, decor: true, outline: true);
+            const int lines = 9;
+            float step = radius * 2f / (lines + 1);
+            float H(float x, float z)
+            {
+                if (onRoad) return .03f + .02f * Mathf.Sin(x * 3.1f + 1f) * Mathf.Sin(z * 2.7f); // lying on the road, a little lumpy
+                return height * (1f - Mathf.Clamp01((x * x + z * z) / (radius * radius))) + .02f;
+            }
+            for (int dir = 0; dir < 2; dir++)
+                for (int i = 1; i <= lines; i++)
+                {
+                    float u = -radius + i * step, half = Mathf.Sqrt(Mathf.Max(0f, radius * radius - u * u));
+                    int segs = Mathf.Max(2, Mathf.CeilToInt(half * 2f / .3f));
+                    for (int s = 0; s < segs; s++)
+                    {
+                        float v0 = -half + 2f * half * s / segs, v1 = -half + 2f * half * (s + 1) / segs;
+                        Vector3 a = dir == 0 ? new Vector3(u, 0f, v0) : new Vector3(v0, 0f, u), b = dir == 0 ? new Vector3(u, 0f, v1) : new Vector3(v1, 0f, u);
+                        a.y = H(a.x, a.z); b.y = H(b.x, b.z);
+                        m.Beam(a, b, .045f, _r.ink);
+                    }
+                }
+            const int rim = 20;
+            for (int i = 0; i < rim; i++)
+            {
+                float a0 = i * Mathf.PI * 2f / rim, a1 = (i + 1) * Mathf.PI * 2f / rim;
+                var p = new Vector3(Mathf.Cos(a0) * radius, 0f, Mathf.Sin(a0) * radius);
+                var q = new Vector3(Mathf.Cos(a1) * radius, 0f, Mathf.Sin(a1) * radius);
+                p.y = H(p.x, p.z) + .02f; q.y = H(q.x, q.z) + .02f;
+                m.Beam(p, q, .08f, RopeTan);
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                float a = (i + .5f) * Mathf.PI * 2f / 8;
+                var w = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
+                w.y = H(w.x, w.z) + .06f;
+                m.Ellipsoid(w, Vector3.one * .17f, Steel);
+            }
+            if (!onRoad) m.Cylinder(new Vector3(0f, height + .04f, 0f), .09f, .08f, RopeTan, 8); // where the rope is tied
         }
 
-        // Pink paint on the road (and, turned upright, on the rider's back): a lumpy blob and a few drops.
-        static void PaintSplat()
+        // What the helicopter drops (theme.policeNet): a dome-shaped net that also lies over a caught rider.
+        static void PoliceNet()
+        {
+            var k = new Kit();
+            NetShape(k.Body, 1.45f, 1.9f, false);
+            Save("PoliceNet", k, Vector3.zero, Vector3.zero, r => { }, decor: true, outline: true);
+        }
+
+        // A net that missed, lying on the road (decoration, no collider).
+        static void NetOnRoad()
+        {
+            var k = new Kit();
+            NetShape(k.Body, 1.45f, 0f, true);
+            Save("NetOnRoad", k, Vector3.zero, Vector3.zero, r => { }, decor: true, outline: true);
+        }
+
+        // The rope from the helicopter to a falling net: one metre along +Z, stretched at runtime.
+        static void NetRope()
+        {
+            var k = new Kit();
+            k.Body.Beam(Vector3.zero, Vector3.forward, .06f, RopeTan);
+            Save("NetRope", k, Vector3.zero, Vector3.zero, r => { }, decor: true);
+        }
+
+        // The sniper shot's bright streak: one metre along +Z, stretched from the helicopter to the red dot for a moment.
+        static void SniperTracer()
+        {
+            var k = new Kit();
+            k.Body.Beam(Vector3.zero, Vector3.forward, .13f, Tracer);
+            Save("SniperTracer", k, Vector3.zero, Vector3.zero, r =>
+            {
+                foreach (MeshRenderer mr in r.GetComponentsInChildren<MeshRenderer>(true)) mr.shadowCastingMode = ShadowCastingMode.Off;
+            }, decor: true);
+        }
+
+        // A comic puff of dust where a missed shot hits the road (billboard pop-up, faces -Z).
+        static void DustPuff()
         {
             var k = new Kit();
             ComicMesh m = k.Body;
-            float[] lumps = { 1f, .7f, .95f, .62f, 1.1f, .75f, .9f, .58f, 1.05f, .7f, .98f, .66f, 1.12f, .72f };
-            void Blob(float scale, float y, Color c)
+            void Circle(float cx, float cy, float r, float z, Color c)
             {
-                for (int i = 0; i < lumps.Length; i++)
+                const int segs = 14;
+                for (int i = 0; i < segs; i++)
                 {
-                    float a0 = i * Mathf.PI * 2f / lumps.Length, a1 = (i + 1) * Mathf.PI * 2f / lumps.Length;
-                    float r0 = lumps[i] * scale, r1 = lumps[(i + 1) % lumps.Length] * scale;
-                    m.Tri(new Vector3(0, y, 0), new Vector3(Mathf.Cos(a1) * r1, y, Mathf.Sin(a1) * r1), new Vector3(Mathf.Cos(a0) * r0, y, Mathf.Sin(a0) * r0), c);
+                    float a0 = i * Mathf.PI * 2f / segs, a1 = (i + 1) * Mathf.PI * 2f / segs;
+                    m.Tri(new Vector3(cx, cy, z), new Vector3(cx + Mathf.Cos(a1) * r, cy + Mathf.Sin(a1) * r, z), new Vector3(cx + Mathf.Cos(a0) * r, cy + Mathf.Sin(a0) * r, z), c);
                 }
             }
-            Blob(1.12f, .005f, PaintDark);
-            Blob(1f, .012f, Paint);
-            float[,] drops = { { 1.55f, .3f, .16f }, { -1.3f, .9f, .12f }, { .4f, -1.5f, .14f }, { -1.1f, -1.1f, .1f }, { 1.2f, -.9f, .09f } };
-            for (int i = 0; i < drops.GetLength(0); i++)
+            float[,] puffs = { { 0f, .27f, .63f }, { -.68f, 0f, .48f }, { .69f, .03f, .51f }, { -.33f, .63f, .42f }, { .36f, .66f, .39f } }; // about 2 m across
+            for (int i = 0; i < puffs.GetLength(0); i++) Circle(puffs[i, 0], puffs[i, 1], puffs[i, 2] + .05f, .02f, _r.ink);
+            for (int i = 0; i < puffs.GetLength(0); i++) Circle(puffs[i, 0], puffs[i, 1], puffs[i, 2], 0f, Dust);
+            Save("FxDust", k, Vector3.zero, Vector3.zero, r =>
             {
-                var d = new ComicMesh();
-                Disc(d, drops[i, 2], .012f, Paint, 8);
-                m.Add(d, new Vector3(drops[i, 0], 0f, drops[i, 1]), Quaternion.identity, Vector3.one);
-            }
-            Save("PaintSplat", k, Vector3.zero, Vector3.zero, r => { }, decor: true);
+                var popup = r.AddComponent<ComicPopup>(); popup.life = .5f; popup.rise = .45f;
+                foreach (MeshRenderer mr in r.GetComponentsInChildren<MeshRenderer>(true)) mr.shadowCastingMode = ShadowCastingMode.Off;
+            }, decor: true);
         }
 
         static GameObject Zebra()

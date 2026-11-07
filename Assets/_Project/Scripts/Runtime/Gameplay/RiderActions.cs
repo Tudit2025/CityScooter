@@ -334,22 +334,35 @@ namespace CityScooter.Gameplay
             k.Launch(new Vector3(side * 2.5f, 7.5f, Mathf.Max(4f, rider.Speed * 0.6f)));
         }
 
-        GameObject _paintBlob;
+        GameObject _netOver;
 
-        /// <summary>A paint pellet hit the rider (PoliceChase.PaintBust): "SPLAT!", a pink blob, a gentle topple.</summary>
-        internal void PaintSplat(Vector3 at)
+        /// <summary>For tests: the net lying over a caught rider (null or inactive when nobody was netted).</summary>
+        public GameObject NetOverRider => _netOver;
+
+        /// <summary>The helicopter's net came down on the rider (PoliceChase.NetArrest): "NETTED!", the rider stays put under it.</summary>
+        internal void Netted(Vector3 at)
         {
             if (rider == null) return;
-            Popup(theme != null ? theme.splatPopup : null, rider.transform.position + new Vector3(0f, 2.4f, 0.6f));
-            Cue("SCO_Land_02", at);
+            Popup(theme != null ? theme.nettedPopup : null, rider.transform.position + new Vector3(0f, 2.9f, 0.4f));
+            Cue("SCO_Land_01", rider.transform.position);
+            ShakeCamera(0.3f);
+            if (theme == null || theme.policeNet == null) return;
+            if (_netOver == null) { _netOver = Instantiate(theme.policeNet, transform); _netOver.name = "NetOverTheRider"; }
+            Vector3 p = rider.transform.position;
+            float pitch = rider.track != null ? rider.track.SurfacePitchAt(p.z) : 0f;
+            _netOver.transform.SetPositionAndRotation(new Vector3(p.x, p.y + 0.02f, p.z), Quaternion.Euler(pitch, 20f, 0f));
+            _netOver.transform.localScale = Vector3.one;
+            _netOver.SetActive(true);
+        }
+
+        /// <summary>The sniper's shot hit the rider (PoliceChase.SniperBust): a comic impact, knocked off the scooter.</summary>
+        internal void Shot(Vector3 at)
+        {
+            if (rider == null) return;
+            Vector3 p = rider.transform.position;
+            Popup(theme != null ? theme.impactPopup : null, p + new Vector3(0f, 1.3f, 0.3f));
+            Cue("SCO_Land_02", p);
             ThrowRider(null);
-            if (_crashRider == null || theme == null || theme.paintSplat == null) return;
-            if (_paintBlob == null) { _paintBlob = Instantiate(theme.paintSplat, _crashRider.transform); _paintBlob.name = "PaintOnTheRider"; }
-            _paintBlob.transform.SetParent(_crashRider.transform, false);
-            _paintBlob.transform.localPosition = new Vector3(0f, 1.35f, -0.19f);
-            _paintBlob.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f); // the ground decal turned to face backwards
-            _paintBlob.transform.localScale = Vector3.one * 0.45f;
-            _paintBlob.SetActive(true);
         }
 
         // A tiny freeze on impact makes a hit feel solid (comic "hit stop").
@@ -461,11 +474,11 @@ namespace CityScooter.Gameplay
             ThrowRider(o);
         }
 
-        enum Throw { ChaseCar, Oncoming, Car, Hole, Person, Paint, Thing }
+        enum Throw { ChaseCar, Oncoming, Car, Hole, Person, Shot, Thing }
 
         static Throw StyleOf(Obstacle o)
         {
-            if (o == null) return Throw.Paint;
+            if (o == null) return Throw.Shot;
             if (PoliceChase.Instance != null && PoliceChase.Instance.IsChaseCar(o)) return Throw.ChaseCar;
             Mover mover = o.GetComponent<Mover>();
             switch (o.kind)
@@ -477,7 +490,7 @@ namespace CityScooter.Gameplay
             }
         }
 
-        // The rider leaves the scooter in a way that matches what was hit (null: a paint pellet).
+        // The rider leaves the scooter in a way that matches what was hit (null: the sniper's shot).
         void ThrowRider(Obstacle o)
         {
             if (theme == null || theme.crashRider == null || theme.crashScooter == null || rider.model == null) return;
@@ -497,11 +510,11 @@ namespace CityScooter.Gameplay
                     _crashScooter.Throw(at, facing, new Vector3(side * 2.5f, 3f, Mathf.Clamp(v * 0.3f + 6f, 8f, 18f)), new Vector3(200f, 160f * side, 240f * side), onSide, 0.2f);
                     ShakeCamera(0.85f);
                     break;
-                case Throw.Paint:
-                    // Splat: a surprised wobble and a gentle topple, the scooter rolls on and falls over.
-                    _crashRider.Throw(at + Vector3.up * 0.3f, facing, new Vector3(side * 1.5f, 4.5f, Mathf.Clamp(v * 0.2f, 3f, 6f)), new Vector3(200f, 0f, 120f * side), lying, 0.15f);
-                    _crashScooter.Throw(at, facing, new Vector3(side * 1f, 1f, Mathf.Clamp(v * 0.25f, 2f, 8f)), new Vector3(0f, 0f, 220f * side), onSide, 0.2f);
-                    ShakeCamera(0.4f);
+                case Throw.Shot:
+                    // The sniper's shot: knocked up and backwards off the scooter in a cartoon tumble, the scooter rolls on.
+                    _crashRider.Throw(at + Vector3.up * 0.4f, facing, new Vector3(side * 2.5f, 7f, Mathf.Clamp(v * 0.2f, 2f, 6f)), new Vector3(-480f, 0f, 140f * side), lying, 0.15f);
+                    _crashScooter.Throw(at, facing, new Vector3(side * 1f, 1f, Mathf.Clamp(v * 0.3f, 3f, 9f)), new Vector3(0f, 0f, 220f * side), onSide, 0.2f);
+                    ShakeCamera(0.6f);
                     break;
                 case Throw.Oncoming:
                     // Oncoming car: thrown back and high, the scooter skids back too.
@@ -555,7 +568,7 @@ namespace CityScooter.Gameplay
         {
             if (_crashRider != null) _crashRider.gameObject.SetActive(false);
             if (_crashScooter != null) _crashScooter.gameObject.SetActive(false);
-            if (_paintBlob != null) _paintBlob.SetActive(false);
+            if (_netOver != null) _netOver.SetActive(false);
             if (_hiddenModel != null) _hiddenModel.SetActive(true);
             _hiddenModel = null;
         }

@@ -78,7 +78,7 @@ namespace CityScooter.Protocol
             return SpeedPrefix + level;
         }
 
-        // ---- v1 WA police (11/8): wanted level, chase, helicopter with paint pellets
+        // ---- v1 WA police (11/8): wanted level, chase, helicopter with nets and a sniper
         // micro:bit → game
         /// <summary>Surrender: pull over now (only while the police chase you).</summary>
         public const string Surrender = "sur";
@@ -96,7 +96,7 @@ namespace CityScooter.Protocol
         public const string HeliOn = "heli:1";
         public const string HeliOff = "heli:0";
         public static string Heli(bool on) => on ? HeliOn : HeliOff;
-        /// <summary>A paint pellet's target ring or the sniper's red dot: on your left, on you, on your right.</summary>
+        /// <summary>A net's target ring or the sniper's red dot: on your left, on you, on your right.</summary>
         public const string IncomingPrefix = "inc:";
         public const string IncomingLeft = "inc:L";
         public const string IncomingCentre = "inc:C";

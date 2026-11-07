@@ -119,7 +119,8 @@ namespace CityScooter.Tests
         public void PoliceKit_IsMarked_StandsByTheCars_AndFollowsTheCityBend()
         {
             TrackTheme t = Theme();
-            GameObject[] kit = { t.policeCar, t.policeOfficer, t.policeCap, t.policeHeli, t.paintPellet, t.paintSplat, t.targetRing, t.sniperDot, t.oiPopup, t.splatPopup, t.screechPopup };
+            GameObject[] kit = { t.policeCar, t.policeOfficer, t.policeCap, t.policeHeli, t.policeNet, t.netOnRoad, t.netRope, t.targetRing, t.sniperDot,
+                t.sniperTracer, t.oiPopup, t.nettedPopup, t.bangPopup, t.dustPopup, t.screechPopup };
             foreach (GameObject g in kit)
             {
                 Assert.NotNull(g, "theme police slot is empty (run CityScooter/Hazards/Build hazard kit)");
@@ -134,11 +135,12 @@ namespace CityScooter.Tests
             Assert.IsFalse(officer.punchable, "officers never get punched out of the way (cartoon mode only, and that costs a star)");
             Assert.NotNull(t.policeOfficer.GetComponent<PoliceOfficer>().cap, "the cap is its own piece so a punch can knock it off");
             // Decoration never blocks the road.
-            foreach (GameObject g in new[] { t.policeCap, t.policeHeli, t.paintPellet, t.paintSplat, t.targetRing, t.sniperDot })
+            foreach (GameObject g in new[] { t.policeCap, t.policeHeli, t.policeNet, t.netOnRoad, t.netRope, t.targetRing, t.sniperDot, t.sniperTracer })
                 Assert.IsEmpty(g.GetComponentsInChildren<Collider>(true), g.name + " must have no colliders");
             Assert.NotNull(t.policeHeli.transform.Find("Art/Rotor"), "spinning main rotor");
             Assert.NotNull(t.policeHeli.transform.Find("Art/TailRotor"));
-            Assert.NotNull(t.targetRing.transform.Find("Art/Pulse"), "the closing ring shows when the pellet lands");
+            Assert.NotNull(t.policeHeli.transform.Find("Art/Muzzle"), "where the sniper's shot starts");
+            Assert.NotNull(t.targetRing.transform.Find("Art/Pulse"), "the closing ring shows when the net lands");
             Assert.NotNull(t.sniperDot.transform.Find("Art/Blink"));
             foreach (string name in new[] { "HZ_PoliceStop", "HZ_PoliceAndOncoming" })
             {

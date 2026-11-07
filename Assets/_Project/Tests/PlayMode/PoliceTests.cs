@@ -13,7 +13,7 @@ namespace CityScooter.Tests
 {
     /// <summary>
     /// WA police in the real Main scene: attacking police raises the wanted level and starts a chase; pulling over,
-    /// surrendering or being boxed in = ARRESTED; the police car or a paint pellet = BUSTED; escaping drops stars and
+    /// surrendering, being boxed in or netted = ARRESTED; the police car or the sniper = BUSTED; escaping drops stars and
     /// ends in LOST THEM!; the helicopter comes at 3 stars; and every step reaches the micro:bits as a message.
     /// The street is made quiet (no random obstacles, hazards, people or turns) so only the police can end a ride.
     /// </summary>
@@ -266,19 +266,40 @@ namespace CityScooter.Tests
         [UnityTest]
         public IEnumerator StayingAwayFromThePolice_DropsStars_ThenLostThem()
         {
-            yield return LoadMain(t => { t.copFirstDelay = 60f; t.escapeSeconds = 1f; t.wantedDecaySeconds = 99f; });
+            yield return LoadMain(t => { t.copFirstDelay = 60f; t.escapeSeconds = 1f; t.wantedDecaySeconds = 99f; t.policeAttackCooldown = 0f; });
             yield return Ride();
-            _police.SetWanted(2);
+            Obstacle police = _game.track.theme.policeCar.GetComponent<Obstacle>();
+            Assert.IsTrue(_police.ReportAttack(police));
+            Assert.IsTrue(_police.ReportAttack(police), "two attacks on the police: two stars");
+            Assert.AreEqual(2, _police.Wanted);
+            Assert.AreEqual(2, _police.EarnedStars);
             yield return WhileRunning(1.5f);
             Assert.AreEqual(1, _police.Wanted, "no police car near for escapeSeconds: one star less");
             yield return WhileRunning(1.5f);
             Assert.AreEqual(0, _police.Wanted);
             Assert.IsFalse(_police.Chasing);
-            Assert.AreEqual(200, _police.LastBonus, "LOST THEM! bonus: 100 per star of the highest level");
+            Assert.AreEqual(200, _police.LastBonus, "LOST THEM! bonus: 100 per star earned by attacking the police");
             Assert.AreEqual(RunState.Running, _game.State);
             int w0 = _sent.IndexOf("wanted:0"), c0 = _sent.IndexOf("chase:0"), lost = _sent.IndexOf("lost");
             Assert.Contains("wanted:1", _sent);
             Assert.That(w0 >= 0 && c0 > w0 && lost > c0, "wanted:0, chase:0, lost (sent: " + string.Join(",", _sent) + ")");
+        }
+
+        [UnityTest]
+        public IEnumerator StarsSetByAProgram_PayNoLostThemBonus()
+        {
+            yield return LoadMain(t => { t.copFirstDelay = 60f; t.escapeSeconds = 0.6f; t.wantedDecaySeconds = 99f; t.heliFirstShotSeconds = 99f; });
+            yield return Ride();
+            _police.SetWanted(5); // what "do:stars:5" does
+            yield return null;
+            _police.SetWanted(1); // then "do:stars:1", then escape: no farming +500
+            int before = _game.Score;
+            yield return WhileRunning(1.5f);
+            Assert.AreEqual(0, _police.Wanted);
+            Assert.Contains("lost", _sent, "still LOST THEM!");
+            Assert.AreEqual(0, _police.EarnedStars);
+            Assert.AreEqual(0, _police.LastBonus, "stars a program gave you are worth nothing");
+            Assert.Less(_game.Score - before, 100, "only the metres ridden");
         }
 
         [UnityTest]
@@ -324,38 +345,69 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
-        public IEnumerator PaintPellet_BustsARiderWhoStaysInTheRing()
+        public IEnumerator Net_CatchesARiderWhoStaysInTheRing_Arrested()
         {
             yield return LoadMain(t => { t.copFirstDelay = 60f; t.heliFirstShotSeconds = 99f; t.sniperMinStars = 5; });
             yield return Ride();
             _police.SetWanted(3);
             yield return null;
             yield return null;
-            Assert.IsTrue(_police.Helicopter.DropPellets(1), "a ring on the road where the rider will be");
+            Assert.IsTrue(_police.Helicopter.DropNets(1), "a ring on the road where the rider will be");
             yield return null;
             Assert.Contains("inc:C", _sent, "the board hears inc:C (the ring is on you)");
             float dropped = Time.time;
             yield return WhileRunning(2.5f);
-            Assert.AreEqual("BUSTED!", _game.EndTitle, "stayed in the ring: paint splat");
+            Assert.AreEqual("ARRESTED!", _game.EndTitle, "stayed in the ring: caught in the net");
             Assert.GreaterOrEqual(Time.time - dropped, 0.8f, "at least 0.8 s of warning");
             yield return null;
-            AssertLastPoliceMessage("busted");
+            AssertLastPoliceMessage("arrested");
+            GameObject net = _actions.NetOverRider;
+            Assert.IsTrue(net != null && net.activeInHierarchy, "the net lies over the rider");
+            Vector3 r = _game.rider.transform.position;
+            Assert.Less(Vector2.Distance(new Vector2(net.transform.position.x, net.transform.position.z), new Vector2(r.x, r.z)), 0.5f);
+            Assert.IsTrue(_game.rider.model.gameObject.activeSelf, "netted, not thrown: the rider stays on the scooter");
+            Assert.IsTrue(_actions.CrashRider == null || !_actions.CrashRider.gameObject.activeSelf);
         }
 
         [UnityTest]
-        public IEnumerator PaintPellet_MissesARiderWhoMovesAway()
+        public IEnumerator Net_MissesARiderWhoMovesAway_AndLiesOnTheRoad()
         {
             yield return LoadMain(t => { t.copFirstDelay = 60f; t.heliFirstShotSeconds = 99f; t.sniperMinStars = 5; });
             yield return Ride();
             _police.SetWanted(3);
             yield return null;
             yield return null;
-            Assert.IsTrue(_police.Helicopter.DropPellets(1));
+            Assert.IsTrue(_police.Helicopter.DropNets(1));
             yield return WhileRunning(0.5f, () => Board("st:100"));
             Board("st:0");
             yield return WhileRunning(1.5f);
-            Assert.AreEqual(RunState.Running, _game.State, "a sidestep out of the ring: the pellet misses");
+            Assert.AreEqual(RunState.Running, _game.State, "a sidestep out of the ring: the net misses");
             Assert.AreEqual(1, _police.Helicopter.Misses);
+            Assert.AreEqual(1, _police.Helicopter.NetsOnRoad, "the net stays on the road (decoration)");
+            Assert.IsTrue(_actions.NetOverRider == null || !_actions.NetOverRider.activeSelf);
+        }
+
+        [UnityTest]
+        public IEnumerator TwoNetsLandTogether_TheSideOneCatches_NoErrors()
+        {
+            // 5 stars: two rings land in the same frame. The side one (not the first in the list) catches the rider,
+            // which ends the chase and clears the helicopter's shots while it is still landing them.
+            yield return LoadMain(t => { t.copFirstDelay = 60f; t.heliFirstShotSeconds = 99f; t.sniperInterval = 99f; });
+            yield return Ride();
+            _police.SetWanted(5);
+            yield return null;
+            yield return null;
+            PoliceHelicopter heli = _police.Helicopter;
+            Assert.IsTrue(heli.DropNets(2));
+            Assert.AreEqual(2, heli.PendingNets, "two rings, one beside the other");
+            Assert.Contains("inc:C", _sent);
+            yield return WhileRunning(1.5f, () => Board(_game.rider.transform.position.x < 2.8f ? "st:100" : "st:0"));
+            Board("st:0");
+            Assert.AreEqual("ARRESTED!", _game.EndTitle, "rode into the side ring: netted");
+            yield return null;
+            AssertLastPoliceMessage("arrested");
+            Assert.AreEqual(0, heli.PendingNets);
+            Assert.AreEqual(1, heli.NetsOnRoad, "the other net lands on the road");
         }
 
         [UnityTest]
@@ -386,7 +438,13 @@ namespace CityScooter.Tests
                     Assert.AreEqual(RunState.Running, _game.State, "moved away while it blinked: missed");
                     Assert.AreEqual(1, heli.Misses);
                 }
-                else Assert.AreEqual("BUSTED!", _game.EndTitle, "stayed under the blinking dot");
+                else
+                {
+                    Assert.AreEqual("BUSTED!", _game.EndTitle, "stayed under the blinking dot: hit by the sniper");
+                    AssertLastPoliceMessage("busted");
+                    Assert.IsTrue(_actions.CrashRider != null && _actions.CrashRider.gameObject.activeSelf, "knocked off the scooter like any crash");
+                }
+                Assert.AreEqual(1, heli.SniperShots);
                 yield return new WaitForSeconds(1.1f);
             }
         }
@@ -422,19 +480,51 @@ namespace CityScooter.Tests
             float t = 0f;
             while (_police.CopGap > -1.5f && t < 8f && _game.State == RunState.Running) { t += Time.deltaTime; yield return null; }
             Capture(cam, "police_car_alongside");
-            // a new ride at 4 stars: helicopter, paint target ring, red dot
+            // a new ride at 4 stars: helicopter, net target ring, red dot; the net falls and catches the rider
+            PoliceHelicopter heli = _police.Helicopter;
             yield return new WaitForSeconds(0.2f);
             yield return Ride();
             _police.SetWanted(4);
             yield return WhileRunning(3f);
-            Assert.IsTrue(_police.Helicopter.DropPellets(1));
-            Assert.IsTrue(_police.Helicopter.StartSniper());
-            yield return WhileRunning(0.4f);
+            float dropAt = Time.time;
+            Assert.IsTrue(heli.DropNets(1));
+            Assert.IsTrue(heli.StartSniper());
+            while (Time.time < dropAt + 0.4f) yield return null;
             Capture(cam, "police_heli_ring_dot");
-            yield return WhileRunning(0.55f);
-            Capture(cam, "police_pellet_falling");
-            yield return WhileRunning(1f);
-            Capture(cam, "police_busted_splat");
+            while (Time.time < dropAt + 0.85f) yield return null; // the net drops during the last 0.55 s of the 1.1 s warning
+            Capture(cam, "police_net_falling");
+            yield return null;
+            yield return WhileRunning(1.2f);
+            yield return new WaitForSeconds(0.25f);
+            Capture(cam, "police_netted");
+            // a missed net on the road
+            yield return new WaitForSeconds(0.2f);
+            yield return Ride();
+            _police.SetWanted(3);
+            yield return WhileRunning(3f);
+            Assert.IsTrue(heli.DropNets(1));
+            yield return WhileRunning(0.5f, () => Board("st:100"));
+            Board("st:0");
+            yield return WhileRunning(0.75f);
+            Capture(cam, "police_net_on_road");
+            // the sniper: BANG! and the streak, then BUSTED; then a miss (dust puff)
+            for (int round = 0; round < 2; round++)
+            {
+                yield return new WaitForSeconds(0.2f);
+                yield return Ride();
+                _police.SetWanted(4);
+                yield return WhileRunning(2.5f);
+                Assert.IsTrue(heli.StartSniper());
+                for (float w = 0f; Mathf.Abs(heli.SniperX - _game.rider.transform.position.x) > 0.2f && w < 3f; w += Time.deltaTime) yield return null;
+                heli.LockSniper();
+                if (round == 1) yield return WhileRunning(0.4f, () => Board("st:-100"));
+                Board("st:0");
+                for (float w = 0f; !heli.TracerShowing && w < 2f; w += Time.deltaTime) yield return null;
+                Capture(cam, round == 0 ? "police_sniper_bang" : "police_sniper_miss_dust");
+                yield return null;
+                yield return WhileRunning(0.9f);
+                if (round == 0) { yield return new WaitForSeconds(0.9f); Capture(cam, "police_sniper_busted"); }
+            }
         }
 
         static void Capture(Camera camera, string name)
