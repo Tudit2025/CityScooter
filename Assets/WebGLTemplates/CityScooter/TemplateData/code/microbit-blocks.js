@@ -103,6 +103,13 @@
   G.mb_on_start = (b) => { addSection("start", body(b, "DO")); return ""; };
   G.mb_forever = (b) => { addSection("loop", body(b, "DO")); return ""; };
   G.mb_on_button = (b) => { addSection("button:" + b.getFieldValue("BTN"), body(b, "DO")); return ""; };
+  // Blockly's "change [variable] by" imports numbers.Number, which MicroPython does not have (ImportError on
+  // every micro:bit). Same meaning without it: a variable that is not a number yet counts from 0.
+  G.math_change = (b, g) => {
+    const v = g.getVariableName(b.getFieldValue("VAR"));
+    const d = g.valueToCode(b, "DELTA", Order.ADDITIVE) || "0";
+    return v + " = (" + v + " if type(" + v + ") in (int, float) else 0) + " + d + "\n";
+  };
   G.mb_button_pressed = (b) => {
     const v = b.getFieldValue("BTN");
     return v === "ab" ? ["(button_a.is_pressed() and button_b.is_pressed())", Order.ATOMIC] : ["button_" + v + ".is_pressed()", Order.FUNCTION_CALL];

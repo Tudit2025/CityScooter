@@ -40,6 +40,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("mb_on_start", { x: 10, y: 10, inputs: { DO: chain(
     B("mb_show", { inputs: { VALUE: val(B("mb_version")) } }),
     B("variables_set", { fields: { VAR: { id: "v1" } }, inputs: { VALUE: n(0) } }),
+    B("math_change", { fields: { VAR: { id: "v1" } }, inputs: { DELTA: n(1) } }),
     B("mb_play", { fields: { TUNE: "POWER_UP" } })) } }),
   B("mb_forever", { x: 10, y: 200, inputs: { DO: chain(
     B("cs_steer", { inputs: { VALUE: val(B("math_constrain", { inputs: {
@@ -137,8 +138,10 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   fs.writeFileSync(path.join(OUT, "blocks_all.py"), allPy);
   const syn2 = pySyntax(allPy, "all");
   check("all blocks: valid Python", !syn2, syn2);
+  check("no module MicroPython lacks (numbers)", !/import numbers|from numbers/.test(allPy));
   for (const want of ["import music", "import random", "(pin_logo.is_touched() if VERSION == \"v2\" else False)",
-    "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None"]) {
+    "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
+    "count = (count if type(count) in (int, float) else 0) + 1"]) {
     check("all blocks make: " + want, allPy.includes(want));
   }
   const disabledOrphans = await ev(() => window.Blockly.getMainWorkspace().getAllBlocks(false).filter((b) => !b.isEnabled()).length);
