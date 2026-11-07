@@ -167,7 +167,7 @@ namespace CityScooter.Gameplay
         }
 
         /// <summary>
-        /// End the ride without hitting anything (WA police: "ARRESTED!", a paint pellet: "BUSTED!"). With crash the
+        /// End the ride without hitting anything (WA police: "ARRESTED!", the sniper: "BUSTED!"). With crash the
         /// usual crash happens too (crash sound, "crash" to the boards); without it the ride just stops.
         /// </summary>
         public void EndRun(string title, bool crash = true)

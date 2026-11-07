@@ -68,16 +68,23 @@ namespace CityScooter.Gameplay
         public GameObject policeCap;
         [Tooltip("The police helicopter (decoration only: no colliders).")]
         public GameObject policeHeli;
-        [Tooltip("What the helicopter drops: one prefab, swap it to change the look (comic paint pellet).")]
-        public GameObject paintPellet;
-        [Tooltip("The paint left on the road (and on the rider when it hits).")]
-        public GameObject paintSplat;
-        [Tooltip("The ring on the road where a pellet will land; its Art/Pulse child closes in until it lands.")]
+        [Tooltip("The net the helicopter drops (a dome that spreads as it falls, and lies over a caught rider). Swap it to change the look.")]
+        public GameObject policeNet;
+        [Tooltip("A net that missed, lying flat on the road (decoration, no collider).")]
+        public GameObject netOnRoad;
+        [Tooltip("The rope from the helicopter to a falling net: one metre along +Z, stretched at runtime.")]
+        public GameObject netRope;
+        [Tooltip("The ring on the road where a net will land; its Art/Pulse child closes in until it lands.")]
         public GameObject targetRing;
         [Tooltip("The sniper's red dot on the road; its Art/Blink child blinks when it locks.")]
         public GameObject sniperDot;
+        [Tooltip("The sniper shot's bright streak: one metre along +Z, stretched from the helicopter to the dot for a moment.")]
+        public GameObject sniperTracer;
         public GameObject oiPopup;
-        public GameObject splatPopup;
+        public GameObject nettedPopup;
+        [Tooltip("The shot at the helicopter (comic muzzle flash with BANG!), and the puff where a missed shot hits the road.")]
+        public GameObject bangPopup;
+        public GameObject dustPopup;
         public GameObject screechPopup;
 
         public bool HasChunks => chunks != null && chunks.Length > 0;

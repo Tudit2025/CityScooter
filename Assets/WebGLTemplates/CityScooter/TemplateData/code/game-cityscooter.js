@@ -17,7 +17,7 @@
     // WA police (11/8). wanted:N and cop:N carry a number: see the "wanted level" and "police distance" blocks.
     ["chase:1 (the police are after you)", "chase:1"], ["chase:0 (police chase over)", "chase:0"],
     ["heli:1 (police helicopter!)", "heli:1"], ["heli:0 (helicopter gone)", "heli:0"],
-    ["inc:C (paint shot ON you: move!)", "inc:C"], ["inc:L (paint shot on your left)", "inc:L"], ["inc:R (paint shot on your right)", "inc:R"],
+    ["inc:C (net or sniper aiming AT you: move!)", "inc:C"], ["inc:L (net or sniper on your left)", "inc:L"], ["inc:R (net or sniper on your right)", "inc:R"],
     ["arrested", "arrested"], ["busted", "busted"], ["lost (you lost the police!)", "lost"]];
 
   // Words of your own that the game repeats to every board ("say:party" -> "party").

@@ -15,7 +15,8 @@ namespace CityScooter.Gameplay
     ///        sidestep after it commits makes it overshoot and spin out ("SCREECH!").
     /// Pulling over while chased (or "sur") = ARRESTED. The police car being gone or far behind for escapeSeconds, or
     /// no new attack for wantedDecaySeconds, drops a star; at 0 stars "LOST THEM!" and bonus points. At 3+ stars the
-    /// PoliceHelicopter joins in with paint pellets. Created by GameController, so no scene changes.
+    /// PoliceHelicopter joins in: it drops nets (caught = ARRESTED) and, from 4 stars, a sniper fires (hit = BUSTED).
+    /// Created by GameController, so no scene changes.
     /// Fair by design: only a committed ram (after its warning) drives at the rider. Otherwise the police car never
     /// closes in on the rider's lane from right behind and never cuts across the rider; it slows down instead.
     /// Numbers: GameTuning "WA police".
@@ -50,6 +51,9 @@ namespace CityScooter.Gameplay
         public bool CopDanger => CopOnRoad && (Mode == CopMode.Lunge || _boxedIn > 0.05f);
         public int SpinOuts { get; private set; }
         public int LastBonus { get; private set; }
+        /// <summary>Stars of this chase earned by attacking the police (ReportAttack). Only these pay the LOST THEM!
+        /// bonus: stars a program sets ("do:stars:5", via SetWanted) earn nothing, so the bonus cannot be farmed.</summary>
+        public int EarnedStars { get; private set; }
         public PoliceHelicopter Helicopter => _heli;
 
         GameObject _cop;
@@ -114,7 +118,7 @@ namespace CityScooter.Gameplay
             _attempt = 0;
             _forced = null;
             _lastAttack = -99f;
-            LastBonus = SpinOuts = PeakWanted = 0;
+            LastBonus = SpinOuts = PeakWanted = EarnedStars = 0;
             HideCop();
             if (Chasing) { Chasing = false; GameEvents.RaiseChaseChanged(false); } // normally already sent when the ride ended
             if (Wanted != 0) { Wanted = 0; GameEvents.RaiseWantedChanged(0); }
@@ -130,11 +134,16 @@ namespace CityScooter.Gameplay
             if (!Running || target == null || !target.police) return false;
             if (Time.time - _lastAttack < Tune.policeAttackCooldown) return false;
             _lastAttack = Time.time;
+            int before = Wanted;
             SetWanted(Wanted + 1);
+            if (Wanted > before) EarnedStars++; // after SetWanted: starting a chase resets the count
             return true;
         }
 
-        /// <summary>Set the wanted level (attacks, tests, scripted moments). The first star starts a chase; 0 ends it quietly.</summary>
+        /// <summary>
+        /// Set the wanted level directly (programs' "do:chase" / "do:stars:N" / "do:heli" / "do:calm", tests, scripted
+        /// moments). The first star starts a chase; 0 ends it quietly. Stars set this way pay no LOST THEM! bonus.
+        /// </summary>
         public void SetWanted(int stars)
         {
             if (!Running) return;
@@ -167,12 +176,13 @@ namespace CityScooter.Gameplay
 
         void LostThem()
         {
-            LastBonus = Tune.lostBonusPerStar * Mathf.Max(1, PeakWanted);
+            // Only stars earned by attacking the police pay (never more than the highest level of this chase).
+            LastBonus = Tune.lostBonusPerStar * Mathf.Min(EarnedStars, PeakWanted);
             GameController game = GameController.Instance;
-            game?.AddPoints(LastBonus);
+            if (LastBonus > 0) game?.AddPoints(LastBonus);
             ChangeWanted(0);
             EndChase();
-            if (game != null && game.hud != null) game.hud.Flash("LOST THEM!", "+" + LastBonus + " points");
+            if (game != null && game.hud != null) game.hud.Flash("LOST THEM!", LastBonus > 0 ? "+" + LastBonus + " points" : "no bonus: those stars came from a program");
             Actions?.Cue("UI_Pickup_01");
             GameEvents.RaiseLostPolice();
         }
@@ -180,6 +190,7 @@ namespace CityScooter.Gameplay
         void StartChase()
         {
             Chasing = true;
+            EarnedStars = 0;
             _attempt = 0;
             _escape = _boxedIn = _pulledOver = 0f;
             _surrender = false;
@@ -235,13 +246,24 @@ namespace CityScooter.Gameplay
             GameEvents.RaiseArrested(); // DeviceFeedback sends "crash" first, then "arrested"
         }
 
-        /// <summary>A paint pellet or the red dot hit the rider (PoliceHelicopter).</summary>
-        internal void PaintBust(Vector3 at)
+        /// <summary>The helicopter's net landed on the rider (PoliceHelicopter): "NETTED!", ARRESTED.</summary>
+        internal void NetArrest(Vector3 at)
+        {
+            GameController game = GameController.Instance;
+            if (game == null || game.State != RunState.Running) return;
+            game.EndRun("ARRESTED!", false);
+            Actions?.Netted(at);
+            EndChase();
+            GameEvents.RaiseArrested(); // DeviceFeedback sends "crash" first, then "arrested"
+        }
+
+        /// <summary>The sniper's shot hit the rider (PoliceHelicopter): BUSTED, the rider is knocked off the scooter.</summary>
+        internal void SniperBust(Vector3 at)
         {
             GameController game = GameController.Instance;
             if (game == null || game.State != RunState.Running) return;
             game.EndRun("BUSTED!", true);
-            Actions?.PaintSplat(at);
+            Actions?.Shot(at);
             EndChase();
             GameEvents.RaiseBusted();
         }

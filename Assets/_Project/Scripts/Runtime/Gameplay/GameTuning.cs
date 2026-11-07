@@ -159,22 +159,22 @@ namespace CityScooter.Gameplay
         public float alongsideZ = 2.5f;
         public Vector2 alongsideX = new Vector2(1.2f, 3.6f);
 
-        [Header("WA police helicopter: paint pellets and the red dot")]
+        [Header("WA police helicopter: nets and the sniper's red dot")]
         [Range(1, 5)] public int heliMinStars = 3;
         [Range(1, 5)] public int sniperMinStars = 4;
         [Tooltip("Where it hovers: metres ahead of and above the rider (high enough to stay clear of the far road, where obstacles appear).")]
         public float heliAhead = 16f;
         public float heliHeight = 9f;
-        [Tooltip("Seconds after the helicopter arrives before its first paint pellet (the red dot comes 1.5 s later).")]
+        [Tooltip("Seconds after the helicopter arrives before its first net (the sniper's red dot comes 1.5 s later).")]
         public float heliFirstShotSeconds = 2f;
-        [Tooltip("Seconds from the target ring appearing to the pellet landing (never below 0.8 s), and the ring's radius (m).")]
-        public float pelletWarnSeconds = 1.1f;
-        public float pelletRadius = 1.3f;
-        [Tooltip("Seconds between pellets at heliMinStars, this much less per extra star (at least 1.6 s).")]
-        public float pelletInterval = 3.6f;
-        public float pelletIntervalPerStar = 0.6f;
-        [Range(1, 2)] public int pelletsAtFiveStars = 2;
-        [Tooltip("The red dot follows the rider this long, then locks (blinks) for sniperLockSeconds before the shot.")]
+        [Tooltip("Seconds from the target ring appearing to the net landing (never below 0.8 s), and the ring's radius (m). Caught under the net = ARRESTED.")]
+        public float netWarnSeconds = 1.1f;
+        public float netRadius = 1.3f;
+        [Tooltip("Seconds between nets at heliMinStars, this much less per extra star (at least 1.6 s).")]
+        public float netInterval = 3.6f;
+        public float netIntervalPerStar = 0.6f;
+        [Range(1, 2)] public int netsAtFiveStars = 2;
+        [Tooltip("The red dot follows the rider this long, then locks (blinks) for sniperLockSeconds before the shot. A hit = BUSTED.")]
         public float sniperTrackSeconds = 2.4f;
         public float sniperLockSeconds = 0.7f;
         public float sniperLockAtFiveStars = 0.55f;

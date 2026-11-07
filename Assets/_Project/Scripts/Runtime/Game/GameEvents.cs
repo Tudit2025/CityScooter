@@ -50,11 +50,11 @@ namespace CityScooter.Game
         public static event Action<int> CopDistanceChanged;
         /// <summary>The police helicopter arrived / left ("heli:1" / "heli:0").</summary>
         public static event Action<bool> HeliChanged;
-        /// <summary>A paint pellet's ring or the red dot locked: -1 on the rider's left, 0 on the rider, 1 on the right ("inc:L|C|R").</summary>
+        /// <summary>A net's target ring appeared or the sniper's red dot locked: -1 on the rider's left, 0 on the rider, 1 on the right ("inc:L|C|R").</summary>
         public static event Action<int> Incoming;
-        /// <summary>The ride ended: pulled over or boxed in ("arrested"; DeviceFeedback sends "crash" first).</summary>
+        /// <summary>The ride ended: pulled over, boxed in or caught in a net ("arrested"; DeviceFeedback sends "crash" first).</summary>
         public static event Action Arrested;
-        /// <summary>The ride ended: hit by the police car or a paint pellet ("busted", after "crash").</summary>
+        /// <summary>The ride ended: hit by the police car or the sniper ("busted", after "crash").</summary>
         public static event Action Busted;
         /// <summary>The wanted level wore off to 0: "LOST THEM!" ("lost").</summary>
         public static event Action LostPolice;

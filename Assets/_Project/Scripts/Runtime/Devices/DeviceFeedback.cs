@@ -17,7 +17,7 @@ namespace CityScooter.Devices
         public float maxSpeedMessagesPerSecond = 5f;
         [Tooltip("Upper limit for cop: messages per second (police car distance while chased).")]
         public float maxCopMessagesPerSecond = 3f;
-        [Tooltip("Seconds between two inc: messages (paint pellet rings / red dot).")]
+        [Tooltip("Seconds between two inc: messages (net rings / the sniper's red dot).")]
         public float incomingSpacing = 0.15f;
 
         DeviceHub _hub;
