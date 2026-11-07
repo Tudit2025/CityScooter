@@ -33,6 +33,7 @@
   const MELODIES = ["BA_DING", "WAWAWAWAA", "POWER_UP", "POWER_DOWN", "JUMP_UP", "JUMP_DOWN", "PUNCHLINE", "BADDY",
     "CHASE", "DADADADUM", "ENTERTAINER", "NYAN", "RINGTONE", "BIRTHDAY"];
   const nice = (s) => s.toLowerCase().replace(/_/g, " ");
+  const HOLD_TIMES = [["0.5", "500"], ["1", "1000"], ["2", "2000"], ["3", "3000"]];
   const GESTURES = [["shaken", "shake"], ["turned face up", "face up"], ["turned face down", "face down"]];
 
   // ------------------------------------------------------------------ generic blocks
@@ -49,6 +50,16 @@
         { type: "field_dropdown", name: "TIMES", options: [["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"]] },
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "mb_events", tooltip: "Runs on the 2nd (3rd, ...) quick press in a row: each press less than 0.4 s after the one before. Look at the Python: it counts presses and remembers when the last one was (running_time)." },
+    { type: "mb_on_hold", message0: "when button %1 is held down for %2 seconds %3 %4",
+      args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }, { type: "field_dropdown", name: "MS", options: HOLD_TIMES },
+        { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "mb_events", tooltip: "Runs once when the button has been held down this long (it does not repeat until you let go and press again). Look at the Python: it remembers when the press started (running_time)." },
+    { type: "mb_on_release", message0: "when button %1 is released %2 %3",
+      args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }, { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "mb_events", tooltip: "Runs when you let go of the button. \"how long button A was held\" then tells you how long it was down: charge up, then let go!" },
+    { type: "mb_held", message0: "how long button %1 is held (ms)",
+      args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }],
+      output: "Number", style: "mb_input", tooltip: "Milliseconds the button has been held down: grows while you hold it, 0 before the first press. After you let go it keeps the length of that last hold until the next press." },
     { type: "mb_presses", message0: "presses of button %1 in a row",
       args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }],
       output: "Number", style: "mb_input", tooltip: "How many quick presses in a row so far: 1, 2, 3, ... Starts again at 1 after a pause of 0.4 s. Even or odd? Use the remainder of dividing by 2." },
@@ -120,6 +131,15 @@
     ctx.flags["presses_" + btn] = true;
     g.definitions_["presses_" + btn] = "presses_" + btn + " = 0  # quick presses of button " + btn.toUpperCase() + " in a row\nlast_press_" + btn + " = -1000  # when it was last pressed (ms)";
   };
+  // Holding a button: tracked in the main loop (see "held" in generate()).
+  const trackHold = (btn, g) => {
+    ctx.flags["held_" + btn] = true;
+    g.definitions_["held_" + btn] = "held_since_" + btn + " = -1  # when button " + btn.toUpperCase() + " went down (ms), -1 while it is up\n"
+      + "held_" + btn + " = 0  # how long it is (or last was) held down (ms)\nheld_done_" + btn + " = 0  # longest hold block already run for this press";
+  };
+  G.mb_on_hold = (b, g) => { const btn = b.getFieldValue("BTN"); trackHold(btn, g); addSection("hold:" + btn + ":" + b.getFieldValue("MS"), body(b, "DO")); return ""; };
+  G.mb_on_release = (b, g) => { const btn = b.getFieldValue("BTN"); trackHold(btn, g); addSection("release:" + btn, body(b, "DO")); return ""; };
+  G.mb_held = (b, g) => { const btn = b.getFieldValue("BTN"); trackHold(btn, g); return ["held_" + btn, Order.ATOMIC]; };
   G.mb_on_presses = (b, g) => {
     const btn = b.getFieldValue("BTN");
     countPresses(btn, g);
@@ -218,6 +238,23 @@
       }
       loopParts.push(code);
     }
+    for (const btn of ["a", "b"]) {
+      if (!c.flags["held_" + btn]) continue;
+      const since = "held_since_" + btn, held = "held_" + btn, done = "held_done_" + btn;
+      let code = "    if button_" + btn + ".is_pressed():\n"
+        + "        if " + since + " < 0:  # it just went down\n"
+        + "            " + since + " = running_time()\n"
+        + "            " + done + " = 0\n"
+        + "        " + held + " = running_time() - " + since + "\n";
+      for (const [, ms] of HOLD_TIMES) {
+        const hold = s("hold:" + btn + ":" + ms);
+        if (hold) code += "        if " + held + " >= " + ms + " and " + done + " < " + ms + ":  # held for " + (ms / 1000) + " s\n"
+          + "            " + done + " = " + ms + "\n" + indent(hold, 8);
+      }
+      code += "    elif " + since + " >= 0:  # it was just let go\n"
+        + "        " + since + " = -1\n" + (indent(s("release:" + btn), 4) || "");
+      loopParts.push(code);
+    }
     for (const [, g] of GESTURES) {
       if (s("gesture:" + g)) loopParts.push('    if accelerometer.was_gesture("' + g + '"):\n' + indent(s("gesture:" + g), 4));
     }
@@ -258,9 +295,9 @@
     const cats = [];
     if (pack && pack.toolbox) cats.push(...pack.toolbox(blk, num));
     cats.push(
-      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button"), blk("mb_on_presses"), blk("mb_on_gesture")] },
+      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button"), blk("mb_on_presses"), blk("mb_on_hold"), blk("mb_on_release"), blk("mb_on_gesture")] },
       { kind: "category", name: "Input", categorystyle: "input_category", contents: [
-        blk("mb_tilt"), blk("mb_button_pressed"), blk("mb_presses"), blk("mb_pin_touched"), blk("mb_logo_touched"), blk("mb_sound_level"),
+        blk("mb_tilt"), blk("mb_button_pressed"), blk("mb_presses"), blk("mb_held"), blk("mb_pin_touched"), blk("mb_logo_touched"), blk("mb_sound_level"),
         blk("mb_version"), blk("mb_running_time")] },
       { kind: "category", name: "LEDs", categorystyle: "led_category", contents: [
         blk("mb_show_icon"), blk("mb_show", { inputs: { VALUE: num(5) } }), blk("mb_clear"),

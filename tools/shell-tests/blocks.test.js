@@ -75,6 +75,9 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("mb_on_gesture", { x: 900, y: 10, fields: { GESTURE: "shake" }, inputs: { DO: chain(B("cs_punch")) } }),
   B("mb_on_presses", { x: 900, y: 520, fields: { BTN: "a", TIMES: "2" }, inputs: { DO: chain(B("cs_boost")) } }),
   B("mb_on_presses", { x: 900, y: 640, fields: { BTN: "a", TIMES: "3" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("text_join", { extraState: { itemCount: 2 }, inputs: { ADD0: t("presses "), ADD1: val(B("mb_presses", { fields: { BTN: "a" } })) } })) } })) } }),
+  // long press (11/8): hold B for 1 s, and how long it was held when let go
+  B("mb_on_hold", { x: 1700, y: 10, fields: { BTN: "b", MS: "1000" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("held B 1s") } })) } }),
+  B("mb_on_release", { x: 1700, y: 120, fields: { BTN: "b" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("text_join", { extraState: { itemCount: 2 }, inputs: { ADD0: t("released after "), ADD1: val(B("mb_held", { fields: { BTN: "b" } })) } })) } })) } }),
   B("cs_on_message", { x: 900, y: 120, fields: { MSG: "warn:ped" }, inputs: { DO: chain(B("cs_bell"), B("cs_toon", { fields: { ON: "1" } })) } }),
   B("cs_on_message", { x: 900, y: 420, fields: { MSG: "boing" }, inputs: { DO: chain(B("cs_toon", { fields: { ON: "0" } })) } }),
   B("cs_on_message", { x: 900, y: 220, fields: { MSG: "ko" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "YES" } })) } }),
@@ -160,6 +163,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
     'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"',
     'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:',
+    'held_since_b = -1', 'if held_b >= 1000 and held_done_b < 1000:', 'elif held_since_b >= 0:',
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
     'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:']) {
     check("all blocks make: " + want, allPy.includes(want));
@@ -186,6 +190,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     for (const k of ["a", "b"]) { await page.keyboard.press(k); await sleep(200); }
     await sleep(500);
     await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(300); // 3 quick presses
+    await page.keyboard.down("b"); await sleep(1400); await page.keyboard.up("b"); await sleep(400); // a long press of B
     await page.keyboard.down("m"); await page.keyboard.down("l"); await sleep(600); await page.keyboard.up("m"); await page.keyboard.up("l");
     for (const m of ["spd:5", "crash", "gift", "go", "warn:ped", "ko", "turn:-1", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     // police messages; no sur before the police car is close (cop:9 is far)
@@ -207,6 +212,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": warn:ped rings the bell (bl)", lines.includes("sim|bl"), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
     check(label + ": warn:ped turns cartoon mode on (toon:1)", lines.includes("sim|toon:1"));
     check(label + ": 2nd quick press of A boosts (bo)", lines.includes("sim|bo"), lines.filter((l) => !/st:/.test(l)).slice(-10).join(" "));
+    check(label + ": holding B for 1 s runs the hold block once", log.filter((x) => x.includes("held B 1s")).length === 1, log.filter((x) => /held B|released/.test(x)).slice(-4).join(" | "));
+    check(label + ": letting go of B runs the release block with the hold time", log.some((x) => /released after (1[1-9]\d\d|[2-9]\d\d\d)/.test(x)), log.filter((x) => /released/.test(x)).slice(-2).join(" | "));
     check(label + ": 3rd quick press runs the 3-times block", log.some((x) => x.includes("presses 3")), log.filter((x) => /presses/.test(x)).slice(-3).join(" | "));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));
     return lines;

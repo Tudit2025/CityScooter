@@ -106,8 +106,9 @@ function installFakeSerial() {
   await push(p, "Traceback (most recent call last):\n  File \"main.py\", line 4, in <module>\nNameError: name 'stear' isn't defined\n");
   await push(p, "st:abc\necho:crash\n");
   await push(p, "sur\n");
-  await sleep(100);
-  const surLamp = await ev(() => { const r = document.querySelector(".cs-stat .cs-sur"); return !!r && r.classList.contains("cs-on"); });
+  // The stats row redraws every 200 ms and the lamp stays on for 600 ms: wait for it rather than sampling once.
+  const surLamp = await page.waitForFunction(() => { const r = document.querySelector(".cs-stat .cs-sur"); return !!r && r.classList.contains("cs-on"); },
+    { timeout: 550, polling: 50 }).then(() => true, () => false);
   await sleep(300);
   const L = await lines();
   check("sur (surrender) reaches Unity", L.includes("usb1|sur"));
