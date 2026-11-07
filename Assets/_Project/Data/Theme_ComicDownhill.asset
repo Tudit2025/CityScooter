@@ -92,3 +92,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8a1ea48e340ebae4cbf52c6fc08ddc86, type: 2}
   - {fileID: 11400000, guid: a3464f8b7be0b2b43a35c7cdb3a92b23, type: 2}
   - {fileID: 11400000, guid: e561799573c327843bdb9dc598e642eb, type: 2}
+  policeCar: {fileID: 6594701729157547053, guid: 75e48cc72c0aaec4390ed5adb136a97c, type: 3}
+  policeOfficer: {fileID: 1648136005807590029, guid: abe4aab41d010b049b71443ccea884de, type: 3}
+  policeCap: {fileID: 3213810724148106034, guid: 3636948f6d2fedf4f871f758422b4b0e, type: 3}
+  policeHeli: {fileID: 6094122960657549835, guid: d1feb9c27446f374eb61dfe4e6cbbf83, type: 3}
+  paintPellet: {fileID: 5068945078478816623, guid: e14263f736c1d0044933f38584e0ec9d, type: 3}
+  paintSplat: {fileID: 6300188077192991876, guid: 8ae221e1705f66848a543ea0d7ca397e, type: 3}
+  targetRing: {fileID: 2988964564877710363, guid: 2d672a78ea5d8db43831a0a9578b58c4, type: 3}
+  sniperDot: {fileID: 582728096727035228, guid: b70732823f5db34458cfc8a6e77f2ed9, type: 3}
+  oiPopup: {fileID: 1874653596165877510, guid: 14e0cb9a782823744aa69f31634a0ed6, type: 3}
+  splatPopup: {fileID: 6311142472003537231, guid: 001a8c5d822e8954c81b91bd739fe96e, type: 3}
+  screechPopup: {fileID: 6138536283774010665, guid: 4b9992d6b8d317e4a95cdb963ef214f3, type: 3}

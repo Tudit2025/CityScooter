@@ -31,6 +31,8 @@ namespace CityScooter.Track
 
         [Tooltip("A punch (\"pu\") knocks it out of the way and the game sends \"ko\". Off for people and vehicles.")]
         public bool punchable;
+        [Tooltip("WA police (officers, police cars): punching one, or knocking an officer flying in cartoon mode, raises the wanted level (PoliceChase).")]
+        public bool police;
         [Tooltip("Relative chance of being picked for a matching spawn slot.")]
         public float spawnWeight = 1f;
     }

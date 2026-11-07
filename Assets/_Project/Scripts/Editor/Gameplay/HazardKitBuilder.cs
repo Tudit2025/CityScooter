@@ -17,7 +17,8 @@ namespace CityScooter.EditorTools
     /// barriers and comic gifts. Everything uses ComicPalette/ComicInk, so it follows the city bend and fake turns.
     /// Also writes the hazard patterns (roadworks zone, police stop, traffic...) and puts them in the theme.
     ///   Menu: CityScooter/Hazards/Build hazard kit       Batch: -executeMethod CityScooter.EditorTools.HazardKitBuilder.BuildBatch
-    /// No real agency logos or crests: generic POLICE text and WA-style blue/white checks only.
+    /// WA police (11/8, the teacher's decision for class): "WA POLICE" text, blue/white checks, a police officer, the
+    /// police helicopter and its comic paint pellets (target ring, red dot, splat). Still no real crest or logo.
     /// </summary>
     public static class HazardKitBuilder
     {
@@ -39,6 +40,10 @@ namespace CityScooter.EditorTools
         static readonly Color Steel = new Color(.42f, .45f, .5f);
         static readonly Color LampOn = new Color(1f, .93f, .35f);
         static readonly Color LampOff = new Color(.35f, .3f, .12f);
+        static readonly Color UniformNavy = new Color(.1f, .13f, .24f);
+        static readonly Color TrouserNavy = new Color(.07f, .09f, .17f);
+        static readonly Color Paint = new Color(1f, .22f, .68f);
+        static readonly Color PaintDark = new Color(.72f, .08f, .46f);
 
         [MenuItem("CityScooter/Hazards/Build hazard kit")]
         public static void Build()
@@ -73,12 +78,16 @@ namespace CityScooter.EditorTools
                 ["PedCrosserA"] = Person("PedCrosserA", Looks["Student"], 1f, true),
                 ["PedCrosserB"] = Person("PedCrosserB", Looks["Elder"], -0.8f, true),
                 ["Zebra"] = Zebra(),
+                ["PoliceOfficer"] = PoliceOfficer(),
             };
+            PoliceCap(); PoliceHeli(); TargetRing(); SniperDot(); PaintPellet(); PaintSplat();
             GameObject[] popups = { Popup("FxPow", "POW", _r.yellow, _r.red, 1f), Popup("FxDing", "DING", White, PoliceBlue, .55f),
                 Popup("FxBang", "!", _r.yellow, _r.ink, .55f), Popup("FxSorry", "SORRY", White, _r.red, .9f),
                 Popup("FxBoing", "BOING", _r.yellow, PoliceBlue, .9f), Popup("FxCrash", "CRASH!", White, _r.red, 1f),
                 Popup("FxBonk", "BONK!", White, _r.ink, .8f), Swish(), Impact(), Popup("FxIgnore", "...", White, _r.ink, .5f),
-                Popup("FxZoom", "ZOOM!", new Color(.3f, .85f, 1f), _r.ink, .85f) };
+                Popup("FxZoom", "ZOOM!", new Color(.3f, .85f, 1f), _r.ink, .85f),
+                Popup("FxOi", "OI!", _r.yellow, PoliceBlue, .7f), Popup("FxSplat", "SPLAT!", Paint, White, 1f),
+                Popup("FxScreech", "SCREECH!", White, _r.ink, 1.05f) };
             PunchArmKit();
             foreach (KeyValuePair<string, Look> look in Looks) Person("Ped_" + look.Key, look.Value, 1f, false);
             CrashRider();
@@ -93,7 +102,7 @@ namespace CityScooter.EditorTools
             var theme = AssetDatabase.LoadAssetAtPath<TrackTheme>(ComicCityBuilder.ThemePath);
             if (theme != null) ApplyTo(theme);
             AssetDatabase.SaveAssets();
-            if (popups.Length != 11) throw new InvalidOperationException("pop-ups");
+            if (popups.Length != 14) throw new InvalidOperationException("pop-ups");
             Debug.Log("[Hazards] built " + p.Count + " hazards, " + gifts.Length + " gifts, " + patterns.Length + " patterns");
         }
 
@@ -118,6 +127,9 @@ namespace CityScooter.EditorTools
             theme.bonkPopup = Fx("FxBonk"); theme.ignorePopup = Fx("FxIgnore"); theme.boostPopup = Fx("FxZoom"); theme.swishPopup = Fx("FxSwish"); theme.impactPopup = Fx("FxImpact");
             theme.punchArm = Fx("PunchArm");
             theme.crashRider = Fx("CrashRider"); theme.crashScooter = Fx("CrashScooter");
+            theme.policeCar = Fx("PoliceCar"); theme.policeOfficer = Fx("PoliceOfficer"); theme.policeCap = Fx("PoliceCap"); theme.policeHeli = Fx("PoliceHeli");
+            theme.paintPellet = Fx("PaintPellet"); theme.paintSplat = Fx("PaintSplat"); theme.targetRing = Fx("TargetRing"); theme.sniperDot = Fx("SniperDot");
+            theme.oiPopup = Fx("FxOi"); theme.splatPopup = Fx("FxSplat"); theme.screechPopup = Fx("FxScreech");
             var people = new List<GameObject>();
             foreach (string id in LookIds) { GameObject p = Fx("Ped_" + id); if (p != null) people.Add(p); }
             theme.pedestrians = people.ToArray();
@@ -172,6 +184,7 @@ namespace CityScooter.EditorTools
             list.Add(Pattern("HZ_PoliceStop", new List<HazardPattern.Entry>
             {
                 E("Cone", -3.5f, 10), E("Cone", -2.9f, 14), E("Cone", -2.3f, 18), E("PoliceCar", -2.5f, 30),
+                E("PoliceOfficer", -1.05f, 31.5f), // at the driver's door (road side), facing the traffic
             }, 40, 0, .9f, true));
 
             list.Add(Pattern("HZ_Manhole", new List<HazardPattern.Entry> { E("Manhole", -2.2f, 12) }, 20, 0, .8f, true));
@@ -187,7 +200,7 @@ namespace CityScooter.EditorTools
             }, 90, 3, .6f, false, meet: 45));
             list.Add(Pattern("HZ_PoliceAndOncoming", new List<HazardPattern.Entry>
             {
-                E("PoliceCar", -2.6f, 20), E("CarOncomingBlue", 2f, 75),
+                E("PoliceCar", -2.6f, 20), E("PoliceOfficer", -4.4f, 21f), E("CarOncomingBlue", 2f, 75), // officer on the kerb
             }, 100, 5, .5f, false, meet: 70));
             // People: strollers on the sidewalk; crossers walk over the zebra when the rider is close (ring the bell!).
             list.Add(Pattern("HZ_SidewalkStroll", new List<HazardPattern.Entry>
@@ -225,6 +238,10 @@ namespace CityScooter.EditorTools
             public readonly ComicMesh Body = new ComicMesh();
             public readonly Dictionary<string, ComicMesh> Parts = new Dictionary<string, ComicMesh>();
             public ComicMesh Part(string name) { if (!Parts.TryGetValue(name, out ComicMesh m)) Parts[name] = m = new ComicMesh(); return m; }
+            /// <summary>Parts that get an ink outline (most parts are lights and have none).</summary>
+            public readonly HashSet<string> Inked = new HashSet<string>();
+            /// <summary>Local position of a part's own transform (rotors spin around it); its mesh is built around zero.</summary>
+            public readonly Dictionary<string, Vector3> Pivots = new Dictionary<string, Vector3>();
         }
 
         static void B(ComicMesh m, float x, float y, float z, float w, float h, float d, Color c) => m.Box(new Vector3(x, y, z), new Vector3(w, h, d), c);
@@ -241,7 +258,8 @@ namespace CityScooter.EditorTools
                 {
                     var go = new GameObject(part.Key);
                     go.transform.SetParent(art.transform, false);
-                    AddRenderer(go, "HZ_" + id + "_" + part.Key, part.Value, false);
+                    if (kit.Pivots.TryGetValue(part.Key, out Vector3 pivot)) go.transform.localPosition = pivot;
+                    AddRenderer(go, "HZ_" + id + "_" + part.Key, part.Value, kit.Inked.Contains(part.Key));
                 }
                 if (!decor)
                 {
@@ -324,6 +342,22 @@ namespace CityScooter.EditorTools
                         m.Quad(new Vector3(x + px, y, z), new Vector3(x, y, z), new Vector3(x, y + px, z), new Vector3(x + px, y + px, z), c, false);
                     }
             }
+        }
+
+        // Pixel text on a surface facing +Y (a car roof), read from behind: letters run along +X, their tops point to +Z.
+        static void TextUp(ComicMesh m, string text, float cx, float z, float y, float px, Color c)
+        {
+            var t = new ComicMesh();
+            Text(t, text, 0f, 0f, 0f, px, c);
+            m.Add(t, new Vector3(cx, y, z), Quaternion.Euler(90f, 0f, 0f), Vector3.one);
+        }
+
+        // Pixel text on a side facing +X (side 1) or -X (side -1), reading the right way round from that side.
+        static void TextSide(ComicMesh m, string text, int side, float x, float cy, float cz, float px, Color c)
+        {
+            var t = new ComicMesh();
+            Text(t, text, 0f, 0f, 0f, px, c);
+            m.Add(t, new Vector3(x, cy, cz), Quaternion.Euler(0f, side > 0 ? -90f : 90f, 0f), Vector3.one);
         }
 
         static GameObject Cone()
@@ -461,7 +495,11 @@ namespace CityScooter.EditorTools
                             if (s > 0) m.Quad(new Vector3(x, y, z), new Vector3(x, y, z + cell), new Vector3(x, y + cell, z + cell), new Vector3(x, y + cell, z), c, false);
                             else m.Quad(new Vector3(x, y, z + cell), new Vector3(x, y, z), new Vector3(x, y + cell, z), new Vector3(x, y + cell, z + cell), c, false);
                         }
-                Text(m, "POLICE", 0, .66f, -2.115f, .034f, PoliceBlue);
+                // WA POLICE (the teacher's call for class): two lines between the tail lights, and on the roof for the chase camera.
+                Text(m, "WA", 0, .79f, -2.115f, .03f, PoliceBlue);
+                Text(m, "POLICE", 0, .6f, -2.115f, .03f, PoliceBlue);
+                TextUp(m, "WA", 0f, -.72f, 1.465f, .09f, PoliceBlue);       // big: the chase camera sees the roof at a shallow angle
+                TextUp(m, "POLICE", 0f, -1.17f, 1.465f, .06f, PoliceBlue);
                 B(m, 0, 1.5f, -.25f, 1.3f, .08f, .36f, _r.ink);
                 B(m, -.33f, 1.6f, -.25f, .58f, .13f, .3f, new Color(.35f, .05f, .07f));
                 B(m, .33f, 1.6f, -.25f, .58f, .13f, .3f, new Color(.05f, .08f, .3f));
@@ -471,7 +509,7 @@ namespace CityScooter.EditorTools
             return Save(id, k, new Vector3(0, .85f, 0), new Vector3(1.9f, 1.7f, 4.3f), r =>
             {
                 MakeObstacle(r, ObstacleKind.Vehicle, false);
-                if (police) Blink(r, "LightRed", "LightBlue", 3f);
+                if (police) { Blink(r, "LightRed", "LightBlue", 3f); r.GetComponent<Obstacle>().police = true; }
                 if (speed != 0f || fraction > 0f) { var mv = r.AddComponent<Mover>(); mv.speed = speed; mv.fractionOfRiderSpeed = fraction; }
             });
         }
@@ -726,6 +764,217 @@ namespace CityScooter.EditorTools
             m.Beam(new Vector3(0, .3f, .48f), new Vector3(0, 1.22f, .65f), .055f, _r.cream);
             B(m, 0, 1.23f, .65f, .85f, .065f, .065f, _r.ink);
             Save("CrashScooter", k, Vector3.zero, Vector3.zero, r => r.AddComponent<CrashTumble>(), decor: true, outline: true);
+        }
+
+        // ---------------------------------------------------------------- WA police
+
+        // Same boxy comic proportions as the street people (facing -Z, feet at the pivot): dark navy uniform, duty belt,
+        // a plain silver badge (no real crest) and the cap with the blue/white checked band. The cap is its own piece:
+        // a punch without cartoon mode knocks it off (PoliceOfficer), the officer stays.
+        static GameObject PoliceOfficer()
+        {
+            var k = new Kit();
+            ComicMesh m = k.Body;
+            for (int s = -1; s <= 1; s += 2)
+            {
+                B(m, s * .11f, .05f, -.03f, .16f, .1f, .28f, _r.ink);
+                B(m, s * .11f, .48f, 0, .17f, .82f, .2f, TrouserNavy);
+                B(m, s * .31f, 1.12f, 0, .13f, .5f, .16f, UniformNavy);
+                B(m, s * .31f, .82f, 0, .11f, .12f, .12f, SkinMedium);
+                B(m, s * .2f, 1.41f, 0, .15f, .03f, .28f, PoliceBlue); // epaulettes
+            }
+            B(m, 0, 1.12f, 0, .48f, .6f, .27f, UniformNavy);
+            B(m, 0, .87f, 0, .52f, .09f, .3f, _r.ink);                     // duty belt
+            B(m, 0, .87f, -.155f, .1f, .06f, .02f, Silver);                // buckle
+            B(m, .21f, .82f, -.09f, .1f, .14f, .12f, _r.ink);               // pouch
+            B(m, -.2f, .82f, -.08f, .08f, .16f, .12f, _r.ink);              // radio
+            B(m, -.13f, 1.27f, -.14f, .09f, .1f, .02f, Silver);             // plain badge
+            B(m, .12f, 1.3f, -.14f, .12f, .03f, .02f, White);               // name bar
+            B(m, 0, 1.55f, 0, .25f, .27f, .25f, SkinMedium);
+            B(m, -.06f, 1.58f, -.13f, .04f, .05f, .02f, _r.ink); B(m, .06f, 1.58f, -.13f, .04f, .05f, .02f, _r.ink);
+            B(m, 0, 1.49f, -.13f, .1f, .02f, .02f, _r.ink);                // a stern little mouth
+            CapShape(k.Part("Cap"), new Vector3(0f, 1.73f, 0f));
+            k.Inked.Add("Cap");
+            return Save("PoliceOfficer", k, new Vector3(0, .9f, 0), new Vector3(.62f, 1.8f, .45f), r =>
+            {
+                MakeObstacle(r, ObstacleKind.Person, false);
+                r.GetComponent<Obstacle>().police = true;
+                var ped = r.AddComponent<Pedestrian>();
+                ped.walkSpeed = 0f; ped.crosses = false; ped.art = r.transform.Find("Art");
+                r.AddComponent<Track.PoliceOfficer>().cap = r.transform.Find("Art/Cap").gameObject;
+            });
+        }
+
+        // Navy crown, a band of blue and white checks (two rows), black peak to the front (-Z). c = bottom of the band.
+        static void CapShape(ComicMesh m, Vector3 c)
+        {
+            m.Cylinder(c + new Vector3(0f, .1f, .01f), .152f, .1f, UniformNavy, 10, 1.18f);
+            const int n = 10;
+            const float r = .158f, h = .04f;
+            for (int i = 0; i < n; i++)
+                for (int row = 0; row < 2; row++)
+                {
+                    float a0 = i * Mathf.PI * 2f / n, a1 = (i + 1) * Mathf.PI * 2f / n, y0 = c.y + row * h, y1 = y0 + h;
+                    Vector3 p = c + new Vector3(Mathf.Cos(a0) * r, 0, Mathf.Sin(a0) * r), q = c + new Vector3(Mathf.Cos(a1) * r, 0, Mathf.Sin(a1) * r);
+                    p.y = q.y = y0;
+                    Color col = ((i + row) & 1) == 0 ? PoliceBlue : White;
+                    m.Quad(q, p, p + Vector3.up * h, q + Vector3.up * h, col, false);
+                }
+            B(m, c.x, c.y + .005f, c.z - .16f, .27f, .025f, .15f, _r.ink);
+        }
+
+        // The cap that flies off (spawned at the officer's cap, launched with Knockout).
+        static void PoliceCap()
+        {
+            var k = new Kit();
+            CapShape(k.Body, new Vector3(0f, -.05f, 0f));
+            Save("PoliceCap", k, Vector3.zero, Vector3.zero, r => { }, decor: true, outline: true);
+        }
+
+        // The police helicopter, nose at +Z: white cabin, blue belly band, blue/white checks and WA POLICE on both
+        // sides, spinning rotors (Rotor, TailRotor: their own pivots), red/blue lights, a searchlight. Decoration only.
+        static void PoliceHeli()
+        {
+            var k = new Kit();
+            ComicMesh m = k.Body;
+            B(m, 0, 1.45f, .1f, 1.7f, 1.5f, 3.1f, White);                         // cabin
+            B(m, 0, 1.25f, 1.85f, 1.5f, 1.1f, .5f, White);                        // nose
+            B(m, 0, 1.55f, 2.11f, 1.3f, .55f, .03f, _r.glass);                    // windscreen
+            k.Body.Box(new Vector3(0, 1.95f, 1.75f), new Vector3(1.4f, .03f, .6f), _r.glass, Quaternion.Euler(-28f, 0f, 0f));
+            B(m, 0, .82f, .2f, 1.72f, .26f, 3.4f, PoliceBlue);                    // belly band
+            const float cell = .24f;
+            for (int s = -1; s <= 1; s += 2)
+            {
+                B(m, s * .855f, 1.95f, 1.45f, .03f, .3f, .7f, _r.glass);            // side windows
+                for (int i = 0; i < 12; i++)
+                    for (int row = 0; row < 2; row++)
+                    {
+                        float z = -1.35f + i * cell, y = .97f + row * cell, x = s * .858f;
+                        Color c = ((i + row) & 1) == 0 ? PoliceBlue : White;
+                        if (s > 0) m.Quad(new Vector3(x, y, z), new Vector3(x, y, z + cell), new Vector3(x, y + cell, z + cell), new Vector3(x, y + cell, z), c, false);
+                        else m.Quad(new Vector3(x, y, z + cell), new Vector3(x, y, z), new Vector3(x, y + cell, z), new Vector3(x, y + cell, z + cell), c, false);
+                    }
+                TextSide(m, "WA POLICE", s, s * .862f, 1.66f, -.1f, .066f, PoliceBlue);
+                // skids and struts
+                m.Beam(new Vector3(s * .85f, .12f, -1.2f), new Vector3(s * .85f, .12f, 1.7f), .09f, _r.ink);
+                m.Beam(new Vector3(s * .62f, .72f, -.7f), new Vector3(s * .85f, .14f, -.7f), .07f, _r.ink);
+                m.Beam(new Vector3(s * .62f, .72f, .9f), new Vector3(s * .85f, .14f, .9f), .07f, _r.ink);
+            }
+            m.Beam(new Vector3(0, 1.75f, -1.3f), new Vector3(0, 2.05f, -5.4f), .42f, White);   // tail boom
+            m.Beam(new Vector3(0, 1.58f, -1.3f), new Vector3(0, 1.86f, -5.2f), .12f, PoliceBlue);
+            B(m, 0, 2.55f, -5.25f, .1f, 1f, .7f, PoliceBlue);                     // fin
+            B(m, 0, 2.05f, -4.85f, 1.3f, .07f, .42f, White);                      // stabiliser
+            m.Cylinder(new Vector3(0, 2.33f, .15f), .14f, .36f, _r.ink, 8);       // mast
+            B(m, 0, 2.27f, .1f, .9f, .22f, 1.3f, White);                          // engine cowling
+            m.Cylinder(new Vector3(0, .7f, 1.7f), .16f, .1f, LampOn, 8);          // searchlight
+            B(m, -.5f, .66f, 1.2f, .28f, .1f, .28f, new Color(.35f, .05f, .07f));
+            B(m, .5f, .66f, 1.2f, .28f, .1f, .28f, new Color(.05f, .08f, .3f));
+            B(k.Part("LightRed"), -.5f, .66f, 1.2f, .32f, .13f, .32f, new Color(1f, .12f, .12f));
+            B(k.Part("LightBlue"), .5f, .66f, 1.2f, .32f, .13f, .32f, new Color(.2f, .45f, 1f));
+            ComicMesh rotor = k.Part("Rotor");
+            B(rotor, 0, 0, 0, 7.4f, .06f, .3f, Steel);
+            B(rotor, 0, 0, 0, .3f, .06f, 7.4f, Steel);
+            rotor.Cylinder(Vector3.zero, .2f, .14f, _r.ink, 8);
+            k.Pivots["Rotor"] = new Vector3(0f, 2.55f, .15f);
+            ComicMesh tail = k.Part("TailRotor");
+            B(tail, 0, 0, 0, .04f, 1.2f, .14f, Steel);
+            B(tail, 0, 0, 0, .04f, .14f, 1.2f, Steel);
+            k.Pivots["TailRotor"] = new Vector3(.12f, 2.35f, -5.3f);
+            Save("PoliceHeli", k, Vector3.zero, Vector3.zero, r => Blink(r, "LightRed", "LightBlue", 2.5f), decor: true, outline: true);
+        }
+
+        // A flat ring on the road (faces +Y).
+        static void Ring(ComicMesh m, float radius, float width, float y, Color c, int segments = 28)
+        {
+            float ri = radius - width * .5f, ro = radius + width * .5f;
+            for (int i = 0; i < segments; i++)
+            {
+                float a0 = i * Mathf.PI * 2f / segments, a1 = (i + 1) * Mathf.PI * 2f / segments;
+                Vector3 d0 = new Vector3(Mathf.Cos(a0), 0, Mathf.Sin(a0)), d1 = new Vector3(Mathf.Cos(a1), 0, Mathf.Sin(a1)), up = Vector3.up * y;
+                m.Quad(d0 * ro + up, d0 * ri + up, d1 * ri + up, d1 * ro + up, c, false);
+            }
+        }
+
+        // A flat disc on the road (faces +Y).
+        static void Disc(ComicMesh m, float radius, float y, Color c, int segments = 16)
+        {
+            for (int i = 0; i < segments; i++)
+            {
+                float a0 = i * Mathf.PI * 2f / segments, a1 = (i + 1) * Mathf.PI * 2f / segments;
+                m.Tri(new Vector3(0, y, 0), new Vector3(Mathf.Cos(a1) * radius, y, Mathf.Sin(a1) * radius), new Vector3(Mathf.Cos(a0) * radius, y, Mathf.Sin(a0) * radius), c);
+            }
+        }
+
+        // Where a paint pellet will land: red and white target, crosshair ticks; Art/Pulse closes in until it lands.
+        static void TargetRing()
+        {
+            var k = new Kit();
+            float r = 1.3f;
+            Ring(k.Body, r, .2f, .01f, _r.ink);
+            Ring(k.Body, r, .13f, .015f, _r.red);
+            Ring(k.Body, r - .22f, .07f, .015f, White);
+            Ring(k.Body, .36f, .1f, .015f, _r.red);
+            Disc(k.Body, .1f, .015f, _r.red, 10);
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 d = Quaternion.Euler(0f, i * 90f, 0f) * Vector3.forward;
+                k.Body.Box(d * (r - .55f) + Vector3.up * .015f, new Vector3(.07f, .01f, .4f), _r.red, Quaternion.LookRotation(d));
+            }
+            Ring(k.Part("Pulse"), r, .09f, .03f, _r.yellow);
+            Save("TargetRing", k, Vector3.zero, Vector3.zero, r2 => { }, decor: true);
+        }
+
+        // The sniper's red dot: a dark ring that is always there, the red dot and crosshair blink (Art/Blink) when it locks.
+        static void SniperDot()
+        {
+            var k = new Kit();
+            Ring(k.Body, .7f, .08f, .01f, _r.ink);
+            ComicMesh b = k.Part("Blink");
+            Disc(b, .2f, .02f, _r.red, 12);
+            Ring(b, .58f, .1f, .02f, _r.red);
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 d = Quaternion.Euler(0f, i * 90f + 45f, 0f) * Vector3.forward;
+                b.Box(d * .78f + Vector3.up * .02f, new Vector3(.07f, .01f, .36f), _r.red, Quaternion.LookRotation(d));
+            }
+            Save("SniperDot", k, Vector3.zero, Vector3.zero, r => { }, decor: true);
+        }
+
+        // What the helicopter drops: a comic paint ball (one swappable prefab: theme.paintPellet).
+        static void PaintPellet()
+        {
+            var k = new Kit();
+            k.Body.Ellipsoid(Vector3.zero, new Vector3(.66f, .66f, .66f), Paint);
+            k.Body.Ellipsoid(new Vector3(0f, .32f, 0f), new Vector3(.36f, .48f, .36f), Paint);
+            k.Body.Ellipsoid(new Vector3(-.13f, .12f, -.22f), new Vector3(.18f, .14f, .1f), White);
+            Save("PaintPellet", k, Vector3.zero, Vector3.zero, r => { }, decor: true, outline: true);
+        }
+
+        // Pink paint on the road (and, turned upright, on the rider's back): a lumpy blob and a few drops.
+        static void PaintSplat()
+        {
+            var k = new Kit();
+            ComicMesh m = k.Body;
+            float[] lumps = { 1f, .7f, .95f, .62f, 1.1f, .75f, .9f, .58f, 1.05f, .7f, .98f, .66f, 1.12f, .72f };
+            void Blob(float scale, float y, Color c)
+            {
+                for (int i = 0; i < lumps.Length; i++)
+                {
+                    float a0 = i * Mathf.PI * 2f / lumps.Length, a1 = (i + 1) * Mathf.PI * 2f / lumps.Length;
+                    float r0 = lumps[i] * scale, r1 = lumps[(i + 1) % lumps.Length] * scale;
+                    m.Tri(new Vector3(0, y, 0), new Vector3(Mathf.Cos(a1) * r1, y, Mathf.Sin(a1) * r1), new Vector3(Mathf.Cos(a0) * r0, y, Mathf.Sin(a0) * r0), c);
+                }
+            }
+            Blob(1.12f, .005f, PaintDark);
+            Blob(1f, .012f, Paint);
+            float[,] drops = { { 1.55f, .3f, .16f }, { -1.3f, .9f, .12f }, { .4f, -1.5f, .14f }, { -1.1f, -1.1f, .1f }, { 1.2f, -.9f, .09f } };
+            for (int i = 0; i < drops.GetLength(0); i++)
+            {
+                var d = new ComicMesh();
+                Disc(d, drops[i, 2], .012f, Paint, 8);
+                m.Add(d, new Vector3(drops[i, 0], 0f, drops[i, 1]), Quaternion.identity, Vector3.one);
+            }
+            Save("PaintSplat", k, Vector3.zero, Vector3.zero, r => { }, decor: true);
         }
 
         static GameObject Zebra()

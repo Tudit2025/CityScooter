@@ -8,6 +8,9 @@ namespace CityScooter.Gameplay
     /// v0 HUD built in code (uGUI + the built-in LegacyRuntime font) so it works before the UI art exists:
     /// score, distance and gifts, a 10-step speed bar (the same 0..9 the micro:bit gets), what is
     /// controlling the scooter, and Ready / Crash messages. Student-facing text is English.
+    /// WA police: wanted stars at the top (drawn sprites, so no font glyphs are needed in the Web build), a "POLICE"
+    /// marker at the bottom that follows the police car left / right and turns red when it is about to ram or has
+    /// you boxed in, and short flash titles ("WANTED!", "LOST THEM!").
     /// The tech artist can replace this with a designed prefab later.
     /// </summary>
     public sealed class HudView : MonoBehaviour
@@ -21,6 +24,10 @@ namespace CityScooter.Gameplay
         Text _hint;
         Image[] _speedSegments;
         Font _font;
+        Image[] _stars;
+        Text _wantedLabel, _police, _flash, _flashSub;
+        float _flashUntil, _starPulse;
+        int _shownWanted;
 
         static readonly Color SegmentOff = new Color(1f, 1f, 1f, 0.18f);
         static readonly Color SegmentOn = new Color(1f, 0.82f, 0.2f, 0.95f);
@@ -60,6 +67,107 @@ namespace CityScooter.Gameplay
                 _speedSegments[i] = seg.GetComponent<Image>();
                 _speedSegments[i].color = SegmentOff;
             }
+
+            // WA police
+            Sprite star = StarSprite();
+            _stars = new Image[5];
+            for (int i = 0; i < _stars.Length; i++)
+            {
+                var go = new GameObject("WantedStar" + i, typeof(RectTransform), typeof(Image));
+                var rt = go.GetComponent<RectTransform>();
+                rt.SetParent(root, false);
+                rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 1f);
+                rt.sizeDelta = new Vector2(58f, 58f);
+                rt.anchoredPosition = new Vector2((i - 2) * 62f, -28f);
+                _stars[i] = go.GetComponent<Image>();
+                _stars[i].sprite = star;
+                _stars[i].raycastTarget = false;
+                go.SetActive(false);
+            }
+            _wantedLabel = MakeText(root, "Wanted", new Vector2(0.5f, 1f), new Vector2(0f, -88f), 26, TextAnchor.UpperCenter, FontStyle.Bold);
+            _wantedLabel.text = "WANTED";
+            _wantedLabel.color = StarOn;
+            _wantedLabel.gameObject.SetActive(false);
+            _police = MakeText(root, "Police", new Vector2(0.5f, 0f), new Vector2(0f, 96f), 36, TextAnchor.LowerCenter, FontStyle.Bold);
+            _flash = MakeText(root, "Flash", new Vector2(0.5f, 0.5f), new Vector2(0f, 250f), 64, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _flash.color = StarOn;
+            _flashSub = MakeText(root, "FlashSub", new Vector2(0.5f, 0.5f), new Vector2(0f, 190f), 30, TextAnchor.MiddleCenter, FontStyle.Normal);
+        }
+
+        static readonly Color StarOn = new Color(1f, 0.82f, 0.2f, 1f);
+        static readonly Color StarOff = new Color(1f, 1f, 1f, 0.28f);
+        static readonly Color PoliceBlue = new Color(0.45f, 0.65f, 1f, 1f);
+        static readonly Color PoliceRed = new Color(1f, 0.25f, 0.2f, 1f);
+
+        /// <summary>A short title in the upper middle of the screen while the ride goes on ("LOST THEM!").</summary>
+        public void Flash(string title, string sub = null, float seconds = 2.2f)
+        {
+            if (_flash == null) return;
+            _flash.text = title;
+            _flashSub.text = sub ?? "";
+            _flashUntil = Time.unscaledTime + seconds;
+        }
+
+        // A comic star: white fill with a dark ink edge (tinted yellow or grey by the Image colour).
+        static Sprite StarSprite()
+        {
+            const int n = 64;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp, name = "WantedStar" };
+            var px = new Color32[n * n];
+            var ink = new Color32(30, 24, 20, 255);
+            var fill = new Color32(255, 255, 255, 255);
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    var p = new Vector2(x + 0.5f - n * 0.5f, y + 0.5f - n * 0.5f + 1.5f);
+                    px[y * n + x] = InStar(p, 23f) ? fill : InStar(p, 30f) ? ink : new Color32(0, 0, 0, 0);
+                }
+            tex.SetPixels32(px);
+            tex.Apply(false, true);
+            return Sprite.Create(tex, new Rect(0, 0, n, n), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        // Inside a five-pointed star (one point up) of outer radius r?
+        static bool InStar(Vector2 p, float r)
+        {
+            float seg = Mathf.PI * 2f / 5f, t = Mathf.Repeat(Mathf.Atan2(p.y, p.x) - Mathf.PI * 0.5f, seg);
+            if (t > seg * 0.5f) t = seg - t;
+            Vector2 a = new Vector2(r, 0f), b = new Vector2(Mathf.Cos(seg * 0.5f), Mathf.Sin(seg * 0.5f)) * (r * 0.46f), e = b - a;
+            Vector2 d = new Vector2(Mathf.Cos(t), Mathf.Sin(t));
+            float den = d.x * e.y - d.y * e.x;
+            if (Mathf.Abs(den) < 1e-6f) return p.magnitude <= r;
+            return p.magnitude <= (a.x * e.y - a.y * e.x) / den;
+        }
+
+        void UpdatePolice(GameController g)
+        {
+            PoliceChase chase = g.GetComponent<PoliceChase>();
+            int wanted = chase != null ? chase.Wanted : 0;
+            if (wanted != _shownWanted) { _starPulse = Time.unscaledTime; _shownWanted = wanted; }
+            float pulse = 1f + 0.35f * Mathf.Clamp01(1f - (Time.unscaledTime - _starPulse) / 0.35f);
+            for (int i = 0; i < _stars.Length; i++)
+            {
+                bool show = wanted > 0;
+                if (_stars[i].gameObject.activeSelf != show) _stars[i].gameObject.SetActive(show);
+                if (!show) continue;
+                bool on = i < wanted;
+                _stars[i].color = on ? StarOn : StarOff;
+                _stars[i].rectTransform.localScale = Vector3.one * (on && i == wanted - 1 ? pulse : 1f);
+            }
+            if (_wantedLabel.gameObject.activeSelf != wanted > 0) _wantedLabel.gameObject.SetActive(wanted > 0);
+            bool cop = chase != null && chase.Chasing && chase.CopOnRoad && chase.CopGap > -4f && g.State == RunState.Running;
+            _police.text = cop ? (chase.CopDanger ? "POLICE!" : "POLICE  " + Mathf.Max(0, Mathf.RoundToInt(chase.CopGap)) + " m") : "";
+            if (cop)
+            {
+                bool blink = ((int)(Time.unscaledTime * 6f) & 1) == 0;
+                _police.color = chase.CopDanger ? (blink ? PoliceRed : Color.white) : (blink ? PoliceBlue : PoliceRed);
+                _police.rectTransform.anchoredPosition = new Vector2(Mathf.Clamp(chase.CopOffsetX * 90f, -520f, 520f), 96f);
+            }
+            float left = _flashUntil - Time.unscaledTime;
+            if (left <= 0f) { if (_flash.text.Length > 0) { _flash.text = ""; _flashSub.text = ""; } return; }
+            float a = Mathf.Clamp01(left / 0.4f);
+            _flash.color = new Color(StarOn.r, StarOn.g, StarOn.b, a);
+            _flashSub.color = new Color(1f, 1f, 1f, a);
         }
 
         Text MakeText(RectTransform parent, string name, Vector2 anchor, Vector2 pos, int size, TextAnchor align, FontStyle style)
@@ -118,6 +226,7 @@ namespace CityScooter.Gameplay
             int level = Mathf.Max(0, g.rider.SpeedLevel);
             for (int i = 0; i < _speedSegments.Length; i++) _speedSegments[i].color = i <= level && g.State == RunState.Running ? SegmentOn : SegmentOff;
             _device.text = DeviceLabel();
+            UpdatePolice(g);
         }
 
         static string PunchCharges(GameController g)

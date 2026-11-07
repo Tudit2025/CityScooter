@@ -100,6 +100,7 @@
         <tr><td><kbd>R</kbd></td><td>ring the bell: people step aside</td></tr>
         <tr><td><kbd>E</kbd></td><td>boost for 2 s (then it recharges)</td></tr>
         <tr><td><kbd>T</kbd></td><td>cartoon mode on/off: people you bump go flying</td></tr>
+        <tr><td><kbd>S</kbd> (police after you)</td><td>brake to a stop: pull over</td></tr>
       </table>
       <h3>Got a micro:bit?</h3>
       <p>Choose <b>micro:bit (USB)</b> above and connect it.</p>
@@ -212,6 +213,7 @@
     if (lower === "bl") return { kind: "bell" };
     if (lower === "toon") return { kind: "toon", value: 1 };
     if (lower === "bo") return { kind: "boost" };
+    if (lower === "sur") return { kind: "surrender" };
     const colon = lower.indexOf(":");
     if (colon <= 0) return { kind: "unknown" };
     const key = lower.slice(0, colon).trim();
@@ -230,6 +232,7 @@
       case "pu": return { kind: "punch" };
       case "bl": return { kind: "bell" };
       case "bo": return { kind: "boost" };
+      case "sur": return { kind: "surrender" };
       case "toon": {
         const v = arg.toLowerCase();
         if (v === "1" || v === "on" || v === "true") return { kind: "toon", value: 1 };
@@ -310,6 +313,9 @@
         break;
       case "boost":
         d.boostUntil = t + 300;
+        break;
+      case "surrender":
+        d.surUntil = t + 600;
         break;
       case "hello":
         if (d.ver !== c.value) {
@@ -450,6 +456,7 @@
       r.querySelector(".cs-bl").classList.toggle("cs-on", t < (d.bellUntil || 0));
       r.querySelector(".cs-toon").classList.toggle("cs-on", !!d.toon);
       r.querySelector(".cs-bo").classList.toggle("cs-on", t < (d.boostUntil || 0));
+      r.querySelector(".cs-sur").classList.toggle("cs-on", t < (d.surUntil || 0));
       const max = Math.max(1, ...d.jpBuckets);
       const bars = r.querySelectorAll(".cs-jpbars i");
       d.jpBuckets.forEach((n, i) => { bars[i].style.height = Math.round((n / max) * 100) + "%"; bars[i].title = n + " jp"; });
@@ -464,7 +471,7 @@
       <span class="cs-steer-val"></span><span class="cs-strate cs-muted"></span>
       <span class="cs-jp" title="jp messages in the last second"><span class="cs-jp-big">0</span><span class="cs-muted">jp in 1 s</span></span>
       <span class="cs-jpbars" title="jp per second, last 10 seconds">${"<i></i>".repeat(10)}</span>
-      <span class="cs-acts"><span class="cs-brake cs-br">BRAKE</span><span class="cs-brake cs-pu" title="pu: punch">PUNCH</span><span class="cs-brake cs-bl" title="bl: bell">BELL</span><span class="cs-brake cs-bo" title="bo: boost">BOOST</span><span class="cs-brake cs-toon" title="toon:1 / toon:0: cartoon mode">TOON</span></span>`;
+      <span class="cs-acts"><span class="cs-brake cs-br">BRAKE</span><span class="cs-brake cs-pu" title="pu: punch">PUNCH</span><span class="cs-brake cs-bl" title="bl: bell">BELL</span><span class="cs-brake cs-bo" title="bo: boost">BOOST</span><span class="cs-brake cs-toon" title="toon:1 / toon:0: cartoon mode">TOON</span><span class="cs-brake cs-sur" title="sur: surrender to the police (pull over)">SUR</span></span>`;
     box.appendChild(r);
     return r;
   }

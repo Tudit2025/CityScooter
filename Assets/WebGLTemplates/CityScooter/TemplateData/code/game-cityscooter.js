@@ -1,5 +1,6 @@
 /* CityScooter block pack for MicrobitBlocks (Claude, 2026-11-07). Protocol: docs/protocol.md.
- * Blocks send st:/jp/br (v1: pu/bl) and react to the game's crash/gift/go/spd:N (v1: ko/warn:/turn:). The generated message reader is the same
+ * Blocks send st:/jp/br (v1: pu/bl, police: sur) and react to the game's crash/gift/go/spd:N (v1: ko/warn:/turn:;
+ * police 11/8: wanted:N, chase:, cop:N, heli:, inc:, arrested, busted, lost). The generated message reader is the same
  * buffered messages() as microbit/starter.py (uart.readline() can return half a line).
  * A pack for another game copies this file's shape: blocks, generators, isHat, globals, helpers, loopTail,
  * toolbox, starter. */
@@ -12,7 +13,12 @@
   const MESSAGE_OPTIONS = [["crash", "crash"], ["gift", "gift"], ["go (new ride)", "go"], ["ko (punch landed)", "ko"],
     ["warn:car (car ahead)", "warn:car"], ["warn:ped (person ahead)", "warn:ped"], ["warn:hole (hole ahead)", "warn:hole"],
     ["turn:-1 (road turns left)", "turn:-1"], ["turn:1 (road turns right)", "turn:1"], ["turn:0 (road straight)", "turn:0"],
-    ["boing (bumped someone in cartoon mode)", "boing"], ["tired (out of punches: wait a moment)", "tired"]];
+    ["boing (bumped someone in cartoon mode)", "boing"], ["tired (out of punches: wait a moment)", "tired"],
+    // WA police (11/8). wanted:N and cop:N carry a number: see the "wanted level" and "police distance" blocks.
+    ["chase:1 (the police are after you)", "chase:1"], ["chase:0 (police chase over)", "chase:0"],
+    ["heli:1 (police helicopter!)", "heli:1"], ["heli:0 (helicopter gone)", "heli:0"],
+    ["inc:C (paint shot ON you: move!)", "inc:C"], ["inc:L (paint shot on your left)", "inc:L"], ["inc:R (paint shot on your right)", "inc:R"],
+    ["arrested", "arrested"], ["busted", "busted"], ["lost (you lost the police!)", "lost"]];
 
   const BLOCKS = [
     { type: "cs_steer", message0: "steer %1", args0: [{ type: "input_value", name: "VALUE", check: "Number" }],
@@ -40,6 +46,16 @@
       style: "game_blocks", tooltip: "Runs when your speed changes. Use the \"game speed\" block inside: 0 (slow) to 9 (fastest)." },
     { type: "cs_speed", message0: "game speed (0-9)", output: "Number", style: "game_blocks",
       tooltip: "The last speed the game sent: 0 (slow) to 9 (fastest)." },
+    // WA police (11/8)
+    { type: "cs_surrender", message0: "pull over (surrender)", previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Give up when the police chase you: the scooter brakes to a stop and you are ARRESTED (the ride ends, your score stays). Python: print(\"sur\")" },
+    { type: "cs_on_wanted", message0: "when the wanted level changes %1 %2",
+      args0: [{ type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "game_blocks", tooltip: "Runs when your wanted level changes. Use the \"wanted level\" block inside: 0 (nobody is after you) to 5 stars." },
+    { type: "cs_wanted", message0: "wanted level (0-5)", output: "Number", style: "game_blocks",
+      tooltip: "How many police stars you have: 0 to 5. Punching police adds a star; losing the police takes them away." },
+    { type: "cs_cop", message0: "police distance (0-9)", output: "Number", style: "game_blocks",
+      tooltip: "How far behind the police car is while it chases you: 0 is right next to you, 9 is far away (or no police car)." },
   ];
 
   const GENERATORS = {
@@ -53,6 +69,10 @@
     cs_speed: () => { MB.setFlag("usesSpeed"); return ["game_speed", Order.ATOMIC]; },
     cs_on_message: (b) => { MB.addSection("msg:" + b.getFieldValue("MSG"), MB.statements(b, "DO")); return ""; },
     cs_on_speed: (b) => { MB.setFlag("usesSpeed"); MB.addSection("msg:spd", MB.statements(b, "DO")); return ""; },
+    cs_surrender: () => 'print("sur")\n',
+    cs_wanted: () => { MB.setFlag("usesWanted"); return ["wanted_level", Order.ATOMIC]; },
+    cs_on_wanted: (b) => { MB.setFlag("usesWanted"); MB.addSection("msg:wanted", MB.statements(b, "DO")); return ""; },
+    cs_cop: () => { MB.setFlag("usesCop"); return ["police_distance", Order.ATOMIC]; },
   };
 
   const MESSAGES_HELPER = [
@@ -80,18 +100,27 @@
     colour: "#e81f26",
     blocks: BLOCKS,
     generators: GENERATORS,
-    reserved: "buffer,messages,msg,lines,line,data,loops,game_speed",
-    isHat: (type) => type === "cs_on_message" || type === "cs_on_speed",
-    globals: () => ['buffer = ""', "loops = 0", "game_speed = 0"],
+    reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance",
+    isHat: (type) => type === "cs_on_message" || type === "cs_on_speed" || type === "cs_on_wanted",
+    // wanted_level / police_distance only when a block uses them, so Lesson 1 programs look the same as before.
+    globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
+      ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null].filter(Boolean),
     helpers: () => [MESSAGES_HELPER],
     loopTail: (ctx, section) => {
       const branches = [];
       for (const [, m] of MESSAGE_OPTIONS) {
-        if (section("msg:" + m)) branches.push('if msg == "' + m + '":\n' + indent(section("msg:" + m), 0));
+        let body = section("msg:" + m);
+        // A new ride or the end of a chase: the police car is gone.
+        if (ctx.flags.usesCop && (m === "go" || m === "chase:0")) body = "    police_distance = 9\n" + body;
+        if (body) branches.push('if msg == "' + m + '":\n' + indent(body, 0));
       }
       if (section("msg:spd") || ctx.flags.usesSpeed) {
         branches.push('if msg.startswith("spd:"):\n    game_speed = int(msg[4:])\n' + section("msg:spd"));
       }
+      if (section("msg:wanted") || ctx.flags.usesWanted) {
+        branches.push('if msg.startswith("wanted:"):\n    wanted_level = int(msg[7:])\n' + section("msg:wanted"));
+      }
+      if (ctx.flags.usesCop) branches.push('if msg.startswith("cop:"):\n    police_distance = int(msg[4:])\n');
       let out = "";
       if (branches.length) {
         out += "# messages from the game\nfor msg in messages():\n" + indent(branches.map((b, i) => (i ? "el" : "") + b).join(""), 4);
@@ -106,6 +135,8 @@
         blk("cs_steer", { inputs: { VALUE: num(0) } }), blk("cs_jump"), blk("cs_brake"), blk("cs_punch"), blk("cs_bell"), blk("cs_boost"), blk("cs_toon"),
         blk("cs_on_message"), blk("cs_on_message", { fields: { MSG: "gift" } }), blk("cs_on_message", { fields: { MSG: "warn:ped" } }),
         blk("cs_on_speed"), blk("cs_speed"),
+        blk("cs_on_message", { fields: { MSG: "chase:1" } }), blk("cs_on_message", { fields: { MSG: "inc:C" } }),
+        blk("cs_on_wanted"), blk("cs_wanted"), blk("cs_cop"), blk("cs_surrender"),
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

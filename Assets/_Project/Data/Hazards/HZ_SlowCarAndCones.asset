@@ -37,3 +37,4 @@ MonoBehaviour:
   turnStrength: 0.8
   turnSeconds: 4
   meetAtZ: 45
+  roadHalfWidth: 4

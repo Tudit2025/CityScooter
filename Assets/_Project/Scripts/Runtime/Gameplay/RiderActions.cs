@@ -14,7 +14,8 @@ namespace CityScooter.Gameplay
     /// ("bl" / R) makes people ahead step aside; "warn:car|ped|hole" for things in the rider's lane ahead (each
     /// thing once); "turn:-1|0|1" when the fake road turns. Cartoon mode ("toon:1" / T) makes people bounce away
     /// ("boing") instead of ending the run. Crashes throw the rider off the scooter depending on what was hit.
-    /// Created by GameController, so no scene changes.
+    /// WA police: punching an officer (BONK, the cap flies, "OI!") or a police car, or knocking an officer flying in
+    /// cartoon mode, tells PoliceChase (one more star). Created by GameController, so no scene changes.
     /// </summary>
     public sealed class RiderActions : MonoBehaviour
     {
@@ -71,7 +72,7 @@ namespace CityScooter.Gameplay
         int _horn;
 
         // Reuses the comic city's sound bank (no new clips yet): thud for a punch, click for the bell, horns for cars.
-        void Cue(string id, Vector3? position = null)
+        internal void Cue(string id, Vector3? position = null)
         {
             if (_audio == null) _audio = FindAnyObjectByType<CityAudioDirector>();
             if (_audio != null) _audio.PlayCue(id, 1f, position);
@@ -267,6 +268,14 @@ namespace CityScooter.Gameplay
                 Popup(theme != null ? theme.bonkPopup : null, at + Vector3.up * 0.8f);
                 Cue("SCO_Land_01", at);
                 ShakeCamera(0.2f);
+                if (target.police) PoliceChase.Instance?.ReportAttack(target); // punching a police car: one more star
+                return false;
+            }
+            if (target.kind == ObstacleKind.Person && target.police && !CartoonMode)
+            {
+                // A police officer does not go flying (cartoon mode off): BONK, the cap pops off, "OI!". One more star.
+                BonkOfficer(target, at, side);
+                PoliceChase.Instance?.ReportAttack(target);
                 return false;
             }
             if (target.kind == ObstacleKind.Person && !CartoonMode)
@@ -290,7 +299,57 @@ namespace CityScooter.Gameplay
             ShakeCamera(0.35f);
             StartCoroutine(HitStop());
             GameEvents.RaisePunchLanded();
+            if (target.police) PoliceChase.Instance?.ReportAttack(target); // cartoon mode: an officer sent flying
             return true;
+        }
+
+        // ---------------------------------------------------------------- WA police
+
+        readonly List<GameObject> _caps = new List<GameObject>();
+
+        void BonkOfficer(Obstacle officer, Vector3 at, float side)
+        {
+            Wobble w = officer.GetComponent<Wobble>();
+            if (w == null) w = officer.gameObject.AddComponent<Wobble>();
+            w.Hit(side);
+            if (_arm != null) _arm.Recoil();
+            Popup(theme != null ? theme.bonkPopup : null, at + Vector3.up * 0.8f);
+            Popup(theme != null ? theme.oiPopup : null, officer.transform.position + new Vector3(side * 1f, 3.1f, 0f), officer.transform);
+            Cue("SCO_Land_01", at);
+            ShakeCamera(0.2f);
+            PoliceOfficer po = officer.GetComponent<PoliceOfficer>();
+            if (po == null || theme == null || theme.policeCap == null || !po.TakeCapOff(out Vector3 capAt, out Quaternion capRot)) return;
+            GameObject cap = null;
+            foreach (GameObject c in _caps) if (c != null && !c.activeSelf) { cap = c; break; }
+            if (cap == null)
+            {
+                cap = Instantiate(theme.policeCap, transform);
+                cap.name = theme.policeCap.name;
+                _caps.Add(cap);
+            }
+            cap.transform.SetPositionAndRotation(capAt, capRot);
+            cap.SetActive(true);
+            Knockout k = cap.GetComponent<Knockout>();
+            if (k == null) k = cap.AddComponent<Knockout>();
+            k.Launch(new Vector3(side * 2.5f, 7.5f, Mathf.Max(4f, rider.Speed * 0.6f)));
+        }
+
+        GameObject _paintBlob;
+
+        /// <summary>A paint pellet hit the rider (PoliceChase.PaintBust): "SPLAT!", a pink blob, a gentle topple.</summary>
+        internal void PaintSplat(Vector3 at)
+        {
+            if (rider == null) return;
+            Popup(theme != null ? theme.splatPopup : null, rider.transform.position + new Vector3(0f, 2.4f, 0.6f));
+            Cue("SCO_Land_02", at);
+            ThrowRider(null);
+            if (_crashRider == null || theme == null || theme.paintSplat == null) return;
+            if (_paintBlob == null) { _paintBlob = Instantiate(theme.paintSplat, _crashRider.transform); _paintBlob.name = "PaintOnTheRider"; }
+            _paintBlob.transform.SetParent(_crashRider.transform, false);
+            _paintBlob.transform.localPosition = new Vector3(0f, 1.35f, -0.19f);
+            _paintBlob.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f); // the ground decal turned to face backwards
+            _paintBlob.transform.localScale = Vector3.one * 0.45f;
+            _paintBlob.SetActive(true);
         }
 
         // A tiny freeze on impact makes a hit feel solid (comic "hit stop").
@@ -360,6 +419,7 @@ namespace CityScooter.Gameplay
             Vector3 p = rider.transform.position;
             float side = o.transform.position.x >= p.x ? 1f : -1f;
             k.Launch(new Vector3(side * 5f, 13f, Mathf.Clamp(rider.Speed * 0.7f, 6f, 25f)));
+            if (o.police) PoliceChase.Instance?.ReportAttack(o); // cartoon mode: rode an officer flying
             rider.Bump(0.65f);
             if (Tune.cartoonCostsGift) GameController.Instance?.SpendGift();
             Bounced++;
@@ -370,7 +430,11 @@ namespace CityScooter.Gameplay
         }
 
         /// <summary>Title for the end-of-ride screen.</summary>
-        public string EndTitle(Obstacle hit) => hit != null && hit.kind == ObstacleKind.Person ? "SORRY!" : "CRASH!";
+        public string EndTitle(Obstacle hit)
+        {
+            if (hit != null && PoliceChase.Instance != null && PoliceChase.Instance.IsChaseCar(hit)) return "BUSTED!";
+            return hit != null && hit.kind == ObstacleKind.Person ? "SORRY!" : "CRASH!";
+        }
 
         /// <summary>Punch accuracy for the end-of-ride screen (null when no punches were thrown).</summary>
         public string EndNote()
@@ -392,11 +456,28 @@ namespace CityScooter.Gameplay
         {
             if (o == null || rider == null) return;
             if (o.kind == ObstacleKind.Person) Popup(theme != null ? theme.sorryPopup : null, o.transform.position + Vector3.up * 2.3f);
+            else if (PoliceChase.Instance != null && PoliceChase.Instance.IsChaseCar(o)) Popup(theme != null ? theme.bonkPopup : null, rider.transform.position + new Vector3(0f, 2.2f, 0f));
             else Popup(theme != null ? theme.crashPopup : null, rider.transform.position + new Vector3(0f, 2.4f, 1f));
             ThrowRider(o);
         }
 
-        // The rider leaves the scooter in a way that matches what was hit.
+        enum Throw { ChaseCar, Oncoming, Car, Hole, Person, Paint, Thing }
+
+        static Throw StyleOf(Obstacle o)
+        {
+            if (o == null) return Throw.Paint;
+            if (PoliceChase.Instance != null && PoliceChase.Instance.IsChaseCar(o)) return Throw.ChaseCar;
+            Mover mover = o.GetComponent<Mover>();
+            switch (o.kind)
+            {
+                case ObstacleKind.Vehicle: return mover != null && mover.speed < 0f ? Throw.Oncoming : Throw.Car;
+                case ObstacleKind.Hole: return Throw.Hole;
+                case ObstacleKind.Person: return Throw.Person;
+                default: return Throw.Thing;
+            }
+        }
+
+        // The rider leaves the scooter in a way that matches what was hit (null: a paint pellet).
         void ThrowRider(Obstacle o)
         {
             if (theme == null || theme.crashRider == null || theme.crashScooter == null || rider.model == null) return;
@@ -407,29 +488,40 @@ namespace CityScooter.Gameplay
             float yaw = model.eulerAngles.y;
             Quaternion facing = Quaternion.Euler(0f, yaw, 0f);
             float v = Mathf.Max(rider.Speed, 6f), side = Random.value < 0.5f ? -1f : 1f;
-            Mover mover = o.GetComponent<Mover>();
             Quaternion lying = Quaternion.Euler(90f, 0f, 0f), onSide = Quaternion.Euler(0f, 0f, 90f * side);
-            switch (o.kind)
+            switch (StyleOf(o))
             {
-                case ObstacleKind.Vehicle when mover != null && mover.speed < 0f:
+                case Throw.ChaseCar:
+                    // The police car from behind: thrown forward and high (BUSTED), the scooter skids on ahead.
+                    _crashRider.Throw(at + Vector3.up * 0.5f, facing, new Vector3(side * 2f, 10f, Mathf.Clamp(v * 0.4f + 10f, 12f, 26f)), new Vector3(560f, 0f, 90f * side), lying, 0.15f);
+                    _crashScooter.Throw(at, facing, new Vector3(side * 2.5f, 3f, Mathf.Clamp(v * 0.3f + 6f, 8f, 18f)), new Vector3(200f, 160f * side, 240f * side), onSide, 0.2f);
+                    ShakeCamera(0.85f);
+                    break;
+                case Throw.Paint:
+                    // Splat: a surprised wobble and a gentle topple, the scooter rolls on and falls over.
+                    _crashRider.Throw(at + Vector3.up * 0.3f, facing, new Vector3(side * 1.5f, 4.5f, Mathf.Clamp(v * 0.2f, 3f, 6f)), new Vector3(200f, 0f, 120f * side), lying, 0.15f);
+                    _crashScooter.Throw(at, facing, new Vector3(side * 1f, 1f, Mathf.Clamp(v * 0.25f, 2f, 8f)), new Vector3(0f, 0f, 220f * side), onSide, 0.2f);
+                    ShakeCamera(0.4f);
+                    break;
+                case Throw.Oncoming:
                     // Oncoming car: thrown back and high, the scooter skids back too.
                     _crashRider.Throw(at + Vector3.up * 0.4f, facing, new Vector3(side * 3f, 11f, -Mathf.Clamp(v * 0.25f + 12f, 12f, 30f)), new Vector3(-540f, 90f * side, 0f), lying, 0.15f);
                     _crashScooter.Throw(at, facing, new Vector3(side * 2f, 4f, -10f), new Vector3(0f, 200f * side, 300f * side), onSide, 0.2f);
                     ShakeCamera(0.9f);
                     break;
-                case ObstacleKind.Vehicle:
+                case Throw.Car:
                     // Into a parked or slower car: over the bonnet, the scooter stops dead.
                     _crashRider.Throw(at + Vector3.up * 0.6f, facing, new Vector3(side * 1.5f, 9f, Mathf.Clamp(v * 0.35f, 5f, 14f)), new Vector3(600f, 0f, 60f * side), lying, 0.15f);
                     _crashScooter.Throw(at, facing, new Vector3(0f, 2f, -2f), new Vector3(-120f, 0f, 160f * side), onSide, 0.2f);
                     ShakeCamera(0.7f);
                     break;
-                case ObstacleKind.Hole:
+                case Throw.Hole:
                     // Front wheel into the open manhole: the scooter noses down and sticks, the rider goes over the bars.
                     _crashScooter.Stick(new Vector3(o.transform.position.x, at.y - 0.25f, o.transform.position.z - 0.35f), facing * Quaternion.Euler(38f, 0f, 0f));
                     _crashRider.Throw(at + Vector3.up * 0.7f, facing, new Vector3(side * 0.8f, 7.5f, Mathf.Clamp(v * 0.45f, 6f, 16f)), new Vector3(480f, 0f, 0f), lying, 0.15f);
                     ShakeCamera(0.5f);
                     break;
-                case ObstacleKind.Person:
+                case Throw.Person:
                     // A gentle topple: nobody gets hurt.
                     _crashRider.Throw(at + Vector3.up * 0.3f, facing, new Vector3(side * 1.2f, 3.5f, 3f), new Vector3(150f, 0f, 90f * side), lying, 0.15f);
                     _crashScooter.Throw(at, facing, new Vector3(side * 1.5f, 1f, 2f), new Vector3(0f, 0f, 220f * side), onSide, 0.2f);
@@ -463,18 +555,19 @@ namespace CityScooter.Gameplay
         {
             if (_crashRider != null) _crashRider.gameObject.SetActive(false);
             if (_crashScooter != null) _crashScooter.gameObject.SetActive(false);
+            if (_paintBlob != null) _paintBlob.SetActive(false);
             if (_hiddenModel != null) _hiddenModel.SetActive(true);
             _hiddenModel = null;
         }
 
-        static void ShakeCamera(float strength)
+        internal static void ShakeCamera(float strength)
         {
             Camera cam = Camera.main;
             FollowCamera follow = cam != null ? cam.GetComponent<FollowCamera>() : null;
             if (follow != null) follow.Shake(strength);
         }
 
-        void Popup(GameObject prefab, Vector3 position, Transform follow = null)
+        internal void Popup(GameObject prefab, Vector3 position, Transform follow = null)
         {
             if (prefab == null) return;
             if (!_popups.TryGetValue(prefab, out Stack<ComicPopup> pool)) _popups[prefab] = pool = new Stack<ComicPopup>();
