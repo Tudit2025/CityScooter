@@ -9,21 +9,30 @@ namespace CityScooter.Gameplay
     /// <summary>
     /// Students' programs trigger the game's own events with "do:..." (protocol v1): start a police chase, set the
     /// wanted stars, call the helicopter, order a turn, send traffic or roadworks. Example rule a student can build:
-    /// count "ko" with a variable and after 3 punches send "do:chase". At most one trigger a second per board; the
-    /// game only does it during a ride, places hazards out of sight ahead (never on a boulevard transition), and the
-    /// usual messages (chase:1, wanted:N, warn:car, turn:1 ...) follow as for any other event.
+    /// count "ko" with a variable and after 3 punches send "do:chase". At most one trigger a second per board during a
+    /// ride; triggers sent between rides (start screen, crash screen) wait and happen just after the next ride starts.
+    /// Hazards are placed out of sight ahead (never on a boulevard transition), and the usual messages (chase:1,
+    /// wanted:N, warn:car, turn:1 ...) follow as for any other event.
     /// </summary>
     public sealed class ProgramTriggers : MonoBehaviour
     {
         public RiderController rider;
         public TrackGenerator track;
         public float perBoardCooldown = 1f;
+        [Tooltip("Seconds into the next ride before triggers sent between rides happen.")]
+        public float queuedDelay = 0.4f;
 
-        /// <summary>For tests: triggers carried out, and ones dropped (too fast, not riding, nowhere to put it).</summary>
+        /// <summary>For tests: triggers carried out, and ones dropped (too fast, nowhere to put it).</summary>
         public int Done { get; private set; }
         public int Dropped { get; private set; }
+        /// <summary>Triggers waiting for the next ride.</summary>
+        public int Queued => _queue.Count;
 
+        struct Pending { public string Device, Name; public int Value; }
+        const int MaxQueued = 6;
+        readonly List<Pending> _queue = new List<Pending>();
         readonly Dictionary<string, float> _next = new Dictionary<string, float>();
+        float _runQueueAt = -1f;
 
         // Trigger name -> hazard pattern asset (theme.hazards) it places ahead.
         static readonly Dictionary<string, string> PatternFor = new Dictionary<string, string>
@@ -32,62 +41,101 @@ namespace CityScooter.Gameplay
             [Messages.DoPolice] = "HZ_PoliceStop", [Messages.DoCrossing] = "HZ_Crossing", [Messages.DoManhole] = "HZ_Manhole",
         };
 
-        void OnEnable() => GameEvents.TriggerRequested += OnTrigger;
-        void OnDisable() => GameEvents.TriggerRequested -= OnTrigger;
+        void OnEnable() { GameEvents.TriggerRequested += OnTrigger; GameEvents.RunStarted += OnRunStarted; }
+        void OnDisable() { GameEvents.TriggerRequested -= OnTrigger; GameEvents.RunStarted -= OnRunStarted; }
 
         void OnTrigger(string deviceId, string name, int value)
         {
             string key = deviceId ?? "?";
-            if (rider == null || !rider.Running || (_next.TryGetValue(key, out float next) && Time.time < next)) { Dropped++; return; }
+            if (rider == null) { Dropped++; return; }
+            if (!rider.Running)
+            {
+                // Between rides: keep it for the start of the next ride. One of each kind is enough, so a program
+                // that sends it in a loop does not pile them up.
+                _queue.RemoveAll(q => q.Name == name);
+                if (_queue.Count >= MaxQueued) _queue.RemoveAt(0);
+                _queue.Add(new Pending { Device = key, Name = name, Value = value });
+                Caption(key, Label(name, value) + " (next ride)");
+                return;
+            }
+            if (_next.TryGetValue(key, out float next) && Time.time < next) { Dropped++; return; }
             _next[key] = Time.time + perBoardCooldown;
-            string label = Do(name, value);
-            if (label == null) { Dropped++; return; }
-            Done++;
-            GameController game = GameController.Instance;
-            if (game != null && game.hud != null) game.hud.Caption((deviceId == "sim" ? "Simulator" : deviceId) + " → " + label);
+            Run(key, name, value);
         }
 
-        // Returns what happened, for the HUD, or null if it could not be done now.
-        string Do(string name, int value)
+        void OnRunStarted()
+        {
+            _next.Clear();
+            _runQueueAt = _queue.Count > 0 ? Time.time + queuedDelay : -1f;
+        }
+
+        void Update()
+        {
+            if (_runQueueAt < 0f || Time.time < _runQueueAt || rider == null || !rider.Running) return;
+            _runQueueAt = -1f;
+            var pending = new List<Pending>(_queue);
+            _queue.Clear();
+            foreach (Pending p in pending) Run(p.Device, p.Name, p.Value);
+        }
+
+        void Run(string device, string name, int value)
+        {
+            if (!Do(name, value)) { Dropped++; return; }
+            Done++;
+            Caption(device, Label(name, value));
+        }
+
+        static void Caption(string device, string text)
+        {
+            GameController game = GameController.Instance;
+            if (game != null && game.hud != null) game.hud.Caption((device == "sim" ? "Simulator" : device) + " → " + text);
+        }
+
+        // False if it could not be done now.
+        bool Do(string name, int value)
         {
             PoliceChase police = PoliceChase.Instance;
             switch (name)
             {
                 case Messages.DoChase:
-                    if (police == null) return null;
+                    if (police == null) return false;
                     police.SetWanted(Mathf.Max(police.Wanted, 1));
-                    return "POLICE CHASE!";
+                    return true;
                 case Messages.DoStars:
-                    if (police == null) return null;
+                    if (police == null) return false;
                     police.SetWanted(value);
-                    return value > 0 ? "WANTED " + new string('★', Mathf.Clamp(value, 0, 5)) : "police give up";
+                    return true;
                 case Messages.DoHeli:
-                    if (police == null) return null;
+                    if (police == null) return false;
                     police.SetWanted(Mathf.Max(police.Wanted, 3));
-                    return "POLICE HELICOPTER!";
+                    return true;
                 case Messages.DoCalm:
-                    if (police == null) return null;
+                    if (police == null) return false;
                     police.SetWanted(0);
-                    return "police give up";
+                    return true;
                 case Messages.DoTurn:
                     FakeTurnDirector turns = FakeTurnDirector.Instance;
-                    if (turns == null || value == 0) return null;
+                    if (turns == null || value == 0) return false;
                     float speed = Mathf.Max(10f, rider.Speed);
-                    bool ok = turns.RequestTurn(rider.transform.position.z + Mathf.Max(150f, speed * 4f), value, 0.9f, Mathf.Max(160f, speed * 6f));
-                    return ok ? (value < 0 ? "turn LEFT ahead" : "turn RIGHT ahead") : null;
+                    return turns.RequestTurn(rider.transform.position.z + Mathf.Max(150f, speed * 4f), value, 0.9f, Mathf.Max(160f, speed * 6f));
                 default:
-                    if (!PatternFor.TryGetValue(name, out string pattern) || track == null || track.theme == null || track.theme.hazards == null) return null;
+                    if (!PatternFor.TryGetValue(name, out string pattern) || track == null || track.theme == null || track.theme.hazards == null) return false;
                     HazardPattern p = System.Array.Find(track.theme.hazards, h => h != null && h.name == pattern);
-                    if (p == null) return null;
+                    if (p == null) return false;
                     float ahead = Mathf.Min(Mathf.Max(120f, rider.Speed * 3.5f), track.buildAhead - p.length - 12f);
-                    return track.TryPlacePatternAhead(p, ahead) ? Label(name) : null;
+                    return track.TryPlacePatternAhead(p, ahead);
             }
         }
 
-        static string Label(string name)
+        static string Label(string name, int value)
         {
             switch (name)
             {
+                case Messages.DoChase: return "POLICE CHASE!";
+                case Messages.DoStars: return value > 0 ? "WANTED " + new string('★', Mathf.Clamp(value, 0, 5)) : "police give up";
+                case Messages.DoHeli: return "POLICE HELICOPTER!";
+                case Messages.DoCalm: return "police give up";
+                case Messages.DoTurn: return value < 0 ? "turn LEFT ahead" : "turn RIGHT ahead";
                 case Messages.DoCar: return "oncoming car!";
                 case Messages.DoSlowCar: return "slow car ahead";
                 case Messages.DoRoadworks: return "ROADWORKS ahead";

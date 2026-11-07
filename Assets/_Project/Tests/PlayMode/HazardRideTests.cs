@@ -224,6 +224,37 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
+        public IEnumerator Do_SentBetweenRides_HappensWhenTheNextRideStarts()
+        {
+            yield return LoadMain();
+            var hub = DeviceHub.Instance;
+            var triggers = _game.GetComponent<ProgramTriggers>();
+            _game.StartRun();
+            yield return new WaitForSeconds(0.3f);
+            hub.Receive("usb1", "do:chase");
+            yield return null;
+            Assert.AreEqual(1, PoliceChase.Instance.Wanted, "summoned at the start of the ride");
+            _game.EndRun("CRASH!", true);
+            yield return null;
+            Assert.AreNotEqual(RunState.Running, _game.State);
+            hub.Receive("usb1", "do:chase");          // e.g. "when the game says crash -> start a police chase"
+            hub.Receive("usb1", "do:chase");          // sent again in a loop: still one
+            hub.Receive("usb1", "do:turn:L");
+            yield return null;
+            Assert.AreEqual(2, triggers.Queued, "kept for the next ride, one of each kind");
+            _game.StartRun();
+            yield return null;
+            // "when the game says go -> make the game start roadworks" arrives right after the start: it works at once.
+            hub.Receive("usb2", "do:roadworks");
+            yield return null;
+            Assert.Greater(_game.track.LastHazardRange.x, _game.rider.transform.position.z + 100f, "do: right after go works");
+            yield return new WaitForSeconds(0.6f);
+            Assert.AreEqual(0, triggers.Queued);
+            Assert.AreEqual(1, PoliceChase.Instance.Wanted, "the chase summoned on the crash screen starts with the new ride");
+            Assert.IsTrue(System.Linq.Enumerable.Any(FakeTurnDirector.Instance.Planned, t => t.Direction == -1), "and the left turn");
+        }
+
+        [UnityTest]
         public IEnumerator Boost_GoesPastTheSpeedLimit_ThenRecharges()
         {
             yield return LoadMain();
