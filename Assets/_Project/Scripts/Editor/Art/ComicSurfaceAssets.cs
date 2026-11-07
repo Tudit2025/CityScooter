@@ -22,6 +22,17 @@ namespace CityScooter.EditorTools.Art
         static Texture2DArray masks,normals;
 
         public static float Tiling(ComicSurface surface)=>profiles.TryGetValue(surface,out var p)?1/p.tileMetres:1;
+
+        /// <summary>Other builders (boulevard sections) bake meshes without rebuilding the textures: load the saved
+        /// profiles and assignments so their surface tiling matches the street kit. No-op after Build.</summary>
+        public static void EnsureLoaded()
+        {
+            if(profiles.Count>0)return;
+            Library=AssetDatabase.LoadAssetAtPath<ComicSurfaceLibrary>(Root+"/ComicSurfaceLibrary.asset");
+            if(Library==null)throw new InvalidOperationException("Build the comic city first (ComicSurfaceLibrary).");
+            foreach(var p in Library.profiles)profiles[p.surface]=p;
+            foreach(var a in Library.assignments)assignments[a.assetId]=a.primarySurface;
+        }
         public static ComicSurface ForAsset(ComicAssetSpec s,bool building)=>assignments.TryGetValue(s.id,out var type)?type:DefaultSurface(s,building);
 
         static ComicSurface DefaultSurface(ComicAssetSpec s,bool building)

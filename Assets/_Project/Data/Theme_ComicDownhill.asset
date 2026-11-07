@@ -70,3 +70,25 @@ MonoBehaviour:
   - {fileID: 5269257977654849716, guid: b0829f5f782ffbf45b7b77bb8e0a3c56, type: 3}
   crashRider: {fileID: 5603426240204836022, guid: c0a7bdc2316c4b84b94f76abe49079b1, type: 3}
   crashScooter: {fileID: 2221484530501345844, guid: 9b074a668e9f3da468b0a86f6af033dc, type: 3}
+  boulevardIn: {fileID: 7821730962975997336, guid: fa4d1aee780581a489ea45ad67f8c574, type: 3}
+  boulevardChunks:
+  - {fileID: 1265895175528040992, guid: 01fcef0a8bf90cd4d92bac61b8102bff, type: 3}
+  - {fileID: 7742087341395049174, guid: 8b50224b893ff9547bfb95120d179153, type: 3}
+  boulevardOut: {fileID: 1516030357790615301, guid: 6514f651fb85de34898287a74974cb2c, type: 3}
+  boulevardHazards:
+  - {fileID: 11400000, guid: d12eedbd87110334ca2fa7137e6a8691, type: 2}
+  - {fileID: 11400000, guid: 4a6cc6f8a8ce7bd4a8ca5f5916423578, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 416bace6f208e294a813b975b4690f17, type: 2}
+  - {fileID: 11400000, guid: 8578d9f54835f0d46a5d163be53caf5b, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: b44e8e9120f2ba547afe612562572111, type: 2}
+  - {fileID: 11400000, guid: f7b4a55b20b8bbf4e98de7d868f4aff7, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  - {fileID: 11400000, guid: 6e7c690878e1b4c4eaae50a5a0d90a33, type: 2}
+  - {fileID: 11400000, guid: 23c9119795600ab4fbfe696b42d06ef5, type: 2}
+  - {fileID: 11400000, guid: 601a8832cac40734c85f6ec5d5b79f34, type: 2}
+  - {fileID: 11400000, guid: 8a1ea48e340ebae4cbf52c6fc08ddc86, type: 2}
+  - {fileID: 11400000, guid: a3464f8b7be0b2b43a35c7cdb3a92b23, type: 2}
+  - {fileID: 11400000, guid: e561799573c327843bdb9dc598e642eb, type: 2}

@@ -1,0 +1,125 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZB_RoadworksKerbLane
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 6182165056013551231, guid: 0bb095d92e02591408ceaca4bb68fedd, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -8.9
+    z: 0
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -7.6
+    z: 10
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -6.8
+    z: 14
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -6
+    z: 18
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -5.2
+    z: 22
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.4
+    z: 26
+    yaw: 0
+  - prefab: {fileID: 4245549831371322931, guid: 4b75d9dd4a0d771419de90ed765da812, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.35
+    z: 32
+    yaw: 0
+  - prefab: {fileID: 4245549831371322931, guid: 4b75d9dd4a0d771419de90ed765da812, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.35
+    z: 38
+    yaw: 0
+  - prefab: {fileID: 4245549831371322931, guid: 4b75d9dd4a0d771419de90ed765da812, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.35
+    z: 44
+    yaw: 0
+  - prefab: {fileID: 9056036491282105397, guid: 738d45b1bda5c1240aa2dc1e6750d039, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -6.2
+    z: 44
+    yaw: 0
+  - prefab: {fileID: 4245549831371322931, guid: 4b75d9dd4a0d771419de90ed765da812, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.35
+    z: 50
+    yaw: 0
+  - prefab: {fileID: 4877492278703633084, guid: f0b626d64682c5245b8854f520d9617a, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -7.3
+    z: 52
+    yaw: 0
+  - prefab: {fileID: 4245549831371322931, guid: 4b75d9dd4a0d771419de90ed765da812, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.35
+    z: 56
+    yaw: 0
+  - prefab: {fileID: 4877492278703633084, guid: f0b626d64682c5245b8854f520d9617a, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -5.5
+    z: 58
+    yaw: 0
+  - prefab: {fileID: 4245549831371322931, guid: 4b75d9dd4a0d771419de90ed765da812, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.35
+    z: 62
+    yaw: 0
+  - prefab: {fileID: 3559360935640938753, guid: 31f05429985a2f548be015806272ff51, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -6.2
+    z: 66
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -4.4
+    z: 72
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -5.45
+    z: 76
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -6.5
+    z: 80
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -7.55
+    z: 84
+    yaw: 0
+  length: 90
+  minLevel: 0
+  weight: 1.2
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 40
+  roadHalfWidth: 8

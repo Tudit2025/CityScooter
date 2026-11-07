@@ -412,6 +412,7 @@ namespace CityScooter.EditorTools.Art
             var previous=AssetDatabase.LoadAssetAtPath<TrackTheme>("Assets/_Project/Data/Theme_PerthStreet.asset");
             theme.gifts=previous!=null?previous.gifts:Array.Empty<Gift>();
             HazardKitBuilder.ApplyTo(theme); // v0.2: comic gifts and hazard patterns (Scripts/Editor/Gameplay)
+            BoulevardBuilder.ApplyTo(theme); // v0.2: 4-lane boulevard sections (Scripts/Editor/Gameplay)
             EditorUtility.SetDirty(theme);
         }
 
