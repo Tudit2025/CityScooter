@@ -35,6 +35,9 @@ namespace CityScooter.Gameplay
         float _runQueueAt = -1f;
 
         // Trigger name -> hazard pattern asset (theme.hazards) it places ahead.
+        /// <summary>Hazard pattern asset names the triggers use (a test checks they exist in the theme).</summary>
+        public static IEnumerable<string> PatternNames => PatternFor.Values;
+
         static readonly Dictionary<string, string> PatternFor = new Dictionary<string, string>
         {
             [Messages.DoCar] = "HZ_OncomingCar", [Messages.DoSlowCar] = "HZ_SlowCar", [Messages.DoRoadworks] = "HZ_RoadworksShort",
@@ -59,8 +62,7 @@ namespace CityScooter.Gameplay
                 return;
             }
             if (_next.TryGetValue(key, out float next) && Time.time < next) { Dropped++; return; }
-            _next[key] = Time.time + perBoardCooldown;
-            Run(key, name, value);
+            if (Run(key, name, value)) _next[key] = Time.time + perBoardCooldown;
         }
 
         void OnRunStarted()
@@ -78,11 +80,17 @@ namespace CityScooter.Gameplay
             foreach (Pending p in pending) Run(p.Device, p.Name, p.Value);
         }
 
-        void Run(string device, string name, int value)
+        bool Run(string device, string name, int value)
         {
-            if (!Do(name, value)) { Dropped++; return; }
+            if (!Do(name, value))
+            {
+                Dropped++;
+                Caption(device, Label(name, value) + ": no room right now");
+                return false;
+            }
             Done++;
             Caption(device, Label(name, value));
+            return true;
         }
 
         static void Caption(string device, string text)
@@ -132,7 +140,7 @@ namespace CityScooter.Gameplay
             switch (name)
             {
                 case Messages.DoChase: return "POLICE CHASE!";
-                case Messages.DoStars: return value > 0 ? "WANTED " + new string('★', Mathf.Clamp(value, 0, 5)) : "police give up";
+                case Messages.DoStars: return value > 0 ? "WANTED: " + Mathf.Clamp(value, 0, 5) + (value == 1 ? " STAR" : " STARS") : "police give up";
                 case Messages.DoHeli: return "POLICE HELICOPTER!";
                 case Messages.DoCalm: return "police give up";
                 case Messages.DoTurn: return value < 0 ? "turn LEFT ahead" : "turn RIGHT ahead";

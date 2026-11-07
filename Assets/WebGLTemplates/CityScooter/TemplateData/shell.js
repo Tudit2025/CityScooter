@@ -234,7 +234,7 @@
       case "bo": return { kind: "boost" };
       case "do": return /^(chase|heli|calm|car|slowcar|roadworks|police|crossing|manhole|stars\s*:\s*[0-5]|turn\s*:\s*(l|r|left|right|-1|1))$/i.test(arg)
         ? { kind: "trigger", value: arg.toLowerCase() } : { kind: "malformed" };
-      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo)$/i.test(arg)
+      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo|jp|br|pu|bl|bo|toon|say|do|sur)$/i.test(arg)
         ? { kind: "say", value: arg } : { kind: "malformed" };
       case "sur": return { kind: "surrender" };
       case "toon": {

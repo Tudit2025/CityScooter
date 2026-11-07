@@ -191,6 +191,8 @@ namespace CityScooter.Tests
         [TestCase("say:crash")]
         [TestCase("say:GIFT")]
         [TestCase("say:warn:car")]
+        [TestCase("say:sur")]
+        [TestCase("say:jp")]
         [TestCase("say:two words")]
         [TestCase("say:abcdefghijklmnopq")]
         public void V1_SayRefusesGameMessagesAndOddWords(string line)

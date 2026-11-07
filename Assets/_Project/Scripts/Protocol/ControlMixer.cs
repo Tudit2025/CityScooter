@@ -25,6 +25,9 @@ namespace CityScooter.Protocol
         /// <summary>v1 cartoon mode: the last "toon:" any device sent (off until a program turns it on).</summary>
         public bool Toon { get; private set; }
 
+        /// <summary>Cartoon mode back to off (the board that turned it on went away).</summary>
+        public void ClearToon() => Toon = false;
+
         public void Apply(in Command command, double now)
         {
             switch (command.Kind)

@@ -75,6 +75,13 @@ namespace CityScooter.Tests
         }
 
         [Test]
+        public void ProgramTriggerPatternsExist()
+        {
+            foreach (string name in ProgramTriggers.PatternNames)
+                Assert.IsTrue(System.Array.Exists(Theme().hazards, h => h != null && h.name == name), name + " is used by do: triggers but missing from the theme");
+        }
+
+        [Test]
         public void TrafficDrivesOnTheLeft()
         {
             foreach (HazardPattern p in Theme().hazards)

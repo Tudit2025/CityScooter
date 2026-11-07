@@ -41,6 +41,8 @@ namespace CityScooter.Protocol
             {
                 case Go: case Crash: case Gift: case Ko: case Boing: case Tired:
                 case "arrested": case "busted": case "lost": case "echo":
+                // board commands too: a relayed "sur" or "jp" must not look like a command to an echoing program
+                case Jump: case Brake: case Punch: case Bell: case Boost: case Toon: case Say: case Do: case "sur":
                     return true;
             }
             return w.IndexOf(':') >= 0;

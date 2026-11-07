@@ -109,6 +109,8 @@ namespace CityScooter.Track
                     break;
                 case State.Walking:
                     p.z += _walk * dt;
+                    // Stay on this chunk's sidewalk: turn round near its ends (chunks are recycled with their people).
+                    if (_chunk != null && _walk != 0f && (p.z < 1f && _walk < 0f || p.z > _chunk.length - 1f && _walk > 0f)) _walk = -_walk;
                     moving = Mathf.Abs(_walk) > 0.01f;
                     break;
                 case State.Dodging:

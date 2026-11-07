@@ -86,7 +86,9 @@ namespace CityScooter.Gameplay
         /// </summary>
         public bool RequestTurn(float startZ, int direction, float strength, float length)
         {
-            float bend = RiderZ + BendStart;
+            // Between rides the rider still stands where the last ride ended: only clamp to it during a ride.
+            bool riding = rider != null && rider.Running;
+            float bend = riding ? RiderZ + BendStart : float.MinValue;
             startZ = Mathf.Max(startZ, bend);
             float endZ = startZ + Mathf.Max(30f, length);
             float gap = T.turnMinStraight * 0.5f;

@@ -108,13 +108,24 @@ namespace CityScooter.Devices
             _hub.Send(word);
         }
 
-        // V1 boards have tiny UART buffers: at most a few warnings per second (HazardWarnings already sends each thing once).
+        // V1 boards have tiny UART buffers: at most 4 warnings a second. Warnings that arrive together (truck, worker and
+        // manhole entering the look-ahead at once) wait their turn instead of being lost; one of each kind is enough.
         float _nextWarnTime;
+        readonly System.Collections.Generic.List<string> _warnQueue = new System.Collections.Generic.List<string>(3);
         void OnWarning(string message)
         {
-            if (Time.unscaledTime < _nextWarnTime) return;
+            if (_warnQueue.Contains(message)) return;
+            if (_warnQueue.Count >= 3) _warnQueue.RemoveAt(0);
+            _warnQueue.Add(message);
+            SendWarnings();
+        }
+
+        void SendWarnings()
+        {
+            if (_warnQueue.Count == 0 || Time.unscaledTime < _nextWarnTime) return;
             _nextWarnTime = Time.unscaledTime + 0.25f;
-            _hub.Send(message);
+            _hub.Send(_warnQueue[0]);
+            _warnQueue.RemoveAt(0);
         }
 
         void OnTurn(int direction) => _hub.Send(Messages.Turn(direction));
@@ -165,6 +176,7 @@ namespace CityScooter.Devices
         void Update()
         {
             SendIncoming();
+            SendWarnings();
             if (_wantedCop >= 0 && _wantedCop != _sentCop && Time.unscaledTime >= _nextCopTime)
             {
                 _hub.Send(Messages.Cop(_wantedCop));

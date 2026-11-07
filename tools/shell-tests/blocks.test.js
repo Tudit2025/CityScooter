@@ -205,7 +205,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(300); // 3 quick presses
     await page.keyboard.down("b"); await sleep(1400); await page.keyboard.up("b"); await sleep(400); // a long press of B
     await page.keyboard.down("m"); await page.keyboard.down("l"); await sleep(600); await page.keyboard.up("m"); await page.keyboard.up("l");
-    for (const m of ["spd:5", "crash", "gift", "go", "party", "warn:ped", "ko", "ko", "ko", "turn:-1", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
+    for (const m of ["spd:5", "crash", "gift", "go", "party", "warn:ped", "ko", "ko", "ko", "turn:-1", "spd:rn:car", "wanted:oops", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     // police messages; no sur before the police car is close (cop:9 is far)
     for (const m of ["chase:1", "wanted:3", "cop:9", "inc:C"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     const surBefore = await ev((n) => window.__fakeUnity.lines.slice(n).filter((l) => l === "sim|sur").length, before);

@@ -74,6 +74,8 @@ namespace CityScooter.Gameplay
         [Tooltip("People on the sidewalks of every 40 m chunk (min, max). They are obstacles for riders on the sidewalk.")]
         public Vector2 sidewalkPeople = new Vector2(2f, 4f);
         [Range(0f, 1f)] public float sidewalkPeopleWalking = 0.65f;
+        [Tooltip("At most this many people around at once (street life stops adding more): the web build's draw-call budget.")]
+        [Min(0)] public int maxPeople = 14;
 
         [Header("Hazard patterns (roadworks, police, traffic)")]
         [Tooltip("No hazard patterns in the first metres of a run.")]

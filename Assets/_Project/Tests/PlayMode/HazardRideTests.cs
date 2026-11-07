@@ -255,6 +255,42 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
+        public IEnumerator Warnings_ThatArriveTogether_AllReachTheBoard()
+        {
+            yield return LoadMain();
+            var capture = new CaptureOutput();
+            DeviceHub.Instance.RegisterOutput(capture);
+            try
+            {
+                _game.StartRun();
+                yield return null;
+                Vector3 p = _game.rider.transform.position;
+                HazardPattern works = Pattern("HZ_RoadworksZone");
+                _game.track.PlaceAt(Prefab(works, "HZ_Manhole"), new Vector3(p.x, p.y, p.z + 20f));
+                _game.track.PlaceAt(Prefab(works, "HZ_Worker"), new Vector3(p.x, p.y, p.z + 23f));
+                yield return new WaitForSeconds(0.8f);
+                Assert.Contains("*|warn:hole", capture.Lines);
+                Assert.Contains("*|warn:ped", capture.Lines, "the second warning waits its turn instead of being lost");
+            }
+            finally { DeviceHub.Instance.UnregisterOutput(capture); }
+        }
+
+        [UnityTest]
+        public IEnumerator DoCar_AtStartSpeed_ReallySendsACar()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return null;
+            Assert.Less(_game.rider.Speed, 13f, "slow, right after the start");
+            DeviceHub.Instance.Receive("usb1", "do:car");
+            float t = 0f;
+            while (_game.track.MovingCount == 0 && t < 3f) { t += Time.deltaTime; yield return null; }
+            Assert.Greater(_game.track.MovingCount, 0, "the oncoming car is on the road");
+            yield return new WaitForSeconds(1f);
+            Assert.Greater(_game.track.MovingCount, 0, "and still there a second later (not spawned past the release distance)");
+        }
+
+        [UnityTest]
         public IEnumerator Boost_GoesPastTheSpeedLimit_ThenRecharges()
         {
             yield return LoadMain();
@@ -390,7 +426,9 @@ namespace CityScooter.Tests
             yield return new WaitForSeconds(6f);
             foreach (Transform t in people)
             {
-                Assert.Greater(Mathf.Abs(t.position.z - (p.z + 20f)), 6f, "walked");
+                Assert.Greater(Mathf.Abs(t.position.z - (p.z + 20f)), 1f, "walked");
+                RoadChunk chunk = t.GetComponentInParent<RoadChunk>();
+                Assert.That(t.localPosition.z, Is.InRange(0f, chunk.length), "stays on its own chunk (turns round at the ends)");
                 Assert.AreEqual(_game.track.SurfaceHeightAt(t.position.x, t.position.z), t.position.y, 0.05f, "feet on the sidewalk, not in the air");
                 Assert.Less(Quaternion.Angle(t.rotation, Quaternion.identity), 0.5f, "standing upright");
             }

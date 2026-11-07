@@ -37,10 +37,10 @@ namespace CityScooter.Gameplay
 
         /// <summary>v1 cartoon mode: off until a program sends "toon:1" (or T on the keyboard). People bumped into go flying.</summary>
         public static bool CartoonMode { get; private set; }
-        static bool _keyToon;
+        static bool _keyToon, _lastBoardToon;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { CartoonMode = false; CanBounce = false; _keyToon = false; }
+        static void ResetStatics() { CartoonMode = false; CanBounce = false; _keyToon = false; _lastBoardToon = false; }
 
         /// <summary>For tests and the HUD.</summary>
         public int Punches { get; private set; }
@@ -65,7 +65,7 @@ namespace CityScooter.Gameplay
         float _nextPunch;
         int _turn;
         readonly Collider[] _hits = new Collider[32];
-        readonly Dictionary<int, float> _warned = new Dictionary<int, float>();
+        readonly Dictionary<int, Vector2> _warned = new Dictionary<int, Vector2>(); // instance id -> (time, z) warned
         readonly Dictionary<GameObject, Stack<ComicPopup>> _popups = new Dictionary<GameObject, Stack<ComicPopup>>();
         readonly List<ComicPopup> _live = new List<ComicPopup>();
         CityAudioDirector _audio;
@@ -125,7 +125,10 @@ namespace CityScooter.Gameplay
             Subscribe();
             DeviceHub hub = DeviceHub.Instance;
             if ((hub == null || hub.KeyboardEnabled) && KeyboardControls.ToonTogglePressed()) ToggleCartoonKey();
-            CartoonMode = _keyToon || (hub != null && hub.Mixer.Toon);
+            bool boardToon = hub != null && hub.Mixer.Toon;
+            if (_lastBoardToon && !boardToon) _keyToon = false; // a board turning it off wins over the T key
+            _lastBoardToon = boardToon;
+            CartoonMode = _keyToon || boardToon;
             GameController game = GameController.Instance;
             CanBounce = CartoonMode && (!Tune.cartoonCostsGift || (game != null && game.Gifts > 0));
             Charges = Mathf.Min(MaxCharges, Charges + Time.deltaTime / Mathf.Max(0.1f, Tune.punchRechargeSeconds));
@@ -400,8 +403,10 @@ namespace CityScooter.Gameplay
                 Obstacle o = _hits[i] != null ? _hits[i].GetComponentInParent<Obstacle>() : null;
                 if (o == null || o.kind == ObstacleKind.Thing) continue;
                 int id = o.GetInstanceID();
-                if (_warned.TryGetValue(id, out float when) && Time.time - when < 8f) continue;
-                _warned[id] = Time.time;
+                float z = o.transform.position.z;
+                // A pooled object reused further up the road is a new thing: warn again if it moved more than 20 m.
+                if (_warned.TryGetValue(id, out Vector2 seen) && Time.time - seen.x < 8f && Mathf.Abs(z - seen.y) < 20f) continue;
+                _warned[id] = new Vector2(Time.time, z);
                 if (o.kind == ObstacleKind.Vehicle && o.GetComponent<Mover>() != null) Cue((_horn++ & 1) == 0 ? "VEH_Horn_01" : "VEH_Horn_02", o.transform.position);
                 GameEvents.RaiseWarning(o.kind == ObstacleKind.Vehicle ? Messages.WarnCar : o.kind == ObstacleKind.Person ? Messages.WarnPerson : Messages.WarnHole);
             }

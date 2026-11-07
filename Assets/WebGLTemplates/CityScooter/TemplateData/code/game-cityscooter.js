@@ -142,12 +142,12 @@
         branches.push('if msg == "' + key.slice(5) + '":\n' + indent(section(key), 0));
       }
       if (section("msg:spd") || ctx.flags.usesSpeed) {
-        branches.push('if msg.startswith("spd:"):\n    game_speed = int(msg[4:])\n' + section("msg:spd"));
+        branches.push('if msg.startswith("spd:"):\n    try:\n        game_speed = int(msg[4:])\n    except ValueError:  # half a line got lost: skip it\n        pass\n' + section("msg:spd"));
       }
       if (section("msg:wanted") || ctx.flags.usesWanted) {
-        branches.push('if msg.startswith("wanted:"):\n    wanted_level = int(msg[7:])\n' + section("msg:wanted"));
+        branches.push('if msg.startswith("wanted:"):\n    try:\n        wanted_level = int(msg[7:])\n    except ValueError:  # half a line got lost: skip it\n        pass\n' + section("msg:wanted"));
       }
-      if (ctx.flags.usesCop) branches.push('if msg.startswith("cop:"):\n    police_distance = int(msg[4:])\n');
+      if (ctx.flags.usesCop) branches.push('if msg.startswith("cop:"):\n    try:\n        police_distance = int(msg[4:])\n    except ValueError:  # half a line got lost: skip it\n        pass\n');
       let out = "";
       if (branches.length) {
         out += "# messages from the game\nfor msg in messages():\n" + indent(branches.map((b, i) => (i ? "el" : "") + b).join(""), 4);

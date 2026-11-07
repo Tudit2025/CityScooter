@@ -127,6 +127,8 @@ namespace CityScooter.Devices
         public void SetStatus(string deviceId, string kind, bool connected, string version = null)
         {
             DeviceInfo dev = GetOrAdd(deviceId);
+            // A board unplugged (or the next student's): cartoon mode does not carry over to whoever comes next.
+            if (dev.Connected && !connected) Mixer.ClearToon();
             if (!string.IsNullOrEmpty(kind)) dev.Kind = kind;
             if (!string.IsNullOrEmpty(version)) dev.Version = version;
             dev.Connected = connected;

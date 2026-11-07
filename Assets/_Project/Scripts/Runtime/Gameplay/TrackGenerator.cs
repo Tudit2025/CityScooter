@@ -45,6 +45,7 @@ namespace CityScooter.Gameplay
             public object Key;
             public float X, Z, Yaw, MeetZ;
             public Mover Mover;
+            public int Pattern;
         }
 
         sealed class Moving
@@ -52,7 +53,18 @@ namespace CityScooter.Gameplay
             public object Key;
             public GameObject Instance;
             public float Speed, X;
+            public int Pattern;
         }
+
+        // What each scheduled pattern has put on the road, so a program's event can replace one nobody has reached yet.
+        struct PatternItem
+        {
+            public int Pattern;
+            public Active Chunk;
+            public GameObject Instance;
+        }
+        readonly List<PatternItem> _patternItems = new List<PatternItem>();
+        int _patternSerial, _lastPattern;
 
         // Boulevard sections: In -> full-width chunks -> Out, planned at a street cycle boundary and laid in order.
         readonly Queue<RoadChunk> _section = new Queue<RoadChunk>();
@@ -102,6 +114,8 @@ namespace CityScooter.Gameplay
             _moving.Clear();
             _pending.Clear();
             _pendingMovers.Clear();
+            _patternItems.Clear();
+            _lastPattern = 0;
             _reservedFrom = _reservedUntil = float.MinValue;
             _nextHazardZ = startZ + T.hazardStartDistance;
             _runSeed = seed != 0 ? seed : System.Environment.TickCount;
@@ -425,6 +439,7 @@ namespace CityScooter.Gameplay
             // Not on boulevard transitions: the sidewalk moves sideways under people walking along it.
             if (theme == null || theme.pedestrians == null || theme.pedestrians.Length == 0 || c.sidewalkWidth <= 1f || c.ChangesWidth) return;
             int count = _rng.Next(Mathf.RoundToInt(T.sidewalkPeople.x), Mathf.RoundToInt(T.sidewalkPeople.y) + 1);
+            count = Mathf.Min(count, T.maxPeople - Pedestrian.Active.Count);
             if (count <= 0) return;
             Physics.SyncTransforms(); // this chunk's sidewalk props were just laid out
             _collisionTransformsDirty = false;
@@ -479,13 +494,22 @@ namespace CityScooter.Gameplay
         public bool TryPlacePatternAhead(HazardPattern p, float ahead)
         {
             if (p == null || rider == null) return false;
-            float start = Mathf.Max(rider.position.z + ahead, _reservedUntil + 8f);
+            float riderZ = rider.position.z, want = riderZ + ahead;
+            // The road ahead is often already booked by a random pattern. If nobody has reached it yet, the program's
+            // event goes first: that pattern is taken off the road. Otherwise the event comes right after it.
+            if (_lastPattern != 0 && _reservedUntil + 8f > want && _reservedFrom > riderZ + ahead * 0.8f)
+            {
+                CancelPattern(_lastPattern);
+                _reservedFrom = _reservedUntil = float.MinValue;
+            }
+            float start = Mathf.Max(want, _reservedUntil + 8f);
             for (int tries = 0; tries < 6; tries++)
             {
                 float end = start + p.length;
-                if (end + 6f > _nextZ) return false;
+                if (start > riderZ + buildAhead + 150f) return false; // too far to count as "now"
                 bool moved = false;
-                for (float z = start - 6f; z <= end + 6f; z += 5f)
+                // Built chunks can be checked; chunks laid later never start a boulevard section inside a reserved pattern.
+                for (float z = start - 6f; z <= end + 6f && z < _nextZ; z += 5f)
                 {
                     RoadChunk c = ChunkAt(z, out float chunkStart);
                     if (c == null || !c.ChangesWidth) continue;
@@ -498,6 +522,26 @@ namespace CityScooter.Gameplay
                 return true;
             }
             return false;
+        }
+
+        // Take a scheduled pattern off the road: its waiting entries and cars, and what it already placed.
+        void CancelPattern(int id)
+        {
+            _pending.RemoveAll(e => e.Pattern == id);
+            _pendingMovers.RemoveAll(e => e.Pattern == id);
+            for (int i = _patternItems.Count - 1; i >= 0; i--)
+            {
+                PatternItem item = _patternItems[i];
+                if (item.Pattern != id) continue;
+                _patternItems.RemoveAt(i);
+                int at = item.Chunk.Spawned.FindIndex(s => s.Instance == item.Instance);
+                if (at < 0) continue;
+                Release(item.Chunk.Spawned[at].Key, item.Instance);
+                item.Chunk.Spawned.RemoveAt(at);
+            }
+            for (int i = _moving.Count - 1; i >= 0; i--)
+                if (_moving[i].Pattern == id) { Release(_moving[i].Key, _moving[i].Instance); _moving.RemoveAt(i); }
+            _collisionTransformsDirty = true;
         }
 
         /// <summary>Places a whole hazard pattern starting at world z (tests, scripted moments). Built chunks get
@@ -523,6 +567,7 @@ namespace CityScooter.Gameplay
         // authored kerb (signs, people on the sidewalk) move out with the kerb, entries on the road stay in their lanes.
         void SchedulePattern(HazardPattern p, float start, bool mirror, float sidewalkShift = 0f)
         {
+            int id = _lastPattern = ++_patternSerial;
             _reservedFrom = start - 6f;
             _reservedUntil = start + p.length + 6f;
             _nextHazardZ = _reservedUntil + T.hazardGap;
@@ -535,7 +580,7 @@ namespace CityScooter.Gameplay
                 var pending = new PendingEntry
                 {
                     Key = prefab, X = x, Z = start + e.z, Yaw = mirror ? -e.yaw : e.yaw,
-                    MeetZ = start + p.meetAtZ, Mover = prefab.GetComponent<Mover>(),
+                    MeetZ = start + p.meetAtZ, Mover = prefab.GetComponent<Mover>(), Pattern = id,
                 };
                 (pending.Mover != null ? _pendingMovers : _pending).Add(pending);
             }
@@ -575,6 +620,7 @@ namespace CityScooter.Gameplay
                 if (e.Z < a.StartZ || e.Z >= end) continue;
                 float local = e.Z - a.StartZ;
                 Place(a, e.Key, new Vector3(e.X, a.Chunk.HeightAt(local) + a.Chunk.SidewalkOffsetAt(e.X, local), local), e.Yaw, true);
+                _patternItems.Add(new PatternItem { Pattern = e.Pattern, Chunk = a, Instance = a.Spawned[a.Spawned.Count - 1].Instance });
                 _pending.RemoveAt(i--);
             }
         }
@@ -601,13 +647,14 @@ namespace CityScooter.Gameplay
                 _pendingMovers.RemoveAt(i--);
                 float speed = e.Mover.fractionOfRiderSpeed > 0f ? riderSpeed * e.Mover.fractionOfRiderSpeed : e.Mover.speed;
                 float t = Mathf.Max(0.5f, (e.MeetZ - riderZ) / riderSpeed);
-                float z = e.Z - speed * t;
+                // Keep it inside the stretch where cars live (a slow rider makes the meeting time long), and never on top of the rider.
+                float z = Mathf.Clamp(e.Z - speed * t, riderZ + 40f, riderZ + buildAhead + 100f);
                 GameObject go = Get(e.Key, () => CreateSpawnable(e.Key));
                 go.transform.SetParent(transform, true);
                 float x = MoverX(e.X, z);
                 go.transform.SetPositionAndRotation(new Vector3(x, SurfaceHeightAt(x, z), z), Quaternion.Euler(SurfacePitchAt(z), e.Yaw, 0f));
                 go.SetActive(true);
-                _moving.Add(new Moving { Key = e.Key, Instance = go, Speed = speed, X = e.X });
+                _moving.Add(new Moving { Key = e.Key, Instance = go, Speed = speed, X = e.X, Pattern = e.Pattern });
                 _collisionTransformsDirty = true;
             }
 
@@ -663,6 +710,7 @@ namespace CityScooter.Gameplay
         {
             Active a = _active[index];
             _active.RemoveAt(index);
+            _patternItems.RemoveAll(it => it.Chunk == a);
             foreach (Placed p in a.Spawned) Release(p.Key, p.Instance);
             a.Spawned.Clear();
             Release(a.Key, a.Chunk.gameObject);
