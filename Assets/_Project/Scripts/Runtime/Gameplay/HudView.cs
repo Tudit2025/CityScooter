@@ -235,26 +235,43 @@ namespace CityScooter.Gameplay
             if (_say != null && _say.text.Length > 0 && Time.unscaledTime > _sayUntil) _say.text = "";
             GameController g = game != null ? game : GameController.Instance;
             if (g == null || g.rider == null) return;
-            _score.text = g.Score.ToString();
-            _stats.text = Mathf.FloorToInt(Mathf.Max(0f, g.rider.Distance)) + " m    Gifts " + g.Gifts
-                + "    Speed " + g.rider.Speed.ToString("0") + " / " + g.rider.CurrentMaxSpeed.ToString("0") + " m/s"
-                + (g.rider.Braking ? "    BRAKE" : "")
-                + (RiderActions.CartoonMode ? "    CARTOON MODE" : "")
-                + PunchCharges(g)
-                + (g.rider.Boosting ? "    BOOST!" : g.rider.BoostReady ? "    Boost ready" : "");
+            // Strings only when what they show changed: per-frame garbage makes the web build's GC hitch.
+            int score = g.Score;
+            if (score != _shownScore) { _shownScore = score; _score.text = score.ToString(); }
+            RiderActions actions = _actions != null ? _actions : (_actions = g.GetComponent<RiderActions>());
+            int charges = actions != null ? Mathf.FloorToInt(actions.Charges) : -1, max = actions != null ? actions.MaxCharges : 0;
+            int boost = g.rider.Boosting ? 2 : g.rider.BoostReady ? 1 : 0;
+            long key = Mathf.FloorToInt(Mathf.Max(0f, g.rider.Distance));
+            key = key * 997 + g.Gifts;
+            key = key * 997 + Mathf.RoundToInt(g.rider.Speed);
+            key = key * 997 + Mathf.RoundToInt(g.rider.CurrentMaxSpeed);
+            key = key * 31 + (g.rider.Braking ? 1 : 0) * 16 + (RiderActions.CartoonMode ? 1 : 0) * 8 + boost * 2;
+            key = key * 31 + (charges + 1) * 8 + max;
+            if (key != _shownStats)
+            {
+                _shownStats = key;
+                _stats.text = Mathf.FloorToInt(Mathf.Max(0f, g.rider.Distance)) + " m    Gifts " + g.Gifts
+                    + "    Speed " + g.rider.Speed.ToString("0") + " / " + g.rider.CurrentMaxSpeed.ToString("0") + " m/s"
+                    + (g.rider.Braking ? "    BRAKE" : "")
+                    + (RiderActions.CartoonMode ? "    CARTOON MODE" : "")
+                    + (actions != null ? "    Punch " + new string('\u25CF', Mathf.Clamp(charges, 0, max)) + new string('\u25CB', Mathf.Clamp(max - charges, 0, max)) : "")
+                    + (boost == 2 ? "    BOOST!" : boost == 1 ? "    Boost ready" : "");
+            }
             int level = Mathf.Max(0, g.rider.SpeedLevel);
             for (int i = 0; i < _speedSegments.Length; i++) _speedSegments[i].color = i <= level && g.State == RunState.Running ? SegmentOn : SegmentOff;
-            _device.text = DeviceLabel();
+            if (Time.unscaledTime >= _nextDeviceLabel)
+            {
+                _nextDeviceLabel = Time.unscaledTime + 0.5f;
+                string label = DeviceLabel();
+                if (label != _device.text) _device.text = label;
+            }
             UpdatePolice(g);
         }
 
-        static string PunchCharges(GameController g)
-        {
-            RiderActions a = g.GetComponent<RiderActions>();
-            if (a == null) return "";
-            int n = Mathf.FloorToInt(a.Charges), max = a.MaxCharges;
-            return "    Punch " + new string('●', Mathf.Clamp(n, 0, max)) + new string('○', Mathf.Clamp(max - n, 0, max));
-        }
+        int _shownScore = int.MinValue;
+        long _shownStats = long.MinValue;
+        float _nextDeviceLabel;
+        RiderActions _actions;
 
         static string DeviceLabel()
         {

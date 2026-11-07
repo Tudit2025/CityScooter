@@ -652,6 +652,8 @@ namespace CityScooter.EditorTools
                 MakeObstacle(r, ObstacleKind.Person, false);
                 var ped = r.AddComponent<Pedestrian>();
                 ped.walkSpeed = walk; ped.crosses = crosses; ped.art = r.transform.Find("Art");
+                // Up to 14 people around: no shadow pass for them (the web build's draw-call budget).
+                foreach (MeshRenderer mr in r.GetComponentsInChildren<MeshRenderer>(true)) mr.shadowCastingMode = ShadowCastingMode.Off;
             });
         }
 
