@@ -105,8 +105,13 @@ function installFakeSerial() {
   await push(p, "jp\nbr\nhello from my code\n");
   await push(p, "Traceback (most recent call last):\n  File \"main.py\", line 4, in <module>\nNameError: name 'stear' isn't defined\n");
   await push(p, "st:abc\necho:crash\n");
-  await sleep(400);
+  await push(p, "sur\n");
+  await sleep(100);
+  const surLamp = await ev(() => { const r = document.querySelector(".cs-stat .cs-sur"); return !!r && r.classList.contains("cs-on"); });
+  await sleep(300);
   const L = await lines();
+  check("sur (surrender) reaches Unity", L.includes("usb1|sur"));
+  check("sur lights the SUR lamp", surLamp);
   check("st split across chunks reaches Unity whole", L.includes("usb1|st:-35"), JSON.stringify(L.slice(0, 8)));
   check("jp lines reach Unity", L.filter((x) => x === "usb1|jp").length === 3);
   check("status usb1 v2 connected", (await ev(() => window.__fakeUnity.status.usb1)) === "usb1|usb|1|v2");
@@ -116,6 +121,7 @@ function installFakeSerial() {
   check("Traceback line red", log.some((x) => /cs-l-error/.test(x) && /Traceback/.test(x)));
   check("malformed st yellow with hint", log.some((x) => /cs-l-warn/.test(x) && x.includes("st:abc") && /needs a number/.test(x)));
   check("st/jp/br/hi not logged line by line", !log.some((x) => !/cs-l-warn/.test(x) && / :: usb1(st:|jp$|br$|hi:)/.test(x)));
+  check("sur is a command, not a student print", !log.some((x) => / :: usb1sur$/.test(x)), log.filter((x) => /sur/.test(x)).join(" | "));
   const stat = await ev(() => { const r = document.querySelector(".cs-stat"); return r && { id: r.querySelector(".cs-sid").textContent, steer: r.querySelector(".cs-steer-val").textContent, jp: r.querySelector(".cs-jp-big").textContent }; });
   check("stats row: id, steer, jp in last second", stat && stat.id === "usb1 V2" && stat.steer === "-35" && stat.jp === "3", JSON.stringify(stat));
 

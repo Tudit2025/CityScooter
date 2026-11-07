@@ -60,7 +60,11 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     B("controls_if", { inputs: {
       IF0: val(B("logic_compare", { fields: { OP: "EQ" }, inputs: { A: val(B("math_random_int", { inputs: { FROM: n(1), TO: n(50) } })), B: n(1) } })),
       DO0: chain(B("mb_show", { inputs: { VALUE: val(B("math_round", { fields: { OP: "ROUND" }, inputs: { NUM: val(B("math_single", { fields: { OP: "ABS" }, inputs: { NUM: n(-3.4) } })) } })) } })) } }),
-    B("controls_whileUntil", { fields: { MODE: "WHILE" }, inputs: { BOOL: val(B("logic_boolean", { fields: { BOOL: "FALSE" } })) } })) } }),
+    B("controls_whileUntil", { fields: { MODE: "WHILE" }, inputs: { BOOL: val(B("logic_boolean", { fields: { BOOL: "FALSE" } })) } }),
+    // police (11/8): pull over when the police car is right behind you
+    B("controls_if", { inputs: {
+      IF0: val(B("logic_compare", { fields: { OP: "LT" }, inputs: { A: val(B("cs_cop")), B: n(2) } })),
+      DO0: chain(B("cs_surrender")) } })) } }),
   B("mb_on_button", { x: 500, y: 10, fields: { BTN: "b" }, inputs: { DO: chain(B("mb_stop_sound"), B("mb_pause", { inputs: { MS: n(10) } })) } }),
   B("mb_on_button", { x: 500, y: 120, fields: { BTN: "a" }, inputs: { DO: chain(B("cs_jump")) } }),
   B("cs_on_message", { x: 500, y: 220, fields: { MSG: "crash" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "SAD" } }),
@@ -75,6 +79,13 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("cs_on_message", { x: 900, y: 420, fields: { MSG: "boing" }, inputs: { DO: chain(B("cs_toon", { fields: { ON: "0" } })) } }),
   B("cs_on_message", { x: 900, y: 220, fields: { MSG: "ko" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "YES" } })) } }),
   B("cs_on_message", { x: 900, y: 320, fields: { MSG: "turn:-1" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "ARROW_W" } })) } }),
+  // police (11/8): siren on chase:1, dodge on inc:C, stars from wanted:N, busted
+  B("cs_on_message", { x: 1300, y: 10, fields: { MSG: "chase:1" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "ANGRY" } })) } }),
+  B("cs_on_message", { x: 1300, y: 120, fields: { MSG: "inc:C" }, inputs: { DO: chain(B("cs_steer", { inputs: { VALUE: n(100) } }),
+    B("mb_print", { inputs: { VALUE: t("dodge") } })) } }),
+  B("cs_on_message", { x: 1300, y: 260, fields: { MSG: "busted" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("got busted") } })) } }),
+  B("cs_on_wanted", { x: 1300, y: 360, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("text_join", { extraState: { itemCount: 2 },
+    inputs: { ADD0: t("wanted "), ADD1: val(B("cs_wanted")) } })) } })) } }),
   B("cs_on_speed", { x: 500, y: 540, inputs: { DO: chain(B("mb_clear"),
     B("controls_for", { fields: { VAR: { id: "v2" } }, inputs: { FROM: n(0), TO: n(4), BY: n(1), DO: chain(B("mb_plot", { inputs: {
       X: val(B("variables_get", { fields: { VAR: { id: "v2" } } })), Y: n(4), B: val(B("cs_speed")) } })) } }),
@@ -148,7 +159,9 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   for (const want of ["import music", "import random", "(pin_logo.is_touched() if VERSION == \"v2\" else False)",
     "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
     'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"',
-    'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:']) {
+    'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:',
+    'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
+    'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:']) {
     check("all blocks make: " + want, allPy.includes(want));
   }
   const disabledOrphans = await ev(() => window.Blockly.getMainWorkspace().getAllBlocks(false).filter((b) => !b.isEnabled()).length);
@@ -164,7 +177,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
 
   async function runInSim(py, label) {
     const before = await ev(() => window.__fakeUnity.lines.length);
-    const logBefore = await ev(() => document.querySelectorAll("#cs-log .cs-line").length);
+    // The monitor keeps the last 300 lines, so mark the old rows instead of counting them (indices shift when it trims).
+    await ev(() => document.querySelectorAll("#cs-log .cs-line").forEach((r) => { r.dataset.old = "1"; }));
     await ev((code) => { document.querySelector('.cs-tabs button[data-view="python"]').click(); const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, py);
     await page.click("#cs-run");
     await sleep(2500);
@@ -174,12 +188,22 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(300); // 3 quick presses
     await page.keyboard.down("m"); await page.keyboard.down("l"); await sleep(600); await page.keyboard.up("m"); await page.keyboard.up("l");
     for (const m of ["spd:5", "crash", "gift", "go", "warn:ped", "ko", "turn:-1", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
+    // police messages; no sur before the police car is close (cop:9 is far)
+    for (const m of ["chase:1", "wanted:3", "cop:9", "inc:C"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
+    const surBefore = await ev((n) => window.__fakeUnity.lines.slice(n).filter((l) => l === "sim|sur").length, before);
+    for (const m of ["cop:1", "busted", "chase:0"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     await sleep(800);
     const lines = await ev((n) => window.__fakeUnity.lines.slice(n), before);
-    const log = await ev((n) => [...document.querySelectorAll("#cs-log .cs-line")].slice(n).map((r) => r.className + " :: " + r.textContent), logBefore);
+    const log = await ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].map((r) => r.className + " :: " + r.textContent));
+    check(label + ": wanted:3 runs the wanted block with the level", log.some((x) => /wanted 3/.test(x)), log.filter((x) => /wanted/.test(x)).slice(-2).join(" | "));
+    check(label + ": inc:C handler dodges", log.some((x) => x.includes("dodge")) && lines.includes("sim|st:100"));
+    check(label + ": no surrender while the police car is far", surBefore === 0, surBefore);
+    check(label + ": cop:1 makes it surrender (sur)", lines.includes("sim|sur"), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
+    check(label + ": busted handler ran", log.some((x) => x.includes("got busted")));
     check(label + ": no Python error", !log.some((x) => /cs-l-error/.test(x)), log.filter((x) => /cs-l-error/.test(x)).slice(0, 4).join(" | "));
     check(label + ": steers", lines.some((l) => /^sim\|st:-?\d+$/.test(l)));
-    check(label + ": crash and gift handlers ran", log.some((x) => x.includes("got crash")) && log.some((x) => x.includes("got gift")));
+    check(label + ": crash and gift handlers ran", log.some((x) => x.includes("got crash")) && log.some((x) => x.includes("got gift")),
+      log.filter((x) => !/:: sim(st:|v=)/.test(x)).slice(0, 14).join(" | "));
     check(label + ": warn:ped rings the bell (bl)", lines.includes("sim|bl"), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
     check(label + ": warn:ped turns cartoon mode on (toon:1)", lines.includes("sim|toon:1"));
     check(label + ": 2nd quick press of A boosts (bo)", lines.includes("sim|bo"), lines.filter((l) => !/st:/.test(l)).slice(-10).join(" "));

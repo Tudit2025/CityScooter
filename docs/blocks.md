@@ -24,6 +24,12 @@
   - Input 分类的"按钮 A 连按了几次"：数值积木，1、2、3……停顿超过 0.4 秒后从 1 重新数。想按奇偶数区分，用"除以 2 的余数"。
   - 生成的 Python 会把计数写出来：`presses_a`、`last_press_a`、`running_time()`，学生能看懂原理。
 - CityScooter 分类："加速"（`print("bo")`）、"卡通模式 开/关"；"当游戏说"里加了 `boing`、`tired`。
+- 西澳警察（11/8）：
+  - "靠边停车（投降）"（`print("sur")`）；
+  - "当游戏说"里加了 `chase:1`、`chase:0`、`heli:1`、`heli:0`、`inc:C`、`inc:L`、`inc:R`、`arrested`、`busted`、`lost`；
+  - "当通缉星级变化时"帽子积木和"通缉星级 (0-5)"数值积木，生成 `wanted_level = int(msg[7:])`，写法和 `spd:`/`game_speed` 一样；
+  - "警车距离 (0-9)"数值积木，生成 `police_distance = int(msg[4:])`，开始是 9（很远）。
+  - 用到这些积木时才生成 `wanted_level`、`police_distance` 两个全局变量，第一课的程序不变。
 
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 
