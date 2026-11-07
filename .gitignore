@@ -52,3 +52,6 @@ Desktop.ini
 
 # Audio provenance uses selected metadata, not raw third-party website scripts.
 /audio-src/comic-city/originals/*.html
+
+# Boulevard review renders (BoulevardTests.Screenshots_*, run by hand; never committed)
+/art-src/boulevard/
