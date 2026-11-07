@@ -108,9 +108,9 @@
         <div class="cs-usb-msg" id="cs-usb-msg" hidden></div>
         <div id="cs-boards"></div>
         <ol class="cs-steps cs-steps-row">
-          <li>Make your code below, click <b>Download main.py</b>.</li>
-          <li>On <b>python.microbit.org</b>: Open it, <b>Send to micro:bit</b>, then <b>Disconnect</b>.</li>
-          <li>Click <b>Connect micro:bit</b> here. Press <b>A</b> to ride.</li>
+          <li>Click <b>Connect micro:bit</b> and pick it in the list.</li>
+          <li>Make your code below and click <b>Send to micro:bit</b>. It restarts with your code.</li>
+          <li>Press <b>A</b> to ride.</li>
         </ol>
       </div>
       <div class="cs-code-slot"></div>
@@ -144,6 +144,7 @@
         <span class="cs-spacer"></span>
         <button type="button" class="cs-small" id="cs-starter">Starter</button>
         <button type="button" class="cs-small cs-accent" id="cs-download">Download main.py</button>
+        <button type="button" class="cs-small cs-primary" id="cs-send">Send to micro:bit</button>
       </div>
       <div class="cs-code-body">
         <div class="cs-blocks-view" id="cs-blocks-view">
@@ -171,10 +172,12 @@
     <h2 id="cs-help-title">Help</h2>
     <h3>How to connect a micro:bit</h3>
     <ol class="cs-steps">
-      <li>Make your code here with <b>Blocks</b> or <b>Python</b> and click <b>Download main.py</b>.</li>
-      <li>Plug the micro:bit in with a USB cable. On <b>python.microbit.org</b> click <b>Open…</b>, pick main.py,
-        click <b>Send to micro:bit</b>, then <b>Disconnect</b>.</li>
-      <li>Here, choose <b>micro:bit (USB)</b>, click <b>Connect micro:bit</b> and pick it in the list. Press <b>A</b> to ride.</li>
+      <li>Plug the micro:bit in with a USB cable. Choose <b>micro:bit (USB)</b>, click <b>Connect micro:bit</b> and pick it in the list.</li>
+      <li>Make your code with <b>Blocks</b> or <b>Python</b> and click <b>Send to micro:bit</b>. It restarts with your code
+        in a few seconds. Press <b>A</b> to ride.</li>
+      <li><b>Send did not work?</b> The micro:bit may not have MicroPython on it yet (a new board, or one used with MakeCode).
+        Do it once the long way: click <b>Download main.py</b>; on <b>python.microbit.org</b> click <b>Open…</b>, pick main.py,
+        click <b>Send to micro:bit</b>, then <b>Disconnect</b>. After that, Send works here.</li>
     </ol>
     <h3>Blocks and Python</h3>
     <p>Every block program is real MicroPython: open <b>Python made by your blocks</b> to see it. Switch to <b>Python</b> to
@@ -184,7 +187,8 @@
       <li><b>Use Chrome or Edge.</b> Other browsers cannot talk to USB devices.</li>
       <li><b>"Could not open" / board busy:</b> another tab is using it. On python.microbit.org click <b>Disconnect</b>, or close that tab.</li>
       <li><b>The list is empty:</b> plug it in again, or try another cable — some cables only charge.</li>
-      <li><b>Connected but nothing happens:</b> your program must <code>print</code> commands like <code>st:20</code>. Flash it again — code you only ran in the REPL is gone after unplugging.</li>
+      <li><b>I changed my code but the micro:bit does the same thing:</b> it keeps running the last code you sent. Click <b>Send to micro:bit</b> again.</li>
+      <li><b>Connected but nothing happens:</b> your program must <code>print</code> commands like <code>st:20</code>. Send it again.</li>
       <li><b>Steering is stuck or slow:</b> remove <code>display.scroll</code> from your loop — it pauses your program.</li>
       <li><b>Red lines in the monitor:</b> your program stopped with an error. Read the last red line and its hint.</li>
       <li><b>No micro:bit?</b> Choose <b>Simulator</b>, paste your code, click ▶ on the virtual micro:bit.</li>
@@ -246,7 +250,7 @@
     let d = shell.devices.get(id);
     if (!d) {
       d = {
-        id, kind, ver: "", connected: false, lastLineAt: 0, connectedAt: 0, silent: false,
+        id, kind, ver: "", connected: false, lastLineAt: 0, connectedAt: 0, silent: false, rxBuf: "", rawRx: null, sending: false,
         steer: 0, stTimes: [], jpTimes: [], brakeUntil: 0, jpBuckets: new Array(10).fill(0), jpBucketAt: 0,
         statRow: null, card: null,
       };
@@ -520,9 +524,22 @@
     readLoop(d);
   }
 
+  // Bytes from a board: lines for the game, or raw text for "Send to micro:bit" while it talks to the REPL.
+  function feed(d, text) {
+    if (d.rawRx) { d.rawRx(text); return; }
+    d.rxBuf += text;
+    let i;
+    while ((i = d.rxBuf.indexOf("\n")) >= 0) {
+      const line = d.rxBuf.slice(0, i).replace(/\r$/, "");
+      d.rxBuf = d.rxBuf.slice(i + 1);
+      if (line.length) onDeviceLine(d, line);
+    }
+    if (d.rxBuf.length > 1000) d.rxBuf = "";
+  }
+
   async function readLoop(d) {
     const decoder = new TextDecoder();
-    let buf = "";
+    d.rxBuf = "";
     while (d.connected && d.port.readable) {
       const reader = d.port.readable.getReader();
       d.reader = reader;
@@ -530,14 +547,7 @@
         for (;;) {
           const { value, done } = await reader.read();
           if (done) break;
-          buf += decoder.decode(value, { stream: true });
-          let i;
-          while ((i = buf.indexOf("\n")) >= 0) {
-            const line = buf.slice(0, i).replace(/\r$/, "");
-            buf = buf.slice(i + 1);
-            if (line.length) onDeviceLine(d, line);
-          }
-          if (buf.length > 1000) buf = "";
+          feed(d, decoder.decode(value, { stream: true }));
         }
       } catch (e) {
         // Unplugged or a serial glitch; the disconnect event handles the rest.
@@ -548,13 +558,22 @@
     }
   }
 
-  function writeBoard(d, line) {
-    if (!d.connected || !d.port.writable) return;
-    d.chain = (d.chain || Promise.resolve()).then(async () => {
-      if (!d.port.writable) return;
+  // Writes go one after another (a WritableStream has one writer at a time). Rejects if the board is gone.
+  function writeBytes(d, bytes) {
+    const p = (d.chain || Promise.resolve()).then(async () => {
+      if (!d.connected || !d.port.writable) throw new Error("unplugged");
       const w = d.port.writable.getWriter();
-      try { await w.write(new TextEncoder().encode(line + "\n")); } catch (e) { /* board gone */ } finally { w.releaseLock(); }
+      try { await w.write(bytes); } finally { w.releaseLock(); }
     });
+    d.chain = p.catch(() => { /* reported to the caller */ });
+    return p;
+  }
+
+  function writeBoard(d, line) {
+    // While sending code the board is in its REPL: a game message there would be typed into it.
+    if (!d.connected || !d.port.writable || d.sending) return false;
+    writeBytes(d, new TextEncoder().encode(line + "\n")).catch(() => { /* board gone */ });
+    return true;
   }
 
   function addPort(port) {
@@ -604,6 +623,7 @@
     if (!box) return;
     box.textContent = "";
     const boards = [...shell.devices.values()].filter((d) => d.kind === "usb");
+    const several = boards.filter((d) => d.connected).length > 1;
     for (const d of boards) {
       const c = document.createElement("div");
       c.className = "cs-board " + (d.connected ? "cs-ok" : "cs-off");
@@ -611,8 +631,22 @@
       title.className = "cs-board-title";
       title.textContent = d.id + (d.ver ? " · " + d.ver.toUpperCase() : "") + " — "
         + (d.connected ? (isActive(d) ? "connected" : "connected (switch to micro:bit (USB) to use it)") : "unplugged — plug it back in");
+      if (several && d.connected) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "cs-small cs-primary cs-board-send";
+        b.textContent = "Send my code here";
+        b.disabled = d.sending;
+        b.addEventListener("click", () => sendClicked(d));
+        title.appendChild(b);
+      }
       c.appendChild(title);
-      if (d.silent) {
+      if (d.sending) {
+        const s = document.createElement("div");
+        s.className = "cs-board-sending";
+        s.textContent = "Sending your code… " + d.sendPct + "% — keep it plugged in";
+        c.appendChild(s);
+      } else if (d.silent) {
         const w = document.createElement("div");
         w.className = "cs-board-warn";
         w.textContent = SILENT_TEXT;
@@ -621,13 +655,16 @@
       box.appendChild(c);
     }
     $("cs-connect").textContent = boards.some((d) => d.connected) ? "Connect another micro:bit" : "Connect micro:bit";
+    const busy = boards.find((d) => d.sending);
+    $("cs-send").disabled = !!busy;
+    $("cs-send").textContent = busy ? "Sending… " + busy.sendPct + "%" : "Send to micro:bit";
   }
 
   function checkSilent() {
     const t = now();
     let changed = false;
     for (const d of shell.devices.values()) {
-      if (!d.connected) continue;
+      if (!d.connected || d.sending) continue;
       const since = d.lastLineAt || d.connectedAt;
       const silent = t - since > SILENT_MS;
       if (silent && !d.silent) {
@@ -637,6 +674,158 @@
       if (silent !== d.silent) { d.silent = silent; changed = true; }
     }
     if (changed) { renderChips(); renderBoards(); }
+  }
+
+  // ------------------------------------------------------------------ Send to micro:bit (main.py over the serial REPL)
+  // A micro:bit that already has MicroPython (flashed once from python.microbit.org) takes a new main.py over the USB
+  // serial port we already have open: stop the program (Ctrl-C), raw REPL (Ctrl-A), write the file in small pieces,
+  // check its length and byte sum, reset. The same steps as microfs / Mu; 32-byte writes with short pauses so a V1's
+  // small serial buffer keeps up. No firmware is flashed, so a board without MicroPython gets the "long way" message.
+  const SEND_PIECE = 64;      // file bytes per f.write()
+  const SEND_BURST = 32;      // serial bytes per write
+  const SEND_GAP_MS = 10;
+  const NO_REPL = "This micro:bit did not answer. It probably does not have MicroPython on it yet (a new board, or one used "
+    + "with MakeCode). Do it once the long way: click Download main.py; on python.microbit.org click Open…, pick main.py, "
+    + "Send to micro:bit, then Disconnect. After that, Send works here.";
+  const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  class SendError extends Error {} // message is shown to the student
+
+  function pyBytes(bytes) {
+    let s = "b'";
+    for (const c of bytes) {
+      if (c === 0x5c) s += "\\\\";
+      else if (c === 0x27) s += "\\'";
+      else if (c >= 0x20 && c < 0x7f) s += String.fromCharCode(c);
+      else s += "\\x" + c.toString(16).padStart(2, "0");
+    }
+    return s + "'";
+  }
+
+  function rawRepl(d) {
+    const enc = new TextEncoder();
+    const rx = { text: "" };
+    d.rawRx = (t) => { rx.text += t; };
+    const unplugged = () => { throw new SendError("The micro:bit was unplugged while sending. Plug it back in and click Send again."); };
+    const write = (bytes) => writeBytes(d, bytes).catch(unplugged);
+    const send = (str) => write(enc.encode(str));
+    async function sendSlow(str) {
+      const b = enc.encode(str);
+      for (let i = 0; i < b.length; i += SEND_BURST) {
+        await write(b.subarray(i, i + SEND_BURST));
+        await sleepMs(SEND_GAP_MS);
+      }
+    }
+    async function waitFor(test, ms) {
+      const end = now() + ms;
+      for (;;) {
+        if (!d.connected) unplugged();
+        const r = test(rx.text);
+        if (r) return r;
+        if (now() > end) return null;
+        await sleepMs(10);
+      }
+    }
+    return {
+      rx, send, sendSlow,
+      async enter() {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          await send("\x03"); await sleepMs(80); await send("\x03"); await sleepMs(250); // stop the running program
+          rx.text = "";
+          await send("\x01");
+          if (await waitFor((t) => t.includes("raw REPL; CTRL-B to exit\r\n>"), 1500)) return;
+        }
+        throw new SendError(NO_REPL);
+      },
+      // Run Python in the raw REPL: "OK" <stdout> \x04 <stderr> \x04 ">".
+      async exec(cmd) {
+        rx.text = "";
+        await sendSlow(cmd);
+        await send("\x04");
+        const r = await waitFor((t) => {
+          const ok = t.indexOf("OK"); if (ok < 0) return null;
+          const a = t.indexOf("\x04", ok + 2); if (a < 0) return null;
+          const b = t.indexOf("\x04", a + 1); if (b < 0 || t.indexOf(">", b + 1) < 0) return null;
+          return { out: t.slice(ok + 2, a), err: t.slice(a + 1, b) };
+        }, 5000);
+        if (!r) throw new SendError("The micro:bit stopped answering. Unplug it, plug it back in and click Send again.");
+        if (r.err.trim()) {
+          const last = r.err.trim().split(/\r?\n/).pop();
+          throw new SendError(/ENOSPC|: 28$|Errno 28/.test(last) ? "The micro:bit has no room for your code. Make it shorter, or do it once "
+            + "the long way (Download main.py, python.microbit.org)." : "The micro:bit said: " + last);
+        }
+        return r.out;
+      },
+      end() { d.rawRx = null; },
+    };
+  }
+
+  function sendClicked(target) {
+    if (!("serial" in navigator)) { usbMsg("This browser cannot talk to USB devices. Please use Chrome or Edge.", "cs-bad"); return; }
+    let d = target;
+    if (!d) {
+      const boards = [...shell.devices.values()].filter((x) => x.kind === "usb" && x.connected);
+      if (!boards.length) { usbMsg("Connect your micro:bit first: click Connect micro:bit above.", "cs-warn"); return; }
+      if (boards.length > 1) { usbMsg(boards.length + " micro:bits are connected: click Send my code here on the one you want.", "cs-warn"); return; }
+      d = boards[0];
+    }
+    sendCode(d);
+  }
+
+  async function sendCode(d) {
+    if (d.sending || !d.connected) return;
+    if (code.view === "blocks") await ensureBlocks();
+    const text = currentCode().replace(/\r\n?/g, "\n");
+    if (!text.trim()) { usbMsg("Your code is empty — make some blocks or write some Python first.", "cs-warn"); return; }
+    const bytes = new TextEncoder().encode(text);
+    let sum = 0;
+    for (const b of bytes) sum += b;
+    d.sending = true;
+    d.sendPct = 0;
+    usbMsg("Sending your code to " + d.id + "… keep it plugged in.", "");
+    logLine("game", d.id, "Sending your code (" + bytes.length + " bytes)…", "");
+    renderBoards();
+    const repl = rawRepl(d);
+    let wrote = false;
+    try {
+      await repl.enter();
+      await repl.exec("f=open('main.py','wb')\nw=f.write");
+      wrote = true;
+      for (let i = 0; i < bytes.length; i += SEND_PIECE) {
+        await repl.exec("w(" + pyBytes(bytes.subarray(i, i + SEND_PIECE)) + ")");
+        d.sendPct = Math.min(99, Math.round(((i + SEND_PIECE) / bytes.length) * 100));
+        renderBoards();
+      }
+      await repl.exec("f.close()");
+      const back = (await repl.exec("f=open('main.py','rb')\nn=0\ns=0\nwhile True:\n c=f.read(64)\n if not c:\n  break\n n+=len(c)\n"
+        + " s+=sum(c)\nf.close()\nprint(n,s)")).trim();
+      if (back !== bytes.length + " " + sum) throw new SendError("Your code did not arrive in one piece. Click Send again.");
+      // Restart the board so it runs the new main.py; the serial port stays open (only the main chip resets).
+      repl.rx.text = "";
+      await repl.sendSlow("import microbit\nmicrobit.reset()\n");
+      await repl.send("\x04");
+      await sleepMs(400);
+      const t = repl.rx.text, ok = t.indexOf("OK");
+      repl.end();
+      d.rxBuf = "";
+      d.sending = false;
+      d.lastLineAt = now();
+      if (ok >= 0) feed(d, t.slice(ok + 2)); // the new program's first lines
+      usbMsg("Sent! " + d.id + " is running your new code. Press A to ride.", "cs-good");
+      logLine("game", d.id, "Sent! Your micro:bit restarted with your new code.", "");
+    } catch (e) {
+      const msg = e instanceof SendError ? e.message : "Sending failed: " + errText(e);
+      // Leave the raw REPL and restart whatever main.py is there now.
+      try { if (d.connected) { await repl.send("\x02"); await sleepMs(50); await repl.send("\x04"); } } catch (e2) { /* gone */ }
+      repl.end();
+      d.rxBuf = "";
+      d.sending = false;
+      d.lastLineAt = now();
+      usbMsg(msg + (wrote && !/long way/.test(msg) ? " (Your old code was replaced part way, so send again before you ride.)" : ""), "cs-bad");
+      logLine("warn", d.id, msg, "");
+    }
+    renderBoards();
+    renderChips();
   }
 
   // ------------------------------------------------------------------ simulator
@@ -902,7 +1091,7 @@
         ta.dispatchEvent(new Event("input"));
       } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        simFlash();
+        if (shell.mode === "usb") sendClicked(); else simFlash();
       }
     });
     document.querySelectorAll(".cs-tabs button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view, true)));
@@ -995,6 +1184,7 @@
     $("cs-run").addEventListener("click", simFlash);
     $("cs-sim-reset").addEventListener("click", simResetClicked);
     $("cs-download").addEventListener("click", downloadCode);
+    $("cs-send").addEventListener("click", () => sendClicked());
     $("cs-starter").addEventListener("click", starterClicked);
     initSplitter();
 
@@ -1063,9 +1253,8 @@
       let sent = false;
       for (const d of shell.devices.values()) {
         if (!isActive(d) || (target !== "*" && target !== d.id)) continue;
-        if (d.kind === "usb") writeBoard(d, line);
-        else if (d.kind === "sim") simPost({ kind: "serial_input", data: line + "\n" });
-        sent = true;
+        if (d.kind === "usb") { if (writeBoard(d, line)) sent = true; }
+        else if (d.kind === "sim") { simPost({ kind: "serial_input", data: line + "\n" }); sent = true; }
       }
       if (sent) logLine("game", "game", line, "");
     },

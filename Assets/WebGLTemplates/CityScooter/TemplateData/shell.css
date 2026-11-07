@@ -41,6 +41,7 @@ p { margin: 6px 0; }
 .cs-accent { background: var(--teal); color: var(--paper); }
 .cs-small { padding: 3px 10px; font-size: 12px; box-shadow: 2px 2px 0 var(--ink); }
 .cs-small.cs-on { background: var(--amber); }
+button:disabled, button:disabled:hover, button:disabled:active { opacity: 0.6; cursor: default; transform: none; box-shadow: 2px 2px 0 var(--ink); }
 
 .cs-app { display: flex; flex-direction: column; height: 100vh; }
 
@@ -136,6 +137,10 @@ body[data-mode="keyboard"] .cs-splitter { visibility: hidden; }
 .cs-board.cs-off { border-left-color: var(--red); color: var(--muted-ink); }
 .cs-board-title { font-weight: 700; }
 .cs-board-warn { margin-top: 4px; color: #8a4b00; font-size: 13px; font-weight: 600; }
+.cs-board-title .cs-board-send { margin-left: 8px; }
+.cs-board-sending { margin-top: 4px; color: var(--ink); font-size: 13px; font-weight: 700; }
+.cs-usb-msg.cs-good { background: #d8f2dc; border-color: var(--green); }
+body:not([data-mode="usb"]) #cs-send { display: none; }
 
 /* simulator */
 .cs-sim-top { display: grid; grid-template-columns: minmax(0, 1fr) 140px; gap: 10px; flex: 0 0 auto; }

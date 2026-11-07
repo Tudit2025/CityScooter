@@ -1,6 +1,6 @@
 # 积木编程框架（Blocks → MicroPython）
 
-学生在网页外壳里用积木编程，积木生成的就是 MicroPython，旁边实时显示对应代码。生成的程序可以直接在页面里的官方模拟器上运行，也可以点 **Download main.py**，再到 python.microbit.org 刷进真板子。V1、V2 都能用。
+学生在网页外壳里用积木编程，积木生成的就是 MicroPython，旁边实时显示对应代码。生成的程序可以直接在页面里的官方模拟器上运行；连着 USB 的真板子点 **Send to micro:bit** 就能写进去（见下面"发送到 micro:bit"）。V1、V2 都能用。
 
 这套框架分成两层，**换一个游戏只需要写一个新的游戏插件**，外壳、编辑器、micro:bit 通用积木和主题都可以直接复用。
 
@@ -59,7 +59,18 @@ while True:
 - 切到 **Python** 时，如果学生还没改过 Python，会显示积木生成的代码。
 - 学生在 Python 里改过之后，积木的改动不会再覆盖它，只有点 **Use my blocks' code** 才会替换。
 - 积木（Blockly 的 JSON）、Python 草稿和当前视图都存在浏览器的 localStorage 里，读写都包了 try/catch。
-- **Run my code**（模拟器）和 **Download main.py** 用的都是当前视图的代码。
+- **Run my code**（模拟器）、**Send to micro:bit** 和 **Download main.py** 用的都是当前视图的代码。
+
+## 发送到 micro:bit
+
+USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不显示，那里用 **Run my code**）。它通过已经连着的串口，把当前代码写成板子上的 `main.py`，然后重启板子，大约 2 到 4 秒。不需要离开页面，也不用断开连接。
+
+- **原理**：和 Mu、microfs 一样走 MicroPython 的 REPL。先发 Ctrl-C 停掉正在跑的程序，再发 Ctrl-A 进原始 REPL，用 `f.write(b'...')` 每次写 64 字节，然后在板子上算文件长度和字节和来核对，最后 `microbit.reset()`。串口每次只写 32 字节、间隔 10 毫秒，照顾 V1 很小的串口缓冲区。
+- **前提**：板子上已经有 MicroPython。新板子、或者刷过 MakeCode 程序的板子，Ctrl-C 没有反应，按钮会提示"走一次老路"：点 Download main.py，到 python.microbit.org 刷一次，之后就能直接 Send。**所以上课前最好把班上所有板子都用 python.microbit.org 刷一次 starter。**
+- **发送期间**：游戏发给这块板的消息（crash、gift 等）会被丢掉，不然会被打进 REPL；监视器不显示 REPL 的输出，也不报"板子没数据"；板卡上显示进度。
+- **出错时**：拔线、板子没空间、板子不回话，都有对应提示，然后退出原始 REPL、软重启板子。如果已经写了一半，提示里会说旧代码被覆盖了，要重新发。
+- **多块板**（合作模式）：每块板的卡片上会出现 **Send my code here** 按钮，发给哪块点哪块。
+- 在 Python 视图里按 **Ctrl+Enter**：USB 模式下是发送，模拟器模式下是运行。
 
 ## 给新游戏写插件
 
@@ -81,7 +92,7 @@ while True:
 
 ## 测试
 
-每次改积木或外壳，都要跑下面三套无头浏览器测试。测试脚本目前在 Claude 的临时目录里，需要的话可以放进仓库：
+每次改积木或外壳，都要跑下面四套无头浏览器测试，脚本在 `tools/shell-tests/`（用法见那里的 `README.md`）：
 
 1. **积木测试**（`tools/shell-dev` 开发页 + 真的官方模拟器）：
    - starter 积木生成的关键代码行；
@@ -95,3 +106,10 @@ while True:
    - 页面不向外网发任何请求。
 2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板。
 3. **真实网页包测试**：用真的 Unity 网页包，USB 和模拟器两条路都能开一局，游戏消息能发回设备。
+4. **发送测试**（`send.test.js`）：页面的 Web Serial 接到用 CPython 模拟的 MicroPython 板子（`fake_repl_board.py`，原始 REPL 的每条命令都真的执行）：
+   - 积木代码原样写进板子，板子重启后跑的是新程序；
+   - 串口单次写入不超过 32 字节；
+   - 发送期间游戏消息不会打进 REPL，监视器里没有 REPL 杂讯；
+   - Python 视图里的引号、反斜杠、中文和 emoji、CRLF 都能逐字节写对；
+   - 没有 MicroPython 的板子、空间满、发送中拔线，都给出对应提示；
+   - 两块板时按板发送，模拟器模式里没有这个按钮。
