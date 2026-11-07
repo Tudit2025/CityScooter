@@ -156,6 +156,8 @@ namespace CityScooter.Tests
         [TestCase("pu", CommandKind.Punch)]
         [TestCase("PU", CommandKind.Punch)]
         [TestCase(" pu:1 ", CommandKind.Punch)]
+        [TestCase("bo", CommandKind.Boost)]
+        [TestCase("BO:1", CommandKind.Boost)]
         [TestCase("bl", CommandKind.Bell)]
         [TestCase("BL:1", CommandKind.Bell)]
         public void V1_PunchAndBell(string line, CommandKind kind)

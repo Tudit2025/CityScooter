@@ -133,6 +133,76 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
+        public IEnumerator SpammingPunch_GetsTired_AndCostsSteering()
+        {
+            yield return LoadMain();
+            bool tired = false;
+            System.Action onTired = () => tired = true;
+            GameEvents.Tired += onTired;
+            _game.StartRun();
+            yield return null;
+            var actions = _game.GetComponent<RiderActions>();
+            int thrown = 0;
+            for (float t = 0f; t < 2f; t += Time.deltaTime)
+            {
+                if (actions.Punch()) thrown++;
+                yield return null;
+                if (actions.Arm != null && actions.Arm.Busy) Assert.Less(_game.rider.SteerFactor, 0.5f, "one hand off the handlebar while punching");
+            }
+            GameEvents.Tired -= onTired;
+            Assert.LessOrEqual(actions.Punches, 5, "about 3 punches plus what recharges in 2 s, however fast pu arrives");
+            Assert.Greater(actions.IgnoredPunches, 0);
+            Assert.IsTrue(tired, "the board hears \"tired\"");
+            Assert.Greater(actions.Misses, 0, "punching the air costs points");
+            Assert.AreEqual(0, thrown, "nothing to hit");
+        }
+
+        [UnityTest]
+        public IEnumerator Boost_GoesPastTheSpeedLimit_ThenRecharges()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return new WaitForSeconds(1.5f);
+            float before = _game.rider.Speed;
+            Assert.IsTrue(_game.rider.Boost());
+            Assert.IsFalse(_game.rider.Boost(), "a second boost right away is ignored (cooldown)");
+            yield return new WaitForSeconds(1.2f);
+            Assert.IsTrue(_game.rider.Boosting);
+            Assert.Greater(_game.rider.Speed, before * 1.15f, "faster while boosting");
+            yield return new WaitForSeconds(1.5f);
+            Assert.IsFalse(_game.rider.Boosting);
+            Assert.IsFalse(_game.rider.BoostReady, "still recharging");
+        }
+
+        [UnityTest]
+        public IEnumerator SpammingTheBell_PeopleStopListening()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return null;
+            var actions = _game.GetComponent<RiderActions>();
+            for (int i = 0; i < 3; i++) { actions.Bell(); yield return new WaitForSeconds(1.05f); }
+            PersonAhead(20f, out GameObject person);
+            actions.Bell();
+            Assert.AreEqual(1, actions.IgnoredBells, "the 4th ring within 5 s is ignored");
+            Assert.IsFalse(person.GetComponent<Pedestrian>().IsStartled);
+        }
+
+        [UnityTest]
+        public IEnumerator CartoonMode_WithoutGifts_BumpingSomeoneIsACrash()
+        {
+            yield return LoadMain();
+            DeviceHub.Instance?.Receive("test", "toon:1");
+            _game.StartRun();
+            yield return null;
+            Assert.AreEqual(0, _game.Gifts);
+            PersonAhead(6f, out GameObject person);
+            float t = 0f;
+            while (_game.State == RunState.Running && t < 3f) { t += Time.deltaTime; yield return null; }
+            Assert.AreEqual(RunState.Crashed, _game.State, "each person sent flying costs a gift; none left means a crash");
+        }
+
+        [UnityTest]
         public IEnumerator Bell_MakesPeopleAheadStepAside()
         {
             yield return LoadMain();
@@ -257,7 +327,11 @@ namespace CityScooter.Tests
         {
             yield return LoadMain();
             DeviceHub.Instance?.Receive("test", "toon:1");
+            int collected = 0;
+            System.Action onGift = () => collected++;
+            GameEvents.GiftCollected += onGift;
             _game.StartRun();
+            _game.GrantGifts(2);
             yield return null;
             Assert.IsTrue(RiderActions.CartoonMode, "toon:1 from a board turns cartoon mode on");
             PersonAhead(6f, out GameObject person);
@@ -265,6 +339,8 @@ namespace CityScooter.Tests
             Assert.AreEqual(RunState.Running, _game.State, "no crash in cartoon mode");
             Assert.Contains("boing", _events);
             Assert.IsFalse(person.activeSelf, "the person flew off");
+            GameEvents.GiftCollected -= onGift;
+            Assert.AreEqual(2 + collected - 1, _game.Gifts, "it cost a gift");
             DeviceHub.Instance?.Receive("test", "toon:0");
             yield return null;
             Assert.IsFalse(RiderActions.CartoonMode);

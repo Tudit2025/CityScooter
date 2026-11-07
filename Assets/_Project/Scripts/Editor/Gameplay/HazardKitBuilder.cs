@@ -77,7 +77,8 @@ namespace CityScooter.EditorTools
             GameObject[] popups = { Popup("FxPow", "POW", _r.yellow, _r.red, 1f), Popup("FxDing", "DING", White, PoliceBlue, .55f),
                 Popup("FxBang", "!", _r.yellow, _r.ink, .55f), Popup("FxSorry", "SORRY", White, _r.red, .9f),
                 Popup("FxBoing", "BOING", _r.yellow, PoliceBlue, .9f), Popup("FxCrash", "CRASH!", White, _r.red, 1f),
-                Popup("FxBonk", "BONK!", White, _r.ink, .8f), Swish(), Impact() };
+                Popup("FxBonk", "BONK!", White, _r.ink, .8f), Swish(), Impact(), Popup("FxIgnore", "...", White, _r.ink, .5f),
+                Popup("FxZoom", "ZOOM!", new Color(.3f, .85f, 1f), _r.ink, .85f) };
             PunchArmKit();
             foreach (KeyValuePair<string, Look> look in Looks) Person("Ped_" + look.Key, look.Value, 1f, false);
             CrashRider();
@@ -92,7 +93,7 @@ namespace CityScooter.EditorTools
             var theme = AssetDatabase.LoadAssetAtPath<TrackTheme>(ComicCityBuilder.ThemePath);
             if (theme != null) ApplyTo(theme);
             AssetDatabase.SaveAssets();
-            if (popups.Length != 9) throw new InvalidOperationException("pop-ups");
+            if (popups.Length != 11) throw new InvalidOperationException("pop-ups");
             Debug.Log("[Hazards] built " + p.Count + " hazards, " + gifts.Length + " gifts, " + patterns.Length + " patterns");
         }
 
@@ -114,7 +115,7 @@ namespace CityScooter.EditorTools
             GameObject Fx(string id) => AssetDatabase.LoadAssetAtPath<GameObject>(Prefabs + "/HZ_" + id + ".prefab");
             theme.punchPopup = Fx("FxPow"); theme.bellPopup = Fx("FxDing"); theme.startlePopup = Fx("FxBang"); theme.sorryPopup = Fx("FxSorry");
             theme.boingPopup = Fx("FxBoing"); theme.crashPopup = Fx("FxCrash");
-            theme.bonkPopup = Fx("FxBonk"); theme.swishPopup = Fx("FxSwish"); theme.impactPopup = Fx("FxImpact");
+            theme.bonkPopup = Fx("FxBonk"); theme.ignorePopup = Fx("FxIgnore"); theme.boostPopup = Fx("FxZoom"); theme.swishPopup = Fx("FxSwish"); theme.impactPopup = Fx("FxImpact");
             theme.punchArm = Fx("PunchArm");
             theme.crashRider = Fx("CrashRider"); theme.crashScooter = Fx("CrashScooter");
             var people = new List<GameObject>();
@@ -306,7 +307,7 @@ namespace CityScooter.EditorTools
             ['H'] = "101101111101101", ['I'] = "111010010010111", ['K'] = "101101110101101", ['L'] = "100100100100111",
             ['O'] = "010101101101010", ['P'] = "110101110100100", ['R'] = "110101110101101", ['S'] = "011100010001110",
             ['T'] = "111010010010010", ['U'] = "101101101101111", ['W'] = "101101101111101",
-            ['B'] = "110101110101110", ['G'] = "011100101101011", ['N'] = "110101101101101", ['Y'] = "101101010010010", ['!'] = "010010010000010",
+            ['B'] = "110101110101110", ['G'] = "011100101101011", ['N'] = "110101101101101", ['Y'] = "101101010010010", ['!'] = "010010010000010", ['.'] = "000000000000010", ['Z'] = "111001010100111", ['M'] = "101111111101101",
         };
 
         static void Text(ComicMesh m, string text, float cx, float cy, float z, float px, Color c)

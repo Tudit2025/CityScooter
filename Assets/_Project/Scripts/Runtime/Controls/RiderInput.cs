@@ -16,6 +16,8 @@ namespace CityScooter.Controls
         public bool Punch;
         /// <summary>v1: true on the frame the bell was rung.</summary>
         public bool Bell;
+        /// <summary>v1: true on the frame a boost was requested.</summary>
+        public bool Boost;
         /// <summary>A micro:bit / simulator is steering right now (for the HUD).</summary>
         public bool DeviceSteering;
     }
@@ -58,6 +60,7 @@ namespace CityScooter.Controls
             input.Brake = (keyboard && KeyboardControls.BrakeHeld()) || (hub != null && hub.Mixer.Braking(now));
             input.Punch = (keyboard && KeyboardControls.PunchPressed()) | (hub != null && hub.Mixer.ConsumePunch());
             input.Bell = (keyboard && KeyboardControls.BellPressed()) | (hub != null && hub.Mixer.ConsumeBell());
+            input.Boost = (keyboard && KeyboardControls.BoostPressed()) | (hub != null && hub.Mixer.ConsumeBoost());
 
             _last = input;
             return input;

@@ -19,6 +19,11 @@
 协议 v1（2026-11-07）加的积木：
 - CityScooter 分类："出拳"（`print("pu")`）、"按铃"（`print("bl")`）；"当游戏说"的下拉里加了 `ko`、`warn:car`、`warn:ped`、`warn:hole`、`turn:-1`、`turn:1`、`turn:0`。
 - 通用 Events 分类："当摇一摇 / 屏幕朝上 / 屏幕朝下时"，生成 `accelerometer.was_gesture(...)`，V1、V2 都能用。
+- 连按（11/8）：
+  - Events 分类的"当按钮 A 连按 N 次时"（N = 2～5）：按到第 N 下立刻触发，每下之间不超过 0.4 秒。
+  - Input 分类的"按钮 A 连按了几次"：数值积木，1、2、3……停顿超过 0.4 秒后从 1 重新数。想按奇偶数区分，用"除以 2 的余数"。
+  - 生成的 Python 会把计数写出来：`presses_a`、`last_press_a`、`running_time()`，学生能看懂原理。
+- CityScooter 分类："加速"（`print("bo")`）、"卡通模式 开/关"；"当游戏说"里加了 `boing`、`tired`。
 
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 

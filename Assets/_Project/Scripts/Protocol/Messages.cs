@@ -21,6 +21,7 @@ namespace CityScooter.Protocol
         public const string Punch = "pu";
         public const string Bell = "bl";
         public const string Toon = "toon";
+        public const string Boost = "bo";
 
         // game → micro:bit
         public const string Go = "go";
@@ -28,6 +29,7 @@ namespace CityScooter.Protocol
         public const string Gift = "gift";
         public const string Ko = "ko";
         public const string Boing = "boing";
+        public const string Tired = "tired";
         public const string WarnPrefix = "warn:";
         public const string WarnCar = "warn:car";
         public const string WarnPerson = "warn:ped";

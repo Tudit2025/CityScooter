@@ -34,6 +34,9 @@ namespace CityScooter.Gameplay
         public GameObject boingPopup;
         public GameObject crashPopup;
         public GameObject bonkPopup;
+        public GameObject boostPopup;
+        [Tooltip("Shown when the bell has been rung too often and nobody listens.")]
+        public GameObject ignorePopup;
         [Tooltip("Comic motion lines when a punch swings, and the ink burst where it lands.")]
         public GameObject swishPopup;
         public GameObject impactPopup;

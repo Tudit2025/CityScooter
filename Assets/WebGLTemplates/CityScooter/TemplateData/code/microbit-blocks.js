@@ -44,6 +44,14 @@
     { type: "mb_on_button", message0: "when button %1 is pressed %2 %3",
       args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }, { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "mb_events", tooltip: "Runs once for each press (Python: button_a.was_pressed())." },
+    { type: "mb_on_presses", message0: "when button %1 is pressed %2 times in a row %3 %4",
+      args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] },
+        { type: "field_dropdown", name: "TIMES", options: [["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"]] },
+        { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "mb_events", tooltip: "Runs on the 2nd (3rd, ...) quick press in a row: each press less than 0.4 s after the one before. Look at the Python: it counts presses and remembers when the last one was (running_time)." },
+    { type: "mb_presses", message0: "presses of button %1 in a row",
+      args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }],
+      output: "Number", style: "mb_input", tooltip: "How many quick presses in a row so far: 1, 2, 3, ... Starts again at 1 after a pause of 0.4 s. Even or odd? Use the remainder of dividing by 2." },
     { type: "mb_on_gesture", message0: "when %1 %2 %3",
       args0: [{ type: "field_dropdown", name: "GESTURE", options: GESTURES }, { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "mb_events", tooltip: "Runs once each time the micro:bit is moved like this (Python: accelerometer.was_gesture(\"shake\"))." },
@@ -107,6 +115,18 @@
   G.mb_on_start = (b) => { addSection("start", body(b, "DO")); return ""; };
   G.mb_forever = (b) => { addSection("loop", body(b, "DO")); return ""; };
   G.mb_on_button = (b) => { addSection("button:" + b.getFieldValue("BTN"), body(b, "DO")); return ""; };
+  // Quick presses in a row: counted in the main loop (see "presses" in generate()).
+  const countPresses = (btn, g) => {
+    ctx.flags["presses_" + btn] = true;
+    g.definitions_["presses_" + btn] = "presses_" + btn + " = 0  # quick presses of button " + btn.toUpperCase() + " in a row\nlast_press_" + btn + " = -1000  # when it was last pressed (ms)";
+  };
+  G.mb_on_presses = (b, g) => {
+    const btn = b.getFieldValue("BTN");
+    countPresses(btn, g);
+    addSection("presses:" + btn + ":" + b.getFieldValue("TIMES"), body(b, "DO"));
+    return "";
+  };
+  G.mb_presses = (b, g) => { const btn = b.getFieldValue("BTN"); countPresses(btn, g); return ["presses_" + btn, Order.ATOMIC]; };
   G.mb_on_gesture = (b) => { addSection("gesture:" + b.getFieldValue("GESTURE"), body(b, "DO")); return ""; };
   G.mb_button_pressed = (b) => {
     const v = b.getFieldValue("BTN");
@@ -182,7 +202,21 @@
     const loopParts = [];
     if (s("loop")) loopParts.push(s("loop"));
     for (const btn of ["a", "b"]) {
-      if (s("button:" + btn)) loopParts.push("    if button_" + btn + ".was_pressed():\n" + indent(s("button:" + btn), 4));
+      const one = s("button:" + btn), counted = c.flags["presses_" + btn];
+      if (!one && !counted) continue;
+      let code = "    if button_" + btn + ".was_pressed():\n";
+      if (counted) {
+        const n = "presses_" + btn, last = "last_press_" + btn;
+        code += "        if running_time() - " + last + " < 400:  # less than 0.4 s since the last press\n"
+          + "            " + n + " += 1\n        else:\n            " + n + " = 1\n"
+          + "        " + last + " = running_time()\n";
+      }
+      code += indent(one, 4);
+      for (const times of ["2", "3", "4", "5"]) {
+        const many = s("presses:" + btn + ":" + times);
+        if (many) code += "        if presses_" + btn + " == " + times + ":\n" + indent(many, 8);
+      }
+      loopParts.push(code);
     }
     for (const [, g] of GESTURES) {
       if (s("gesture:" + g)) loopParts.push('    if accelerometer.was_gesture("' + g + '"):\n' + indent(s("gesture:" + g), 4));
@@ -224,9 +258,9 @@
     const cats = [];
     if (pack && pack.toolbox) cats.push(...pack.toolbox(blk, num));
     cats.push(
-      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button"), blk("mb_on_gesture")] },
+      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button"), blk("mb_on_presses"), blk("mb_on_gesture")] },
       { kind: "category", name: "Input", categorystyle: "input_category", contents: [
-        blk("mb_tilt"), blk("mb_button_pressed"), blk("mb_pin_touched"), blk("mb_logo_touched"), blk("mb_sound_level"),
+        blk("mb_tilt"), blk("mb_button_pressed"), blk("mb_presses"), blk("mb_pin_touched"), blk("mb_logo_touched"), blk("mb_sound_level"),
         blk("mb_version"), blk("mb_running_time")] },
       { kind: "category", name: "LEDs", categorystyle: "led_category", contents: [
         blk("mb_show_icon"), blk("mb_show", { inputs: { VALUE: num(5) } }), blk("mb_clear"),

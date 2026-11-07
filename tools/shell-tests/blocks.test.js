@@ -69,6 +69,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("cs_on_message", { x: 500, y: 460, fields: { MSG: "go" }, inputs: { DO: chain(B("mb_clear")) } }),
   // protocol v1: punch, bell, gesture, ko / warn: / turn:
   B("mb_on_gesture", { x: 900, y: 10, fields: { GESTURE: "shake" }, inputs: { DO: chain(B("cs_punch")) } }),
+  B("mb_on_presses", { x: 900, y: 520, fields: { BTN: "a", TIMES: "2" }, inputs: { DO: chain(B("cs_boost")) } }),
+  B("mb_on_presses", { x: 900, y: 640, fields: { BTN: "a", TIMES: "3" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("text_join", { extraState: { itemCount: 2 }, inputs: { ADD0: t("presses "), ADD1: val(B("mb_presses", { fields: { BTN: "a" } })) } })) } })) } }),
   B("cs_on_message", { x: 900, y: 120, fields: { MSG: "warn:ped" }, inputs: { DO: chain(B("cs_bell"), B("cs_toon", { fields: { ON: "1" } })) } }),
   B("cs_on_message", { x: 900, y: 420, fields: { MSG: "boing" }, inputs: { DO: chain(B("cs_toon", { fields: { ON: "0" } })) } }),
   B("cs_on_message", { x: 900, y: 220, fields: { MSG: "ko" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "YES" } })) } }),
@@ -145,7 +147,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   check("all blocks: valid Python", !syn2, syn2);
   for (const want of ["import music", "import random", "(pin_logo.is_touched() if VERSION == \"v2\" else False)",
     "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
-    'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"']) {
+    'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"',
+    'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:']) {
     check("all blocks make: " + want, allPy.includes(want));
   }
   const disabledOrphans = await ev(() => window.Blockly.getMainWorkspace().getAllBlocks(false).filter((b) => !b.isEnabled()).length);
@@ -167,6 +170,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     await sleep(2500);
     await page.click(".cs-monitor-head strong");
     for (const k of ["a", "b"]) { await page.keyboard.press(k); await sleep(200); }
+    await sleep(500);
+    await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(300); // 3 quick presses
     await page.keyboard.down("m"); await page.keyboard.down("l"); await sleep(600); await page.keyboard.up("m"); await page.keyboard.up("l");
     for (const m of ["spd:5", "crash", "gift", "go", "warn:ped", "ko", "turn:-1", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     await sleep(800);
@@ -177,6 +182,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": crash and gift handlers ran", log.some((x) => x.includes("got crash")) && log.some((x) => x.includes("got gift")));
     check(label + ": warn:ped rings the bell (bl)", lines.includes("sim|bl"), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
     check(label + ": warn:ped turns cartoon mode on (toon:1)", lines.includes("sim|toon:1"));
+    check(label + ": 2nd quick press of A boosts (bo)", lines.includes("sim|bo"), lines.filter((l) => !/st:/.test(l)).slice(-10).join(" "));
+    check(label + ": 3rd quick press runs the 3-times block", log.some((x) => x.includes("presses 3")), log.filter((x) => /presses/.test(x)).slice(-3).join(" | "));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));
     return lines;
   }

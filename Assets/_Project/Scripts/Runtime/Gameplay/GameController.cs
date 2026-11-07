@@ -36,7 +36,21 @@ namespace CityScooter.Gameplay
         public RunState State { get; private set; } = RunState.Ready;
         public int Gifts { get; private set; }
         public int Best { get; private set; }
-        public int Score => rider == null ? 0 : Mathf.Max(0, Mathf.FloorToInt(rider.Distance * T.pointsPerMetre)) + _giftPoints;
+        public int Score => rider == null ? 0 : Mathf.Max(0, Mathf.Max(0, Mathf.FloorToInt(rider.Distance * T.pointsPerMetre)) + _giftPoints);
+
+        /// <summary>Bonus or penalty points (punch hits and misses).</summary>
+        public void AddPoints(int points) => _giftPoints += points;
+
+        /// <summary>Use up one gift (cartoon mode). False when there is none.</summary>
+        public bool SpendGift()
+        {
+            if (Gifts <= 0) return false;
+            Gifts--;
+            return true;
+        }
+
+        /// <summary>Tests and scripted moments.</summary>
+        public void GrantGifts(int count) => Gifts += Mathf.Max(0, count);
         public float StateTime => _stateTime;
 
         float _stateTime;
@@ -148,7 +162,8 @@ namespace CityScooter.Gameplay
                 try { PlayerPrefs.SetInt(BestKey, Best); PlayerPrefs.Save(); } catch (System.Exception) { /* storage blocked */ }
             }
             GameEvents.RaiseCrashed();
-            hud?.ShowCrashed(score, Best);
+            RiderActions actions = GetComponent<RiderActions>();
+            hud?.ShowCrashed(score, Best, actions != null ? actions.EndTitle(obstacle) : "CRASH!", actions != null ? actions.EndNote() : null);
         }
 
         void OnGotGift(Gift gift)

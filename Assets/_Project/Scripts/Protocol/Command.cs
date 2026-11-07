@@ -17,6 +17,8 @@ namespace CityScooter.Protocol
         Bell,
         /// <summary>v1: "toon:1" / "toon:0" cartoon mode on/off (Value 1 or 0): bumping into people sends them flying.</summary>
         Toon,
+        /// <summary>v1: "bo" boost for a moment (has a cooldown).</summary>
+        Boost,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

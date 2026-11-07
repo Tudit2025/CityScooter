@@ -46,6 +46,30 @@ namespace CityScooter.Gameplay
         [Range(0f, 1f)] public float jumpObstacleChance = 0.5f;
         [Range(0, 9)] public int jumpObstacleMinLevel = 1;
 
+        [Header("Punch and bell limits (sending pu / bl in a fast loop must not pay off)")]
+        [Tooltip("Punches in a row before the rider is tired; one comes back every punchRechargeSeconds.")]
+        [Min(1)] public int punchCharges = 3;
+        public float punchRechargeSeconds = 1.2f;
+        [Tooltip("Steering while a punch is out (one hand off the handlebar).")]
+        [Range(0f, 1f)] public float punchSteerFactor = 0.3f;
+        public int punchHitPoints = 15;
+        [Tooltip("Points lost for a punch that hits nothing.")]
+        public int punchMissPoints = 5;
+        public float bellCooldown = 1f;
+        [Tooltip("More than this many rings within bellSpamWindow seconds and people stop listening for bellIgnoreSeconds.")]
+        public int bellSpamCount = 3;
+        public float bellSpamWindow = 5f;
+        public float bellIgnoreSeconds = 3f;
+        [Tooltip("Cartoon mode: each person sent flying costs a gift; with no gifts, bumping into someone is a crash.")]
+        public bool cartoonCostsGift = true;
+
+        [Header("Boost (bo)")]
+        public float boostSeconds = 2f;
+        [Tooltip("Speed limit multiplier while boosting.")]
+        public float boostFactor = 1.35f;
+        [Tooltip("Seconds from one boost to the next; boosts sent earlier are ignored.")]
+        public float boostCooldown = 6f;
+
         [Header("Street life")]
         [Tooltip("People on the sidewalks of every 40 m chunk (min, max). They are obstacles for riders on the sidewalk.")]
         public Vector2 sidewalkPeople = new Vector2(2f, 4f);

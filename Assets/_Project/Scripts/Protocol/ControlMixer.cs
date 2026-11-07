@@ -19,6 +19,7 @@ namespace CityScooter.Protocol
         int _pendingJumps;
         int _pendingPunches;
         int _pendingBells;
+        int _pendingBoosts;
 
         /// <summary>v1 cartoon mode: the last "toon:" any device sent (off until a program turns it on).</summary>
         public bool Toon { get; private set; }
@@ -42,6 +43,9 @@ namespace CityScooter.Protocol
                     break;
                 case CommandKind.Bell:
                     _pendingBells++;
+                    break;
+                case CommandKind.Boost:
+                    _pendingBoosts++;
                     break;
                 case CommandKind.Toon:
                     Toon = command.Value > 0.5f;
@@ -75,6 +79,14 @@ namespace CityScooter.Protocol
             _pendingPunches = 0;
             return true;
         }
+        /// <summary>True if a boost was requested since the last call; clears the request.</summary>
+        public bool ConsumeBoost()
+        {
+            if (_pendingBoosts <= 0) return false;
+            _pendingBoosts = 0;
+            return true;
+        }
+
         /// <summary>True if the bell was rung since the last call; clears the request.</summary>
         public bool ConsumeBell()
         {
@@ -88,6 +100,7 @@ namespace CityScooter.Protocol
             Toon = false;
             _pendingPunches = 0;
             _pendingBells = 0;
+            _pendingBoosts = 0;
             _steer = 0f;
             _steerTime = double.NegativeInfinity;
             _brakeUntil = double.NegativeInfinity;

@@ -51,6 +51,13 @@ namespace CityScooter.Controls
             return (k != null && k.fKey.wasPressedThisFrame) || (g != null && g.buttonWest.wasPressedThisFrame);
         }
 
+        /// <summary>v1 boost: E.</summary>
+        public static bool BoostPressed()
+        {
+            Keyboard k = Keyboard.current;
+            return k != null && k.eKey.wasPressedThisFrame;
+        }
+
         /// <summary>v1 cartoon mode toggle: T.</summary>
         public static bool ToonTogglePressed()
         {

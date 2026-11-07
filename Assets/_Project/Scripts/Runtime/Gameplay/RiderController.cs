@@ -38,8 +38,23 @@ namespace CityScooter.Gameplay
         public event Action<Obstacle> BouncedPerson;
 
         float _twist;
+        /// <summary>1 normally; less while a punch is out (one hand off the handlebar). Set by RiderActions.</summary>
+        public float SteerFactor { get; set; } = 1f;
         /// <summary>Punch: the body twists towards the side of the punch, then settles (visual only).</summary>
         public void PunchTwist(float side) => _twist = Mathf.Sign(side) * 22f;
+
+        float _boostUntil = -1f, _boostReadyAt;
+        public bool Boosting => _running && Time.time < _boostUntil;
+        public bool BoostReady => Time.time >= _boostReadyAt;
+
+        /// <summary>A short burst above the speed limit; false while it recharges.</summary>
+        public bool Boost()
+        {
+            if (!_running || Time.time < _boostReadyAt) return false;
+            _boostUntil = Time.time + T.boostSeconds;
+            _boostReadyAt = Time.time + Mathf.Max(T.boostSeconds, T.boostCooldown);
+            return true;
+        }
 
         /// <summary>Lose some speed (cartoon bumps).</summary>
         public void Bump(float keep) => Speed = Mathf.Max(T.brakeMinSpeed, Speed * Mathf.Clamp01(keep));
@@ -71,6 +86,8 @@ namespace CityScooter.Gameplay
             Braking = false;
             _running = false;
             _twist = 0f;
+            _boostUntil = -1f;
+            _boostReadyAt = 0f;
             if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(start.z) : 0f, 0f, 0f);
             SetSpeedLevel(0);
         }
@@ -98,15 +115,17 @@ namespace CityScooter.Gameplay
 
             // Forward speed: ramps with distance, brake pulls it down, then it recovers.
             float target = Mathf.Lerp(T.startSpeed, CurrentMaxSpeed, T.Difficulty01(Distance));
+            bool boosting = Time.time < _boostUntil;
             Braking = input.Brake;
             if (Braking) Speed = Mathf.Max(T.brakeMinSpeed, Speed - T.brakeDeceleration * dt);
-            else Speed = Mathf.MoveTowards(Speed, target, T.acceleration * dt);
+            else if (boosting) Speed = Mathf.MoveTowards(Speed, target * T.boostFactor, T.acceleration * 4f * dt);
+            else Speed = Mathf.MoveTowards(Speed, target, T.acceleration * (Speed > target ? 2f : 1f) * dt);
 
             // Sideways: eased towards the steer input, clamped to the lane.
             Vector3 from=transform.position;
             float nextZ=from.z+Speed*dt;
             float limit = Mathf.Max(0.5f, (track != null ? track.RideableHalfWidthAt(nextZ) : PlaceholderTrack.HalfWidth) - radius);
-            float targetVx = input.Steer * T.lateralMaxSpeed;
+            float targetVx = input.Steer * T.lateralMaxSpeed * SteerFactor;
             _vx = Mathf.Lerp(_vx, targetVx, 1f - Mathf.Exp(-T.lateralResponse * dt));
             FakeTurnDirector turn = FakeTurnDirector.Instance;
             float x=from.x+(_vx+(turn != null ? turn.Drift : 0f))*dt;
@@ -162,7 +181,7 @@ namespace CityScooter.Gameplay
                 Obstacle obstacle = c.GetComponentInParent<Obstacle>();
                 if (obstacle == null) continue;
                 if (Airborne && obstacle.canJumpOver) continue;
-                if (obstacle.kind == ObstacleKind.Person && RiderActions.CartoonMode)
+                if (obstacle.kind == ObstacleKind.Person && RiderActions.CanBounce)
                 {
                     BouncedPerson?.Invoke(obstacle);
                     continue;

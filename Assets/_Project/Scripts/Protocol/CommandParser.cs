@@ -24,6 +24,7 @@ namespace CityScooter.Protocol
             if (lower == Messages.Punch) return new Command(CommandKind.Punch);
             if (lower == Messages.Bell) return new Command(CommandKind.Bell);
             if (lower == Messages.Toon) return new Command(CommandKind.Toon, 1f);
+            if (lower == Messages.Boost) return new Command(CommandKind.Boost);
 
             int colon = lower.IndexOf(':');
             if (colon <= 0) return new Command(CommandKind.Unknown, 0f, s);
@@ -53,6 +54,8 @@ namespace CityScooter.Protocol
                     return new Command(CommandKind.Punch);
                 case Messages.Bell:
                     return new Command(CommandKind.Bell);
+                case Messages.Boost:
+                    return new Command(CommandKind.Boost);
                 case Messages.Toon:
                     switch (arg.ToLowerInvariant())
                     {

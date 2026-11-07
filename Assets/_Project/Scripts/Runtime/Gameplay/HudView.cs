@@ -46,7 +46,7 @@ namespace CityScooter.Gameplay
             _device = MakeText(root, "Device", new Vector2(1f, 1f), new Vector2(-40f, -90f), 28, TextAnchor.UpperRight, FontStyle.Normal);
             _centre = MakeText(root, "Centre", new Vector2(0.5f, 0.5f), new Vector2(0f, 60f), 56, TextAnchor.MiddleCenter, FontStyle.Bold);
             _hint = MakeText(root, "Hint", new Vector2(0.5f, 0f), new Vector2(0f, 40f), 28, TextAnchor.LowerCenter, FontStyle.Normal);
-            _hint.text = "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake  ·  F punch  ·  R bell  ·  T cartoon";
+            _hint.text = "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake  ·  F punch  ·  R bell  ·  E boost  ·  T cartoon";
 
             _speedSegments = new Image[10];
             for (int i = 0; i < _speedSegments.Length; i++)
@@ -95,11 +95,13 @@ namespace CityScooter.Gameplay
             if (_centre != null) _centre.text = string.Empty;
         }
 
-        public void ShowCrashed(int score, int best)
+        public void ShowCrashed(int score, int best, string title = "CRASH!", string note = null)
         {
             if (_centre == null) return;
             _centre.supportRichText = true;
-            _centre.text = "CRASH!\n<size=36>Score " + score + "    Best " + best + "</size>\n<size=30>Press A or Space to ride again</size>";
+            _centre.text = title + "\n<size=36>Score " + score + "    Best " + best + "</size>"
+                + (string.IsNullOrEmpty(note) ? "" : "\n<size=26>" + note + "</size>")
+                + "\n<size=30>Press A or Space to ride again</size>";
         }
 
         void Update()
@@ -110,10 +112,20 @@ namespace CityScooter.Gameplay
             _stats.text = Mathf.FloorToInt(Mathf.Max(0f, g.rider.Distance)) + " m    Gifts " + g.Gifts
                 + "    Speed " + g.rider.Speed.ToString("0") + " / " + g.rider.CurrentMaxSpeed.ToString("0") + " m/s"
                 + (g.rider.Braking ? "    BRAKE" : "")
-                + (RiderActions.CartoonMode ? "    CARTOON MODE" : "");
+                + (RiderActions.CartoonMode ? "    CARTOON MODE" : "")
+                + PunchCharges(g)
+                + (g.rider.Boosting ? "    BOOST!" : g.rider.BoostReady ? "    Boost ready" : "");
             int level = Mathf.Max(0, g.rider.SpeedLevel);
             for (int i = 0; i < _speedSegments.Length; i++) _speedSegments[i].color = i <= level && g.State == RunState.Running ? SegmentOn : SegmentOff;
             _device.text = DeviceLabel();
+        }
+
+        static string PunchCharges(GameController g)
+        {
+            RiderActions a = g.GetComponent<RiderActions>();
+            if (a == null) return "";
+            int n = Mathf.FloorToInt(a.Charges), max = a.MaxCharges;
+            return "    Punch " + new string('●', Mathf.Clamp(n, 0, max)) + new string('○', Mathf.Clamp(max - n, 0, max));
         }
 
         static string DeviceLabel()

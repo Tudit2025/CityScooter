@@ -39,11 +39,25 @@ namespace CityScooter.Gameplay
         static bool _keyToon;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { CartoonMode = false; _keyToon = false; }
+        static void ResetStatics() { CartoonMode = false; CanBounce = false; _keyToon = false; }
 
         /// <summary>For tests and the HUD.</summary>
         public int Punches { get; private set; }
         public int Bounced { get; private set; }
+        /// <summary>Punches sent while out of breath, rings nobody listened to, punches that hit nothing.</summary>
+        public int IgnoredPunches { get; private set; }
+        public int IgnoredBells { get; private set; }
+        public int Misses { get; private set; }
+        /// <summary>Punches left (refills over time); see GameTuning "Punch and bell limits".</summary>
+        public float Charges { get; private set; } = 3f;
+        public int MaxCharges => Mathf.Max(1, Tune.punchCharges);
+        /// <summary>Cartoon mode and a gift to pay with: bumping into someone sends them flying instead of ending the run.</summary>
+        public static bool CanBounce { get; private set; }
+
+        GameTuning Tune => rider != null && rider.tuning != null ? rider.tuning : GameTuning.Default;
+        float _nextBell, _bellIgnoredUntil, _nextTired;
+        readonly Queue<float> _rings = new Queue<float>();
+        bool _punchOpen;
         public int Hits { get; private set; }
         public int Bells { get; private set; }
 
@@ -94,6 +108,11 @@ namespace CityScooter.Gameplay
             _warned.Clear();
             _turn = 0;
             _nextPunch = 0f;
+            _nextBell = _bellIgnoredUntil = 0f;
+            _rings.Clear();
+            _punchOpen = false;
+            Charges = MaxCharges;
+            Punches = Hits = Misses = IgnoredPunches = IgnoredBells = Bells = Bounced = 0;
             ClearCrash();
         }
 
@@ -106,11 +125,21 @@ namespace CityScooter.Gameplay
             DeviceHub hub = DeviceHub.Instance;
             if ((hub == null || hub.KeyboardEnabled) && KeyboardControls.ToonTogglePressed()) ToggleCartoonKey();
             CartoonMode = _keyToon || (hub != null && hub.Mixer.Toon);
+            GameController game = GameController.Instance;
+            CanBounce = CartoonMode && (!Tune.cartoonCostsGift || (game != null && game.Gifts > 0));
+            Charges = Mathf.Min(MaxCharges, Charges + Time.deltaTime / Mathf.Max(0.1f, Tune.punchRechargeSeconds));
+            if (rider != null) rider.SteerFactor = (_arm != null && _arm.Busy) || Punching ? Tune.punchSteerFactor : 1f;
             if (rider == null || !rider.Running) return;
             RiderInput input = RiderInputSource.Read();
             if (input.Punch) Punch();
             UpdatePunch();
             if (input.Bell) Bell();
+            if (input.Boost && rider.Boost())
+            {
+                Popup(theme != null ? theme.boostPopup : null, rider.transform.position + new Vector3(-1.3f, 2.3f, 0f), rider.transform);
+                Cue("SCO_Jump");
+                ShakeCamera(0.15f);
+            }
             Warn();
             FakeTurnDirector turns = FakeTurnDirector.Instance;
             int dir = turns != null ? turns.Direction : 0;
@@ -138,6 +167,15 @@ namespace CityScooter.Gameplay
         public bool Punch()
         {
             if (Time.time < _nextPunch) return false;
+            if (Charges < 1f)
+            {
+                // Out of breath: spamming pu in a loop gets ignored (and the board hears "tired").
+                IgnoredPunches++;
+                if (Time.time >= _nextTired) { _nextTired = Time.time + 1f; GameEvents.RaiseTired(); }
+                return false;
+            }
+            Charges -= 1f;
+            _punchOpen = true;
             _nextPunch = Time.time + punchCooldown;
             _punchUntil = Time.time + 0.3f;
             _punchLanded = false;
@@ -159,7 +197,13 @@ namespace CityScooter.Gameplay
 
         void UpdatePunch()
         {
-            if (!Punching || _punchLanded) return;
+            if (!Punching)
+            {
+                if (_punchOpen && !_punchLanded) { Misses++; GameController.Instance?.AddPoints(-Tune.punchMissPoints); }
+                _punchOpen = false;
+                return;
+            }
+            if (_punchLanded) return;
             Obstacle target = FindPunchTarget(FistZone(), out bool solid);
             if (target != null) Land(target, solid);
         }
@@ -239,6 +283,7 @@ namespace CityScooter.Gameplay
                 ? new Vector3(side * 7f, 13f, Mathf.Max(8f, rider.Speed * 0.7f))
                 : new Vector3(side * 10f, 9f, Mathf.Max(9f, rider.Speed * 0.95f)));
             Hits++;
+            GameController.Instance?.AddPoints(Tune.punchHitPoints);
             Cue("SCO_Land_02", at);
             Popup(theme != null ? theme.impactPopup : null, at);
             Popup(theme != null ? theme.punchPopup : null, at + Vector3.up * 0.7f);
@@ -259,9 +304,21 @@ namespace CityScooter.Gameplay
 
         public void Bell()
         {
+            if (Time.time < _nextBell) return;
+            _nextBell = Time.time + Tune.bellCooldown;
             Bells++;
             Vector3 p = rider.transform.position;
             Cue("UI_Click");
+            while (_rings.Count > 0 && Time.time - _rings.Peek() > Tune.bellSpamWindow) _rings.Dequeue();
+            _rings.Enqueue(Time.time);
+            if (_rings.Count > Tune.bellSpamCount) _bellIgnoredUntil = Time.time + Tune.bellIgnoreSeconds;
+            if (Time.time < _bellIgnoredUntil)
+            {
+                // Rung too often: people stop listening for a while ("...").
+                IgnoredBells++;
+                Popup(theme != null ? theme.ignorePopup : null, p + new Vector3(1.3f, 2.4f, 0f), rider.transform);
+                return;
+            }
             Popup(theme != null ? theme.bellPopup : null, p + new Vector3(1.3f, 2.4f, 0f), rider.transform);
             for (int i = Pedestrian.Active.Count - 1; i >= 0; i--)
             {
@@ -304,11 +361,23 @@ namespace CityScooter.Gameplay
             float side = o.transform.position.x >= p.x ? 1f : -1f;
             k.Launch(new Vector3(side * 5f, 13f, Mathf.Clamp(rider.Speed * 0.7f, 6f, 25f)));
             rider.Bump(0.65f);
+            if (Tune.cartoonCostsGift) GameController.Instance?.SpendGift();
             Bounced++;
             Cue("SCO_Land_01", o.transform.position);
             Popup(theme != null ? theme.boingPopup : null, o.transform.position + Vector3.up * 2.2f);
             ShakeCamera(0.25f);
             GameEvents.RaisePersonBounced();
+        }
+
+        /// <summary>Title for the end-of-ride screen.</summary>
+        public string EndTitle(Obstacle hit) => hit != null && hit.kind == ObstacleKind.Person ? "SORRY!" : "CRASH!";
+
+        /// <summary>Punch accuracy for the end-of-ride screen (null when no punches were thrown).</summary>
+        public string EndNote()
+        {
+            if (Punches == 0) return null;
+            int pct = Mathf.RoundToInt(100f * Hits / Mathf.Max(1, Punches));
+            return "Punches " + Punches + "  ·  hits " + Hits + " (" + pct + "%)" + (IgnoredPunches > 0 ? "  ·  too tired " + IgnoredPunches + "x" : "");
         }
 
         // ---------------------------------------------------------------- crash show
