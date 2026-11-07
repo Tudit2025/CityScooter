@@ -197,6 +197,51 @@ namespace CityScooter.Tests
             Assert.AreEqual("boing", Messages.Boing);
         }
 
+        [TestCase("sur", CommandKind.Surrender)]
+        [TestCase(" SUR ", CommandKind.Surrender)]
+        [TestCase("sur:1", CommandKind.Surrender)]
+        public void Police_Surrender(string line, CommandKind kind)
+        {
+            Assert.AreEqual(kind, CommandParser.Parse(line).Kind);
+        }
+
+        [Test]
+        public void Police_GameMessages()
+        {
+            Assert.AreEqual("wanted:0", Messages.Wanted(-2));
+            Assert.AreEqual("wanted:3", Messages.Wanted(3));
+            Assert.AreEqual("wanted:5", Messages.Wanted(9));
+            Assert.AreEqual("chase:1", Messages.Chase(true));
+            Assert.AreEqual("chase:0", Messages.Chase(false));
+            Assert.AreEqual("cop:0", Messages.Cop(-1));
+            Assert.AreEqual("cop:4", Messages.Cop(4));
+            Assert.AreEqual("cop:9", Messages.Cop(30));
+            Assert.AreEqual("heli:1", Messages.Heli(true));
+            Assert.AreEqual("heli:0", Messages.Heli(false));
+            Assert.AreEqual("inc:L", Messages.Incoming(-1));
+            Assert.AreEqual("inc:C", Messages.Incoming(0));
+            Assert.AreEqual("inc:R", Messages.Incoming(2));
+            Assert.AreEqual("arrested", Messages.Arrested);
+            Assert.AreEqual("busted", Messages.Busted);
+            Assert.AreEqual("lost", Messages.Lost);
+            // A board echoing what the game said must never steer, brake or surrender.
+            foreach (string m in new[] { "wanted:3", "chase:1", "cop:2", "heli:1", "inc:C", "arrested", "busted", "lost" })
+                Assert.AreEqual(CommandKind.Unknown, CommandParser.Parse(m).Kind, m);
+        }
+
+        [Test]
+        public void Police_MixerCountsSurrenderOnce_AndResetClearsIt()
+        {
+            var mixer = new ControlMixer();
+            mixer.Apply(CommandParser.Parse("sur"), 0);
+            mixer.Apply(CommandParser.Parse("sur"), 0);
+            Assert.IsTrue(mixer.ConsumeSurrender());
+            Assert.IsFalse(mixer.ConsumeSurrender());
+            mixer.Apply(CommandParser.Parse("sur"), 1);
+            mixer.Reset();
+            Assert.IsFalse(mixer.ConsumeSurrender());
+        }
+
         [Test]
         public void V1_MixerCountsPunchAndBellOnce()
         {

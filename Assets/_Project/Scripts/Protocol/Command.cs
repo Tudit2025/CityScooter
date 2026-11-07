@@ -19,6 +19,8 @@ namespace CityScooter.Protocol
         Toon,
         /// <summary>v1: "bo" boost for a moment (has a cooldown).</summary>
         Boost,
+        /// <summary>v1 police: "sur" surrender, pull over now (ignored unless the police are chasing).</summary>
+        Surrender,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

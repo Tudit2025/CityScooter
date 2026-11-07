@@ -20,6 +20,7 @@ namespace CityScooter.Protocol
         int _pendingPunches;
         int _pendingBells;
         int _pendingBoosts;
+        int _pendingSurrenders;
 
         /// <summary>v1 cartoon mode: the last "toon:" any device sent (off until a program turns it on).</summary>
         public bool Toon { get; private set; }
@@ -46,6 +47,9 @@ namespace CityScooter.Protocol
                     break;
                 case CommandKind.Boost:
                     _pendingBoosts++;
+                    break;
+                case CommandKind.Surrender:
+                    _pendingSurrenders++;
                     break;
                 case CommandKind.Toon:
                     Toon = command.Value > 0.5f;
@@ -87,6 +91,14 @@ namespace CityScooter.Protocol
             return true;
         }
 
+        /// <summary>v1 police: true if "sur" arrived since the last call; clears the request.</summary>
+        public bool ConsumeSurrender()
+        {
+            if (_pendingSurrenders <= 0) return false;
+            _pendingSurrenders = 0;
+            return true;
+        }
+
         /// <summary>True if the bell was rung since the last call; clears the request.</summary>
         public bool ConsumeBell()
         {
@@ -101,6 +113,7 @@ namespace CityScooter.Protocol
             _pendingPunches = 0;
             _pendingBells = 0;
             _pendingBoosts = 0;
+            _pendingSurrenders = 0;
             _steer = 0f;
             _steerTime = double.NegativeInfinity;
             _brakeUntil = double.NegativeInfinity;

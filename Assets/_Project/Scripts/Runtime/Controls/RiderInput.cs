@@ -18,6 +18,8 @@ namespace CityScooter.Controls
         public bool Bell;
         /// <summary>v1: true on the frame a boost was requested.</summary>
         public bool Boost;
+        /// <summary>v1 police: true on the frame a board sent "sur" (pull over now).</summary>
+        public bool Surrender;
         /// <summary>A micro:bit / simulator is steering right now (for the HUD).</summary>
         public bool DeviceSteering;
     }
@@ -61,6 +63,7 @@ namespace CityScooter.Controls
             input.Punch = (keyboard && KeyboardControls.PunchPressed()) | (hub != null && hub.Mixer.ConsumePunch());
             input.Bell = (keyboard && KeyboardControls.BellPressed()) | (hub != null && hub.Mixer.ConsumeBell());
             input.Boost = (keyboard && KeyboardControls.BoostPressed()) | (hub != null && hub.Mixer.ConsumeBoost());
+            input.Surrender = hub != null && hub.Mixer.ConsumeSurrender(); // keyboard players hold S to pull over
 
             _last = input;
             return input;
