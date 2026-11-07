@@ -31,6 +31,8 @@ namespace CityScooter.Track
         public Transform art;
 
         enum State { Waiting, Crossing, Walking, Dodging }
+        RoadChunk _chunk;
+        Transform _chunkOf;
         State _state;
         float _dir, _dodgeTargetX, _phase, _walk;
 
@@ -79,6 +81,9 @@ namespace CityScooter.Track
             if (dt <= 0f) return;
             Vector3 p = transform.localPosition;
             bool moving = true;
+            // People stand upright on the chunk's surface (the street runs downhill: walking must follow it).
+            if (_chunkOf != transform.parent) { _chunkOf = transform.parent; _chunk = _chunkOf != null ? _chunkOf.GetComponent<RoadChunk>() : null; }
+            if (transform.localRotation != Quaternion.identity) transform.localRotation = Quaternion.identity;
             switch (_state)
             {
                 case State.Waiting:
@@ -103,6 +108,7 @@ namespace CityScooter.Track
                     if (Mathf.Abs(p.x - _dodgeTargetX) < 0.01f) { _state = State.Walking; _walk = 0f; }
                     break;
             }
+            if (_chunk != null) p.y = _chunk.HeightAt(p.z) + _chunk.SidewalkOffsetAt(p.x);
             if (p != transform.localPosition) { transform.localPosition = p; Mover.MovedThisFrame = true; }
             if (art == null) return;
             _phase += dt * (moving ? (_state == State.Dodging ? 16f : 9f) : 0f);

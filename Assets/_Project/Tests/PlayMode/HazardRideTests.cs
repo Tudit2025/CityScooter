@@ -167,6 +167,31 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
+        public IEnumerator WalkingPeople_StayOnTheDownhillSidewalk()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            _game.rider.Stop(); // the rider stays put; the people walk
+            yield return null;
+            Vector3 p = _game.rider.transform.position;
+            var people = new System.Collections.Generic.List<Transform>();
+            foreach (float walk in new[] { 1.5f, -1.5f })
+            {
+                float x = walk > 0 ? 6f : -6f, z = p.z + 20f;
+                GameObject go = _game.track.PlaceAt(Prefab(Pattern("HZ_SidewalkStroll"), "HZ_PedWalkerA"), new Vector3(x, _game.track.SurfaceHeightAt(x, z), z));
+                go.GetComponent<Pedestrian>().Configure(walk);
+                people.Add(go.transform);
+            }
+            yield return new WaitForSeconds(6f);
+            foreach (Transform t in people)
+            {
+                Assert.Greater(Mathf.Abs(t.position.z - (p.z + 20f)), 6f, "walked");
+                Assert.AreEqual(_game.track.SurfaceHeightAt(t.position.x, t.position.z), t.position.y, 0.05f, "feet on the sidewalk, not in the air");
+                Assert.Less(Quaternion.Angle(t.rotation, Quaternion.identity), 0.5f, "standing upright");
+            }
+        }
+
+        [UnityTest]
         public IEnumerator CartoonOff_BumpingSomeoneEndsTheRide_AndThrowsTheRider()
         {
             yield return LoadMain();
