@@ -46,7 +46,7 @@ namespace CityScooter.Gameplay
             _device = MakeText(root, "Device", new Vector2(1f, 1f), new Vector2(-40f, -90f), 28, TextAnchor.UpperRight, FontStyle.Normal);
             _centre = MakeText(root, "Centre", new Vector2(0.5f, 0.5f), new Vector2(0f, 60f), 56, TextAnchor.MiddleCenter, FontStyle.Bold);
             _hint = MakeText(root, "Hint", new Vector2(0.5f, 0f), new Vector2(0f, 40f), 28, TextAnchor.LowerCenter, FontStyle.Normal);
-            _hint.text = "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake";
+            _hint.text = "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake  ·  F punch  ·  R bell";
 
             _speedSegments = new Image[10];
             for (int i = 0; i < _speedSegments.Length; i++)

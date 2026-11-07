@@ -152,5 +152,42 @@ namespace CityScooter.Tests
         {
             Assert.AreEqual(expected, Messages.Speed(level));
         }
+
+        [TestCase("pu", CommandKind.Punch)]
+        [TestCase("PU", CommandKind.Punch)]
+        [TestCase(" pu:1 ", CommandKind.Punch)]
+        [TestCase("bl", CommandKind.Bell)]
+        [TestCase("BL:1", CommandKind.Bell)]
+        public void V1_PunchAndBell(string line, CommandKind kind)
+        {
+            Assert.AreEqual(kind, CommandParser.Parse(line).Kind);
+        }
+
+        [Test]
+        public void V1_GameMessages()
+        {
+            Assert.AreEqual("1", Messages.ProtocolVersion);
+            Assert.AreEqual("ko", Messages.Ko);
+            Assert.AreEqual("warn:car", Messages.WarnCar);
+            Assert.AreEqual("warn:ped", Messages.WarnPerson);
+            Assert.AreEqual("warn:hole", Messages.WarnHole);
+            Assert.AreEqual("turn:-1", Messages.Turn(-3));
+            Assert.AreEqual("turn:0", Messages.Turn(0));
+            Assert.AreEqual("turn:1", Messages.Turn(1));
+        }
+
+        [Test]
+        public void V1_MixerCountsPunchAndBellOnce()
+        {
+            var mixer = new ControlMixer();
+            mixer.Apply(CommandParser.Parse("pu"), 0);
+            mixer.Apply(CommandParser.Parse("pu"), 0);
+            mixer.Apply(CommandParser.Parse("bl"), 0);
+            Assert.AreEqual(2, mixer.PendingPunches);
+            Assert.IsTrue(mixer.ConsumePunch());
+            Assert.IsFalse(mixer.ConsumePunch());
+            Assert.IsTrue(mixer.ConsumeBell());
+            Assert.IsFalse(mixer.ConsumeBell());
+        }
     }
 }

@@ -410,7 +410,9 @@ namespace CityScooter.EditorTools.Art
             }
             theme.obstacles=obstacles.ToArray();theme.jumpObstacles=Array.Empty<Obstacle>();
             var previous=AssetDatabase.LoadAssetAtPath<TrackTheme>("Assets/_Project/Data/Theme_PerthStreet.asset");
-            theme.gifts=previous!=null?previous.gifts:Array.Empty<Gift>();EditorUtility.SetDirty(theme);
+            theme.gifts=previous!=null?previous.gifts:Array.Empty<Gift>();
+            HazardKitBuilder.ApplyTo(theme); // v0.2: comic gifts and hazard patterns (Scripts/Editor/Gameplay)
+            EditorUtility.SetDirty(theme);
         }
 
         [MenuItem("CityScooter/Comic City/2 - Apply to Main and Save Preview")]

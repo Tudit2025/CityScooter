@@ -42,5 +42,21 @@ namespace CityScooter.Controls
             return (k != null && (k.downArrowKey.isPressed || k.sKey.isPressed))
                 || (g != null && (g.buttonEast.isPressed || g.leftTrigger.ReadValue() > 0.3f));
         }
+
+        /// <summary>v1 punch: F, gamepad west button.</summary>
+        public static bool PunchPressed()
+        {
+            Keyboard k = Keyboard.current;
+            Gamepad g = Gamepad.current;
+            return (k != null && k.fKey.wasPressedThisFrame) || (g != null && g.buttonWest.wasPressedThisFrame);
+        }
+
+        /// <summary>v1 bell: R (ring; B is the micro:bit brake button in every hint), gamepad north button.</summary>
+        public static bool BellPressed()
+        {
+            Keyboard k = Keyboard.current;
+            Gamepad g = Gamepad.current;
+            return (k != null && k.rKey.wasPressedThisFrame) || (g != null && g.buttonNorth.wasPressedThisFrame);
+        }
     }
 }

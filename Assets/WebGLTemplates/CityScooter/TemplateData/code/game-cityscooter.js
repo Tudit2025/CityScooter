@@ -1,5 +1,5 @@
 /* CityScooter block pack for MicrobitBlocks (Claude, 2026-11-07). Protocol: docs/protocol.md.
- * Blocks send st:/jp/br and react to the game's crash/gift/go/spd:N. The generated message reader is the same
+ * Blocks send st:/jp/br (v1: pu/bl) and react to the game's crash/gift/go/spd:N (v1: ko/warn:/turn:). The generated message reader is the same
  * buffered messages() as microbit/starter.py (uart.readline() can return half a line).
  * A pack for another game copies this file's shape: blocks, generators, isHat, globals, helpers, loopTail,
  * toolbox, starter. */
@@ -7,6 +7,11 @@
   "use strict";
   const MB = window.MicrobitBlocks;
   const Order = window.python.Order;
+
+  // What the game sends (docs/protocol.md). v1 added ko, warn:* and turn:*; old programs simply ignore them.
+  const MESSAGE_OPTIONS = [["crash", "crash"], ["gift", "gift"], ["go (new ride)", "go"], ["ko (punch landed)", "ko"],
+    ["warn:car (car ahead)", "warn:car"], ["warn:ped (person ahead)", "warn:ped"], ["warn:hole (hole ahead)", "warn:hole"],
+    ["turn:-1 (road turns left)", "turn:-1"], ["turn:1 (road turns right)", "turn:1"], ["turn:0 (road straight)", "turn:0"]];
 
   const BLOCKS = [
     { type: "cs_steer", message0: "steer %1", args0: [{ type: "input_value", name: "VALUE", check: "Number" }],
@@ -16,8 +21,12 @@
       tooltip: "Jump over cones and railings. Python: print(\"jp\")" },
     { type: "cs_brake", message0: "brake", previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "Slow down for a moment. Send it every loop to keep braking. Python: print(\"br\")" },
+    { type: "cs_punch", message0: "punch", previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Punch boxes, bins and cones out of your way. One punch at a time: punching again within 0.4 s does nothing. Python: print(\"pu\")" },
+    { type: "cs_bell", message0: "ring the bell", previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Ring your bell: people ahead step out of your way. Python: print(\"bl\")" },
     { type: "cs_on_message", message0: "when the game says %1 %2 %3",
-      args0: [{ type: "field_dropdown", name: "MSG", options: [["crash", "crash"], ["gift", "gift"], ["go (new ride)", "go"]] },
+      args0: [{ type: "field_dropdown", name: "MSG", options: MESSAGE_OPTIONS },
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "game_blocks", tooltip: "Runs when the game sends this message to your micro:bit." },
     { type: "cs_on_speed", message0: "when the game sends the speed %1 %2",
@@ -31,6 +40,8 @@
     cs_steer: (b, g) => 'print("st:" + str(int(' + (g.valueToCode(b, "VALUE", Order.NONE) || "0") + ")))\n",
     cs_jump: () => 'print("jp")\n',
     cs_brake: () => 'print("br")\n',
+    cs_punch: () => 'print("pu")\n',
+    cs_bell: () => 'print("bl")\n',
     cs_speed: () => { MB.setFlag("usesSpeed"); return ["game_speed", Order.ATOMIC]; },
     cs_on_message: (b) => { MB.addSection("msg:" + b.getFieldValue("MSG"), MB.statements(b, "DO")); return ""; },
     cs_on_speed: (b) => { MB.setFlag("usesSpeed"); MB.addSection("msg:spd", MB.statements(b, "DO")); return ""; },
@@ -67,7 +78,7 @@
     helpers: () => [MESSAGES_HELPER],
     loopTail: (ctx, section) => {
       const branches = [];
-      for (const m of ["crash", "gift", "go"]) {
+      for (const [, m] of MESSAGE_OPTIONS) {
         if (section("msg:" + m)) branches.push('if msg == "' + m + '":\n' + indent(section("msg:" + m), 0));
       }
       if (section("msg:spd") || ctx.flags.usesSpeed) {
@@ -84,8 +95,9 @@
     },
     toolbox: (blk, num) => [{
       kind: "category", name: "CityScooter", categorystyle: "game_category", contents: [
-        blk("cs_steer", { inputs: { VALUE: num(0) } }), blk("cs_jump"), blk("cs_brake"),
-        blk("cs_on_message"), blk("cs_on_message", { fields: { MSG: "gift" } }), blk("cs_on_speed"), blk("cs_speed"),
+        blk("cs_steer", { inputs: { VALUE: num(0) } }), blk("cs_jump"), blk("cs_brake"), blk("cs_punch"), blk("cs_bell"),
+        blk("cs_on_message"), blk("cs_on_message", { fields: { MSG: "gift" } }), blk("cs_on_message", { fields: { MSG: "warn:ped" } }),
+        blk("cs_on_speed"), blk("cs_speed"),
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_ManholeMiddle
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -1.3
+    z: 6
+    yaw: 0
+  - prefab: {fileID: 1003818853710608965, guid: 026fd11ce343eba409d4b484956a13d2, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 1.3
+    z: 6
+    yaw: 0
+  - prefab: {fileID: 3559360935640938753, guid: 31f05429985a2f548be015806272ff51, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 0
+    z: 12
+    yaw: 0
+  length: 20
+  minLevel: 2
+  weight: 0.6
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 40

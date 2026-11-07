@@ -24,14 +24,25 @@ namespace CityScooter.Gameplay
 
         Camera _cam;
         RiderController _rider;
+        Quaternion _base = Quaternion.identity; // rotation before the fake-turn bank, so the bank never feeds back
 
-        void Awake() => _cam = GetComponent<Camera>();
+        void Awake() { _cam = GetComponent<Camera>(); _base = transform.rotation; }
 
         public void SnapToTarget()
         {
             if (target == null) return;
             transform.position = Desired();
-            transform.rotation = DesiredRotation(transform.position);
+            _base = DesiredRotation(transform.position);
+            transform.rotation = WithTurn(_base);
+        }
+
+        // Fake turns: look a little into the turn and bank the horizon (FakeTurnDirector).
+        Quaternion WithTurn(Quaternion rotation)
+        {
+            FakeTurnDirector turn = FakeTurnDirector.Instance;
+            if (turn == null || turn.Amount == 0f) return rotation;
+            GameTuning t = turn.tuning != null ? turn.tuning : GameTuning.Default;
+            return Quaternion.AngleAxis(turn.Amount * t.turnCameraLook, Vector3.up) * rotation * Quaternion.Euler(0f, 0f, -turn.Amount * t.turnCameraRoll);
         }
 
         Vector3 Desired()
@@ -73,7 +84,8 @@ namespace CityScooter.Gameplay
             pos.z = desired.z;
             transform.position = pos;
             float turn=directionalFollow?1-Mathf.Exp(-rotationResponse*Time.deltaTime):k;
-            transform.rotation = Quaternion.Slerp(transform.rotation, DesiredRotation(pos), turn);
+            _base = Quaternion.Slerp(_base, DesiredRotation(pos), turn);
+            transform.rotation = WithTurn(_base);
             if (_cam != null && _rider != null)
             {
                 float fov = Mathf.Min(maxFov, baseFov + _rider.Speed * fovPerMetrePerSecond);

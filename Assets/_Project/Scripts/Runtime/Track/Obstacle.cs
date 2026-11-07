@@ -7,15 +7,30 @@ namespace CityScooter.Track
     /// Needs at least one non-trigger Collider (prefer BoxCollider) on itself or a child.
     /// The rider crashes on contact unless it is airborne and <see cref="canJumpOver"/> is true.
     /// </summary>
+    public enum ObstacleKind
+    {
+        Thing = 0,
+        /// <summary>Cars, trucks, police cars.</summary>
+        Vehicle = 1,
+        /// <summary>Workers, traffic controllers, pedestrians.</summary>
+        Person = 2,
+        /// <summary>Open manholes and other holes in the road: jump or steer around.</summary>
+        Hole = 3,
+    }
+
     [DisallowMultipleComponent]
     public sealed class Obstacle : MonoBehaviour
     {
+        [Tooltip("What it is: decides the warning sent to the micro:bit and how a crash looks.")]
+        public ObstacleKind kind = ObstacleKind.Thing;
         [Tooltip("Low things (cones, bins, railings) can be cleared with a jump; cars and walls cannot.")]
         public bool canJumpOver = true;
 
         [Tooltip("Spans the whole road (e.g. a railing across it): steering around is impossible, you must jump.")]
         public bool spansRoad;
 
+        [Tooltip("A punch (\"pu\") knocks it out of the way and the game sends \"ko\". Off for people and vehicles.")]
+        public bool punchable;
         [Tooltip("Relative chance of being picked for a matching spawn slot.")]
         public float spawnWeight = 1f;
     }

@@ -46,6 +46,35 @@ namespace CityScooter.Gameplay
         [Range(0f, 1f)] public float jumpObstacleChance = 0.5f;
         [Range(0, 9)] public int jumpObstacleMinLevel = 1;
 
+        [Header("Hazard patterns (roadworks, police, traffic)")]
+        [Tooltip("No hazard patterns in the first metres of a run.")]
+        public float hazardStartDistance = 250f;
+        [Range(0f, 1f)] public float hazardChanceStart = 0.35f;
+        [Range(0f, 1f)] public float hazardChanceMax = 0.7f;
+        [Tooltip("Free metres between two hazard patterns (random obstacles still appear there).")]
+        public float hazardGap = 40f;
+        [Tooltip("Moving cars appear when the rider is this many seconds (at least 160 m) from where they meet.")]
+        public float moverLeadSeconds = 5f;
+
+        [Header("Fake turns (visual; the road stays straight for physics)")]
+        [Tooltip("Sideways swing of the far city per squared metre at a full turn. Zero turns fake turns off.")]
+        [Range(0f, 0.004f)] public float turnCurvature = 0.0016f;
+        [Tooltip("How fast the sky turns at a full turn, at the reference speed (degrees per second).")]
+        public float turnHeadingDegreesPerSecond = 9f;
+        public float turnReferenceSpeed = 30f;
+        [Tooltip("Seconds to ease into and out of a turn.")]
+        public float turnEaseSeconds = 1.1f;
+        public float turnFirstStraight = 5f;
+        public Vector2 turnStraightSeconds = new Vector2(3f, 7f);
+        public Vector2 turnHoldSeconds = new Vector2(3f, 7f);
+        [Tooltip("Camera bank and look into the turn, and rider lean, at a full turn (degrees).")]
+        public float turnCameraRoll = 4f;
+        public float turnCameraLook = 4f;
+        public float turnRiderLean = 10f;
+        [Tooltip("Push towards the outside of a turn as a fraction of lateralMaxSpeed (students must steer against it).")]
+        [Range(0f, 0.5f)] public float turnDrift = 0.2f;
+        [Range(0, 9)] public int turnDriftMinLevel = 3;
+
         [Header("Score / flow")]
         public float pointsPerMetre = 1f;
         [Tooltip("Seconds after a crash before a press can start the next run.")]

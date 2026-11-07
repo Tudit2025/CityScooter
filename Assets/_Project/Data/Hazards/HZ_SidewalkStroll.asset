@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_SidewalkStroll
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 5847602310533469488, guid: c2d7373b4b7494440b6fd438dba6bea6, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -5.7
+    z: 8
+    yaw: 0
+  - prefab: {fileID: 5785450017088293597, guid: 8ed5bafe31a671e4d927dd3810204598, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 5.9
+    z: 18
+    yaw: 0
+  - prefab: {fileID: 8104418743411090006, guid: d60e0e00374fc164991b2e0a44fd6d23, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -6.5
+    z: 26
+    yaw: 0
+  - prefab: {fileID: 5847602310533469488, guid: c2d7373b4b7494440b6fd438dba6bea6, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 6.4
+    z: 40
+    yaw: 0
+  length: 50
+  minLevel: 0
+  weight: 0.9
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 40

@@ -27,6 +27,9 @@ namespace CityScooter.Devices
             GameEvents.Crashed += OnCrashed;
             GameEvents.GiftCollected += OnGift;
             GameEvents.SpeedLevelChanged += OnSpeedLevel;
+            GameEvents.PunchLanded += OnPunchLanded;
+            GameEvents.Warning += OnWarning;
+            GameEvents.TurnChanged += OnTurn;
         }
 
         void OnDisable()
@@ -35,6 +38,9 @@ namespace CityScooter.Devices
             GameEvents.Crashed -= OnCrashed;
             GameEvents.GiftCollected -= OnGift;
             GameEvents.SpeedLevelChanged -= OnSpeedLevel;
+            GameEvents.PunchLanded -= OnPunchLanded;
+            GameEvents.Warning -= OnWarning;
+            GameEvents.TurnChanged -= OnTurn;
         }
 
         void OnRunStarted()
@@ -48,6 +54,19 @@ namespace CityScooter.Devices
         void OnGift() => _hub.Send(Messages.Gift);
 
         void OnSpeedLevel(int level) => _wantedSpeed = level;
+
+        void OnPunchLanded() => _hub.Send(Messages.Ko);
+
+        // V1 boards have tiny UART buffers: at most a few warnings per second (HazardWarnings already sends each thing once).
+        float _nextWarnTime;
+        void OnWarning(string message)
+        {
+            if (Time.unscaledTime < _nextWarnTime) return;
+            _nextWarnTime = Time.unscaledTime + 0.25f;
+            _hub.Send(message);
+        }
+
+        void OnTurn(int direction) => _hub.Send(Messages.Turn(direction));
 
         void Update()
         {

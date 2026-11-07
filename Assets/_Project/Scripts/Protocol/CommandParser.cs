@@ -21,6 +21,8 @@ namespace CityScooter.Protocol
             string lower = s.ToLowerInvariant();
             if (lower == Messages.Jump) return new Command(CommandKind.Jump);
             if (lower == Messages.Brake) return new Command(CommandKind.Brake);
+            if (lower == Messages.Punch) return new Command(CommandKind.Punch);
+            if (lower == Messages.Bell) return new Command(CommandKind.Bell);
 
             int colon = lower.IndexOf(':');
             if (colon <= 0) return new Command(CommandKind.Unknown, 0f, s);
@@ -46,6 +48,10 @@ namespace CityScooter.Protocol
                 case Messages.Brake:
                     // "jp:1" style: be forgiving, the intent is clear.
                     return new Command(key == Messages.Jump ? CommandKind.Jump : CommandKind.Brake);
+                case Messages.Punch:
+                    return new Command(CommandKind.Punch);
+                case Messages.Bell:
+                    return new Command(CommandKind.Bell);
                 default:
                     return new Command(CommandKind.Unknown, 0f, s);
             }

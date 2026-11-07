@@ -11,6 +11,10 @@ namespace CityScooter.Protocol
         Brake,
         Hello,
         Echo,
+        /// <summary>v1: "pu" punch (one punch per line; the game has a cooldown).</summary>
+        Punch,
+        /// <summary>v1: "bl" ring the bell (pedestrians ahead step aside).</summary>
+        Bell,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

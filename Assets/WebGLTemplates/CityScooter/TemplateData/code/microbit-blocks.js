@@ -33,6 +33,7 @@
   const MELODIES = ["BA_DING", "WAWAWAWAA", "POWER_UP", "POWER_DOWN", "JUMP_UP", "JUMP_DOWN", "PUNCHLINE", "BADDY",
     "CHASE", "DADADADUM", "ENTERTAINER", "NYAN", "RINGTONE", "BIRTHDAY"];
   const nice = (s) => s.toLowerCase().replace(/_/g, " ");
+  const GESTURES = [["shaken", "shake"], ["turned face up", "face up"], ["turned face down", "face down"]];
 
   // ------------------------------------------------------------------ generic blocks
   const BLOCKS = [
@@ -43,6 +44,9 @@
     { type: "mb_on_button", message0: "when button %1 is pressed %2 %3",
       args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"]] }, { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "mb_events", tooltip: "Runs once for each press (Python: button_a.was_pressed())." },
+    { type: "mb_on_gesture", message0: "when %1 %2 %3",
+      args0: [{ type: "field_dropdown", name: "GESTURE", options: GESTURES }, { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "mb_events", tooltip: "Runs once each time the micro:bit is moved like this (Python: accelerometer.was_gesture(\"shake\"))." },
     { type: "mb_button_pressed", message0: "button %1 is pressed",
       args0: [{ type: "field_dropdown", name: "BTN", options: [["A", "a"], ["B", "b"], ["A+B", "ab"]] }],
       output: "Boolean", style: "mb_input", tooltip: "True while the button is held down right now (Python: button_a.is_pressed())." },
@@ -103,6 +107,7 @@
   G.mb_on_start = (b) => { addSection("start", body(b, "DO")); return ""; };
   G.mb_forever = (b) => { addSection("loop", body(b, "DO")); return ""; };
   G.mb_on_button = (b) => { addSection("button:" + b.getFieldValue("BTN"), body(b, "DO")); return ""; };
+  G.mb_on_gesture = (b) => { addSection("gesture:" + b.getFieldValue("GESTURE"), body(b, "DO")); return ""; };
   G.mb_button_pressed = (b) => {
     const v = b.getFieldValue("BTN");
     return v === "ab" ? ["(button_a.is_pressed() and button_b.is_pressed())", Order.ATOMIC] : ["button_" + v + ".is_pressed()", Order.FUNCTION_CALL];
@@ -179,6 +184,9 @@
     for (const btn of ["a", "b"]) {
       if (s("button:" + btn)) loopParts.push("    if button_" + btn + ".was_pressed():\n" + indent(s("button:" + btn), 4));
     }
+    for (const [, g] of GESTURES) {
+      if (s("gesture:" + g)) loopParts.push('    if accelerometer.was_gesture("' + g + '"):\n' + indent(s("gesture:" + g), 4));
+    }
     if (pack && pack.loopTail) loopParts.push(indent(pack.loopTail(c, s), 4));
     loopParts.push("    sleep(50)\n");
     L.push(loopParts.join("").replace(/\n$/, ""));
@@ -216,7 +224,7 @@
     const cats = [];
     if (pack && pack.toolbox) cats.push(...pack.toolbox(blk, num));
     cats.push(
-      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button")] },
+      { kind: "category", name: "Events", categorystyle: "events_category", contents: [blk("mb_on_start"), blk("mb_forever"), blk("mb_on_button"), blk("mb_on_gesture")] },
       { kind: "category", name: "Input", categorystyle: "input_category", contents: [
         blk("mb_tilt"), blk("mb_button_pressed"), blk("mb_pin_touched"), blk("mb_logo_touched"), blk("mb_sound_level"),
         blk("mb_version"), blk("mb_running_time")] },

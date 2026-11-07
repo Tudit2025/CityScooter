@@ -12,6 +12,10 @@ namespace CityScooter.Controls
         public bool Jump;
         /// <summary>Held.</summary>
         public bool Brake;
+        /// <summary>v1: true on the frame a punch was requested.</summary>
+        public bool Punch;
+        /// <summary>v1: true on the frame the bell was rung.</summary>
+        public bool Bell;
         /// <summary>A micro:bit / simulator is steering right now (for the HUD).</summary>
         public bool DeviceSteering;
     }
@@ -52,6 +56,8 @@ namespace CityScooter.Controls
             // Non-short-circuit '|' so pending device jumps are always consumed.
             input.Jump = (keyboard && KeyboardControls.JumpPressed()) | (hub != null && hub.Mixer.ConsumeJump());
             input.Brake = (keyboard && KeyboardControls.BrakeHeld()) || (hub != null && hub.Mixer.Braking(now));
+            input.Punch = (keyboard && KeyboardControls.PunchPressed()) | (hub != null && hub.Mixer.ConsumePunch());
+            input.Bell = (keyboard && KeyboardControls.BellPressed()) | (hub != null && hub.Mixer.ConsumeBell());
 
             _last = input;
             return input;

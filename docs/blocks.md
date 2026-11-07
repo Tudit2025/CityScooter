@@ -16,6 +16,10 @@
 | `code/game-cityscooter.js` | 游戏 | CityScooter 插件：专属积木、消息分发、工具箱分类、默认的 starter 积木 |
 | `shell.js` / `shell.css` | 通用 | 外壳：积木和 Python 两个视图、按需加载 Blockly、分隔条、模拟器、USB、串口监视器 |
 
+协议 v1（2026-11-07）加的积木：
+- CityScooter 分类："出拳"（`print("pu")`）、"按铃"（`print("bl")`）；"当游戏说"的下拉里加了 `ko`、`warn:car`、`warn:ped`、`warn:hole`、`turn:-1`、`turn:1`、`turn:0`。
+- 通用 Events 分类："当摇一摇 / 屏幕朝上 / 屏幕朝下时"，生成 `accelerometer.was_gesture(...)`，V1、V2 都能用。
+
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 
 ## 生成的程序长什么样

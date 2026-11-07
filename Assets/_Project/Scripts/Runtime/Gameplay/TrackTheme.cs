@@ -24,6 +24,13 @@ namespace CityScooter.Gameplay
 
         [Tooltip("Pickup prefabs (root has Gift).")]
         public Gift[] gifts;
+        [Tooltip("Hand-made stretches (roadworks, police stop, traffic) placed instead of random obstacles.")]
+        public HazardPattern[] hazards;
+        [Header("Comic pop-ups (optional)")]
+        public GameObject punchPopup;
+        public GameObject bellPopup;
+        public GameObject startlePopup;
+        public GameObject sorryPopup;
 
         public bool HasChunks => chunks != null && chunks.Length > 0;
     }

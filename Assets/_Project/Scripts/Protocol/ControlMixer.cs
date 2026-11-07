@@ -17,6 +17,8 @@ namespace CityScooter.Protocol
         double _steerTime = double.NegativeInfinity;
         double _brakeUntil = double.NegativeInfinity;
         int _pendingJumps;
+        int _pendingPunches;
+        int _pendingBells;
 
         public void Apply(in Command command, double now)
         {
@@ -31,6 +33,12 @@ namespace CityScooter.Protocol
                     break;
                 case CommandKind.Brake:
                     _brakeUntil = now + BrakeHold;
+                    break;
+                case CommandKind.Punch:
+                    _pendingPunches++;
+                    break;
+                case CommandKind.Bell:
+                    _pendingBells++;
                     break;
             }
         }
@@ -53,8 +61,26 @@ namespace CityScooter.Protocol
             return true;
         }
 
+        public int PendingPunches => _pendingPunches;
+        /// <summary>True if a punch was requested since the last call; clears the request.</summary>
+        public bool ConsumePunch()
+        {
+            if (_pendingPunches <= 0) return false;
+            _pendingPunches = 0;
+            return true;
+        }
+        /// <summary>True if the bell was rung since the last call; clears the request.</summary>
+        public bool ConsumeBell()
+        {
+            if (_pendingBells <= 0) return false;
+            _pendingBells = 0;
+            return true;
+        }
+
         public void Reset()
         {
+            _pendingPunches = 0;
+            _pendingBells = 0;
             _steer = 0f;
             _steerTime = double.NegativeInfinity;
             _brakeUntil = double.NegativeInfinity;

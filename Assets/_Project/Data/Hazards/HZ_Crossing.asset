@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_Crossing
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 8104418743411090006, guid: d60e0e00374fc164991b2e0a44fd6d23, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 5.8
+    z: 20
+    yaw: 0
+  - prefab: {fileID: 5431144315272764891, guid: 826a5f3a75b8c0e4d835ec0aa7754491, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -5.6
+    z: 30
+    yaw: 0
+  - prefab: {fileID: 5882402833698672007, guid: 34c05c2d47f82724ba66048b7942f02e, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 0
+    z: 30
+    yaw: 0
+  length: 45
+  minLevel: 1
+  weight: 1
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 40

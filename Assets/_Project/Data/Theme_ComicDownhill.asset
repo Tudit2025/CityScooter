@@ -25,9 +25,25 @@ MonoBehaviour:
   - {fileID: 3252785564823809802, guid: eef0a39a68ecfdb43a6831f7c8928987, type: 3}
   jumpObstacles: []
   gifts:
-  - {fileID: 1958351135698532571, guid: 979de83145a1efd45ad0c115c12d10fc, type: 3}
-  - {fileID: 541098976610873748, guid: 95b10362975463b4dac73b186e88d440, type: 3}
-  - {fileID: 671617113920802668, guid: 30784fb2da008464bbfdb4ec3c07b442, type: 3}
-  - {fileID: 815583598194828538, guid: ae222f6bb181fef4a881ee918e6dc4ab, type: 3}
-  - {fileID: 2176563685798402813, guid: 0aaac1935dbc3a54e8b68e06cac6e943, type: 3}
-  - {fileID: 5034289025256511863, guid: fcecb0e04757e0245bf8bc7591d54964, type: 3}
+  - {fileID: 9162247648598201734, guid: c0534e32ce0c64c4085c8bdac7758a15, type: 3}
+  - {fileID: 2775097090940484613, guid: 8d98016fcc1519c4684dbf824b7059c2, type: 3}
+  - {fileID: 3905484752962149310, guid: 44e3150135422ba4c8c9cc1026fd3d9c, type: 3}
+  - {fileID: 2251021570006390520, guid: cbf9011cf703f0c429a5386cd6f63cb7, type: 3}
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: 3256659962f960d409105dbb393657c3, type: 2}
+  - {fileID: 11400000, guid: d12eedbd87110334ca2fa7137e6a8691, type: 2}
+  - {fileID: 11400000, guid: 4a6cc6f8a8ce7bd4a8ca5f5916423578, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 416bace6f208e294a813b975b4690f17, type: 2}
+  - {fileID: 11400000, guid: 8578d9f54835f0d46a5d163be53caf5b, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: b44e8e9120f2ba547afe612562572111, type: 2}
+  - {fileID: 11400000, guid: f7b4a55b20b8bbf4e98de7d868f4aff7, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  - {fileID: 11400000, guid: 6e7c690878e1b4c4eaae50a5a0d90a33, type: 2}
+  punchPopup: {fileID: 2011246801867556698, guid: 42472509edd6c7c4ebb42cbbe347c6f7, type: 3}
+  bellPopup: {fileID: 6388409423442489130, guid: f59398f2ff593fe49a2557fa3826958c, type: 3}
+  startlePopup: {fileID: 1518109781098615905, guid: 210729d7f03e0324f8674136f570877f, type: 3}
+  sorryPopup: {fileID: 762235716819808211, guid: 14e5ede21630fc649af135d4f1d142bb, type: 3}

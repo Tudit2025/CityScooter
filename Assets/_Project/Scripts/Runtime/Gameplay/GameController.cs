@@ -73,8 +73,18 @@ namespace CityScooter.Gameplay
             if (Instance == this) Instance = null;
         }
 
+        FakeTurnDirector _turns;
+
         void Start()
         {
+            // Fake turns need no scene setup: created here so Main.unity stays the tech artist's.
+            _turns = GetComponent<FakeTurnDirector>();
+            if (_turns == null && rider != null) _turns = gameObject.AddComponent<FakeTurnDirector>();
+            if (_turns != null) { if (_turns.rider == null) _turns.rider = rider; if (_turns.tuning == null) _turns.tuning = tuning; }
+            // v1 punch / bell / warnings, also without scene changes.
+            var actions = GetComponent<RiderActions>();
+            if (actions == null && rider != null) actions = gameObject.AddComponent<RiderActions>();
+            if (actions != null) { if (actions.rider == null) actions.rider = rider; if (actions.theme == null && track != null) actions.theme = track.theme; }
             EnterReady();
             Camera cam = Camera.main;
             if (cam != null && rider != null)
@@ -118,6 +128,7 @@ namespace CityScooter.Gameplay
             Gifts = 0;
             _giftPoints = 0;
             rider?.Begin();
+            _turns?.Restart(System.Environment.TickCount);
             Camera.main?.GetComponent<FollowCamera>()?.SnapToTarget();
             SetState(RunState.Running);
             GameEvents.RaiseRunStarted();

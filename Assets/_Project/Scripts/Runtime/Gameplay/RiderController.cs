@@ -98,7 +98,8 @@ namespace CityScooter.Gameplay
             float limit = Mathf.Max(0.5f, (track != null ? track.RideableHalfWidthAt(nextZ) : PlaceholderTrack.HalfWidth) - radius);
             float targetVx = input.Steer * T.lateralMaxSpeed;
             _vx = Mathf.Lerp(_vx, targetVx, 1f - Mathf.Exp(-T.lateralResponse * dt));
-            float x=from.x+_vx*dt;
+            FakeTurnDirector turn = FakeTurnDirector.Instance;
+            float x=from.x+(_vx+(turn != null ? turn.Drift : 0f))*dt;
             if(x>limit){x=limit;_vx=Mathf.Min(_vx,0);}
             if(x<-limit){x=-limit;_vx=Mathf.Max(_vx,0);}
 
@@ -125,7 +126,8 @@ namespace CityScooter.Gameplay
             Vector3 to = new Vector3(x, _y + (track != null ? track.SurfaceHeightAt(x,nextZ) : 0f), nextZ);
             transform.position = to;
 
-            if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(nextZ) : 0f, 0f, -_vx / Mathf.Max(0.01f, T.lateralMaxSpeed) * T.maxLean);
+            float lean = -_vx / Mathf.Max(0.01f, T.lateralMaxSpeed) * T.maxLean - (turn != null ? turn.Amount * T.turnRiderLean : 0f);
+            if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(nextZ) : 0f, 0f, Mathf.Clamp(lean, -T.maxLean - T.turnRiderLean, T.maxLean + T.turnRiderLean));
             SetSpeedLevel(Mathf.RoundToInt(Speed / Mathf.Max(0.01f, CurrentMaxSpeed) * Messages.MaxSpeedLevel));
             Sweep(from, to);
         }

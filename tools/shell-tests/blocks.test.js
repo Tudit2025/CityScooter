@@ -67,6 +67,11 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     B("mb_play", { fields: { TUNE: "WAWAWAWAA" } }), B("mb_print", { inputs: { VALUE: t("got crash") } })) } }),
   B("cs_on_message", { x: 500, y: 380, fields: { MSG: "gift" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("got gift") } })) } }),
   B("cs_on_message", { x: 500, y: 460, fields: { MSG: "go" }, inputs: { DO: chain(B("mb_clear")) } }),
+  // protocol v1: punch, bell, gesture, ko / warn: / turn:
+  B("mb_on_gesture", { x: 900, y: 10, fields: { GESTURE: "shake" }, inputs: { DO: chain(B("cs_punch")) } }),
+  B("cs_on_message", { x: 900, y: 120, fields: { MSG: "warn:ped" }, inputs: { DO: chain(B("cs_bell")) } }),
+  B("cs_on_message", { x: 900, y: 220, fields: { MSG: "ko" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "YES" } })) } }),
+  B("cs_on_message", { x: 900, y: 320, fields: { MSG: "turn:-1" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "ARROW_W" } })) } }),
   B("cs_on_speed", { x: 500, y: 540, inputs: { DO: chain(B("mb_clear"),
     B("controls_for", { fields: { VAR: { id: "v2" } }, inputs: { FROM: n(0), TO: n(4), BY: n(1), DO: chain(B("mb_plot", { inputs: {
       X: val(B("variables_get", { fields: { VAR: { id: "v2" } } })), Y: n(4), B: val(B("cs_speed")) } })) } }),
@@ -138,7 +143,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   const syn2 = pySyntax(allPy, "all");
   check("all blocks: valid Python", !syn2, syn2);
   for (const want of ["import music", "import random", "(pin_logo.is_touched() if VERSION == \"v2\" else False)",
-    "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None"]) {
+    "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
+    'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"']) {
     check("all blocks make: " + want, allPy.includes(want));
   }
   const disabledOrphans = await ev(() => window.Blockly.getMainWorkspace().getAllBlocks(false).filter((b) => !b.isEnabled()).length);
@@ -161,13 +167,14 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     await page.click(".cs-monitor-head strong");
     for (const k of ["a", "b"]) { await page.keyboard.press(k); await sleep(200); }
     await page.keyboard.down("m"); await page.keyboard.down("l"); await sleep(600); await page.keyboard.up("m"); await page.keyboard.up("l");
-    for (const m of ["spd:5", "crash", "gift", "go", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
+    for (const m of ["spd:5", "crash", "gift", "go", "warn:ped", "ko", "turn:-1", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     await sleep(800);
     const lines = await ev((n) => window.__fakeUnity.lines.slice(n), before);
     const log = await ev((n) => [...document.querySelectorAll("#cs-log .cs-line")].slice(n).map((r) => r.className + " :: " + r.textContent), logBefore);
     check(label + ": no Python error", !log.some((x) => /cs-l-error/.test(x)), log.filter((x) => /cs-l-error/.test(x)).slice(0, 4).join(" | "));
     check(label + ": steers", lines.some((l) => /^sim\|st:-?\d+$/.test(l)));
     check(label + ": crash and gift handlers ran", log.some((x) => x.includes("got crash")) && log.some((x) => x.includes("got gift")));
+    check(label + ": warn:ped rings the bell (bl)", lines.includes("sim|bl"), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));
     return lines;
   }

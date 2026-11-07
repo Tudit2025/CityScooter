@@ -45,8 +45,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ddc2dff2d824b6c4ea1e4e4e93e9d69b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.Obstacle
+  kind: 0
   canJumpOver: 1
   spansRoad: 0
+  punchable: 1
   spawnWeight: 1
 --- !u!1001 &2788573564564296840
 PrefabInstance:

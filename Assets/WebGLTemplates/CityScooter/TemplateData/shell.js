@@ -96,6 +96,8 @@
         <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>steer</td></tr>
         <tr><td><kbd>Space</kbd></td><td>jump (and start a ride)</td></tr>
         <tr><td><kbd>S</kbd></td><td>brake</td></tr>
+        <tr><td><kbd>F</kbd></td><td>punch boxes, bins and cones out of the way</td></tr>
+        <tr><td><kbd>R</kbd></td><td>ring the bell: people step aside</td></tr>
       </table>
       <h3>Got a micro:bit?</h3>
       <p>Choose <b>micro:bit (USB)</b> above and connect it.</p>
@@ -204,6 +206,8 @@
     const lower = s.toLowerCase();
     if (lower === "jp") return { kind: "jump" };
     if (lower === "br") return { kind: "brake" };
+    if (lower === "pu") return { kind: "punch" };
+    if (lower === "bl") return { kind: "bell" };
     const colon = lower.indexOf(":");
     if (colon <= 0) return { kind: "unknown" };
     const key = lower.slice(0, colon).trim();
@@ -219,6 +223,8 @@
       case "echo": return { kind: "echo" };
       case "jp": return { kind: "jump" };
       case "br": return { kind: "brake" };
+      case "pu": return { kind: "punch" };
+      case "bl": return { kind: "bell" };
       default: return { kind: "unknown" };
     }
   }
@@ -281,6 +287,12 @@
         break;
       case "brake":
         d.brakeUntil = t + BRAKE_HOLD_MS;
+        break;
+      case "punch":
+        d.punchUntil = t + 300;
+        break;
+      case "bell":
+        d.bellUntil = t + 300;
         break;
       case "hello":
         if (d.ver !== c.value) {
@@ -416,7 +428,9 @@
       r.querySelector(".cs-steer-val").textContent = (d.steer > 0 ? "+" : "") + Math.round(d.steer);
       r.querySelector(".cs-strate").textContent = d.stTimes.length + " st/s";
       r.querySelector(".cs-jp-big").textContent = d.jpTimes.length;
-      r.querySelector(".cs-brake").classList.toggle("cs-on", t < d.brakeUntil);
+      r.querySelector(".cs-br").classList.toggle("cs-on", t < d.brakeUntil);
+      r.querySelector(".cs-pu").classList.toggle("cs-on", t < (d.punchUntil || 0));
+      r.querySelector(".cs-bl").classList.toggle("cs-on", t < (d.bellUntil || 0));
       const max = Math.max(1, ...d.jpBuckets);
       const bars = r.querySelectorAll(".cs-jpbars i");
       d.jpBuckets.forEach((n, i) => { bars[i].style.height = Math.round((n / max) * 100) + "%"; bars[i].title = n + " jp"; });
@@ -431,7 +445,7 @@
       <span class="cs-steer-val"></span><span class="cs-strate cs-muted"></span>
       <span class="cs-jp" title="jp messages in the last second"><span class="cs-jp-big">0</span><span class="cs-muted">jp in 1 s</span></span>
       <span class="cs-jpbars" title="jp per second, last 10 seconds">${"<i></i>".repeat(10)}</span>
-      <span class="cs-brake">BRAKE</span>`;
+      <span class="cs-acts"><span class="cs-brake cs-br">BRAKE</span><span class="cs-brake cs-pu" title="pu: punch">PUNCH</span><span class="cs-brake cs-bl" title="bl: bell">BELL</span></span>`;
     box.appendChild(r);
     return r;
   }

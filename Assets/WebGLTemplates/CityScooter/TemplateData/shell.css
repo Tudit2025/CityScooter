@@ -89,7 +89,8 @@ body[data-mode="keyboard"] .cs-splitter { visibility: hidden; }
 .cs-monitor-head strong { font-family: var(--display); font-weight: 400; font-size: 20px; letter-spacing: 0.6px; color: var(--amber); }
 .cs-stats { padding: 4px 12px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
 .cs-stats.cs-empty { color: var(--muted); }
-.cs-stat { display: grid; grid-template-columns: 74px 130px 38px 54px auto 70px 58px; align-items: center; gap: 10px; }
+.cs-stat { display: grid; grid-template-columns: 74px 130px 38px 54px auto 70px auto; align-items: center; gap: 10px; }
+.cs-acts { display: flex; flex-wrap: wrap; gap: 4px; }
 .cs-stat.cs-inactive { opacity: 0.45; }
 .cs-sid { font-weight: 700; }
 .cs-steer { position: relative; height: 10px; border-radius: 5px; background: #262c3a; overflow: hidden; }

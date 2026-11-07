@@ -7,6 +7,20 @@ float4 _ComicWorldBend;
 float4 _ComicHorizon;
 // x: transition distance, y: final visual rise slope, z: easing length.
 float4 _ComicCurveTail;
+#ifndef CITYSCOOTER_COMIC_TURN_DECL
+#define CITYSCOOTER_COMIC_TURN_DECL
+// Fake turn (FakeTurnDirector): x: sideways metres per squared metre (+ = right), y: sky heading radians.
+float4 _ComicTurn;
+#endif
+// Sideways offset of the fake turn: same unaffected distance as the rise, quadratic, then straight on.
+void ComicTurnOffset(float distanceZ, out float offset, out float slope)
+{
+    float d=max(0,distanceZ-_ComicWorldBend.y);
+    float a=max(1,_ComicCurveTail.x-_ComicWorldBend.y);
+    float q=min(d,a);
+    offset=_ComicTurn.x*(q*q+2*a*max(0,d-a));
+    slope=2*_ComicTurn.x*q;
+}
 void ComicCurve(float distanceZ, out float rise, out float slope)
 {
     float d=max(0,distanceZ-_ComicWorldBend.y);
@@ -38,7 +52,8 @@ float3 ComicBendPosition(float3 positionWS, float amount)
     float d=positionWS.z-_ComicWorldBend.x,rise,slope,scale,derivative;
     ComicCurve(d,rise,slope);ComicTaper(d,scale,derivative);
     float ground=_ComicWorldBend.w-d*_ComicHorizon.w;
-    float3 result=float3(positionWS.x*scale,ground+rise+(positionWS.y-ground)*scale,positionWS.z);
+    float side,sideSlope;ComicTurnOffset(d,side,sideSlope);
+    float3 result=float3(positionWS.x*scale+side,ground+rise+(positionWS.y-ground)*scale,positionWS.z);
     return lerp(positionWS,result,amount);
 }
 float3 ComicBendNormal(float3 positionWS, float3 normalWS, float amount)
@@ -48,9 +63,10 @@ float3 ComicBendNormal(float3 positionWS, float3 normalWS, float amount)
     scale=lerp(1,scale,amount);derivative*=amount;
     float height=positionWS.y-(_ComicWorldBend.w-d*_ComicHorizon.w);
     float dy=slope*amount-_ComicHorizon.w*(1-scale)+height*derivative;
+    float side,sideSlope;ComicTurnOffset(d,side,sideSlope);
     // Inverse transpose includes the shrinking width AND building height.
     normalWS.xy/=max(scale,.001);
-    normalWS.z-=positionWS.x*derivative*normalWS.x+dy*normalWS.y;
+    normalWS.z-=(positionWS.x*derivative+sideSlope*amount)*normalWS.x+dy*normalWS.y;
     return normalize(normalWS);
 }
 #endif

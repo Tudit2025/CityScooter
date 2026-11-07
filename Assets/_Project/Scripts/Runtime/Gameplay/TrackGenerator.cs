@@ -10,6 +10,7 @@ namespace CityScooter.Gameplay
     /// grey-box placeholders when the theme is empty. Every row keeps at least one free lane unless it
     /// holds a road-wide jump obstacle.
     /// </summary>
+    [DefaultExecutionOrder(-40)] // moving cars move before the rider sweeps for collisions
     public sealed class TrackGenerator : MonoBehaviour
     {
         public TrackTheme theme;
@@ -38,6 +39,34 @@ namespace CityScooter.Gameplay
             public readonly List<Placed> Spawned = new List<Placed>();
         }
 
+        // Hazard patterns: static entries wait until the chunk under them exists; moving ones until the rider is near.
+        sealed class PendingEntry
+        {
+            public object Key;
+            public float X, Z, Yaw, MeetZ;
+            public Mover Mover;
+        }
+
+        sealed class Moving
+        {
+            public object Key;
+            public GameObject Instance;
+            public float Speed;
+        }
+
+        struct TurnTrigger
+        {
+            public float Z, Strength, Seconds;
+            public int Direction;
+        }
+
+        readonly List<PendingEntry> _pending = new List<PendingEntry>();
+        readonly List<PendingEntry> _pendingMovers = new List<PendingEntry>();
+        readonly List<Moving> _moving = new List<Moving>();
+        readonly List<TurnTrigger> _turnTriggers = new List<TurnTrigger>();
+        float _reservedFrom = float.MinValue, _reservedUntil = float.MinValue, _nextHazardZ;
+        RiderController _riderController;
+
         readonly List<Active> _active = new List<Active>();
         readonly Dictionary<object, Stack<GameObject>> _pool = new Dictionary<object, Stack<GameObject>>();
         readonly List<SpawnSlot> _rowScratch = new List<SpawnSlot>();
@@ -55,11 +84,21 @@ namespace CityScooter.Gameplay
         GameTuning T => tuning != null ? tuning : GameTuning.Default;
 
         public int ActiveChunkCount => _active.Count;
+        public int MovingCount => _moving.Count;
+        /// <summary>Start and end (world z) of the latest hazard pattern, for tests.</summary>
+        public Vector2 LastHazardRange => new Vector2(_reservedFrom, _reservedUntil);
 
         /// <summary>Clears everything and builds fresh track starting at <paramref name="startZ"/>.</summary>
         public void ResetTrack(float startZ)
         {
             for (int i = _active.Count - 1; i >= 0; i--) Recycle(i);
+            foreach (Moving m in _moving) Release(m.Key, m.Instance);
+            _moving.Clear();
+            _pending.Clear();
+            _pendingMovers.Clear();
+            _turnTriggers.Clear();
+            _reservedFrom = _reservedUntil = float.MinValue;
+            _nextHazardZ = startZ + T.hazardStartDistance;
             _runSeed = seed != 0 ? seed : System.Environment.TickCount;
             _rng = new System.Random(_runSeed);
             _nextZ = startZ;
@@ -87,11 +126,13 @@ namespace CityScooter.Gameplay
             float z = rider.position.z;
             BuildAhead(z);
             while (_active.Count > 1 && _active[0].StartZ + _active[0].Chunk.length < z - keepBehind) Recycle(0);
+            UpdateHazards(z, Time.deltaTime);
             SyncCollisionTransforms();
         }
 
         void SyncCollisionTransforms()
         {
+            if(Mover.MovedThisFrame){_collisionTransformsDirty=true;Mover.MovedThisFrame=false;}
             if(!_collisionTransformsDirty)return;
             Physics.SyncTransforms();_collisionTransformsDirty=false;
         }
@@ -147,6 +188,7 @@ namespace CityScooter.Gameplay
             var active = new Active { Key = key, Chunk = chunk, StartZ = _nextZ };
             _active.Add(active);
             Populate(active);
+            PlacePending(active);
             _nextZ += Mathf.Max(1f, chunk.length);
             _nextY += chunk.endHeight;
             _chunkCounter++;
@@ -205,6 +247,7 @@ namespace CityScooter.Gameplay
             float d01 = T.Difficulty01(chunkDistance);
             int level = T.DifficultyLevel(chunkDistance);
             float obstacleChance = Mathf.Lerp(T.obstacleChanceStart, T.obstacleChanceMax, d01);
+            TryScheduleHazard(a, level, d01);
 
             _rows.Clear();
             foreach (SpawnSlot slot in a.Chunk.GetSlots())
@@ -217,6 +260,8 @@ namespace CityScooter.Gameplay
             foreach (KeyValuePair<int, List<SpawnSlot>> row in _rows)
             {
                 float rowDistance = chunkDistance + row.Key * 0.5f;
+                float rowZ = a.StartZ + row.Key * 0.5f;
+                if (rowZ >= _reservedFrom && rowZ <= _reservedUntil) continue; // a hazard pattern owns this stretch
                 bool safe = rowDistance < T.safeStartDistance;
                 List<SpawnSlot> slots = row.Value;
 
@@ -294,14 +339,147 @@ namespace CityScooter.Gameplay
             return null;
         }
 
-        void Place(Active a, object key, Vector3 localPos)
+        void Place(Active a, object key, Vector3 localPos, float yaw = 0f, bool followSlope = false)
         {
             GameObject go = Get(key, () => CreateSpawnable(key));
             go.transform.SetParent(a.Chunk.transform, false);
             go.transform.localPosition = localPos;
-            go.transform.localRotation = Quaternion.identity;
+            float pitch = followSlope ? -Mathf.Atan2(a.Chunk.endHeight, Mathf.Max(1f, a.Chunk.length)) * Mathf.Rad2Deg : 0f;
+            go.transform.localRotation = Quaternion.Euler(pitch, yaw, 0f);
             go.SetActive(true);
             a.Spawned.Add(new Placed { Key = key, Instance = go });
+        }
+
+        // ---------------- hazard patterns
+
+        void TryScheduleHazard(Active a, int level, float d01)
+        {
+            if (theme == null || theme.hazards == null || theme.hazards.Length == 0) return;
+            if (a.StartZ < _nextHazardZ) return;
+            if (_rng.NextDouble() >= Mathf.Lerp(T.hazardChanceStart, T.hazardChanceMax, d01))
+            {
+                _nextHazardZ = a.StartZ + Mathf.Max(1f, a.Chunk.length);
+                return;
+            }
+            HazardPattern p = PickPattern(level);
+            if (p == null) return;
+            SchedulePattern(p, a.StartZ + 5f, p.allowMirror && _rng.NextDouble() < 0.5);
+        }
+
+        /// <summary>Places a whole hazard pattern starting at world z (tests, scripted moments). Built chunks get
+        /// their entries now; moving cars appear when the rider gets near, as in a normal run.</summary>
+        public void PlacePattern(HazardPattern p, float startZ, bool mirror = false)
+        {
+            // Chunks already built may hold random obstacles and gifts in this stretch: the pattern owns it now.
+            foreach (Active a in _active)
+                for (int i = a.Spawned.Count - 1; i >= 0; i--)
+                {
+                    Placed s = a.Spawned[i];
+                    float z = s.Instance != null ? s.Instance.transform.position.z : float.MinValue;
+                    if (z < startZ - 6f || z > startZ + p.length + 6f) continue;
+                    Release(s.Key, s.Instance);
+                    a.Spawned.RemoveAt(i);
+                }
+            SchedulePattern(p, startZ, mirror && p.allowMirror);
+            foreach (Active a in _active) PlacePending(a);
+            Physics.SyncTransforms();
+        }
+
+        void SchedulePattern(HazardPattern p, float start, bool mirror)
+        {
+            _reservedFrom = start - 6f;
+            _reservedUntil = start + p.length + 6f;
+            _nextHazardZ = _reservedUntil + T.hazardGap;
+            foreach (HazardPattern.Entry e in p.entries)
+            {
+                GameObject prefab = mirror && e.mirrorPrefab != null ? e.mirrorPrefab : e.prefab;
+                if (prefab == null) continue;
+                var pending = new PendingEntry
+                {
+                    Key = prefab, X = mirror ? -e.x : e.x, Z = start + e.z, Yaw = mirror ? -e.yaw : e.yaw,
+                    MeetZ = start + p.meetAtZ, Mover = prefab.GetComponent<Mover>(),
+                };
+                (pending.Mover != null ? _pendingMovers : _pending).Add(pending);
+            }
+            if (p.turnDirection != 0)
+                _turnTriggers.Add(new TurnTrigger { Z = start + p.turnAtZ, Direction = mirror ? -p.turnDirection : p.turnDirection, Strength = p.turnStrength, Seconds = p.turnSeconds });
+        }
+
+        HazardPattern PickPattern(int level)
+        {
+            float total = 0f;
+            foreach (HazardPattern h in theme.hazards) if (h != null && h.minLevel <= level) total += Mathf.Max(0f, h.weight);
+            if (total <= 0f) return null;
+            double pick = _rng.NextDouble() * total;
+            foreach (HazardPattern h in theme.hazards)
+            {
+                if (h == null || h.minLevel > level) continue;
+                pick -= Mathf.Max(0f, h.weight);
+                if (pick <= 0) return h;
+            }
+            return null;
+        }
+
+        void PlacePending(Active a)
+        {
+            float end = a.StartZ + Mathf.Max(1f, a.Chunk.length);
+            for (int i = 0; i < _pending.Count; i++)
+            {
+                PendingEntry e = _pending[i];
+                if (e.Z < a.StartZ || e.Z >= end) continue;
+                float local = e.Z - a.StartZ;
+                Place(a, e.Key, new Vector3(e.X, a.Chunk.HeightAt(local) + a.Chunk.SidewalkOffsetAt(e.X), local), e.Yaw, true);
+                _pending.RemoveAt(i--);
+            }
+        }
+
+        void UpdateHazards(float riderZ, float dt)
+        {
+            if (_riderController == null && rider != null) _riderController = rider.GetComponent<RiderController>();
+            float riderSpeed = _riderController != null ? Mathf.Max(T.startSpeed, _riderController.Speed) : T.startSpeed;
+
+            // Moving cars appear a few seconds before they meet the rider, placed so that they meet near MeetZ.
+            float lead = Mathf.Max(160f, riderSpeed * T.moverLeadSeconds);
+            for (int i = 0; i < _pendingMovers.Count; i++)
+            {
+                PendingEntry e = _pendingMovers[i];
+                if (riderZ < e.MeetZ - lead) continue;
+                _pendingMovers.RemoveAt(i--);
+                float speed = e.Mover.fractionOfRiderSpeed > 0f ? riderSpeed * e.Mover.fractionOfRiderSpeed : e.Mover.speed;
+                float t = Mathf.Max(0.5f, (e.MeetZ - riderZ) / riderSpeed);
+                float z = e.Z - speed * t;
+                GameObject go = Get(e.Key, () => CreateSpawnable(e.Key));
+                go.transform.SetParent(transform, true);
+                go.transform.SetPositionAndRotation(new Vector3(e.X, SurfaceHeightAt(e.X, z), z), Quaternion.Euler(SurfacePitchAt(z), e.Yaw, 0f));
+                go.SetActive(true);
+                _moving.Add(new Moving { Key = e.Key, Instance = go, Speed = speed });
+                _collisionTransformsDirty = true;
+            }
+
+            for (int i = 0; i < _moving.Count; i++)
+            {
+                Moving m = _moving[i];
+                if (m.Instance == null) { _moving.RemoveAt(i--); continue; }
+                Vector3 p = m.Instance.transform.position;
+                p.z += m.Speed * dt;
+                p.y = SurfaceHeightAt(p.x, p.z);
+                if (p.z < riderZ - keepBehind - 20f || p.z > riderZ + buildAhead + 120f)
+                {
+                    Release(m.Key, m.Instance);
+                    _moving.RemoveAt(i--);
+                    continue;
+                }
+                m.Instance.transform.position = p;
+                _collisionTransformsDirty = true;
+            }
+
+            for (int i = 0; i < _turnTriggers.Count; i++)
+            {
+                TurnTrigger t = _turnTriggers[i];
+                if (riderZ < t.Z) continue;
+                _turnTriggers.RemoveAt(i--);
+                FakeTurnDirector.Instance?.ForceTurn(t.Direction, t.Strength, t.Seconds);
+            }
         }
 
         /// <summary>Puts an obstacle at a world position on the current track (tests, scripted moments).</summary>
