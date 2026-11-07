@@ -49,6 +49,19 @@ namespace CityScooter.Gameplay
         public GameObject crashRider;
         public GameObject crashScooter;
 
+        [Header("Boulevard sections (optional; when they appear is in GameTuning)")]
+        [Tooltip("Widens the street into the 4-lane boulevard (RoadChunk.endHalfWidth).")]
+        public RoadChunk boulevardIn;
+        [Tooltip("Full-width 4-lane chunks, used in turn between the In and Out chunks.")]
+        public RoadChunk[] boulevardChunks;
+        [Tooltip("Narrows the boulevard back to the normal street.")]
+        public RoadChunk boulevardOut;
+        [Tooltip("Hazard patterns allowed on the full-width boulevard chunks. Street patterns (roadHalfWidth 4) move their " +
+                 "sidewalk entries out with the kerb. Empty: the normal hazards list is used.")]
+        public HazardPattern[] boulevardHazards;
+
         public bool HasChunks => chunks != null && chunks.Length > 0;
+        public bool HasBoulevard => boulevardIn != null && boulevardOut != null && boulevardChunks != null
+                                    && boulevardChunks.Length > 0 && System.Array.TrueForAll(boulevardChunks, c => c != null);
     }
 }

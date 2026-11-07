@@ -34,11 +34,36 @@ namespace CityScooter.Track
         [Min(0)] public float sidewalkWidth;
         [Min(0)] public float sidewalkHeight;
         [Min(.01f)] public float curbTransitionWidth = .3f;
+
+        [Header("Optional width change along the chunk (boulevard transitions)")]
+        [Tooltip("Road half width at the END of the chunk. Zero (default) keeps halfWidth along the whole chunk. The kerb, " +
+                 "the sidewalk and the rideable edge all follow HalfWidthAt(z); the art must too.")]
+        [Min(0)] public float endHalfWidth;
+        [Tooltip("Local z where the width starts and stops changing (smoothstep in between).")]
+        public Vector2 widthChangeZ = new Vector2(8f, 32f);
+
+        /// <summary>True for transition chunks whose road gets wider or narrower along z.</summary>
+        public bool ChangesWidth => endHalfWidth > 0f && Mathf.Abs(endHalfWidth - halfWidth) > 0.001f;
+
+        /// <summary>Road half width at local z (constant unless <see cref="endHalfWidth"/> is set).</summary>
+        public float HalfWidthAt(float localZ)
+        {
+            if (!ChangesWidth) return halfWidth;
+            float t = Mathf.InverseLerp(widthChangeZ.x, widthChangeZ.y, localZ);
+            return Mathf.Lerp(halfWidth, endHalfWidth, t * t * (3f - 2f * t));
+        }
+
+        /// <summary>Road plus sidewalk half width at the START of the chunk (legacy; see <see cref="RideableHalfWidthAt"/>).</summary>
         public float RideableHalfWidth => halfWidth+Mathf.Max(0,sidewalkWidth);
-        public float SidewalkOffsetAt(float localX)
+        public float RideableHalfWidthAt(float localZ) => HalfWidthAt(localZ)+Mathf.Max(0,sidewalkWidth);
+        /// <summary>Kerb height offset at local x, for the start width (legacy; see the overload with z).</summary>
+        public float SidewalkOffsetAt(float localX) => SidewalkOffset(localX, halfWidth);
+        public float SidewalkOffsetAt(float localX, float localZ) => SidewalkOffset(localX, HalfWidthAt(localZ));
+
+        float SidewalkOffset(float localX, float kerb)
         {
             if(sidewalkWidth<=0)return 0;
-            float blend=Mathf.InverseLerp(halfWidth-curbTransitionWidth*.5f,halfWidth+curbTransitionWidth*.5f,Mathf.Abs(localX));
+            float blend=Mathf.InverseLerp(kerb-curbTransitionWidth*.5f,kerb+curbTransitionWidth*.5f,Mathf.Abs(localX));
             return Mathf.SmoothStep(0,sidewalkHeight,blend);
         }
 
@@ -56,13 +81,17 @@ namespace CityScooter.Track
         {
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.9f);
-            Vector3 startLeft = new Vector3(-halfWidth, 0f, 0f), startRight = new Vector3(halfWidth, 0f, 0f);
-            Vector3 endLeft = new Vector3(-halfWidth, endHeight, length), endRight = new Vector3(halfWidth, endHeight, length);
-            Gizmos.DrawLine(startLeft, startRight);
-            Gizmos.DrawLine(startLeft, endLeft);
-            Gizmos.DrawLine(startRight, endRight);
+            Vector3 Edge(float side, float z) => new Vector3(side * HalfWidthAt(z), HeightAt(z), z);
+            Gizmos.DrawLine(Edge(-1f, 0f), Edge(1f, 0f));
+            const int steps = 8;
+            for (int i = 0; i < steps; i++)
+            {
+                float z0 = length * i / steps, z1 = length * (i + 1) / steps;
+                Gizmos.DrawLine(Edge(-1f, z0), Edge(-1f, z1));
+                Gizmos.DrawLine(Edge(1f, z0), Edge(1f, z1));
+            }
             Gizmos.color = new Color(1f, 0.4f, 0.2f, 0.9f);
-            Gizmos.DrawLine(endLeft, endRight);
+            Gizmos.DrawLine(Edge(-1f, length), Edge(1f, length));
         }
     }
 }

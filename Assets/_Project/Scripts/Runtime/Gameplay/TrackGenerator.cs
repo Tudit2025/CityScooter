@@ -51,8 +51,21 @@ namespace CityScooter.Gameplay
         {
             public object Key;
             public GameObject Instance;
-            public float Speed;
+            public float Speed, X;
         }
+
+        // Boulevard sections: In -> full-width chunks -> Out, planned at a street cycle boundary and laid in order.
+        readonly Queue<RoadChunk> _section = new Queue<RoadChunk>();
+        System.Random _sectionRng = new System.Random(1);
+        float _wideFrom = float.MinValue, _wideUntil = float.MinValue, _nextSectionZ = float.MinValue;
+        int _streetIndex, _sectionStreetIndex = int.MinValue;
+
+        /// <summary>Boulevard sections planned since the last reset (tests).</summary>
+        public int BoulevardSections { get; private set; }
+        /// <summary>World z where the full-width part of the latest boulevard starts and ends (tests).</summary>
+        public Vector2 LastBoulevardRange => new Vector2(_wideFrom, _wideUntil);
+        /// <summary>A hazard pattern was scheduled at this world z (tests, debugging).</summary>
+        public event System.Action<HazardPattern, float> PatternScheduled;
 
         readonly List<PendingEntry> _pending = new List<PendingEntry>();
         readonly List<PendingEntry> _pendingMovers = new List<PendingEntry>();
@@ -98,6 +111,11 @@ namespace CityScooter.Gameplay
             _runStartZ = startZ;
             _chunkCounter = 0;
             _lastChunkKey = null;
+            _section.Clear();
+            _sectionRng = new System.Random(_runSeed ^ 0x5bd1e995); // own stream: the street content stays as it was
+            _wideFrom = _wideUntil = _nextSectionZ = float.MinValue;
+            _sectionStreetIndex = int.MinValue;
+            BoulevardSections = 0;
             if (buildLeadIn && theme != null && theme.orderedChunks && theme.HasChunks)
             {
                 RoadChunk previous = theme.chunks[theme.chunks.Length - 1];
@@ -108,6 +126,7 @@ namespace CityScooter.Gameplay
                     _chunkCounter = -1;
                 }
             }
+            _streetIndex = _chunkCounter;
             BuildAhead(startZ);
             SyncCollisionTransforms();
         }
@@ -135,25 +154,38 @@ namespace CityScooter.Gameplay
             while (_nextZ < riderZ + buildAhead && guard++ < 64) SpawnChunk();
         }
 
-        /// <summary>Half width of the road, excluding sidewalks.</summary>
-        public float HalfWidthAt(float z)
-        {
-            for (int i = 0; i < _active.Count; i++)
-            {
-                Active a = _active[i];
-                if (z >= a.StartZ && z < a.StartZ + a.Chunk.length) return a.Chunk.halfWidth;
-            }
-            return PlaceholderTrack.HalfWidth;
-        }
-
-        RoadChunk SurfaceChunkAt(float z)
+        // The chunk under world z; the first and last chunks extend past the built track (chase camera, cars far ahead).
+        Active ActiveAt(float z)
         {
             if(_active.Count==0)return null;
-            for(int i=0;i<_active.Count;i++)if(z<_active[i].StartZ+_active[i].Chunk.length)return _active[i].Chunk;
-            return _active[_active.Count-1].Chunk;
+            for(int i=0;i<_active.Count;i++)if(z<_active[i].StartZ+_active[i].Chunk.length)return _active[i];
+            return _active[_active.Count-1];
         }
-        public float RideableHalfWidthAt(float z)=>SurfaceChunkAt(z)?.RideableHalfWidth??PlaceholderTrack.HalfWidth;
-        public float SidewalkOffsetAt(float x,float z)=>SurfaceChunkAt(z)?.SidewalkOffsetAt(x)??0;
+
+        /// <summary>The built chunk under world z and its start z (tests, tools).</summary>
+        public RoadChunk ChunkAt(float z, out float startZ)
+        {
+            Active a = ActiveAt(z);
+            startZ = a != null ? a.StartZ : 0f;
+            return a?.Chunk;
+        }
+
+        /// <summary>Half width of the road, excluding sidewalks (boulevard transitions change it along z).</summary>
+        public float HalfWidthAt(float z)
+        {
+            Active a = ActiveAt(z);
+            return a != null ? a.Chunk.HalfWidthAt(z - a.StartZ) : PlaceholderTrack.HalfWidth;
+        }
+        public float RideableHalfWidthAt(float z)
+        {
+            Active a = ActiveAt(z);
+            return a != null ? a.Chunk.RideableHalfWidthAt(z - a.StartZ) : PlaceholderTrack.HalfWidth;
+        }
+        public float SidewalkOffsetAt(float x,float z)
+        {
+            Active a = ActiveAt(z);
+            return a != null ? a.Chunk.SidewalkOffsetAt(x, z - a.StartZ) : 0f;
+        }
         public float SurfaceHeightAt(float x,float z)=>SurfaceHeightAt(z)+SidewalkOffsetAt(x,z);
 
         // Extrapolate the end chunks for the chase camera just behind / ahead of built track.
@@ -170,7 +202,9 @@ namespace CityScooter.Gameplay
 
         void SpawnChunk()
         {
-            object key = PickChunk();
+            RoadChunk planned = NextSectionChunk();
+            object key = planned != null ? planned.gameObject : PickChunk();
+            if (planned == null) _streetIndex++; // boulevard chunks do not advance the street rhythm
             GameObject go = Get(key, () => CreateChunk(key));
             var chunk = go.GetComponent<RoadChunk>();
             go.transform.SetParent(transform, false);
@@ -200,7 +234,7 @@ namespace CityScooter.Gameplay
             {
                 for (int i = 0; i < theme.chunks.Length; i++)
                 {
-                    RoadChunk candidate = theme.chunks[(_chunkCounter + i + theme.chunks.Length) % theme.chunks.Length];
+                    RoadChunk candidate = theme.chunks[((_streetIndex + i) % theme.chunks.Length + theme.chunks.Length) % theme.chunks.Length];
                     if (candidate != null && candidate.minDifficulty <= level) return candidate.gameObject;
                 }
                 return FirstChunk();
@@ -225,6 +259,44 @@ namespace CityScooter.Gameplay
                 if (c != null) return c.gameObject;
             return "placeholder-chunk-0";
         }
+
+        // ---------------- boulevard sections: the street widens to 4 lanes for a while, then narrows back
+
+        RoadChunk NextSectionChunk()
+        {
+            if (_section.Count == 0) TryPlanSection();
+            return _section.Count > 0 ? _section.Dequeue() : null;
+        }
+
+        void TryPlanSection()
+        {
+            if (theme == null || !theme.HasChunks || !theme.HasBoulevard || !T.boulevardSections) return;
+            // Only where the ordered street cycle starts again, so its near / open rhythm stays whole; never two
+            // sections back to back (after the Out chunk the street index is still on the same boundary).
+            if (_streetIndex <= 0 || _streetIndex % theme.chunks.Length != 0 || _streetIndex == _sectionStreetIndex) return;
+            if (_nextZ - _runStartZ < T.boulevardMinDistance || _nextZ < _nextSectionZ) return;
+            // A hazard pattern authored for the street still runs into this stretch: try again next cycle.
+            if (_reservedUntil >= _nextZ) return;
+            if (_sectionRng.NextDouble() >= T.boulevardChance) return;
+            _sectionStreetIndex = _streetIndex;
+            int min = Mathf.Max(1, T.boulevardChunks.x), count = _sectionRng.Next(min, Mathf.Max(min, T.boulevardChunks.y) + 1);
+            int first = _sectionRng.Next(theme.boulevardChunks.Length);
+            _section.Enqueue(theme.boulevardIn);
+            float z = _nextZ + Mathf.Max(1f, theme.boulevardIn.length);
+            _wideFrom = z;
+            for (int i = 0; i < count; i++)
+            {
+                RoadChunk c = theme.boulevardChunks[(first + i) % theme.boulevardChunks.Length];
+                _section.Enqueue(c);
+                z += Mathf.Max(1f, c.length);
+            }
+            _wideUntil = z;
+            _section.Enqueue(theme.boulevardOut);
+            _nextSectionZ = z + Mathf.Max(1f, theme.boulevardOut.length) + T.boulevardGap;
+            BoulevardSections++;
+        }
+
+        bool OnBoulevard(float z) => z >= _wideFrom - 0.01f && z < _wideUntil - 0.01f;
 
         GameObject CreateChunk(object key)
         {
@@ -350,7 +422,8 @@ namespace CityScooter.Gameplay
         void PlaceStreetLife(Active a)
         {
             RoadChunk c = a.Chunk;
-            if (theme == null || theme.pedestrians == null || theme.pedestrians.Length == 0 || c.sidewalkWidth <= 1f) return;
+            // Not on boulevard transitions: the sidewalk moves sideways under people walking along it.
+            if (theme == null || theme.pedestrians == null || theme.pedestrians.Length == 0 || c.sidewalkWidth <= 1f || c.ChangesWidth) return;
             int count = _rng.Next(Mathf.RoundToInt(T.sidewalkPeople.x), Mathf.RoundToInt(T.sidewalkPeople.y) + 1);
             if (count <= 0) return;
             Physics.SyncTransforms(); // this chunk's sidewalk props were just laid out
@@ -379,16 +452,23 @@ namespace CityScooter.Gameplay
 
         void TryScheduleHazard(Active a, int level, float d01)
         {
-            if (theme == null || theme.hazards == null || theme.hazards.Length == 0) return;
+            if (theme == null) return;
+            // Patterns are authored for one road width: never on a boulevard transition, and on a boulevard only
+            // when the whole pattern fits inside its full-width part.
+            if (a.Chunk.ChangesWidth) return;
+            bool wide = OnBoulevard(a.StartZ);
+            HazardPattern[] list = wide && theme.boulevardHazards != null && theme.boulevardHazards.Length > 0 ? theme.boulevardHazards : theme.hazards;
+            if (list == null || list.Length == 0) return;
             if (a.StartZ < _nextHazardZ) return;
             if (_rng.NextDouble() >= Mathf.Lerp(T.hazardChanceStart, T.hazardChanceMax, d01))
             {
                 _nextHazardZ = a.StartZ + Mathf.Max(1f, a.Chunk.length);
                 return;
             }
-            HazardPattern p = PickPattern(level);
+            float start = a.StartZ + 5f;
+            HazardPattern p = PickPattern(list, level, a.Chunk.halfWidth, wide ? _wideUntil - 6f - start : float.MaxValue);
             if (p == null) return;
-            SchedulePattern(p, a.StartZ + 5f, p.allowMirror && _rng.NextDouble() < 0.5);
+            SchedulePattern(p, start, p.allowMirror && _rng.NextDouble() < 0.5, Mathf.Max(0f, a.Chunk.halfWidth - p.roadHalfWidth));
         }
 
         /// <summary>Places a whole hazard pattern starting at world z (tests, scripted moments). Built chunks get
@@ -405,12 +485,14 @@ namespace CityScooter.Gameplay
                     Release(s.Key, s.Instance);
                     a.Spawned.RemoveAt(i);
                 }
-            SchedulePattern(p, startZ, mirror && p.allowMirror);
+            SchedulePattern(p, startZ, mirror && p.allowMirror, Mathf.Max(0f, HalfWidthAt(startZ) - p.roadHalfWidth));
             foreach (Active a in _active) PlacePending(a);
             Physics.SyncTransforms();
         }
 
-        void SchedulePattern(HazardPattern p, float start, bool mirror)
+        // sidewalkShift: the road is this much wider than the pattern was authored for (boulevard); entries beyond the
+        // authored kerb (signs, people on the sidewalk) move out with the kerb, entries on the road stay in their lanes.
+        void SchedulePattern(HazardPattern p, float start, bool mirror, float sidewalkShift = 0f)
         {
             _reservedFrom = start - 6f;
             _reservedUntil = start + p.length + 6f;
@@ -419,13 +501,16 @@ namespace CityScooter.Gameplay
             {
                 GameObject prefab = mirror && e.mirrorPrefab != null ? e.mirrorPrefab : e.prefab;
                 if (prefab == null) continue;
+                float x = mirror ? -e.x : e.x;
+                if (sidewalkShift > 0f && Mathf.Abs(x) > p.roadHalfWidth + 0.01f) x += Mathf.Sign(x) * sidewalkShift;
                 var pending = new PendingEntry
                 {
-                    Key = prefab, X = mirror ? -e.x : e.x, Z = start + e.z, Yaw = mirror ? -e.yaw : e.yaw,
+                    Key = prefab, X = x, Z = start + e.z, Yaw = mirror ? -e.yaw : e.yaw,
                     MeetZ = start + p.meetAtZ, Mover = prefab.GetComponent<Mover>(),
                 };
                 (pending.Mover != null ? _pendingMovers : _pending).Add(pending);
             }
+            PatternScheduled?.Invoke(p, start);
             if (p.turnDirection != 0)
             {
                 // The turn is fixed in the world now, so it shows up in the distance like the rest of the pattern.
@@ -435,15 +520,17 @@ namespace CityScooter.Gameplay
             }
         }
 
-        HazardPattern PickPattern(int level)
+        // Patterns for this road width (never wider than the road) that fit in the room left (boulevard).
+        HazardPattern PickPattern(HazardPattern[] list, int level, float roadHalfWidth, float room)
         {
+            bool Fits(HazardPattern h) => h != null && h.minLevel <= level && h.roadHalfWidth <= roadHalfWidth + 0.01f && h.length <= room;
             float total = 0f;
-            foreach (HazardPattern h in theme.hazards) if (h != null && h.minLevel <= level) total += Mathf.Max(0f, h.weight);
+            foreach (HazardPattern h in list) if (Fits(h)) total += Mathf.Max(0f, h.weight);
             if (total <= 0f) return null;
             double pick = _rng.NextDouble() * total;
-            foreach (HazardPattern h in theme.hazards)
+            foreach (HazardPattern h in list)
             {
-                if (h == null || h.minLevel > level) continue;
+                if (!Fits(h)) continue;
                 pick -= Mathf.Max(0f, h.weight);
                 if (pick <= 0) return h;
             }
@@ -458,9 +545,17 @@ namespace CityScooter.Gameplay
                 PendingEntry e = _pending[i];
                 if (e.Z < a.StartZ || e.Z >= end) continue;
                 float local = e.Z - a.StartZ;
-                Place(a, e.Key, new Vector3(e.X, a.Chunk.HeightAt(local) + a.Chunk.SidewalkOffsetAt(e.X), local), e.Yaw, true);
+                Place(a, e.Key, new Vector3(e.X, a.Chunk.HeightAt(local) + a.Chunk.SidewalkOffsetAt(e.X, local), local), e.Yaw, true);
                 _pending.RemoveAt(i--);
             }
+        }
+
+        // Cars keep moverKerbGap from the kerb: one in an outer boulevard lane merges in where the road narrows.
+        // Cars authored inside that gap (all street traffic) keep their x.
+        float MoverX(float x, float z)
+        {
+            float limit = Mathf.Max(0f, HalfWidthAt(z) - T.moverKerbGap);
+            return Mathf.Abs(x) > limit + 0.05f ? Mathf.Sign(x) * limit : x;
         }
 
         void UpdateHazards(float riderZ, float dt)
@@ -480,9 +575,10 @@ namespace CityScooter.Gameplay
                 float z = e.Z - speed * t;
                 GameObject go = Get(e.Key, () => CreateSpawnable(e.Key));
                 go.transform.SetParent(transform, true);
-                go.transform.SetPositionAndRotation(new Vector3(e.X, SurfaceHeightAt(e.X, z), z), Quaternion.Euler(SurfacePitchAt(z), e.Yaw, 0f));
+                float x = MoverX(e.X, z);
+                go.transform.SetPositionAndRotation(new Vector3(x, SurfaceHeightAt(x, z), z), Quaternion.Euler(SurfacePitchAt(z), e.Yaw, 0f));
                 go.SetActive(true);
-                _moving.Add(new Moving { Key = e.Key, Instance = go, Speed = speed });
+                _moving.Add(new Moving { Key = e.Key, Instance = go, Speed = speed, X = e.X });
                 _collisionTransformsDirty = true;
             }
 
@@ -492,6 +588,7 @@ namespace CityScooter.Gameplay
                 if (m.Instance == null) { _moving.RemoveAt(i--); continue; }
                 Vector3 p = m.Instance.transform.position;
                 p.z += m.Speed * dt;
+                p.x = MoverX(m.X, p.z);
                 p.y = SurfaceHeightAt(p.x, p.z);
                 if (p.z < riderZ - keepBehind - 20f || p.z > riderZ + buildAhead + 120f)
                 {

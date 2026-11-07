@@ -85,6 +85,20 @@ namespace CityScooter.Gameplay
         [Tooltip("Moving cars appear when the rider is this many seconds (at least 160 m) from where they meet.")]
         public float moverLeadSeconds = 5f;
 
+        [Header("Boulevard sections (4 lanes; the chunks are in TrackTheme)")]
+        [Tooltip("Sometimes the street widens into a 4-lane boulevard: In chunk, some full-width chunks, Out chunk.")]
+        public bool boulevardSections = true;
+        [Tooltip("No boulevard in the first metres of a run.")]
+        public float boulevardMinDistance = 600f;
+        [Tooltip("Chance of a boulevard each time the street chunk cycle starts again (every 160 m with 4 ordered chunks).")]
+        [Range(0f, 1f)] public float boulevardChance = 0.35f;
+        [Tooltip("Full-width chunks between the In and Out chunks (min, max; 40 m each).")]
+        public Vector2Int boulevardChunks = new Vector2Int(3, 6);
+        [Tooltip("At least this many metres of normal street between two boulevards.")]
+        public float boulevardGap = 480f;
+        [Tooltip("Moving cars in the outer boulevard lanes keep this far from the kerb, so they merge in where the road narrows.")]
+        public float moverKerbGap = 1.9f;
+
         [Header("Fake turns (visual; the road stays straight for physics)")]
         [Tooltip("Turns are stretches of road fixed in the world: they appear far ahead, come closer, and the sky turns while you ride through.")]
         public bool fakeTurns = true;

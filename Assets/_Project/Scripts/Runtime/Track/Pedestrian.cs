@@ -52,6 +52,13 @@ namespace CityScooter.Track
 
         void OnDisable() => Active.Remove(this);
 
+        // Road half width where this person is (4 on the street, 8 on a boulevard).
+        float Kerb()
+        {
+            if (_chunkOf != transform.parent) { _chunkOf = transform.parent; _chunk = _chunkOf != null ? _chunkOf.GetComponent<RoadChunk>() : null; }
+            return _chunk != null ? _chunk.HalfWidthAt(transform.localPosition.z) : 4f;
+        }
+
         /// <summary>Street life placed by the generator: stroll at this speed (0 = stand and chat), facing the way it goes.</summary>
         public void Configure(float walk)
         {
@@ -68,8 +75,9 @@ namespace CityScooter.Track
             float x = transform.localPosition.x;
             float side = Mathf.Abs(x - riderX) < 0.01f ? (x >= 0f ? 1f : -1f) : Mathf.Sign(x - riderX);
             // Off the road if possible: to the kerb on that side, or further out on the sidewalk.
-            if (Mathf.Abs(x) > 4.2f) _dodgeTargetX = side * x > 0f ? side * 7.3f : side * 4.4f;
-            else _dodgeTargetX = side * 4.9f;
+            float kerb = Kerb();
+            if (Mathf.Abs(x) > kerb + 0.2f) _dodgeTargetX = side * x > 0f ? side * (kerb + 3.3f) : side * (kerb + 0.4f);
+            else _dodgeTargetX = side * (kerb + 0.9f);
             if (Mathf.Abs(_dodgeTargetX - x) < 1.2f) _dodgeTargetX = x + side * 1.2f;
             _state = State.Dodging;
             Startled?.Invoke(this);
@@ -97,7 +105,7 @@ namespace CityScooter.Track
                     break;
                 case State.Crossing:
                     p.x += _dir * crossSpeed * dt;
-                    if (p.x * _dir > 5.6f) { _state = State.Walking; _walk = walkSpeed; }
+                    if (p.x * _dir > Kerb() + 1.6f) { _state = State.Walking; _walk = walkSpeed; }
                     break;
                 case State.Walking:
                     p.z += _walk * dt;
@@ -108,7 +116,7 @@ namespace CityScooter.Track
                     if (Mathf.Abs(p.x - _dodgeTargetX) < 0.01f) { _state = State.Walking; _walk = 0f; }
                     break;
             }
-            if (_chunk != null) p.y = _chunk.HeightAt(p.z) + _chunk.SidewalkOffsetAt(p.x);
+            if (_chunk != null) p.y = _chunk.HeightAt(p.z) + _chunk.SidewalkOffsetAt(p.x, p.z);
             if (p != transform.localPosition) { transform.localPosition = p; Mover.MovedThisFrame = true; }
             if (art == null) return;
             _phase += dt * (moving ? (_state == State.Dodging ? 16f : 9f) : 0f);
