@@ -33,6 +33,12 @@ namespace CityScooter.Gameplay
         public GameObject sorryPopup;
         public GameObject boingPopup;
         public GameObject crashPopup;
+        public GameObject bonkPopup;
+        [Tooltip("Comic motion lines when a punch swings, and the ink burst where it lands.")]
+        public GameObject swishPopup;
+        public GameObject impactPopup;
+        [Tooltip("The rider's punching arm and the riding model without that arm (PunchArm).")]
+        public GameObject punchArm;
         [Header("Street life and crashes (optional)")]
         [Tooltip("People the generator puts on the sidewalks of every chunk (root has Pedestrian).")]
         public GameObject[] pedestrians;

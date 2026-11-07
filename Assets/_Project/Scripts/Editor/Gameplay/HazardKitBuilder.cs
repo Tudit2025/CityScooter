@@ -76,7 +76,9 @@ namespace CityScooter.EditorTools
             };
             GameObject[] popups = { Popup("FxPow", "POW", _r.yellow, _r.red, 1f), Popup("FxDing", "DING", White, PoliceBlue, .55f),
                 Popup("FxBang", "!", _r.yellow, _r.ink, .55f), Popup("FxSorry", "SORRY", White, _r.red, .9f),
-                Popup("FxBoing", "BOING", _r.yellow, PoliceBlue, .9f), Popup("FxCrash", "CRASH!", White, _r.red, 1f) };
+                Popup("FxBoing", "BOING", _r.yellow, PoliceBlue, .9f), Popup("FxCrash", "CRASH!", White, _r.red, 1f),
+                Popup("FxBonk", "BONK!", White, _r.ink, .8f), Swish(), Impact() };
+            PunchArmKit();
             foreach (KeyValuePair<string, Look> look in Looks) Person("Ped_" + look.Key, look.Value, 1f, false);
             CrashRider();
             CrashScooter();
@@ -90,7 +92,7 @@ namespace CityScooter.EditorTools
             var theme = AssetDatabase.LoadAssetAtPath<TrackTheme>(ComicCityBuilder.ThemePath);
             if (theme != null) ApplyTo(theme);
             AssetDatabase.SaveAssets();
-            if (popups.Length != 6) throw new InvalidOperationException("pop-ups");
+            if (popups.Length != 9) throw new InvalidOperationException("pop-ups");
             Debug.Log("[Hazards] built " + p.Count + " hazards, " + gifts.Length + " gifts, " + patterns.Length + " patterns");
         }
 
@@ -112,6 +114,8 @@ namespace CityScooter.EditorTools
             GameObject Fx(string id) => AssetDatabase.LoadAssetAtPath<GameObject>(Prefabs + "/HZ_" + id + ".prefab");
             theme.punchPopup = Fx("FxPow"); theme.bellPopup = Fx("FxDing"); theme.startlePopup = Fx("FxBang"); theme.sorryPopup = Fx("FxSorry");
             theme.boingPopup = Fx("FxBoing"); theme.crashPopup = Fx("FxCrash");
+            theme.bonkPopup = Fx("FxBonk"); theme.swishPopup = Fx("FxSwish"); theme.impactPopup = Fx("FxImpact");
+            theme.punchArm = Fx("PunchArm");
             theme.crashRider = Fx("CrashRider"); theme.crashScooter = Fx("CrashScooter");
             var people = new List<GameObject>();
             foreach (string id in LookIds) { GameObject p = Fx("Ped_" + id); if (p != null) people.Add(p); }
@@ -606,6 +610,87 @@ namespace CityScooter.EditorTools
                 var ped = r.AddComponent<Pedestrian>();
                 ped.walkSpeed = walk; ped.crosses = crosses; ped.art = r.transform.Find("Art");
             });
+        }
+
+        // ---------------------------------------------------------------- punch visuals
+
+        // The rider's punching arm (upper arm, forearm, fist: unit pieces stretched at runtime) and the riding model
+        // without the right / left arm, swapped in while the arm swings (PunchArm).
+        static void PunchArmKit()
+        {
+            var root = new GameObject("HZ_PunchArm");
+            try
+            {
+                Transform Piece(string name, ComicMesh mesh)
+                {
+                    var go = new GameObject(name);
+                    go.transform.SetParent(root.transform, false);
+                    AddRenderer(go, "HZ_PunchArm_" + name, mesh, true);
+                    return go.transform;
+                }
+                var upper = new ComicMesh { Surface = ComicSurface.Fabric };
+                upper.Beam(Vector3.zero, Vector3.forward, .17f, _r.ink);
+                var fore = new ComicMesh { Surface = ComicSurface.Fabric };
+                fore.Beam(Vector3.zero, Vector3.forward, .15f, _r.ink);
+                var fist = new ComicMesh { Surface = ComicSurface.Fabric };
+                fist.Ellipsoid(Vector3.zero, new Vector3(.2f, .19f, .22f), _r.cream);
+                fist.Box(new Vector3(0, .02f, -.1f), new Vector3(.17f, .1f, .06f), _r.ink);
+                var arm = root.AddComponent<PunchArm>();
+                arm.upperArm = Piece("UpperArm", upper);
+                arm.forearm = Piece("Forearm", fore);
+                arm.fist = Piece("Fist", fist);
+                arm.armlessRight = SaveMesh("HZ_Rider_NoRightArm", ComicKitGeometry.Rider(_r, 1));
+                arm.armlessLeft = SaveMesh("HZ_Rider_NoLeftArm", ComicKitGeometry.Rider(_r, -1));
+                string path = Prefabs + "/HZ_PunchArm.prefab";
+                PrefabUtility.SaveAsPrefabAsset(root, path, out bool ok);
+                if (!ok) throw new InvalidOperationException("Could not save " + path);
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        // Comic motion lines for a swing (faces -Z; ComicPopup turns it to the camera).
+        static GameObject Swish()
+        {
+            var k = new Kit();
+            ComicMesh m = k.Body;
+            for (int line = 0; line < 3; line++)
+            {
+                float r = .55f + line * .22f, w = .07f - line * .012f;
+                const int seg = 8;
+                for (int i = 0; i < seg; i++)
+                {
+                    float a0 = Mathf.Lerp(-.2f, 1.3f, i / (float)seg), a1 = Mathf.Lerp(-.2f, 1.3f, (i + 1) / (float)seg);
+                    Vector3 o0 = new Vector3(Mathf.Cos(a0), Mathf.Sin(a0), 0), o1 = new Vector3(Mathf.Cos(a1), Mathf.Sin(a1), 0);
+                    float taper0 = Mathf.Sin(Mathf.PI * i / seg), taper1 = Mathf.Sin(Mathf.PI * (i + 1) / seg);
+                    Vector3 a = o0 * (r - w * taper0), b = o0 * (r + w * taper0), c = o1 * (r + w * taper1), d = o1 * (r - w * taper1);
+                    m.Quad(b, a, d, c, White, false);
+                    m.Quad(b * 1.03f + Vector3.forward * .01f, a * .97f + Vector3.forward * .01f, d * .97f + Vector3.forward * .01f, c * 1.03f + Vector3.forward * .01f, _r.ink, false);
+                }
+            }
+            return Save("FxSwish", k, Vector3.zero, Vector3.zero, r =>
+            {
+                var popup = r.AddComponent<ComicPopup>(); popup.life = .22f; popup.rise = 0f;
+                foreach (MeshRenderer mr in r.GetComponentsInChildren<MeshRenderer>(true)) mr.shadowCastingMode = ShadowCastingMode.Off;
+            }, decor: true);
+        }
+
+        // Ink burst where a punch lands.
+        static GameObject Impact()
+        {
+            var k = new Kit();
+            ComicMesh m = k.Body;
+            const int spikes = 12;
+            for (int i = 0; i < spikes; i++)
+            {
+                float a = i * Mathf.PI * 2f / spikes + (i & 1) * .12f, r0 = .35f, r1 = (i & 1) == 0 ? 1.25f : .95f, w = .07f;
+                Vector3 dir = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0), n = new Vector3(-dir.y, dir.x, 0);
+                m.Tri(dir * r1, dir * r0 - n * w, dir * r0 + n * w, _r.ink);
+            }
+            return Save("FxImpact", k, Vector3.zero, Vector3.zero, r =>
+            {
+                var popup = r.AddComponent<ComicPopup>(); popup.life = .25f; popup.rise = 0f;
+                foreach (MeshRenderer mr in r.GetComponentsInChildren<MeshRenderer>(true)) mr.shadowCastingMode = ShadowCastingMode.Off;
+            }, decor: true);
         }
 
         // The rider thrown off in a crash, standing pose (feet at the pivot, facing +Z like the riding model).

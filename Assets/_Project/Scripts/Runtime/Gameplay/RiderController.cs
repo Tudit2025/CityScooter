@@ -37,6 +37,10 @@ namespace CityScooter.Gameplay
         /// <summary>v1 cartoon mode: rode into a person, who goes flying instead of ending the run.</summary>
         public event Action<Obstacle> BouncedPerson;
 
+        float _twist;
+        /// <summary>Punch: the body twists towards the side of the punch, then settles (visual only).</summary>
+        public void PunchTwist(float side) => _twist = Mathf.Sign(side) * 22f;
+
         /// <summary>Lose some speed (cartoon bumps).</summary>
         public void Bump(float keep) => Speed = Mathf.Max(T.brakeMinSpeed, Speed * Mathf.Clamp01(keep));
 
@@ -66,6 +70,7 @@ namespace CityScooter.Gameplay
             Airborne = false;
             Braking = false;
             _running = false;
+            _twist = 0f;
             if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(start.z) : 0f, 0f, 0f);
             SetSpeedLevel(0);
         }
@@ -132,7 +137,8 @@ namespace CityScooter.Gameplay
             transform.position = to;
 
             float lean = -_vx / Mathf.Max(0.01f, T.lateralMaxSpeed) * T.maxLean - (turn != null ? turn.Amount * T.turnRiderLean : 0f);
-            if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(nextZ) : 0f, 0f, Mathf.Clamp(lean, -T.maxLean - T.turnRiderLean, T.maxLean + T.turnRiderLean));
+            _twist = Mathf.MoveTowards(_twist, 0f, 110f * dt);
+            if (model != null) model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(nextZ) : 0f, _twist, Mathf.Clamp(lean - _twist * 0.35f, -T.maxLean - T.turnRiderLean - 8f, T.maxLean + T.turnRiderLean + 8f));
             SetSpeedLevel(Mathf.RoundToInt(Speed / Mathf.Max(0.01f, CurrentMaxSpeed) * Messages.MaxSpeedLevel));
             Sweep(from, to);
         }

@@ -49,6 +49,10 @@ MonoBehaviour:
   sorryPopup: {fileID: 762235716819808211, guid: 14e5ede21630fc649af135d4f1d142bb, type: 3}
   boingPopup: {fileID: 3475192621128986349, guid: 93d4af0cab6903a418201849a2ceeee4, type: 3}
   crashPopup: {fileID: 2413974206081523122, guid: 1ec938f13a42c774c9c7c6bf5d597a67, type: 3}
+  bonkPopup: {fileID: 9059801652702232371, guid: fc9682eccadb03a46afb052f7c63bfc3, type: 3}
+  swishPopup: {fileID: 8828762915075357487, guid: e9cba34e3a7411a4aab2403f2a8a2aef, type: 3}
+  impactPopup: {fileID: 5691616913434981926, guid: 0018810dd85add246a07d259d9df7da6, type: 3}
+  punchArm: {fileID: 8140970990130738127, guid: 1535f40d01f47c444a33f1f24328fd58, type: 3}
   pedestrians:
   - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}
   - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}

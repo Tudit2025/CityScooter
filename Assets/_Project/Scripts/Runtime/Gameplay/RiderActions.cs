@@ -86,6 +86,7 @@ namespace CityScooter.Gameplay
             GameEvents.RunStarted -= OnRunStarted;
             if (_subscribed != null) { _subscribed.HitObstacle -= OnHit; _subscribed.BouncedPerson -= OnBounced; }
             _subscribed = null;
+            if (Time.timeScale < 1f) Time.timeScale = 1f; // never leave a hit-stop behind
         }
 
         void OnRunStarted()
@@ -108,6 +109,7 @@ namespace CityScooter.Gameplay
             if (rider == null || !rider.Running) return;
             RiderInput input = RiderInputSource.Read();
             if (input.Punch) Punch();
+            UpdatePunch();
             if (input.Bell) Bell();
             Warn();
             FakeTurnDirector turns = FakeTurnDirector.Instance;
@@ -115,13 +117,57 @@ namespace CityScooter.Gameplay
             if (dir != _turn) { _turn = dir; GameEvents.RaiseTurnChanged(dir); }
         }
 
+        // ---------------------------------------------------------------- punch: the rider's arm
+
+        PunchArm _arm;
+        float _punchUntil, _punchSide = 1f;
+        bool _punchLanded;
+
+        /// <summary>True while a punch is swinging (its hit window).</summary>
+        public bool Punching => Time.time < _punchUntil;
+        public PunchArm Arm => _arm;
+
+        /// <summary>Metres ahead the fist reaches; something must be (or come) this close while the punch is out.</summary>
+        public float fistReach = 2.4f;
+
+        /// <summary>
+        /// Throw a punch: the rider's arm swings at once. Anything within the fist's reach during the next 0.3 s gets
+        /// hit (riding forward brings things into reach), so the timing does not have to be frame-perfect.
+        /// Returns true if something was hit right away.
+        /// </summary>
         public bool Punch()
         {
             if (Time.time < _nextPunch) return false;
             _nextPunch = Time.time + punchCooldown;
+            _punchUntil = Time.time + 0.3f;
+            _punchLanded = false;
             Punches++;
+            // Aim at what is coming (further ahead), hit only what the fist reaches.
+            Obstacle aim = FindPunchTarget(Mathf.Max(punchReach, rider.Speed * punchReachSeconds), out _);
             Vector3 p = rider.transform.position;
-            float reach = Mathf.Max(punchReach, rider.Speed * punchReachSeconds);
+            _punchSide = aim != null ? (aim.transform.position.x >= p.x ? 1f : -1f) : (p.x > 0.5f ? -1f : 1f);
+            rider.PunchTwist(_punchSide);
+            FireArm(aim);
+            Popup(theme != null ? theme.swishPopup : null, p + new Vector3(_punchSide * 1.3f, 1.35f, 1.1f), rider.transform);
+            Cue("UI_Click");
+            Obstacle target = FindPunchTarget(FistZone(), out bool solid);
+            return target != null && Land(target, solid);
+        }
+
+        // The fist's reach plus this frame's ride, so fast riders cannot skip past a target between frames.
+        float FistZone() => fistReach + rider.Speed * Time.deltaTime * 1.5f;
+
+        void UpdatePunch()
+        {
+            if (!Punching || _punchLanded) return;
+            Obstacle target = FindPunchTarget(FistZone(), out bool solid);
+            if (target != null) Land(target, solid);
+        }
+
+        Obstacle FindPunchTarget(float reach, out bool solid)
+        {
+            solid = false;
+            Vector3 p = rider.transform.position;
             float drop = reach * MaxGrade; // the street runs downhill: things ahead sit lower
             var centre = new Vector3(p.x, p.y + 0.9f - drop * 0.5f, p.z + reach * 0.5f);
             int n = Physics.OverlapBoxNonAlloc(centre, new Vector3(punchHalfWidth, 1.2f + drop * 0.5f, reach * 0.5f + 0.5f), _hits, Quaternion.identity, Physics.AllLayers, QueryTriggerInteraction.Collide);
@@ -130,7 +176,7 @@ namespace CityScooter.Gameplay
             for (int i = 0; i < n; i++)
             {
                 Obstacle o = _hits[i] != null ? _hits[i].GetComponentInParent<Obstacle>() : null;
-                if (o == null || !(o.punchable || (CartoonMode && o.kind == ObstacleKind.Person)) || !o.gameObject.activeInHierarchy) continue;
+                if (o == null || !o.gameObject.activeInHierarchy || o.transform.IsChildOf(rider.transform)) continue;
                 Knockout k = o.GetComponent<Knockout>();
                 if (k != null && k.KnockedOut) continue;
                 float dz = o.transform.position.z - p.z;
@@ -138,16 +184,77 @@ namespace CityScooter.Gameplay
                 bestDz = dz;
                 best = o;
             }
-            if (best == null) return false;
-            Knockout ko = best.GetComponent<Knockout>();
-            if (ko == null) ko = best.gameObject.AddComponent<Knockout>();
-            float side = best.transform.position.x >= p.x ? 1f : -1f;
-            ko.Launch(best.kind == ObstacleKind.Person ? new Vector3(side * 6f, 12f, Mathf.Max(6f, rider.Speed * 0.6f)) : new Vector3(side * 7f, 8f, Mathf.Max(6f, rider.Speed * 0.8f)));
+            if (best != null) solid = !(best.punchable || best.kind == ObstacleKind.Person);
+            return best;
+        }
+
+        void FireArm(Obstacle target)
+        {
+            if (_arm == null && theme != null && theme.punchArm != null && rider.model != null)
+            {
+                GameObject go = Instantiate(theme.punchArm, rider.model);
+                go.name = theme.punchArm.name;
+                go.transform.localPosition = Vector3.zero;
+                go.transform.localRotation = Quaternion.identity;
+                _arm = go.GetComponent<PunchArm>();
+            }
+            if (_arm == null) return;
+            // A hook to the side the target is on, or straight-ish ahead on a miss.
+            Vector3 aim = target != null
+                ? rider.model.InverseTransformPoint(target.transform.position + Vector3.up * 1.1f)
+                : new Vector3(_punchSide * 0.9f, 1.35f, 1.6f);
+            _arm.Fire(_punchSide, aim);
+        }
+
+        // What happens where the glove lands depends on what it hits.
+        bool Land(Obstacle target, bool solid)
+        {
+            _punchLanded = true;
+            Vector3 p = rider.transform.position, at = target.transform.position + Vector3.up * 1f;
+            float side = target.transform.position.x >= p.x ? 1f : -1f;
+            if (_arm != null && rider.model != null) _arm.Strike(rider.model.InverseTransformPoint(at + Vector3.up * 0.1f));
+            if (solid)
+            {
+                // Cars, barriers, signs, workers: they shake, BONK, the glove springs back.
+                Wobble w = target.GetComponent<Wobble>();
+                if (w == null) w = target.gameObject.AddComponent<Wobble>();
+                w.Hit(side);
+                if (_arm != null) _arm.Recoil();
+                Popup(theme != null ? theme.bonkPopup : null, at + Vector3.up * 0.8f);
+                Cue("SCO_Land_01", at);
+                ShakeCamera(0.2f);
+                return false;
+            }
+            if (target.kind == ObstacleKind.Person && !CartoonMode)
+            {
+                // Not in cartoon mode: the glove only makes people jump out of the way.
+                Pedestrian ped = target.GetComponent<Pedestrian>();
+                if (ped != null) ped.Startle(p.x);
+                if (_arm != null) _arm.Recoil();
+                return false;
+            }
+            Knockout ko = target.GetComponent<Knockout>();
+            if (ko == null) ko = target.gameObject.AddComponent<Knockout>();
+            ko.Launch(target.kind == ObstacleKind.Person
+                ? new Vector3(side * 7f, 13f, Mathf.Max(8f, rider.Speed * 0.7f))
+                : new Vector3(side * 10f, 9f, Mathf.Max(9f, rider.Speed * 0.95f)));
             Hits++;
-            Cue("SCO_Land_02", best.transform.position);
-            Popup(theme != null ? theme.punchPopup : null, best.transform.position + Vector3.up * 1.4f);
+            Cue("SCO_Land_02", at);
+            Popup(theme != null ? theme.impactPopup : null, at);
+            Popup(theme != null ? theme.punchPopup : null, at + Vector3.up * 0.7f);
+            ShakeCamera(0.35f);
+            StartCoroutine(HitStop());
             GameEvents.RaisePunchLanded();
             return true;
+        }
+
+        // A tiny freeze on impact makes a hit feel solid (comic "hit stop").
+        System.Collections.IEnumerator HitStop()
+        {
+            if (Time.timeScale < 0.99f) yield break;
+            Time.timeScale = 0.05f;
+            yield return new WaitForSecondsRealtime(0.06f);
+            Time.timeScale = 1f;
         }
 
         public void Bell()

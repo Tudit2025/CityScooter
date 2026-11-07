@@ -205,7 +205,8 @@ namespace CityScooter.EditorTools.Art
 
         public static int StableHash(string s) {int h=17;unchecked {foreach(char c in s)h=h*31+c;}return h==int.MinValue?0:h;}
 
-        public static ComicMesh Rider(ComicCityRecipe r)
+        // withoutArm: -1 left / +1 right leaves that arm out (v0.2 punch: HazardKitBuilder swaps it in while a separate arm swings).
+        public static ComicMesh Rider(ComicCityRecipe r, int withoutArm = 0)
         {
             var m=new ComicMesh{Surface=ComicSurface.PaintedMetal};Color pants=new Color(.38f,.42f,.27f),shoe=r.cream;
             m.Box(new Vector3(0,.22f,0),new Vector3(.34f,.12f,1.2f),r.ink);
@@ -226,6 +227,7 @@ namespace CityScooter.EditorTools.Art
             m.Box(new Vector3(0,1.32f,.05f),new Vector3(.53f,.62f,.32f),r.ink,Quaternion.Euler(20,0,0));
             for(int side=-1;side<=1;side+=2)
             {
+                if(side==withoutArm)continue;
                 m.Beam(new Vector3(side*.28f,1.52f,.13f),new Vector3(side*.38f,1.2f,.33f),.17f,r.ink);
                 m.Beam(new Vector3(side*.38f,1.2f,.33f),new Vector3(side*.35f,1.23f,.65f),.15f,r.ink);
                 m.Ellipsoid(new Vector3(side*.35f,1.23f,.65f),Vector3.one*.16f,shoe);

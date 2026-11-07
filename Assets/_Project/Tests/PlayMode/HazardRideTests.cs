@@ -86,12 +86,50 @@ namespace CityScooter.Tests
             Assert.NotNull(cone);
             var actions = _game.GetComponent<RiderActions>();
             Assert.NotNull(actions);
-            Assert.IsTrue(actions.Punch(), "a cone right ahead gets punched");
-            Assert.Contains("ko", _events);
+            actions.Punch();
             Assert.IsFalse(actions.Punch(), "cooldown: punching again at once does nothing");
+            float t = 0f;
+            while (!_events.Contains("ko") && t < 0.4f) { t += Time.deltaTime; yield return null; }
+            Assert.Contains("ko", _events, "the cone comes into the fist's reach while the punch is out");
             yield return new WaitForSeconds(1.2f);
             Assert.IsFalse(cone.activeSelf, "the cone flew away");
             Assert.AreEqual(RunState.Running, _game.State, "riding through the punched cone's spot is safe");
+        }
+
+        [UnityTest]
+        public IEnumerator Punch_SwingsTheRidersArm_EvenOnAMiss_ThenPutsItBack()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return null;
+            var actions = _game.GetComponent<RiderActions>();
+            MeshFilter body = _game.rider.model.Find("RiderAndScooter").GetComponent<MeshFilter>();
+            Mesh riding = body.sharedMesh;
+            Assert.IsFalse(actions.Punch(), "nothing to hit right at the start");
+            Assert.NotNull(actions.Arm, "the punch arm is fitted to the rider");
+            Assert.IsTrue(actions.Arm.Busy, "the arm swings anyway");
+            Assert.AreNotSame(riding, body.sharedMesh, "the riding model loses that arm while the separate arm swings");
+            Assert.IsTrue(actions.Arm.fist.gameObject.activeSelf);
+            yield return new WaitForSeconds(0.6f);
+            Assert.IsFalse(actions.Arm.Busy);
+            Assert.AreSame(riding, body.sharedMesh, "and gets it back afterwards");
+            Assert.IsFalse(actions.Arm.fist.gameObject.activeSelf);
+        }
+
+        [UnityTest]
+        public IEnumerator Punch_OnACar_Bonks_ButDoesNotMoveIt()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return null;
+            Vector3 p = _game.rider.transform.position;
+            GameObject car = _game.track.PlaceAt(Prefab(Pattern("HZ_PoliceStop"), "HZ_PoliceCar"), new Vector3(p.x + 1.6f, p.y, p.z + 4.5f));
+            Vector3 carAt = car.transform.position;
+            var actions = _game.GetComponent<RiderActions>();
+            Assert.IsFalse(actions.Punch(), "a police car cannot be punched away");
+            Assert.NotNull(car.GetComponent<Wobble>(), "it shakes");
+            Assert.AreEqual(carAt, car.transform.position);
+            Assert.IsFalse(_events.Contains("ko"));
         }
 
         [UnityTest]
@@ -332,6 +370,30 @@ namespace CityScooter.Tests
             for (int f = 0; f < 4; f++) yield return null;
             Capture(Camera.main, "popups");
             Assert.NotNull(cone);
+        }
+
+        /// <summary>Not part of the normal run: frames of a punch that lands on a crate stack.</summary>
+        [UnityTest, Explicit]
+        public IEnumerator PunchShots()
+        {
+            yield return LoadMain();
+            _game.StartRun();
+            yield return new WaitForSeconds(0.5f);
+            Vector3 p = _game.rider.transform.position;
+            Obstacle crates = System.Array.Find(_game.track.theme.obstacles, o => o.name == "OBS_Crates");
+            _game.track.PlaceAt(crates.gameObject, new Vector3(p.x + 1.3f, _game.track.SurfaceHeightAt(p.x + 1.3f, p.z + 4.5f), p.z + 4.5f));
+            var actions = _game.GetComponent<RiderActions>();
+            actions.Punch();
+            float t = 0f;
+            while (!_events.Contains("ko") && t < 0.5f) { t += Time.deltaTime; yield return null; }
+            Capture(Camera.main, "punch_1_contact");
+            yield return new WaitForSecondsRealtime(0.12f);
+            yield return null;
+            Capture(Camera.main, "punch_2_after");
+            yield return new WaitForSeconds(0.5f);
+            actions.Punch(); // a miss: the arm still swings
+            yield return null; yield return null; yield return null;
+            Capture(Camera.main, "punch_miss");
         }
 
         /// <summary>Not part of the normal run: a right turn appears far ahead, comes closer, is ridden through.</summary>
