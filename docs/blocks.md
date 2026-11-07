@@ -1,0 +1,97 @@
+# 积木编程框架（Blocks → MicroPython）
+
+学生在网页外壳里用积木编程，积木生成的就是 MicroPython，旁边实时显示对应代码。生成的程序可以直接在页面里的官方模拟器上运行，也可以点 **Download main.py**，再到 python.microbit.org 刷进真板子。V1、V2 都能用。
+
+这套框架分成两层，**换一个游戏只需要写一个新的游戏插件**，外壳、编辑器、micro:bit 通用积木和主题都可以直接复用。
+
+## 文件
+
+除了 Blockly，都在 `Assets/WebGLTemplates/CityScooter/TemplateData/` 下：
+
+| 文件 | 层 | 作用 |
+|---|---|---|
+| `web-vendor/blockly/`（仓库根目录） | 第三方 | Blockly 13.4.0，Apache 2.0（见 `LICENSE`、`README.txt`）。原样取自 npm 包，不走 CDN；积木音效已关掉。**不能放进 `Assets/`**：Unity 的网页模板预处理器会把 `<<<名字>>>` 当成引用内置文件，而 Blockly 的 CSS 里就有 `<<<PATH>>>`，放进去打包会直接失败。打包脚本会在 Unity 打包成功后，把它复制到 `Builds/Web/TemplateData/vendor/` |
+| `fonts/` | 第三方 | Bangers 漫画字体，SIL OFL（见 `Bangers-OFL.txt`），只用在标题上 |
+| `code/microbit-blocks.js` | 通用 | micro:bit 通用积木和对应的 MicroPython 生成器、程序组装、漫画主题、编辑器挂载、风险警告 |
+| `code/game-cityscooter.js` | 游戏 | CityScooter 插件：专属积木、消息分发、工具箱分类、默认的 starter 积木 |
+| `shell.js` / `shell.css` | 通用 | 外壳：积木和 Python 两个视图、按需加载 Blockly、分隔条、模拟器、USB、串口监视器 |
+
+Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
+
+## 生成的程序长什么样
+
+每个积木程序都是同一个形状，学生在 **Python made by your blocks** 里能看到全部代码：
+
+```python
+from microbit import *
+import music                  # 用到才加
+try:                          # 判断板子版本；V2 专属积木会先检查它，所以 V1 不会报错
+    from microbit import microphone
+    VERSION = "v2"
+except ImportError:
+    VERSION = "v1"
+uart.init(baudrate=115200)
+# 变量、插件的全局变量和辅助函数（CityScooter：buffer、messages()）
+display.show(VERSION[1])
+# "on start" 积木
+while True:
+    # "forever" 积木
+    # "when button A/B is pressed" 积木：每个按键只调用一次 was_pressed()
+    # 插件的循环末尾（CityScooter：分发游戏消息，每秒报一次 hi:）
+    sleep(50)
+```
+
+- 帽子积木（`on start`、`forever`、按键事件、游戏消息事件）的内容按类别放进程序里固定的位置。积木在画布上怎么摆，都不影响生成的代码。
+- 没接在帽子积木下面的散积木会变灰，什么也不做（用的是 Blockly 的 `disableOrphans`）。
+- 缩进是 4 个空格，和课上教的一致；学生的变量名不会和框架用到的名字冲突（框架会保留 `VERSION`、`buffer` 等名字）。
+
+## V1 / V2 和硬件的坑（已经处理）
+
+- **V2 专属积木**（`logo is touched (V2)`、`sound level (V2)`）生成的是带版本判断的表达式，在 V1 上分别返回 False 和 0，不会报错。
+- **声音和引脚 0**：micro:bit 的声音默认走引脚 0，这时再读 `pin0.is_touched()` 会报 `Pin 0 in music mode`。现在的处理：
+  - V2 只用板载扬声器（`SOUND_PIN = None`），引脚 0 留给触摸；
+  - V1 没有扬声器，声音只能走引脚 0。所以工作区里同时出现"播放声音"和"引脚 0 被触摸"时，积木上会显示警告，提示改用引脚 1 或 2；串口监视器里这个报错也有对应提示。
+- `show` 积木用 `display.show(..., wait=False)`，不会卡住转向；框架里没有 `scroll` 积木。
+
+## 积木和 Python 怎么切换
+
+- 默认显示积木视图，第一次打开时载入 starter 积木（和 `microbit/starter.py` 等价）。
+- 切到 **Python** 时，如果学生还没改过 Python，会显示积木生成的代码。
+- 学生在 Python 里改过之后，积木的改动不会再覆盖它，只有点 **Use my blocks' code** 才会替换。
+- 积木（Blockly 的 JSON）、Python 草稿和当前视图都存在浏览器的 localStorage 里，读写都包了 try/catch。
+- **Run my code**（模拟器）和 **Download main.py** 用的都是当前视图的代码。
+
+## 给新游戏写插件
+
+照着 `code/game-cityscooter.js` 的结构写一个新文件，调用 `MicrobitBlocks.registerPack({...})`：
+
+| 字段 | 作用 |
+|---|---|
+| `id`、`name`、`colour` | 插件名和积木颜色 |
+| `blocks` | Blockly JSON 积木定义；`style: "game_blocks"` 会用上 `colour` |
+| `generators` | `{ 积木类型: (block, generator) => 代码 }`。帽子积木调用 `MicrobitBlocks.addSection(key, MicrobitBlocks.statements(block, "DO"))`，然后返回 `""` |
+| `isHat(type)` | 哪些积木是这个插件的帽子积木 |
+| `reserved` | 插件生成代码里用到的名字，用逗号分隔 |
+| `globals(ctx)`、`helpers(ctx)` | 放在 `on start` 前面的全局变量和辅助函数（字符串数组） |
+| `loopTail(ctx, section)` | 每次循环末尾要执行的代码（不带缩进）；`section(key)` 取帽子积木存进来的内容，`ctx.flags` 是生成器设置的标记 |
+| `toolbox(blk, num)` | 返回工具箱分类，排在通用分类前面 |
+| `starter()` | 默认积木（Blockly 序列化 JSON） |
+
+然后在 `index.html` 的 `boot(...)` 参数里，用 `codePacks: ["code/你的插件.js"]` 换掉 CityScooter 的插件。
+
+## 测试
+
+每次改积木或外壳，都要跑下面三套无头浏览器测试。测试脚本目前在 Claude 的临时目录里，需要的话可以放进仓库：
+
+1. **积木测试**（`tools/shell-dev` 开发页 + 真的官方模拟器）：
+   - starter 积木生成的关键代码行；
+   - 用 CPython 做语法检查；
+   - 在模拟器里运行：倾斜转向、A 跳、报 `hi:v2`；
+   - 用上全部积木的程序：在 V2 上和模拟 V1 的情况下都运行，并收发 crash/gift/go/spd，要求没有任何 Python 报错；
+   - 引脚 0 加声音时会出警告；
+   - 积木和 Python 的切换规则；
+   - 分隔条能拖动；
+   - 刷新后积木、视图和模式都能恢复；
+   - 页面不向外网发任何请求。
+2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板。
+3. **真实网页包测试**：用真的 Unity 网页包，USB 和模拟器两条路都能开一局，游戏消息能发回设备。

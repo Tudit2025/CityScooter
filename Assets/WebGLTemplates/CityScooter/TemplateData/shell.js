@@ -23,6 +23,9 @@
   const BRAKE_HOLD_MS = 300; // matches ControlMixer.BrakeHold
   const KEY_MODE = "cityscooter.mode";
   const KEY_DRAFT = "cityscooter.draft";
+  const KEY_BLOCKS = "cityscooter.blocks";
+  const KEY_VIEW = "cityscooter.view";
+  const KEY_PANEL = "cityscooter.panelWidth";
 
   const SILENT_TEXT = "Connected, but this micro:bit is not sending anything. Flash a program that prints, like the starter. "
     + "Code you only ran in the REPL is gone after unplugging.";
@@ -45,6 +48,9 @@
     keyboardEnabled: true,
     starterUrl: "TemplateData/starter.py",
     starterText: null,
+    codeBase: "TemplateData/",                  // where code/ lives
+    vendorBase: "TemplateData/vendor/",         // Blockly; copied in from web-vendor/ after the Unity build
+    codePacks: ["code/game-cityscooter.js"],    // the game's block pack(s), relative to codeBase
   };
 
   // ------------------------------------------------------------------ layout
@@ -81,6 +87,7 @@
       <div class="cs-log" id="cs-log"></div>
     </section>
   </section>
+  <div class="cs-splitter" id="cs-splitter" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
   <aside class="cs-panel">
     <div class="cs-pane" data-pane="keyboard">
       <h2>Play with the keyboard</h2>
@@ -96,16 +103,17 @@
       <p>Choose <b>Simulator</b> to run your own code on a virtual micro:bit.</p>
     </div>
     <div class="cs-pane" data-pane="usb">
-      <button type="button" class="cs-primary cs-big" id="cs-connect">Connect micro:bit</button>
-      <div class="cs-usb-msg" id="cs-usb-msg" hidden></div>
-      <div id="cs-boards"></div>
-      <h3>How to connect</h3>
-      <ol class="cs-steps">
-        <li>Flash your program (for example the starter) from <b>python.microbit.org</b>, then click <b>Disconnect</b> there.</li>
-        <li>Plug the micro:bit into this computer with a USB data cable.</li>
-        <li>Click <b>Connect micro:bit</b>, pick it in the list, click <b>Connect</b>. Press <b>A</b> to start a ride.</li>
-      </ol>
-      <p class="cs-muted">Tilt to steer · A jump · hold B brake. Up to 4 boards can play together.</p>
+      <div class="cs-usb-top">
+        <button type="button" class="cs-primary cs-big" id="cs-connect">Connect micro:bit</button>
+        <div class="cs-usb-msg" id="cs-usb-msg" hidden></div>
+        <div id="cs-boards"></div>
+        <ol class="cs-steps cs-steps-row">
+          <li>Make your code below, click <b>Download main.py</b>.</li>
+          <li>On <b>python.microbit.org</b>: Open it, <b>Send to micro:bit</b>, then <b>Disconnect</b>.</li>
+          <li>Click <b>Connect micro:bit</b> here. Press <b>A</b> to ride.</li>
+        </ol>
+      </div>
+      <div class="cs-code-slot"></div>
     </div>
     <div class="cs-pane" data-pane="sim">
       <div class="cs-sim-top">
@@ -116,8 +124,6 @@
         <div class="cs-sim-side">
           <button type="button" class="cs-primary" id="cs-run">Run my code</button>
           <button type="button" id="cs-sim-reset">Reset simulator</button>
-          <button type="button" id="cs-download">Download .py</button>
-          <button type="button" id="cs-starter">Load starter</button>
           <div class="cs-keycard">
             <div><kbd>←</kbd><kbd>→</kbd> tilt</div>
             <div><kbd>A</kbd><kbd>B</kbd> buttons</div>
@@ -126,10 +132,37 @@
           </div>
         </div>
       </div>
-      <div class="cs-editor-head"><b>main.py</b><span class="cs-muted" id="cs-saved"></span></div>
-      <textarea id="cs-code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"
-        aria-label="Your MicroPython code"></textarea>
+      <div class="cs-code-slot"></div>
     </div>
+    <section class="cs-code" id="cs-code-section" aria-label="Your code">
+      <div class="cs-code-head">
+        <div class="cs-tabs" role="group" aria-label="Code view">
+          <button type="button" data-view="blocks">Blocks</button>
+          <button type="button" data-view="python">Python</button>
+        </div>
+        <span class="cs-muted cs-saved" id="cs-saved"></span>
+        <span class="cs-spacer"></span>
+        <button type="button" class="cs-small" id="cs-starter">Starter</button>
+        <button type="button" class="cs-small cs-accent" id="cs-download">Download main.py</button>
+      </div>
+      <div class="cs-code-body">
+        <div class="cs-blocks-view" id="cs-blocks-view">
+          <div class="cs-blockly" id="cs-blockly"><div class="cs-blockly-msg" id="cs-blockly-msg">Loading blocks…</div></div>
+          <details class="cs-preview" id="cs-preview-box" open>
+            <summary>Python made by your blocks</summary>
+            <pre id="cs-preview"></pre>
+          </details>
+        </div>
+        <div class="cs-python-view" id="cs-python-view" hidden>
+          <div class="cs-python-note" id="cs-python-note" hidden>
+            <span>This Python is yours now — your blocks did not change it.</span>
+            <button type="button" class="cs-small" id="cs-from-blocks">Use my blocks' code</button>
+          </div>
+          <textarea id="cs-code" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"
+            aria-label="Your MicroPython code"></textarea>
+        </div>
+      </div>
+    </section>
   </aside>
 </main>
 <div class="cs-overlay" id="cs-help" hidden>
@@ -138,10 +171,14 @@
     <h2 id="cs-help-title">Help</h2>
     <h3>How to connect a micro:bit</h3>
     <ol class="cs-steps">
-      <li>On <b>python.microbit.org</b>, flash your program (start with the starter code), then click <b>Disconnect</b>.</li>
-      <li>Plug the micro:bit into this computer with a USB cable.</li>
+      <li>Make your code here with <b>Blocks</b> or <b>Python</b> and click <b>Download main.py</b>.</li>
+      <li>Plug the micro:bit in with a USB cable. On <b>python.microbit.org</b> click <b>Open…</b>, pick main.py,
+        click <b>Send to micro:bit</b>, then <b>Disconnect</b>.</li>
       <li>Here, choose <b>micro:bit (USB)</b>, click <b>Connect micro:bit</b> and pick it in the list. Press <b>A</b> to ride.</li>
     </ol>
+    <h3>Blocks and Python</h3>
+    <p>Every block program is real MicroPython: open <b>Python made by your blocks</b> to see it. Switch to <b>Python</b> to
+      change the code as text — text changes do not go back into blocks.</p>
     <h3>Something is wrong?</h3>
     <ul>
       <li><b>Use Chrome or Edge.</b> Other browsers cannot talk to USB devices.</li>
@@ -189,6 +226,8 @@
     [/TypeError/, "you mixed text and numbers, e.g. use \"st:\" + str(steer)"],
     [/AttributeError/, "check the spelling after the dot, e.g. button_a.was_pressed()"],
     [/ImportError|no module named/i, "that module is not on this micro:bit (a V1 has fewer features)"],
+    [/out of bounds/i, "LED x and y go from 0 to 4"],
+    [/music mode/i, "sound uses pin 0 — touch pin 1 or 2 instead"],
     [/ValueError/, "a value had the wrong form, e.g. int(\"abc\")"],
     [/MemoryError/, "your program used too much memory — keep lists and strings small"],
     [/ZeroDivisionError/, "you divided by zero"],
@@ -425,6 +464,7 @@
     }
     if (mode === "sim") simEnter();
     else if (prev === "sim") simLeave();
+    placeCode();
     for (const d of shell.devices.values()) sendStatus(d);
     shell.outbox.length = 0;
     renderChips();
@@ -657,8 +697,7 @@
       $("cs-sim-hint").classList.remove("cs-pulse"); void $("cs-sim-hint").offsetWidth; $("cs-sim-hint").classList.add("cs-pulse");
       return;
     }
-    const code = $("cs-code").value;
-    simPost({ kind: "flash", filesystem: { "main.py": new TextEncoder().encode(code) } });
+    simPost({ kind: "flash", filesystem: { "main.py": new TextEncoder().encode(currentCode()) } });
     sim.running = true;
     sim.buf = "";
     const d = simDevice();
@@ -740,17 +779,121 @@
     simSet("accelerometerX", sim.accel);
   }
 
-  // ------------------------------------------------------------------ code editor
+  // ------------------------------------------------------------------ code: Blocks and Python views
+  // Blocks (Blockly -> MicroPython, code/microbit-blocks.js + the game's pack) is loaded on first use, so keyboard
+  // players never download it. The Python view is a plain textarea. Blocks -> Python is one way: once the student
+  // edits the Python, the blocks no longer overwrite it unless they click "Use my blocks' code".
+  const code = {
+    view: "blocks", blocks: null, loading: null, failed: false,
+    pythonIsFromBlocks: false, // textarea holds untouched generated code
+    lastGenerated: "",
+  };
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("could not load " + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  function ensureBlocks() {
+    if (code.blocks || code.failed) return Promise.resolve(code.blocks);
+    if (code.loading) return code.loading;
+    const v = shell.vendorBase + "blockly/";
+    const files = [v + "blockly_compressed.js", v + "blocks_compressed.js", v + "python_compressed.js", v + "msg/en.js",
+      shell.codeBase + "code/microbit-blocks.js", ...shell.codePacks.map((p) => shell.codeBase + p)];
+    code.loading = files.reduce((p, f) => p.then(() => loadScript(f)), Promise.resolve()).then(() => {
+      $("cs-blockly-msg").remove();
+      code.blocks = window.MicrobitBlocks.mount($("cs-blockly"), { media: v + "media/", onChange: onBlocksChanged });
+      let saved = null;
+      try { saved = JSON.parse(storeGet(KEY_BLOCKS) || "null"); } catch (e) { saved = null; }
+      try {
+        if (saved) code.blocks.load(saved); else code.blocks.loadStarter();
+      } catch (e) {
+        code.blocks.loadStarter(); // a draft from an older block set
+      }
+      onBlocksChanged();
+      return code.blocks;
+    }).catch((e) => {
+      code.failed = true;
+      $("cs-blockly-msg").textContent = "Blocks could not load (" + errText(e) + "). Use the Python view.";
+      return null;
+    });
+    return code.loading;
+  }
+
+  function onBlocksChanged() {
+    if (!code.blocks) return;
+    let py;
+    try { py = code.blocks.code(); } catch (e) { py = "# Could not turn the blocks into Python: " + errText(e) + "\n"; }
+    code.lastGenerated = py;
+    $("cs-preview").textContent = py;
+    try { storeSet(KEY_BLOCKS, JSON.stringify(code.blocks.save())); } catch (e) { /* storage full or blocked */ }
+    if (code.pythonIsFromBlocks) $("cs-code").value = py;
+    flashSaved();
+  }
+
+  function flashSaved() {
+    const s = $("cs-saved");
+    s.textContent = "saved in this browser";
+    clearTimeout(flashSaved.t);
+    flashSaved.t = setTimeout(() => { s.textContent = ""; }, 1500);
+  }
+
+  function setView(view, user) {
+    code.view = view === "python" ? "python" : "blocks";
+    if (user) storeSet(KEY_VIEW, code.view);
+    document.querySelectorAll(".cs-tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === code.view)));
+    $("cs-blocks-view").hidden = code.view !== "blocks";
+    $("cs-python-view").hidden = code.view !== "python";
+    const ta = $("cs-code");
+    if (code.view === "python") {
+      // First visit, or Python still equals what the blocks made: show the blocks' code.
+      if (code.lastGenerated && (!ta.value.trim() || code.pythonIsFromBlocks || ta.value === shell.starterText)) {
+        ta.value = code.lastGenerated;
+        code.pythonIsFromBlocks = true;
+      }
+      $("cs-python-note").hidden = code.pythonIsFromBlocks || !code.lastGenerated;
+    } else {
+      ensureBlocks().then(() => {
+        if (!code.blocks) return;
+        code.blocks.resize();
+        if (code.blocks.needsFit) code.blocks.fit(); // loaded while hidden
+      });
+    }
+  }
+
+  // The code panel lives in whichever mode pane is showing (USB or Simulator).
+  function placeCode() {
+    const pane = document.querySelector('.cs-pane[data-pane="' + shell.mode + '"]');
+    const slot = pane && pane.querySelector(".cs-code-slot");
+    const section = $("cs-code-section");
+    if (!slot) { section.hidden = true; return; }
+    if (section.parentElement !== slot) slot.appendChild(section);
+    section.hidden = false;
+    setView(code.view, false);
+  }
+
+  function currentCode() {
+    if (code.view === "blocks" && code.blocks) return code.blocks.code();
+    return $("cs-code").value;
+  }
+
   function initEditor() {
     const ta = $("cs-code");
     const draft = storeGet(KEY_DRAFT);
     if (draft) ta.value = draft;
-    else loadStarter(false);
+    loadStarterText(); // keep the text starter around for the Python view
+    code.view = storeGet(KEY_VIEW) === "python" ? "python" : "blocks";
     let saveTimer = 0;
     ta.addEventListener("input", () => {
+      code.pythonIsFromBlocks = false;
+      $("cs-python-note").hidden = !code.lastGenerated;
       clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => { storeSet(KEY_DRAFT, ta.value); $("cs-saved").textContent = "saved in this browser"; }, 500);
-      $("cs-saved").textContent = "";
+      saveTimer = setTimeout(() => { storeSet(KEY_DRAFT, ta.value); flashSaved(); }, 500);
     });
     ta.addEventListener("keydown", (e) => {
       if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
@@ -762,31 +905,78 @@
         simFlash();
       }
     });
+    document.querySelectorAll(".cs-tabs button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view, true)));
+    $("cs-from-blocks").addEventListener("click", () => {
+      if (!window.confirm("Replace your Python with the code from your blocks?")) return;
+      ta.value = code.lastGenerated;
+      code.pythonIsFromBlocks = true;
+      storeSet(KEY_DRAFT, ta.value);
+      $("cs-python-note").hidden = true;
+    });
   }
 
-  async function loadStarter(ask) {
-    if (ask && $("cs-code").value.trim() && !window.confirm("Replace your code with the starter code?")) return;
+  async function loadStarterText() {
     try {
       if (shell.starterText == null) {
         const r = await fetch(shell.starterUrl, { cache: "no-cache" });
         if (!r.ok) throw new Error("HTTP " + r.status);
         shell.starterText = await r.text();
       }
-      $("cs-code").value = shell.starterText;
-      storeSet(KEY_DRAFT, shell.starterText);
+      return shell.starterText;
     } catch (e) {
       logLine("warn", "", "Could not load the starter code (" + errText(e) + ").", "paste your code instead");
+      return null;
     }
   }
 
+  async function starterClicked() {
+    if (code.view === "blocks") {
+      if (!code.blocks || !window.confirm("Replace your blocks with the starter blocks?")) return;
+      code.blocks.loadStarter();
+      return;
+    }
+    if ($("cs-code").value.trim() && !window.confirm("Replace your Python with the starter code?")) return;
+    const text = await loadStarterText();
+    if (text == null) return;
+    $("cs-code").value = text;
+    code.pythonIsFromBlocks = false;
+    storeSet(KEY_DRAFT, text);
+  }
+
   function downloadCode() {
-    const blob = new Blob([$("cs-code").value], { type: "text/x-python" });
+    const blob = new Blob([currentCode()], { type: "text/x-python" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "cityscooter.py";
+    a.download = "main.py";
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  // Drag the bar between the game and the panel; the width is remembered.
+  function initSplitter() {
+    const bar = $("cs-splitter");
+    const main = document.querySelector(".cs-main");
+    const apply = (w) => {
+      const max = Math.max(360, window.innerWidth - 420);
+      main.style.setProperty("--panel-w", clamp(Math.round(w), 360, max) + "px");
+    };
+    const saved = parseInt(storeGet(KEY_PANEL) || "", 10);
+    if (saved) apply(saved);
+    bar.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      bar.setPointerCapture(e.pointerId);
+      document.body.classList.add("cs-resizing");
+      const move = (ev) => { apply(window.innerWidth - ev.clientX); if (code.blocks) code.blocks.resize(); };
+      const up = () => {
+        bar.removeEventListener("pointermove", move);
+        document.body.classList.remove("cs-resizing");
+        storeSet(KEY_PANEL, String(parseInt(getComputedStyle(main).getPropertyValue("--panel-w"), 10)));
+      };
+      bar.addEventListener("pointermove", move);
+      bar.addEventListener("pointerup", up, { once: true });
+    });
+    window.addEventListener("resize", () => { if (code.blocks) code.blocks.resize(); });
   }
 
   // ------------------------------------------------------------------ page chrome
@@ -805,7 +995,8 @@
     $("cs-run").addEventListener("click", simFlash);
     $("cs-sim-reset").addEventListener("click", simResetClicked);
     $("cs-download").addEventListener("click", downloadCode);
-    $("cs-starter").addEventListener("click", () => loadStarter(true));
+    $("cs-starter").addEventListener("click", starterClicked);
+    initSplitter();
 
     const help = $("cs-help");
     const showHelp = (v) => { help.hidden = !v; if (v) $("cs-help-close").focus(); };
@@ -836,6 +1027,9 @@
   window.CityScooterShell = {
     boot(canvas, config, options) {
       if (options && options.starterUrl) shell.starterUrl = options.starterUrl;
+      if (options && options.codeBase) shell.codeBase = options.codeBase;
+      if (options && options.vendorBase) shell.vendorBase = options.vendorBase;
+      if (options && options.codePacks) shell.codePacks = options.codePacks;
       initChrome(canvas);
       initEditor();
       initSerial();

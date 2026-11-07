@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -63,7 +64,33 @@ namespace CityScooter.EditorTools
             BuildSummary summary = report.summary;
             Debug.Log("[CityScooter] Web build " + summary.result + ": " + (summary.totalSize / 1048576f).ToString("F1")
                 + " MB, " + summary.totalTime + ", errors " + summary.totalErrors);
-            return summary.result == BuildResult.Succeeded;
+            if (summary.result != BuildResult.Succeeded) return false;
+            return CopyWebVendor();
+        }
+
+        // Third-party web libraries (Blockly) live in web-vendor/, outside Assets/: Unity's template pre-processor
+        // treats "<<<NAME>>>" as an include, and Blockly's CSS uses "<<<PATH>>>". Copy them in after the build.
+        const string WebVendorSource = "web-vendor";
+
+        static bool CopyWebVendor()
+        {
+            string target = Path.Combine(WebOutputPath, "TemplateData", "vendor");
+            if (!Directory.Exists(WebVendorSource))
+            {
+                Debug.LogError("[CityScooter] " + WebVendorSource + "/ is missing: the Blocks editor will not load.");
+                return false;
+            }
+            if (Directory.Exists(target)) Directory.Delete(target, true);
+            int files = 0;
+            foreach (string src in Directory.GetFiles(WebVendorSource, "*", SearchOption.AllDirectories))
+            {
+                string dst = Path.Combine(target, Path.GetRelativePath(WebVendorSource, src));
+                Directory.CreateDirectory(Path.GetDirectoryName(dst));
+                File.Copy(src, dst, true);
+                files++;
+            }
+            Debug.Log("[CityScooter] Copied " + files + " files from " + WebVendorSource + "/ to " + target);
+            return true;
         }
     }
 }

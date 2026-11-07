@@ -22,8 +22,11 @@
   <script src="../../Assets/WebGLTemplates/CityScooter/TemplateData/shell.js"></script>
   <script src="fake-unity.js"></script>
   <script>
-    CityScooterShell.boot(document.querySelector("#unity-canvas"), {},
-      { starterUrl: "../../Assets/WebGLTemplates/CityScooter/TemplateData/starter.py" });
+    CityScooterShell.boot(document.querySelector("#unity-canvas"), {}, {
+      starterUrl: "../../Assets/WebGLTemplates/CityScooter/TemplateData/starter.py",
+      codeBase: "../../Assets/WebGLTemplates/CityScooter/TemplateData/",
+      vendorBase: "../../web-vendor/",
+    });
   </script>
 </body>
 </html>

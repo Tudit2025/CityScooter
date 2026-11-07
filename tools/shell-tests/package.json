@@ -1,0 +1,13 @@
+{
+  "name": "cityscooter-shell-tests",
+  "private": true,
+  "description": "Headless Chrome tests for the web shell, the Blocks editor and a Unity Web build. See README.md.",
+  "scripts": {
+    "shell": "node shell.test.js ../.. out",
+    "blocks": "node blocks.test.js ../.. out",
+    "build": "node build.test.js ../../Builds/Web ../labcheck/labcheck.py out"
+  },
+  "dependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}
