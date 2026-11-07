@@ -41,6 +41,7 @@ namespace CityScooter.Devices
             GameEvents.PunchLanded += OnPunchLanded;
             GameEvents.PersonBounced += OnBoing;
             GameEvents.Tired += OnTired;
+            GameEvents.BoardSaid += OnBoardSaid;
             GameEvents.Warning += OnWarning;
             GameEvents.TurnChanged += OnTurn;
             GameEvents.WantedChanged += OnWanted;
@@ -62,6 +63,7 @@ namespace CityScooter.Devices
             GameEvents.PunchLanded -= OnPunchLanded;
             GameEvents.PersonBounced -= OnBoing;
             GameEvents.Tired -= OnTired;
+            GameEvents.BoardSaid -= OnBoardSaid;
             GameEvents.Warning -= OnWarning;
             GameEvents.TurnChanged -= OnTurn;
             GameEvents.WantedChanged -= OnWanted;
@@ -93,6 +95,18 @@ namespace CityScooter.Devices
         void OnBoing() => _hub.Send(Messages.Boing);
 
         void OnTired() => _hub.Send(Messages.Tired);
+
+        // "say:word" from one board: the game says the word to every board (at most 2 a second per board).
+        readonly System.Collections.Generic.Dictionary<string, float> _nextSay = new System.Collections.Generic.Dictionary<string, float>();
+        public int SaysRelayed { get; private set; }
+        void OnBoardSaid(string deviceId, string word)
+        {
+            string key = deviceId ?? "?";
+            if (_nextSay.TryGetValue(key, out float next) && Time.unscaledTime < next) return;
+            _nextSay[key] = Time.unscaledTime + 0.5f;
+            SaysRelayed++;
+            _hub.Send(word);
+        }
 
         // V1 boards have tiny UART buffers: at most a few warnings per second (HazardWarnings already sends each thing once).
         float _nextWarnTime;

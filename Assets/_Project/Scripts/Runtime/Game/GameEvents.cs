@@ -20,6 +20,8 @@ namespace CityScooter.Game
         public static event Action PersonBounced;
         /// <summary>v1: a punch was ignored because the rider is out of punches ("tired").</summary>
         public static event Action Tired;
+        /// <summary>v1: a board asked the game to say a word ("say:party"): (device id, word).</summary>
+        public static event Action<string, string> BoardSaid;
         /// <summary>v1: something is in the rider's lane ahead; the argument is the whole message ("warn:car").</summary>
         public static event Action<string> Warning;
         /// <summary>v1: the fake road turns: -1 left, 0 straight, 1 right.</summary>
@@ -32,6 +34,7 @@ namespace CityScooter.Game
         public static void RaisePunchLanded() => PunchLanded?.Invoke();
         public static void RaisePersonBounced() => PersonBounced?.Invoke();
         public static void RaiseTired() => Tired?.Invoke();
+        public static void RaiseBoardSaid(string deviceId, string word) => BoardSaid?.Invoke(deviceId, word);
         public static void RaiseWarning(string message) => Warning?.Invoke(message);
         public static void RaiseTurnChanged(int direction) => TurnChanged?.Invoke(direction);
 
@@ -73,6 +76,7 @@ namespace CityScooter.Game
             PunchLanded = null;
             PersonBounced = null;
             Tired = null;
+            BoardSaid = null;
             Warning = null;
             TurnChanged = null;
             WantedChanged = null;

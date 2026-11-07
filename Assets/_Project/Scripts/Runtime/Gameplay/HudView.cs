@@ -26,6 +26,8 @@ namespace CityScooter.Gameplay
         Font _font;
         Image[] _stars;
         Text _wantedLabel, _police, _flash, _flashSub;
+        Text _say;
+        float _sayUntil;
         float _flashUntil, _starPulse;
         int _shownWanted;
 
@@ -53,6 +55,9 @@ namespace CityScooter.Gameplay
             _device = MakeText(root, "Device", new Vector2(1f, 1f), new Vector2(-40f, -90f), 28, TextAnchor.UpperRight, FontStyle.Normal);
             _centre = MakeText(root, "Centre", new Vector2(0.5f, 0.5f), new Vector2(0f, 60f), 56, TextAnchor.MiddleCenter, FontStyle.Bold);
             _hint = MakeText(root, "Hint", new Vector2(0.5f, 0f), new Vector2(0f, 40f), 28, TextAnchor.LowerCenter, FontStyle.Normal);
+            _say = MakeText(root, "Say", new Vector2(0.5f, 0f), new Vector2(0f, 150f), 44, TextAnchor.LowerCenter, FontStyle.Bold);
+            _say.color = new Color(1f, 0.85f, 0.2f);
+            Game.GameEvents.BoardSaid += OnBoardSaid;
             _hint.text = "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake  ·  F punch  ·  R bell  ·  E boost  ·  T cartoon";
 
             _speedSegments = new Image[10];
@@ -212,8 +217,19 @@ namespace CityScooter.Gameplay
                 + "\n<size=30>Press A or Space to ride again</size>";
         }
 
+        void OnDestroy() => Game.GameEvents.BoardSaid -= OnBoardSaid;
+
+        // "say:party" from a board: show who said what for a moment (the game also repeats it to every board).
+        void OnBoardSaid(string deviceId, string word)
+        {
+            if (_say == null) return;
+            _say.text = "\u201c" + word + "\u201d  \u2014 " + (deviceId == "sim" ? "Simulator" : deviceId);
+            _sayUntil = Time.unscaledTime + 1.5f;
+        }
+
         void Update()
         {
+            if (_say != null && _say.text.Length > 0 && Time.unscaledTime > _sayUntil) _say.text = "";
             GameController g = game != null ? game : GameController.Instance;
             if (g == null || g.rider == null) return;
             _score.text = g.Score.ToString();

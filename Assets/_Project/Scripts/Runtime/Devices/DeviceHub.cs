@@ -101,6 +101,9 @@ namespace CityScooter.Devices
                 case CommandKind.Steer: dev.SteerLines++; break;
                 case CommandKind.Jump: dev.JumpLines++; break;
                 case CommandKind.Brake: dev.BrakeLines++; break;
+                case CommandKind.Say:
+                    Game.GameEvents.RaiseBoardSaid(deviceId, cmd.Text);
+                    break;
                 case CommandKind.Hello:
                     if (dev.Version != cmd.Text)
                     {

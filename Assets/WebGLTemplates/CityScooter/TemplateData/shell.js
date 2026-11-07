@@ -232,6 +232,8 @@
       case "pu": return { kind: "punch" };
       case "bl": return { kind: "bell" };
       case "bo": return { kind: "boost" };
+      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo)$/i.test(arg)
+        ? { kind: "say", value: arg } : { kind: "malformed" };
       case "sur": return { kind: "surrender" };
       case "toon": {
         const v = arg.toLowerCase();
@@ -314,6 +316,8 @@
       case "boost":
         d.boostUntil = t + 300;
         break;
+      case "say":
+        break; // the game repeats it to every board; the monitor shows that as a game line
       case "surrender":
         d.surUntil = t + 600;
         break;
@@ -326,7 +330,9 @@
         }
         break;
       case "malformed":
-        logLine("warn", d.id, line, /^\s*toon/i.test(line) ? "toon: needs 1 (on) or 0 (off), e.g. toon:1" : "st: needs a number, e.g. st:-35");
+        logLine("warn", d.id, line, /^\s*toon/i.test(line) ? "toon: needs 1 (on) or 0 (off), e.g. toon:1"
+          : /^\s*say/i.test(line) ? "say: one word of your own (letters, digits, _ - ! ?, up to 16), not a game word like crash"
+          : "st: needs a number, e.g. st:-35");
         break;
       default: {
         const err = looksLikeError(line);

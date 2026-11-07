@@ -19,6 +19,8 @@ namespace CityScooter.Protocol
         Toon,
         /// <summary>v1: "bo" boost for a moment (has a cooldown).</summary>
         Boost,
+        /// <summary>v1: "say:party" makes the game say "party" to every board (Text holds the word).</summary>
+        Say,
         /// <summary>v1 police: "sur" surrender, pull over now (ignored unless the police are chasing).</summary>
         Surrender,
     }

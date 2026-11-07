@@ -20,6 +20,9 @@
     ["inc:C (paint shot ON you: move!)", "inc:C"], ["inc:L (paint shot on your left)", "inc:L"], ["inc:R (paint shot on your right)", "inc:R"],
     ["arrested", "arrested"], ["busted", "busted"], ["lost (you lost the police!)", "lost"]];
 
+  // Words of your own that the game repeats to every board ("say:party" -> "party").
+  const sayWord = (w) => String(w || "").replace(/[^A-Za-z0-9_!?-]/g, "").slice(0, 16) || "party";
+
   const BLOCKS = [
     { type: "cs_steer", message0: "steer %1", args0: [{ type: "input_value", name: "VALUE", check: "Number" }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
@@ -37,6 +40,12 @@
     { type: "cs_toon", message0: "cartoon mode %1", args0: [{ type: "field_dropdown", name: "ON", options: [["on", "1"], ["off", "0"]] }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "Cartoon mode on: people you bump into go flying (BOING!) and you only slow down. Off: bumping into someone ends the ride. The game remembers the last one you sent, so send it after the game has started (e.g. in forever, or on a button). Python: print(\"toon:1\")" },
+    { type: "cs_say", message0: "make the game say %1", args0: [{ type: "field_input", name: "WORD", text: "party" }],
+      previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "The game repeats your word to EVERY connected micro:bit (this one too), and shows it on screen. Use \"when the game says word\" to react. One word: letters, digits, _ - ! ? (up to 16), not a game word like crash. At most 2 a second. Python: print(\"say:party\")" },
+    { type: "cs_on_word", message0: "when the game says word %1 %2 %3",
+      args0: [{ type: "field_input", name: "WORD", text: "party" }, { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "game_blocks", tooltip: "Runs when the game repeats this word, because some micro:bit used \"make the game say\". Two boards can talk through the game this way." },
     { type: "cs_on_message", message0: "when the game says %1 %2 %3",
       args0: [{ type: "field_dropdown", name: "MSG", options: MESSAGE_OPTIONS },
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
@@ -65,6 +74,8 @@
     cs_punch: () => 'print("pu")\n',
     cs_bell: () => 'print("bl")\n',
     cs_boost: () => 'print("bo")\n',
+    cs_say: (b) => 'print("say:' + sayWord(b.getFieldValue("WORD")) + '")\n',
+    cs_on_word: (b) => { MB.addSection("word:" + sayWord(b.getFieldValue("WORD")), MB.statements(b, "DO")); return ""; },
     cs_toon: (b) => 'print("toon:' + b.getFieldValue("ON") + '")\n',
     cs_speed: () => { MB.setFlag("usesSpeed"); return ["game_speed", Order.ATOMIC]; },
     cs_on_message: (b) => { MB.addSection("msg:" + b.getFieldValue("MSG"), MB.statements(b, "DO")); return ""; },
@@ -101,7 +112,7 @@
     blocks: BLOCKS,
     generators: GENERATORS,
     reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance",
-    isHat: (type) => type === "cs_on_message" || type === "cs_on_speed" || type === "cs_on_wanted",
+    isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted",
     // wanted_level / police_distance only when a block uses them, so Lesson 1 programs look the same as before.
     globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
       ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null].filter(Boolean),
@@ -113,6 +124,11 @@
         // A new ride or the end of a chase: the police car is gone.
         if (ctx.flags.usesCop && (m === "go" || m === "chase:0")) body = "    police_distance = 9\n" + body;
         if (body) branches.push('if msg == "' + m + '":\n' + indent(body, 0));
+      }
+      // Words of your own, repeated by the game (see "make the game say").
+      for (const key of Object.keys(ctx.sections)) {
+        if (!key.startsWith("word:")) continue;
+        branches.push('if msg == "' + key.slice(5) + '":\n' + indent(section(key), 0));
       }
       if (section("msg:spd") || ctx.flags.usesSpeed) {
         branches.push('if msg.startswith("spd:"):\n    game_speed = int(msg[4:])\n' + section("msg:spd"));
@@ -137,6 +153,7 @@
         blk("cs_on_speed"), blk("cs_speed"),
         blk("cs_on_message", { fields: { MSG: "chase:1" } }), blk("cs_on_message", { fields: { MSG: "inc:C" } }),
         blk("cs_on_wanted"), blk("cs_wanted"), blk("cs_cop"), blk("cs_surrender"),
+        blk("cs_say"), blk("cs_on_word"),
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

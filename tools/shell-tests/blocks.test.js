@@ -74,7 +74,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("mb_on_receive", { x: 2100, y: 10, fields: { NAME: "party" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("party time") } })) } }),
   B("mb_on_receive", { x: 2100, y: 120, fields: { NAME: "party" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("second listener") } }), B("mb_radio_send", { inputs: { VALUE: { shadow: { type: "text", fields: { TEXT: "gift!" } } } } })) } }),
   B("mb_on_radio", { x: 2100, y: 240, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("mb_radio_msg")) } })) } }),
-  B("cs_on_message", { x: 500, y: 460, fields: { MSG: "go" }, inputs: { DO: chain(B("mb_clear")) } }),
+  B("cs_on_message", { x: 500, y: 460, fields: { MSG: "go" }, inputs: { DO: chain(B("mb_clear"), B("cs_say", { fields: { WORD: "party" } })) } }),
+  B("cs_on_word", { x: 2100, y: 360, fields: { WORD: "party" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("word party") } })) } }),
   // protocol v1: punch, bell, gesture, ko / warn: / turn:
   B("mb_on_gesture", { x: 900, y: 10, fields: { GESTURE: "shake" }, inputs: { DO: chain(B("cs_punch")) } }),
   B("mb_on_presses", { x: 900, y: 520, fields: { BTN: "a", TIMES: "2" }, inputs: { DO: chain(B("cs_boost")) } }),
@@ -166,7 +167,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   for (const want of ["import music", "import random", "(pin_logo.is_touched() if VERSION == \"v2\" else False)",
     "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
     'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"',
-    'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:',
+    'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:', 'print("say:party")', 'msg == "party"',
     'broadcasts.append("party")', 'if got == "party":', 'import radio', 'radio.config(group=1)', "radio.send(str('gift!'))", 'got_radio = radio.receive()', 'del broadcasts[:]',
     'held_since_b = -1', 'if held_b >= 1000 and held_done_b < 1000:', 'elif held_since_b >= 0:',
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
@@ -197,7 +198,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(300); // 3 quick presses
     await page.keyboard.down("b"); await sleep(1400); await page.keyboard.up("b"); await sleep(400); // a long press of B
     await page.keyboard.down("m"); await page.keyboard.down("l"); await sleep(600); await page.keyboard.up("m"); await page.keyboard.up("l");
-    for (const m of ["spd:5", "crash", "gift", "go", "warn:ped", "ko", "turn:-1", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
+    for (const m of ["spd:5", "crash", "gift", "go", "party", "warn:ped", "ko", "turn:-1", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     // police messages; no sur before the police car is close (cop:9 is far)
     for (const m of ["chase:1", "wanted:3", "cop:9", "inc:C"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     const surBefore = await ev((n) => window.__fakeUnity.lines.slice(n).filter((l) => l === "sim|sur").length, before);
@@ -219,6 +220,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": 2nd quick press of A boosts (bo)", lines.includes("sim|bo"), lines.filter((l) => !/st:/.test(l)).slice(-10).join(" "));
     check(label + ": holding B for 1 s runs the hold block once", log.filter((x) => x.includes("held B 1s")).length === 1, log.filter((x) => /held B|released/.test(x)).slice(-4).join(" | "));
     check(label + ": letting go of B runs the release block with the hold time", log.some((x) => /released after (1[1-9]\d\d|[2-9]\d\d\d)/.test(x)), log.filter((x) => /released/.test(x)).slice(-2).join(" | "));
+    check(label + ": go makes the board ask the game to say party", lines.includes("sim|say:party"));
+    check(label + ": when the game says word party runs", log.some((x) => x.includes("word party")), log.filter((x) => /word/.test(x)).slice(-2).join(" | "));
     check(label + ": gift broadcasts party, both listeners run", log.some((x) => x.includes("party time")) && log.some((x) => x.includes("second listener")), log.filter((x) => /party|listener/.test(x)).slice(-3).join(" | "));
     check(label + ": 3rd quick press runs the 3-times block", log.some((x) => x.includes("presses 3")), log.filter((x) => /presses/.test(x)).slice(-3).join(" | "));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));

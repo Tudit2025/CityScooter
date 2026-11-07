@@ -157,6 +157,39 @@ namespace CityScooter.Tests
             Assert.AreEqual(0, thrown, "nothing to hit");
         }
 
+        sealed class CaptureOutput : IDeviceOutput
+        {
+            public readonly List<string> Lines = new List<string>();
+            public void Send(string target, string line) => Lines.Add(target + "|" + line);
+        }
+
+        [UnityTest]
+        public IEnumerator Say_TheGameRepeatsTheWordToEveryBoard_TwiceASecondAtMost()
+        {
+            yield return LoadMain();
+            var hub = DeviceHub.Instance;
+            Assert.NotNull(hub);
+            var capture = new CaptureOutput();
+            hub.RegisterOutput(capture);
+            try
+            {
+                hub.Receive("usb1", "say:party");
+                hub.Receive("usb1", "say:party"); // too soon: dropped
+                hub.Receive("usb2", "say:jump!");
+                hub.Receive("usb1", "say:crash"); // a game word: refused
+                yield return null;
+                Assert.Contains("*|party", capture.Lines);
+                Assert.Contains("*|jump!", capture.Lines);
+                Assert.AreEqual(1, capture.Lines.FindAll(l => l == "*|party").Count, "at most 2 a second per board");
+                Assert.IsFalse(capture.Lines.Contains("*|crash"), "a board cannot make the game say crash");
+                yield return new WaitForSecondsRealtime(0.55f);
+                hub.Receive("usb1", "say:party");
+                yield return null;
+                Assert.AreEqual(2, capture.Lines.FindAll(l => l == "*|party").Count);
+            }
+            finally { hub.UnregisterOutput(capture); }
+        }
+
         [UnityTest]
         public IEnumerator Boost_GoesPastTheSpeedLimit_ThenRecharges()
         {

@@ -57,6 +57,8 @@ namespace CityScooter.Protocol
                     return new Command(CommandKind.Bell);
                 case Messages.Boost:
                     return new Command(CommandKind.Boost);
+                case Messages.Say:
+                    return Messages.IsSayWord(arg) ? new Command(CommandKind.Say, 0f, arg) : new Command(CommandKind.Malformed, 0f, s);
                 case Messages.Surrender:
                     return new Command(CommandKind.Surrender);
                 case Messages.Toon:

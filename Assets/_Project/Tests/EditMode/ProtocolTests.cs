@@ -178,6 +178,26 @@ namespace CityScooter.Tests
             Assert.AreEqual("turn:1", Messages.Turn(1));
         }
 
+        [TestCase("say:party", "party")]
+        [TestCase(" SAY : Jump_2! ", "Jump_2!")]
+        public void V1_SayCarriesTheWord(string line, string word)
+        {
+            Command c = CommandParser.Parse(line);
+            Assert.AreEqual(CommandKind.Say, c.Kind);
+            Assert.AreEqual(word, c.Text);
+        }
+
+        [TestCase("say:")]
+        [TestCase("say:crash")]
+        [TestCase("say:GIFT")]
+        [TestCase("say:warn:car")]
+        [TestCase("say:two words")]
+        [TestCase("say:abcdefghijklmnopq")]
+        public void V1_SayRefusesGameMessagesAndOddWords(string line)
+        {
+            Assert.AreEqual(CommandKind.Malformed, CommandParser.Parse(line).Kind);
+        }
+
         [Test]
         public void V1_ToonModeIsLatchedUntilChanged()
         {

@@ -24,6 +24,31 @@ namespace CityScooter.Protocol
         public const string Bell = "bl";
         public const string Toon = "toon";
         public const string Boost = "bo";
+        /// <summary>"say:word": the game repeats the word to every connected board (students' own events).</summary>
+        public const string Say = "say";
+        public const int MaxSayLength = 16;
+
+        /// <summary>A word the game itself sends (crash, gift, ...): a board may not make the game say these.</summary>
+        public static bool IsGameMessage(string word)
+        {
+            string w = (word ?? "").Trim().ToLowerInvariant();
+            switch (w)
+            {
+                case Go: case Crash: case Gift: case Ko: case Boing: case Tired:
+                case "arrested": case "busted": case "lost": case "echo":
+                    return true;
+            }
+            return w.IndexOf(':') >= 0;
+        }
+
+        /// <summary>Letters, digits, _ - ! ? only, 1..16 characters, and not a game message.</summary>
+        public static bool IsSayWord(string word)
+        {
+            if (string.IsNullOrEmpty(word) || word.Length > MaxSayLength || IsGameMessage(word)) return false;
+            foreach (char c in word)
+                if (!(char.IsLetterOrDigit(c) && c < 128) && c != '_' && c != '-' && c != '!' && c != '?') return false;
+            return true;
+        }
 
         // game → micro:bit
         public const string Go = "go";
