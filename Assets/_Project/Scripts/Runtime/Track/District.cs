@@ -66,6 +66,16 @@ namespace CityScooter.Track
         public Color sunColor = new Color(1f, 0.95f, 0.86f);
         [Range(0f, 3f)] public float sunIntensity = 1.35f;
 
+        [Header("Sky panorama (one 360-degree Perth picture, turned and sized per district; blended like the look)")]
+        [Tooltip("Turns the panorama so it matches which way this road really runs (degrees, + = right). 0 = the CBD " +
+                 "skyline ahead-left with the river on the right, as seen from Kings Park; 180 = the city behind you " +
+                 "(Mounts Bay Rd, riding west along the river).")]
+        [Range(-180f, 180f)] public float skyYaw;
+        [Tooltip("Apparent size of the skyline: below 1 = further from the city (UWA), above 1 = closer (CBD).")]
+        [Range(0.5f, 1.6f)] public float skySize = 1f;
+        [Tooltip("Moves the skyline up (+) or down (-), in degrees: down when you look over the city from a hill.")]
+        [Range(-10f, 10f)] public float skyHeight;
+
         [Header("Scenery and sound (optional)")]
         [Tooltip("Far scenery that follows the rider at the horizon while in this district (no colliders), e.g. the river " +
                  "and the far shore, the Kings Park bush line. Pivot on the road centre line at the rider's height.")]

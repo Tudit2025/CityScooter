@@ -34,6 +34,7 @@ namespace CityScooter.Devices
 
         void OnEnable()
         {
+            GameEvents.ZoneEntered += OnZone; // ---- Districts (v0.3)
             GameEvents.RunStarted += OnRunStarted;
             GameEvents.Crashed += OnCrashed;
             GameEvents.GiftCollected += OnGift;
@@ -58,6 +59,7 @@ namespace CityScooter.Devices
 
         void OnDisable()
         {
+            GameEvents.ZoneEntered -= OnZone; // ---- Districts (v0.3)
             GameEvents.RunStarted -= OnRunStarted;
             GameEvents.Crashed -= OnCrashed;
             GameEvents.GiftCollected -= OnGift;
@@ -133,6 +135,9 @@ namespace CityScooter.Devices
         }
 
         void OnTurn(int direction) => _hub.Send(Messages.Turn(direction));
+
+        // ---- Districts (v0.3): rare (start of a ride, then every 450+ m), so right away.
+        void OnZone(string districtId) => _hub.Send(Messages.Zone(districtId));
 
         // ---- WA police
         void OnWanted(int stars) => _hub.Send(Messages.Wanted(stars));

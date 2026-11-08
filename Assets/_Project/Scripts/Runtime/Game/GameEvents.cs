@@ -75,6 +75,14 @@ namespace CityScooter.Game
         public static event Action<bool> Landed;
         public static void RaiseAirChanged(bool on) => AirChanged?.Invoke(on);
         public static void RaiseLanded(bool trick) => Landed?.Invoke(trick);
+        // ---- Districts (v0.3)
+        /// <summary>The rider is in a district: at the start of a ride and once per boundary crossing ("zone:&lt;id&gt;").</summary>
+        public static event Action<string> ZoneEntered;
+        public static void RaiseZoneEntered(string districtId) => ZoneEntered?.Invoke(districtId);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetDistrictStatics() => ZoneEntered = null;
+        // ---- end Districts (v0.3)
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()

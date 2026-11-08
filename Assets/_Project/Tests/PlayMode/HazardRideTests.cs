@@ -34,6 +34,7 @@ namespace CityScooter.Tests
             yield return null;
             _game = GameController.Instance;
             Assert.NotNull(_game);
+            ClassicStreet.Use(_game); // v0.3: the comic street as before districts
             _events.Clear();
             GameEvents.PunchLanded += OnKo;
             GameEvents.Warning += OnWarn;

@@ -144,6 +144,28 @@ namespace CityScooter.Gameplay
             return p.magnitude <= (a.x * e.y - a.y * e.x) / den;
         }
 
+        // ---- Districts (v0.3): "Start: UWA (keys 1-7)" under the start prompt; DistrictDirector shows it only on the
+        // start screen (null hides it). Its own text, so the start / again texts above stay as they are.
+        Text _startText;
+        public void SetStartLine(string line)
+        {
+            if (string.IsNullOrEmpty(line))
+            {
+                if (_startText != null && _startText.text.Length > 0) _startText.text = "";
+                return;
+            }
+            if (_startText == null)
+            {
+                if (_centre == null) return;
+                _startText = MakeText((RectTransform)_centre.rectTransform.parent, "StartDistrict", new Vector2(0.5f, 0.5f), new Vector2(0f, -80f), 30, TextAnchor.MiddleCenter, FontStyle.Bold);
+                _startText.color = new Color(1f, 0.85f, 0.2f);
+            }
+            if (_startText.text != line) _startText.text = line;
+        }
+        /// <summary>The start district line shown now ("" when hidden; tests).</summary>
+        public string StartLineText => _startText != null ? _startText.text : "";
+        // ---- end Districts (v0.3)
+
         void UpdatePolice(GameController g)
         {
             PoliceChase chase = g.GetComponent<PoliceChase>();

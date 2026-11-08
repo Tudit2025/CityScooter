@@ -134,6 +134,15 @@ function installFakeSerial() {
   await sleep(100);
   check("crash written to the board with newline", (await ev((i) => window.__serial.ports[i].written, p)) === "crash\n");
   check("game message shown in game colour", (await logText()).some((x) => /cs-l-game/.test(x) && x.includes("crash")));
+  // districts (v0.3): zone:<id> from the game names the district; a board printing zone: is told it is a game message
+  await ev(() => window.CityScooterShell.sendToDevices("*", "zone:kingspark"));
+  await push(p, "zone:uwa\n");
+  await sleep(400);
+  const zlog = await logText();
+  check("zone:kingspark from the game shown with the district name", zlog.some((x) => /cs-l-game/.test(x) && x.includes("zone:kingspark") && x.includes("entering Kings Park")),
+    zlog.filter((x) => /zone/.test(x)).join(" | "));
+  check("zone: from a board is a student print with a hint", zlog.some((x) => /cs-l-print/.test(x) && x.includes("zone:uwa") && /FROM the game/.test(x)),
+    zlog.filter((x) => /zone/.test(x)).join(" | "));
   await page.screenshot({ path: path.join(OUT, "shell_usb.png") });
 
   // silent board: second board sends nothing

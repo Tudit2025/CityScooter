@@ -23,6 +23,12 @@
     ["air:1 (you took off from a ramp!)", "air:1"], ["air:0 (back on the ground)", "air:0"],
     ["land:ok (landed)", "land:ok"], ["land:trick (landed after a trick!)", "land:trick"]];
 
+  // ---- Districts (v0.3): zone:<id> at the start of a ride and when you ride into the next district (route order).
+  const DISTRICTS = [["UWA", "uwa"], ["Matilda Bay", "matilda"], ["Kings Park", "kingspark"], ["West Perth", "westperth"],
+    ["Perth CBD", "cbd"], ["Elizabeth Quay", "quay"], ["Mounts Bay Road", "mountsbay"]];
+  for (const [name, id] of DISTRICTS) MESSAGE_OPTIONS.push(["zone:" + id + " (entering " + name + ")", "zone:" + id]);
+  // ---- end Districts (v0.3)
+
   // Words of your own that the game repeats to every board ("say:party" -> "party").
   const sayWord = (w) => String(w || "").replace(/[^A-Za-z0-9_!?-]/g, "").slice(0, 16) || "party";
 
@@ -81,6 +87,12 @@
     // Ramps and air (v0.3)
     { type: "cs_trick", message0: "do a trick", previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "While you fly off a ramp (the game says air:1): a spin, then a flip, 50 points each, more for 2 in one flight. Land in the middle of one and it is SKETCHY (no points). On the ground it does nothing; sending it in a fast loop makes you dizzy. Python: print(\"trick\")" },
+    // ---- Districts (v0.3)
+    { type: "cs_on_zone", message0: "when entering %1 %2 %3",
+      args0: [{ type: "field_dropdown", name: "ZONE", options: DISTRICTS.map(([name, id]) => [name, id]) },
+        { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "game_blocks",
+      tooltip: "Runs when your ride starts in this part of Perth, and each time you ride into it (UWA, Matilda Bay, Kings Park, West Perth, Perth CBD, Elizabeth Quay, Mounts Bay Road). The game sends zone:<name>, e.g. zone:kingspark." },
   ];
 
   const GENERATORS = {
@@ -103,6 +115,8 @@
     cs_on_wanted: (b) => { MB.setFlag("usesWanted"); MB.addSection("msg:wanted", MB.statements(b, "DO")); return ""; },
     cs_cop: () => { MB.setFlag("usesCop"); return ["police_distance", Order.ATOMIC]; },
     cs_trick: () => 'print("trick")\n',
+    // ---- Districts (v0.3): the same branch as "when the game says zone:<id>" (compact: one elif per district used)
+    cs_on_zone: (b) => { MB.addSection("msg:zone:" + b.getFieldValue("ZONE"), MB.statements(b, "DO")); return ""; },
   };
 
   const MESSAGES_HELPER = [
@@ -131,7 +145,8 @@
     blocks: BLOCKS,
     generators: GENERATORS,
     reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance",
-    isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted",
+    isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted"
+      || type === "cs_on_zone", // ---- Districts (v0.3)
     // wanted_level / police_distance only when a block uses them, so Lesson 1 programs look the same as before.
     globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
       ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null].filter(Boolean),
@@ -174,6 +189,7 @@
         blk("cs_on_wanted"), blk("cs_wanted"), blk("cs_cop"), blk("cs_surrender"),
         blk("cs_do"), blk("cs_stars", { inputs: { N: num(1) } }), blk("cs_say"), blk("cs_on_word"),
         blk("cs_on_message", { fields: { MSG: "air:1" } }), blk("cs_trick"), // ramps and air (v0.3)
+        blk("cs_on_zone", { fields: { ZONE: "kingspark" } }), // ---- Districts (v0.3)
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

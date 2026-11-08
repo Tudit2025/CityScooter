@@ -107,7 +107,14 @@ MonoBehaviour:
   bangPopup: {fileID: 5766073859980331930, guid: cf060ac9731864649afd2f6043353a91, type: 3}
   dustPopup: {fileID: 2704699411109644269, guid: f503f754b9bf4bc4b878e01d07bac9e2, type: 3}
   screechPopup: {fileID: 6138536283774010665, guid: 4b9992d6b8d317e4a95cdb963ef214f3, type: 3}
-  districts: []
+  districts:
+  - {fileID: 11400000, guid: 0ea5a843f40a8664384e46cdf9afa3a2, type: 2}
+  - {fileID: 11400000, guid: 7affd68c0e03c614986c4bd733100bb2, type: 2}
+  - {fileID: 11400000, guid: e232f72c15b8d2f45a94670eab323e46, type: 2}
+  - {fileID: 11400000, guid: 64fffa1dba6f9304394dbd288cd37e6a, type: 2}
+  - {fileID: 11400000, guid: 56de9769cfc5d16419a019e63351af71, type: 2}
+  - {fileID: 11400000, guid: 81133b00724c79847850e371036f4b7a, type: 2}
+  - {fileID: 11400000, guid: 6a0634cef43ed2f4380576293131f5af, type: 2}
   ramps:
   - {fileID: 6008180276453059417, guid: da5a276b28583f546b8236833ae9c102, type: 3}
   - {fileID: 1138295221086410786, guid: 1155d2a9ad4829143a5273b528387d70, type: 3}

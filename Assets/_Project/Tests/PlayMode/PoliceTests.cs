@@ -48,12 +48,14 @@ namespace CityScooter.Tests
             _calm.giftChance = 0f;
             _calm.sidewalkPeople = Vector2.zero;
             _calm.fakeTurns = false;
+            _calm.districts = false; // v0.3: the comic street as before districts
             tune?.Invoke(_calm);
             _game.tuning = _calm;
             _game.rider.tuning = _calm;
             _game.track.tuning = _calm;
             FakeTurnDirector turns = _game.GetComponent<FakeTurnDirector>();
             if (turns != null) turns.tuning = _calm;
+            _game.EnterReady(); // v0.3: rebuild the street with the calm tuning (no districts)
             _sent.Clear();
             _sentAt.Clear();
             DeviceHub.Instance.LineSent += OnSent;

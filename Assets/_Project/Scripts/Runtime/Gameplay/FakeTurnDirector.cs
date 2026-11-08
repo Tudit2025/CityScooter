@@ -37,6 +37,9 @@ namespace CityScooter.Gameplay
         public int Direction => Amount > 0.35f ? 1 : Amount < -0.35f ? -1 : 0;
         /// <summary>Sideways push on the rider in m/s (towards the outside of the turn).</summary>
         public float Drift { get; private set; }
+        /// <summary>Extra sky heading in radians on top of <see cref="Heading"/> (DistrictDirector: which way each
+        /// district's road really runs). Only the sky uses it; the road bend does not.</summary>
+        public float SkyOffset { get; set; }
         /// <summary>Turns ahead (and the one being ridden), nearest first.</summary>
         public IReadOnlyList<Turn> Planned => _plan;
 
@@ -147,7 +150,8 @@ namespace CityScooter.Gameplay
             int level = rider != null ? T.DifficultyLevel(rider.Distance) : 0;
             Drift = running && level >= T.turnDriftMinLevel ? -Amount * T.turnDrift * T.lateralMaxSpeed : 0f;
 
-            Shader.SetGlobalVector(TurnId, _plan.Count > 0 ? new Vector4(_plan[0].Curvature, _plan[0].Start, _plan[0].End, Heading) : new Vector4(0f, 0f, 0f, Heading));
+            float sky = Heading + SkyOffset;
+            Shader.SetGlobalVector(TurnId, _plan.Count > 0 ? new Vector4(_plan[0].Curvature, _plan[0].Start, _plan[0].End, sky) : new Vector4(0f, 0f, 0f, sky));
             Shader.SetGlobalVector(NextTurnId, _plan.Count > 1 ? new Vector4(_plan[1].Curvature, _plan[1].Start, _plan[1].End, 0f) : Vector4.zero);
         }
 

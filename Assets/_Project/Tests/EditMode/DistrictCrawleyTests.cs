@@ -72,7 +72,8 @@ namespace CityScooter.Tests
             Assert.NotNull(d.farScenery, "far scenery");
             Assert.IsEmpty(d.farScenery.GetComponentsInChildren<Collider>(true), "far scenery has no colliders");
             Assert.IsNull(d.farScenery.GetComponentInChildren<Obstacle>(true));
-            Assert.IsNull(d.gateway, "system A makes the generic gateway sign");
+            // The generic gateway sign comes from DistrictSetup (GW_<Id>): empty before it ran, its sign after.
+            Assert.IsTrue(d.gateway == null || d.gateway.name.StartsWith("GW_"), "gateway: empty or the generic sign from DistrictSetup");
             foreach (Color c in new[] { d.fogColor, d.ambientSky, d.ambientEquator, d.ambientGround, d.sunColor, d.skyTint })
                 Assert.AreEqual(1f, c.a, 1e-4f, "opaque look colours");
             Assert.That(d.sunIntensity, Is.InRange(.8f, 2f));

@@ -105,6 +105,9 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("cs_on_message", { x: 2500, y: 10, fields: { MSG: "air:1" }, inputs: { DO: chain(B("cs_trick"), B("mb_print", { inputs: { VALUE: t("in the air") } })) } }),
   B("cs_on_message", { x: 2500, y: 140, fields: { MSG: "land:trick" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("trick landed") } }),
     B("cs_do", { fields: { EVENT: "ramp" } })) } }),
+  // districts (v0.3): when entering Kings Park, and the same message from the "when the game says" list
+  B("cs_on_zone", { x: 2500, y: 300, fields: { ZONE: "kingspark" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("in kings park") } })) } }),
+  B("cs_on_message", { x: 2500, y: 420, fields: { MSG: "zone:quay" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "HAPPY" } })) } }),
   B("cs_on_speed", { x: 500, y: 540, inputs: { DO: chain(B("mb_clear"),
     B("controls_for", { fields: { VAR: { id: "v2" } }, inputs: { FROM: n(0), TO: n(4), BY: n(1), DO: chain(B("mb_plot", { inputs: {
       X: val(B("variables_get", { fields: { VAR: { id: "v2" } } })), Y: n(4), B: val(B("cs_speed")) } })) } }),
@@ -185,6 +188,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
     'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:',
     'msg == "air:1"', 'print("trick")', 'msg == "land:trick"', 'print("do:ramp")',
+    'msg == "zone:kingspark"', 'msg == "zone:quay"',
     "count = (count if type(count) in (int, float) else 0) + 1"]) {
     check("all blocks make: " + want, allPy.includes(want));
   }
@@ -212,7 +216,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(120); await page.keyboard.press("a"); await sleep(300); // 3 quick presses
     await page.keyboard.down("b"); await sleep(1400); await page.keyboard.up("b"); await sleep(400); // a long press of B
     await page.keyboard.down("m"); await page.keyboard.down("l"); await sleep(600); await page.keyboard.up("m"); await page.keyboard.up("l");
-    for (const m of ["spd:5", "crash", "gift", "go", "party", "warn:ped", "ko", "ko", "ko", "turn:-1", "spd:rn:car", "wanted:oops", "spd:9"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
+    for (const m of ["spd:5", "crash", "gift", "go", "party", "warn:ped", "ko", "ko", "ko", "turn:-1", "spd:rn:car", "wanted:oops", "spd:9", "zone:uwa", "zone:kingspark"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     // police messages; no sur before the police car is close (cop:9 is far)
     for (const m of ["chase:1", "wanted:3", "cop:9", "inc:C"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     const surBefore = await ev((n) => window.__fakeUnity.lines.slice(n).filter((l) => l === "sim|sur").length, before);
@@ -244,6 +248,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": gift broadcasts party, both listeners run", log.some((x) => x.includes("party time")) && log.some((x) => x.includes("second listener")), log.filter((x) => /party|listener/.test(x)).slice(-3).join(" | "));
     check(label + ": 3rd quick press runs the 3-times block", log.some((x) => x.includes("presses 3")), log.filter((x) => /presses/.test(x)).slice(-3).join(" | "));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));
+    check(label + ": zone:kingspark runs the when entering Kings Park block (once)", log.filter((x) => x.includes("in kings park")).length === 1, log.filter((x) => /zone|kings/.test(x)).slice(-3).join(" | "));
     return lines;
   }
   const v2 = await runInSim(allPy, "all blocks on V2");

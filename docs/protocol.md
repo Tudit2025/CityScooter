@@ -52,6 +52,7 @@ USB 串口波特率 115200。v0 只用于 USB 直连和模拟器；无线（radi
 | `air:1` / `air:0` | **v0.3 跳台** 从跳台飞起来了 / 落地了（或者在空中撞车、掉进水里，这时 `air:0` 在 `crash` 前面）。每次飞行各发一次。普通跳（`jp`）只飞 0.65 秒，**不发**；只有从跳台起飞，或者预计能飞 0.8 秒以上的（比如在高平台上起跳）才发（`GameTuning.airMessageMinSeconds`） |
 | `land:ok` / `land:trick` | **v0.3 跳台** 安全落地，紧跟在 `air:0` 后面：这次飞行里至少做完 1 个特技是 `land:trick`，否则 `land:ok`。掉进缺口（SPLASH!）、落在车上撞车时没有 `land:` |
 | `lost` | **v1 警察** 甩掉警察了（LOST THEM!）：星级掉到 0。加分只算打警察挣来的星（每颗 100），`do:stars` 这类程序给的星不加分 |
+| `zone:uwa` … | **v0.3 场景** 你在哪个场景（沿 UWA → 珀斯市中心的真实骑行线）：一局开始时在 `go` 后面发一次出发的场景，之后每骑进下一个场景发一次（几百米一次，很少）。id 按路线顺序：`uwa`（UWA）、`matilda`（Matilda Bay）、`kingspark`（Kings Park）、`westperth`（West Perth）、`cbd`（Perth CBD）、`quay`（Elizabeth Quay）、`mountsbay`（Mounts Bay Road），走完再回到 `uwa`。只有小写字母。屏幕上同时显示 `ENTERING KINGS PARK` |
 
 键盘对应：`F` 出拳，`R` 按铃，`E` 加速，`T` 卡通模式开/关，`Q` 特技（v0.3；外壳关掉键盘时这些键都不起作用，板子发的 `trick` 照样有效）。
 
@@ -72,6 +73,12 @@ USB 串口波特率 115200。v0 只用于 USB 直连和模拟器；无线（radi
 - 卡通模式：每撞飞一个人花 1 个礼物；没有礼物时撞人就是撞车。
 - 加速：冷却 6 秒。
 - 最好的写法是收到 `warn:` 再出手，而不是放进 forever 里一直发。（`B` 在所有提示里都是板子上的刹车键，所以按铃不用 B）。
+
+**场景消息（v0.3）：**
+- `zone:` 只有游戏发，板子发了游戏不理（网页的串口监视器会提示"这是游戏发的消息"）。`say:zone:uwa` 也不行（带冒号）。
+- 主题里只有一个场景时没有交界，只在开局发一次。
+- 积木"when entering [Kings Park]"，或者"when the game says"里的 `zone:kingspark`，生成的都是一个 `elif msg == "zone:kingspark":` 分支，V1 也放得下。
+- 开局画面显示出发场景（"Start: UWA"）。键盘开着时按数字键 1～7 换出发场景（老师演示用）；键盘关掉时（只用 micro:bit）不提数字键，按了也没用。默认出发场景在 `GameTuning.startDistrict`。
 
 ### 学生代码必须先攒到换行再处理
 
@@ -114,4 +121,4 @@ except ImportError:
 
 ## 以后再加（不在 v1）
 
-护盾 `sh`、加速 `bo`、油门 `th:0..100`、遥测 `pl:名字:数值`（画到游戏里的曲线面板）、路段事件 `zone:tunnel`、无线 radio 版（组号、频段、玩家编号）。
+护盾 `sh`、加速 `bo`、油门 `th:0..100`、遥测 `pl:名字:数值`（画到游戏里的曲线面板）、无线 radio 版（组号、频段、玩家编号）。
