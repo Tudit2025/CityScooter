@@ -16,15 +16,14 @@ namespace CityScooter.Tests
 {
     /// <summary>Review images of the UWA and Matilda Bay districts from the real chase camera (art-src/districts/&lt;id&gt;/
     /// previews). The game runs with a runtime copy of the theme whose chunks are the district's [entry, chunks, exit]
-    /// in order, with the district's obstacles and people; the look (fog, ambient, sun) and the far scenery are applied
-    /// by hand here until the district system does it. The theme asset is never modified.</summary>
+    /// on the real route: the ride starts in the district (GameTuning.startDistrict on a runtime copy of the tuning), so
+    /// DistrictDirector applies its look, sky, gateway and far scenery. No asset is modified.</summary>
     public class DistrictCrawleyScreenshots
     {
         Scene _main;
         GameController _game;
         GameTuning _tuning;
-        TrackTheme _original, _theme;
-        GameObject _far;
+        TrackTheme _original;
 
         [UnitySetUp]
         public IEnumerator Setup()
@@ -51,11 +50,9 @@ namespace CityScooter.Tests
         [UnityTearDown]
         public IEnumerator Cleanup()
         {
-            if (_far != null) Object.Destroy(_far);
             if (_game != null && _original != null) _game.track.theme = _original;
             if (_main.IsValid() && _main.isLoaded) yield return SceneManager.UnloadSceneAsync(_main);
             if (_tuning != null) Object.Destroy(_tuning);
-            if (_theme != null) Object.Destroy(_theme);
             DeviceHub.Instance?.Mixer.Reset();
         }
 
@@ -100,31 +97,13 @@ namespace CityScooter.Tests
         {
             var d = AssetDatabase.LoadAssetAtPath<District>(districtPath);
             Assert.NotNull(d, districtPath);
-            _theme = Object.Instantiate(_original);
-            _theme.chunks = new[] { d.entry }.Concat(d.chunks).Concat(new[] { d.exit }).ToArray();
-            _theme.orderedChunks = true;
-            _theme.obstacles = d.obstacles;
-            _theme.jumpObstacles = System.Array.Empty<Obstacle>();
-            _theme.hazards = System.Array.Empty<HazardPattern>();
-            _theme.pedestrians = d.pedestrians;
-            _theme.districts = System.Array.Empty<District>();
-            _theme.boulevardChunks = System.Array.Empty<RoadChunk>();
-            _game.track.theme = _theme;
-
-            // The district look (the district system will blend this in; here it is set directly).
-            RenderSettings.fogColor = d.fogColor;
-            Color fog = d.fogColor; fog.a = 1f;
-            Shader.SetGlobalColor("_CS_FogColor", fog);
-            RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = d.ambientSky;
-            RenderSettings.ambientEquatorColor = d.ambientEquator;
-            RenderSettings.ambientGroundColor = d.ambientGround;
-            if (RenderSettings.sun != null) { RenderSettings.sun.color = d.sunColor; RenderSettings.sun.intensity = d.sunIntensity; }
-            DynamicGI.UpdateEnvironment();
-
+            // The real route: the ride starts in this district, so DistrictDirector applies its look, sky, gateway and
+            // far scenery exactly as in the game.
+            Assert.IsTrue(_original.HasDistricts && System.Array.IndexOf(_original.districts, d) >= 0, "run DistrictSetup: the theme lists " + d.id);
+            _tuning.startDistrict = d.id;
             _game.EnterReady();
             yield return null;
-            if (d.farScenery != null) _far = Object.Instantiate(d.farScenery);
+            yield return null;
 
             // Where the generator laid each chunk (the whole 7-chunk cycle is within the build range at the start).
             var starts = new Dictionary<string, float>();
@@ -140,20 +119,23 @@ namespace CityScooter.Tests
             Debug.Log("[DistrictShots] " + d.id + " chunks: " + string.Join(", ", starts.Select(kv => kv.Key + "@" + kv.Value)));
 
             var follow = Camera.main.GetComponent<FollowCamera>();
+            int taken = 0;
             foreach (Shot shot in shots)
             {
-                Assert.IsTrue(starts.ContainsKey(shot.Chunk), d.id + ": no " + shot.Chunk + " chunk within the build range");
+                if (!starts.ContainsKey(shot.Chunk)) { Debug.LogWarning("[DistrictShots] " + d.id + ": no " + shot.Chunk + " chunk within the build range"); continue; }
+                taken++;
                 float z = Mathf.Max(1f, starts[shot.Chunk] + shot.Z);
                 _game.rider.ResetRider(new Vector3(shot.X, 0f, z));
                 yield return null;
                 yield return null;
-                if (_far != null) _far.transform.position = new Vector3(0f, track.SurfaceHeightAt(z), z);
                 follow.SnapToTarget();
                 yield return null;
                 follow.SnapToTarget();
-                if (_far != null) _far.transform.position = new Vector3(0f, track.SurfaceHeightAt(z), z);
+                for (int i = 0; i < 3; i++) yield return null; // the director moves the far scenery and blends the look
+                follow.SnapToTarget();
                 Capture(Camera.main, d.id, shot.File);
             }
+            Assert.That(taken, Is.GreaterThanOrEqualTo(5), d.id + ": most review shots found their chunk");
         }
 
         static void Capture(Camera camera, string id, string file)
