@@ -110,17 +110,19 @@ namespace CityScooter.Tests
         [UnityTest, Explicit("Renders review images of PERTH CBD and ELIZABETH QUAY into art-src/districts/<id>/previews")]
         public IEnumerator Screenshots_CbdAndQuay_FromTheChaseCamera()
         {
-            // PERTH CBD: Entry, Terrace, TownHall, MallArcade, MallShops, Plaza, CarPark, Exit (40 m each).
+            // PERTH CBD: Entry, Widen, Terrace, TownHall, Plaza, CarPark, Narrow, MallArcade, MallShops, Exit (40 m each).
             District cbd = Load("Assets/_Project/Data/Districts/District_CBD.asset");
             float s = Ride(cbd);
             float C(int chunk, float local) => s + chunk * 40f + local;
             yield return Shot("cbd", "01-entry.png", 0f, C(0, 2f));
-            yield return Shot("cbd", "02-terrace.png", 1.5f, C(1, 0f));
-            yield return Shot("cbd", "03-town-hall.png", 1.5f, C(1, 6f));
-            yield return Shot("cbd", "04-hay-street-mall.png", 0f, C(3, 0f));
-            yield return Shot("cbd", "05-mall-sidewalk.png", -5.5f, C(3, 22f));
-            yield return Shot("cbd", "06-plaza-towers.png", 1f, C(5, 2f));
-            yield return Shot("cbd", "07-car-park-kicker.png", -2.6f, C(6, 0f));
+            yield return Shot("cbd", "02-widening.png", 1.5f, C(1, 0f));
+            yield return Shot("cbd", "03-terrace-4-lanes.png", 2f, C(2, 0f));
+            yield return Shot("cbd", "04-town-hall.png", -2f, C(2, 10f));
+            yield return Shot("cbd", "05-plaza-towers.png", 2f, C(4, 2f));
+            yield return Shot("cbd", "06-car-park-kicker.png", -6f, C(5, 0f));
+            yield return Shot("cbd", "07-narrowing.png", 0f, C(6, 0f));
+            yield return Shot("cbd", "08-hay-street-mall.png", 0f, C(7, 0f));
+            yield return Shot("cbd", "09-mall-sidewalk.png", -5.5f, C(7, 22f));
 
             // ELIZABETH QUAY: Entry, Promenade, BellTower, Bridge, Spanda, Inlet, Exit.
             District quay = Load("Assets/_Project/Data/Districts/District_Quay.asset");

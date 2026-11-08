@@ -17,16 +17,18 @@ MonoBehaviour:
   order: 50
   length: {x: 480, y: 640}
   chunks:
+  - {fileID: 3045585384574955647, guid: a98f7ea830fff864da250f93d7d3ed86, type: 3}
   - {fileID: 1552585047098679710, guid: e0c5ea7b76ff27b41bf3a411e0505c09, type: 3}
   - {fileID: 3316886743491673634, guid: eefbb7d1dc93a6342837f9c81b451b8f, type: 3}
-  - {fileID: 9153950767318188957, guid: c118e46cb2ca7b64383850fbb3e013ee, type: 3}
-  - {fileID: 2353761460489630496, guid: 0f988958c97a56a4686ca51c162fd06d, type: 3}
   - {fileID: 6471803498328572513, guid: 11406f850aacee14f956d2c86f83ed83, type: 3}
   - {fileID: 6881607737356257674, guid: 3790e09d02f73ca49b2167f026f24271, type: 3}
+  - {fileID: 8389086171063174890, guid: c38b85deffce05f448030b36bb0b1e80, type: 3}
+  - {fileID: 9153950767318188957, guid: c118e46cb2ca7b64383850fbb3e013ee, type: 3}
+  - {fileID: 2353761460489630496, guid: 0f988958c97a56a4686ca51c162fd06d, type: 3}
   orderedChunks: 1
   entry: {fileID: 1179748422816541349, guid: eba0d287d4053ca498696701858fd038, type: 3}
   exit: {fileID: 5271302885337421999, guid: 754da8f7f8c6e194583e642f19959e2c, type: 3}
-  allowBoulevard: 1
+  allowBoulevard: 0
   obstacles:
   - {fileID: 5475644072903381760, guid: c496068eedf870141be539ff37817d7d, type: 3}
   - {fileID: 2012374524003700131, guid: c8a81388d2674de43995a5955ab2048d, type: 3}
@@ -51,9 +53,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
   - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
   - {fileID: 11400000, guid: 6e7c690878e1b4c4eaae50a5a0d90a33, type: 2}
+  - {fileID: 11400000, guid: 23c9119795600ab4fbfe696b42d06ef5, type: 2}
+  - {fileID: 11400000, guid: 601a8832cac40734c85f6ec5d5b79f34, type: 2}
+  - {fileID: 11400000, guid: 8a1ea48e340ebae4cbf52c6fc08ddc86, type: 2}
+  - {fileID: 11400000, guid: a3464f8b7be0b2b43a35c7cdb3a92b23, type: 2}
+  - {fileID: 11400000, guid: e561799573c327843bdb9dc598e642eb, type: 2}
   - {fileID: 11400000, guid: eda3cd239fb42414298f4dfdcc11d28c, type: 2}
   - {fileID: 11400000, guid: 6f05f28e5f36e7e4b875834836833224, type: 2}
   - {fileID: 11400000, guid: ca3d6985192101448a9a1ea8d5f7473a, type: 2}
+  - {fileID: 11400000, guid: 9eec7d20b992b334ea31bc42b6457175, type: 2}
   pedestrians:
   - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}
   - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}

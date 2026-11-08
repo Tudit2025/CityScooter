@@ -117,7 +117,7 @@ Transform:
   m_GameObject: {fileID: 722826806356978958}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 16, y: 12.890434, z: 23}
+  m_LocalPosition: {x: 20, y: 12.890434, z: 23}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -170,7 +170,7 @@ Transform:
   m_GameObject: {fileID: 966905400473580204}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -20, y: 13.598526, z: 14}
+  m_LocalPosition: {x: -24, y: 13.598526, z: 14}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -226,15 +226,17 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5464978756045047580}
-  - {fileID: 4015863078873883229}
-  - {fileID: 7794771727780847161}
-  - {fileID: 1731234710814684085}
-  - {fileID: 5206108332646571004}
-  - {fileID: 2071740770481575844}
+  - {fileID: 2844436813081376480}
+  - {fileID: 4943057931191810912}
+  - {fileID: 2503389241846780736}
+  - {fileID: 6475006415141956239}
+  - {fileID: 347217947507863455}
+  - {fileID: 7950908157008399928}
+  - {fileID: 7342070762371700367}
+  - {fileID: 470050608833459694}
   m_Father: {fileID: 4298438227606852574}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1410204426808043112
+--- !u!1 &1293901836982930805
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -242,37 +244,82 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5206108332646571004}
-  - component: {fileID: 496468629169019332}
+  - component: {fileID: 4943057931191810912}
+  - component: {fileID: 862520772801708669}
   m_Layer: 0
-  m_Name: Row25_Lane0
+  m_Name: Row10_Lane-2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5206108332646571004
+--- !u!4 &4943057931191810912
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1410204426808043112}
+  m_GameObject: {fileID: 1293901836982930805}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.9669182, z: 25}
+  m_LocalPosition: {x: -2, y: -0.7867673, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4687006645051215760}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &496468629169019332
+--- !u!114 &862520772801708669
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1410204426808043112}
+  m_GameObject: {fileID: 1293901836982930805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
+  kind: 0
+--- !u!1 &1536604139610273625
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 470050608833459694}
+  - component: {fileID: 4669485757551642737}
+  m_Layer: 0
+  m_Name: Row25_Lane6
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &470050608833459694
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1536604139610273625}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 6, y: -1.9669182, z: 25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4687006645051215760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4669485757551642737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1536604139610273625}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
@@ -305,7 +352,7 @@ Transform:
   m_GameObject: {fileID: 1980099318775730510}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15, y: 12.103668, z: 33}
+  m_LocalPosition: {x: -19, y: 12.103668, z: 33}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -423,7 +470,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &2994504970659339833
+--- !u!1 &2490687680767111270
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -431,82 +478,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1731234710814684085}
-  - component: {fileID: 6183347085054463679}
+  - component: {fileID: 2844436813081376480}
+  - component: {fileID: 2480414862604284807}
   m_Layer: 0
-  m_Name: Row25_Lane-2.6
+  m_Name: Row10_Lane-6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1731234710814684085
+--- !u!4 &2844436813081376480
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2994504970659339833}
+  m_GameObject: {fileID: 2490687680767111270}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.6, y: -1.9669182, z: 25}
+  m_LocalPosition: {x: -6, y: -0.7867673, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4687006645051215760}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6183347085054463679
+--- !u!114 &2480414862604284807
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2994504970659339833}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
-  kind: 0
---- !u!1 &3443902009345308579
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4015863078873883229}
-  - component: {fileID: 921559633859648847}
-  m_Layer: 0
-  m_Name: Row10_Lane0
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4015863078873883229
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3443902009345308579}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.7867673, z: 10}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4687006645051215760}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &921559633859648847
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3443902009345308579}
+  m_GameObject: {fileID: 2490687680767111270}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
@@ -719,7 +721,7 @@ Transform:
   m_GameObject: {fileID: 4324272215243123299}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15, y: 11.946314, z: 35}
+  m_LocalPosition: {x: 19, y: 11.946314, z: 35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -746,7 +748,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 14, y: 31, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &4652115962227331708
+--- !u!1 &4327350633953537251
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -754,127 +756,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5464978756045047580}
-  - component: {fileID: 7979180640444788445}
+  - component: {fileID: 2503389241846780736}
+  - component: {fileID: 3180523194945041965}
   m_Layer: 0
-  m_Name: Row10_Lane-2.6
+  m_Name: Row10_Lane2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5464978756045047580
+--- !u!4 &2503389241846780736
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4652115962227331708}
+  m_GameObject: {fileID: 4327350633953537251}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.6, y: -0.7867673, z: 10}
+  m_LocalPosition: {x: 2, y: -0.7867673, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4687006645051215760}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7979180640444788445
+--- !u!114 &3180523194945041965
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4652115962227331708}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
-  kind: 0
---- !u!1 &5568851701265837360
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2071740770481575844}
-  - component: {fileID: 1924986082603138287}
-  m_Layer: 0
-  m_Name: Row25_Lane2.6
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2071740770481575844
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5568851701265837360}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.6, y: -1.9669182, z: 25}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4687006645051215760}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1924986082603138287
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5568851701265837360}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
-  kind: 0
---- !u!1 &6444579809786253003
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7794771727780847161}
-  - component: {fileID: 2814801766830714356}
-  m_Layer: 0
-  m_Name: Row10_Lane2.6
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7794771727780847161
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6444579809786253003}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.6, y: -0.7867673, z: 10}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4687006645051215760}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2814801766830714356
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6444579809786253003}
+  m_GameObject: {fileID: 4327350633953537251}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
@@ -971,6 +883,51 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6819410295297220714
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7342070762371700367}
+  - component: {fileID: 2258726121992568449}
+  m_Layer: 0
+  m_Name: Row25_Lane2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7342070762371700367
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6819410295297220714}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2, y: -1.9669182, z: 25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4687006645051215760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2258726121992568449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6819410295297220714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
+  kind: 0
 --- !u!1 &7373541694352201510
 GameObject:
   m_ObjectHideFlags: 0
@@ -997,7 +954,7 @@ Transform:
   m_GameObject: {fileID: 7373541694352201510}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 16, y: 14.070585, z: 8}
+  m_LocalPosition: {x: 20, y: 14.070585, z: 8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1024,6 +981,141 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 16, y: 31, z: 16}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &7482442293835487992
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 347217947507863455}
+  - component: {fileID: 7211022331738296186}
+  m_Layer: 0
+  m_Name: Row25_Lane-6
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &347217947507863455
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7482442293835487992}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6, y: -1.9669182, z: 25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4687006645051215760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7211022331738296186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7482442293835487992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
+  kind: 0
+--- !u!1 &7961544920977153456
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6475006415141956239}
+  - component: {fileID: 5378951108935425649}
+  m_Layer: 0
+  m_Name: Row10_Lane6
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6475006415141956239
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7961544920977153456}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 6, y: -0.7867673, z: 10}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4687006645051215760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5378951108935425649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7961544920977153456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
+  kind: 0
+--- !u!1 &7995373460767419355
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7950908157008399928}
+  - component: {fileID: 1198558244571102691}
+  m_Layer: 0
+  m_Name: Row25_Lane-2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7950908157008399928
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995373460767419355}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2, y: -1.9669182, z: 25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4687006645051215760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1198558244571102691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7995373460767419355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f82f7d5635be71f47a3fdfe7145c70f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
+  kind: 0
 --- !u!1 &8062768399080079997
 GameObject:
   m_ObjectHideFlags: 0
@@ -1114,7 +1206,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.RoadChunk
   length: 40
   endHeight: -3.1470692
-  halfWidth: 4
+  halfWidth: 8
   sidewalkWidth: 4
   sidewalkHeight: 0.2
   curbTransitionWidth: 0.3
@@ -1142,55 +1234,55 @@ MonoBehaviour:
   collisionLayouts:
   - obstacles:
     - id: PlaneTree
-      position: {x: -10.2, y: -1.7275798, z: 24.5}
+      position: {x: -14.2, y: -1.7275798, z: 24.5}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 1.7, z: 0}
       size: {x: 0.4, y: 3.4, z: 0.4}
       canJumpOver: 0
     - id: Bench
-      position: {x: -7.3, y: -0.9014743, z: 14}
+      position: {x: -11.3, y: -0.9014743, z: 14}
       rotation: {x: 0, y: 90, z: 0}
       centre: {x: 0, y: 0.5, z: 0}
       size: {x: 2, y: 1, z: 0.8}
       canJumpOver: 1
     - id: PlaneTree
-      position: {x: 4.95, y: -0.11470692, z: 4}
+      position: {x: 8.95, y: -0.11470692, z: 4}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 1.7, z: 0}
       size: {x: 0.4, y: 3.4, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
-      position: {x: 4.95, y: -1.0588276, z: 16}
+      position: {x: 8.95, y: -1.0588276, z: 16}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 1.7, z: 0}
       size: {x: 0.4, y: 3.4, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
-      position: {x: 4.95, y: -2.0029485, z: 28}
+      position: {x: 8.95, y: -2.0029485, z: 28}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 1.7, z: 0}
       size: {x: 0.4, y: 3.4, z: 0.4}
       canJumpOver: 0
     - id: StreetLamp
-      position: {x: 4.55, y: -1.5308881, z: 22}
+      position: {x: 8.55, y: -1.5308881, z: 22}
       rotation: {x: 0, y: -90, z: 0}
       centre: {x: 0, y: 2.5, z: 0}
       size: {x: 0.35, y: 5, z: 0.35}
       canJumpOver: 0
     - id: StreetLamp
-      position: {x: -4.55, y: -2.3176553, z: 32}
+      position: {x: -8.55, y: -2.3176553, z: 32}
       rotation: {x: 0, y: 90, z: 0}
       centre: {x: 0, y: 2.5, z: 0}
       size: {x: 0.35, y: 5, z: 0.35}
       canJumpOver: 0
     - id: TrafficLight
-      position: {x: -4.45, y: 0.12132327, z: 1}
+      position: {x: -8.45, y: 0.12132327, z: 1}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 1.8, z: 0}
       size: {x: 0.3, y: 3.6, z: 0.3}
       canJumpOver: 0
     - id: TrafficLight
-      position: {x: 4.45, y: 0.12132327, z: 1}
+      position: {x: 8.45, y: 0.12132327, z: 1}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 1.8, z: 0}
       size: {x: 0.3, y: 3.6, z: 0.3}
@@ -1311,7 +1403,7 @@ Transform:
   m_GameObject: {fileID: 9006099352940326255}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -19, y: 14.621323, z: 1}
+  m_LocalPosition: {x: -23, y: 14.621323, z: 1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

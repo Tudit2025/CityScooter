@@ -15,7 +15,7 @@ MonoBehaviour:
   entries:
   - prefab: {fileID: 4659631116241668574, guid: 84a244cb9f2bd0d4d83e3e13471641bb, type: 3}
     mirrorPrefab: {fileID: 0}
-    x: -2
+    x: -6
     z: 50
     yaw: 0
   length: 100
@@ -27,4 +27,4 @@ MonoBehaviour:
   turnStrength: 0.8
   turnSeconds: 4
   meetAtZ: 50
-  roadHalfWidth: 4
+  roadHalfWidth: 8
