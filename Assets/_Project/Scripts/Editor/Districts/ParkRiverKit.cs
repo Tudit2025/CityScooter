@@ -238,149 +238,217 @@ namespace CityScooter.EditorTools.Districts
 
         // ------------------------------------------------------------------ plants and things (upright, base at p)
 
-        /// <summary>Lemon-scented gum: tall smooth cream-white trunk, a high fork, sparse olive canopy clumps.</summary>
+        // Like ComicKitGeometry's Plant(): a faceted low-poly blob and a smaller, lighter one on top of it (two tones).
+        public static void Plant(ComicMesh m, Vector3 c, float size, Color dark, Color light)
+        {
+            m.Surface = ComicSurface.Foliage;
+            m.Ellipsoid(c, V(size, size * .7f, size), dark);
+            m.Ellipsoid(c + V(size * .23f, size * .15f, 0f), V(size * .65f, size * .6f, size * .65f), light);
+        }
+
+        /// <summary>An 8-sided round rod from a to b (limbs, stems, rails): closed, never a plank.</summary>
+        public static void Rod(ComicMesh m, Vector3 a, Vector3 b, float radius, Color color, float topScale = 1f, int sides = 8)
+        {
+            Vector3 d = b - a;
+            if (d.sqrMagnitude < 1e-6f) return;
+            m.Cylinder((a + b) * .5f, radius, d.magnitude, color, sides, topScale, Quaternion.FromToRotation(Vector3.up, d.normalized));
+        }
+
+        /// <summary>A closed box between z0 and z1 whose bottom / top heights change along z (sloped deck pieces, rails).</summary>
+        public static void SlopeBox(ComicMesh m, float x0, float x1, float z0, float z1, float b0, float t0, float b1, float t1, Color c)
+        {
+            Face(m, V(x0, t0, z0), V(x0, t1, z1), V(x1, t1, z1), V(x1, t0, z0), c, Vector3.up);
+            Face(m, V(x0, b0, z0), V(x0, b1, z1), V(x1, b1, z1), V(x1, b0, z0), c, Vector3.down);
+            Face(m, V(x0, b0, z0), V(x0, b1, z1), V(x0, t1, z1), V(x0, t0, z0), c, Vector3.left);
+            Face(m, V(x1, b0, z0), V(x1, b1, z1), V(x1, t1, z1), V(x1, t0, z0), c, Vector3.right);
+            Face(m, V(x0, b0, z0), V(x1, b0, z0), V(x1, t0, z0), V(x0, t0, z0), c, Vector3.back);
+            Face(m, V(x0, b1, z1), V(x1, b1, z1), V(x1, t1, z1), V(x0, t1, z1), c, Vector3.forward);
+        }
+
+        /// <summary>
+        /// Lemon-scented gum, built like the kit's street tree: navy ink root ring, a tall smooth cream-white 8-sided trunk
+        /// (slightly tapered, slight lean), two 8-sided limbs from a high fork, and sparse high olive blob clusters (two
+        /// tones). cheap = background version (6 sides, no ring, one cluster).
+        /// </summary>
         public static void Gum(ComicMesh m, Vector3 p, float h, int seed, bool cheap = false)
         {
             var r = Rng(seed);
-            float trunkH = h * F(r, .52f, .62f), r0 = .16f + .022f * h;
+            float trunkH = h * F(r, .52f, .6f), r0 = .2f + .02f * h;
             Quaternion q = Quaternion.Euler(F(r, -3f, 3f), 0f, F(r, -4f, 4f));
-            m.Surface = ComicSurface.Plaster;
-            m.Cylinder(p + q * V(0, trunkH * .5f, 0), r0, trunkH, GumBark, cheap ? 4 : 6, .62f, q);
-            Vector3 top = p + q * V(0, trunkH, 0);
             if (!cheap)
             {
-                float a0 = F(r, 0f, 360f);
-                m.Box(p + q * V(0, trunkH * F(r, .25f, .45f), 0) + Quaternion.Euler(0, a0, 0) * V(r0 * .78f, 0, 0), V(.07f, F(r, .9f, 1.6f), r0 * .9f), GumPatch, q * Quaternion.Euler(0, a0, 0));
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Cylinder(p + V(0, .1f, 0), r0 * 1.45f, .2f, R.ink, 8, .9f);
             }
-            // Three limbs from a high fork (one lower and drooping), each ending in a loose rounded clump: the open,
-            // airy crown of a lemon-scented gum rather than a flat umbrella.
-            int forks = cheap ? 1 : 3;
-            float spin = F(r, 0f, 360f);
-            for (int i = 0; i < forks; i++)
+            m.Surface = ComicSurface.Wood;
+            m.Cylinder(p + q * V(0, trunkH * .5f, 0), r0, trunkH, GumBark, cheap ? 6 : 8, .68f, q);
+            Vector3 top = p + q * V(0, trunkH, 0);
+            if (cheap)
             {
-                float a = (spin + i * 120f + F(r, -20f, 20f)) * Mathf.Deg2Rad;
-                bool low = i == 2;
-                Vector3 from = low ? p + q * V(0, trunkH * .82f, 0) : top;
-                float reach = h * (low ? F(r, .17f, .22f) : F(r, .1f, .16f)), up = h * (low ? F(r, .08f, .13f) : F(r, .2f, .3f));
-                Vector3 end = from + V(Mathf.Cos(a) * reach, up, Mathf.Sin(a) * reach);
-                m.Surface = ComicSurface.Plaster;
-                if (!cheap) m.Beam(from, end, r0 * (low ? .4f : .5f), GumBark);
-                m.Surface = ComicSurface.Foliage;
-                float s = h * (low ? F(r, .13f, .16f) : F(r, .16f, .21f));
-                m.Ellipsoid(end + V(0, s * (low ? -.05f : .12f), 0), V(s * 1.25f, s * .8f, s * 1.15f), i == 0 ? GumLeaf : i == 1 ? GumLeafLight : GumLeafDark);
+                Plant(m, top + V(0, h * .1f, 0), h * .34f, GumLeaf, GumLeafLight);
+                return;
             }
-            m.Surface = ComicSurface.Foliage;
-            m.Ellipsoid(top + V(0, h * .4f, 0), V(h * .28f, h * .2f, h * .26f), cheap ? GumLeaf : GumLeafDark);
+            float a0 = F(r, 0f, 360f);
+            m.Box(p + q * V(0, trunkH * F(r, .25f, .45f), 0) + Quaternion.Euler(0, a0, 0) * V(r0 * .74f, 0, 0), V(.08f, F(r, .9f, 1.5f), r0 * .9f), GumPatch, q * Quaternion.Euler(0, a0, 0));
+            float spin = F(r, 0f, 360f);
+            for (int i = 0; i < 2; i++)
+            {
+                float a = (spin + i * 155f + F(r, -20f, 20f)) * Mathf.Deg2Rad;
+                Vector3 from = i == 0 ? top : p + q * V(0, trunkH * .86f, 0);
+                Vector3 end = from + V(Mathf.Cos(a) * h * F(r, .1f, .17f), h * F(r, .17f, .27f), Mathf.Sin(a) * h * F(r, .1f, .15f));
+                m.Surface = ComicSurface.Wood;
+                Rod(m, from, end, r0 * .5f, GumBark, .7f);
+                Plant(m, end + V(0, h * .02f, 0), h * (i == 0 ? F(r, .34f, .4f) : F(r, .27f, .32f)), i == 0 ? GumLeaf : GumLeafDark, GumLeafLight);
+            }
         }
 
-        /// <summary>A round-crowned tree (peppermint, fig, plane).</summary>
+        /// <summary>A round-crowned tree (peppermint, fig) like the kit's street tree: ink root ring, 8-sided trunk, blob crown.</summary>
         public static void RoundTree(ComicMesh m, Vector3 p, float h, Color leaf, int seed)
         {
             var r = Rng(seed);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, .1f, 0), .3f + h * .03f, .2f, R.ink, 8, .9f);
             m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + V(0, h * .25f, 0), .18f + h * .02f, h * .5f, new Color(.45f, .34f, .25f), 6, .7f);
-            m.Surface = ComicSurface.Foliage;
-            m.Ellipsoid(p + V(0, h * .62f, 0), V(h * .62f, h * .5f, h * .58f), leaf);
-            m.Ellipsoid(p + V(F(r, -.15f, .15f) * h, h * .82f, F(r, -.1f, .1f) * h), V(h * .42f, h * .32f, h * .4f), Color.Lerp(leaf, R.yellow, .18f));
+            m.Cylinder(p + V(0, h * .27f, 0), .16f + h * .02f, h * .54f, new Color(.45f, .34f, .25f), 8, .75f);
+            Plant(m, p + V(0, h * .6f, 0), h * .62f, leaf, Color.Lerp(leaf, R.yellow, .25f));
+            Plant(m, p + V(F(r, -.15f, .15f) * h, h * .78f, F(r, -.12f, .12f) * h), h * .4f, Color.Lerp(leaf, R.ink, .1f), Color.Lerp(leaf, R.yellow, .3f));
         }
 
-        /// <summary>Grass tree (balga): black trunk, a skirt of fine grass, a flower spear.</summary>
+        /// <summary>
+        /// Grass tree (balga): navy ink root ring, black 8-sided trunk, and at the TOP a dense skirt of long thin closed leaf
+        /// boxes: an outer ring drooping steeply (dry straw), an inner ring drooping less (olive), a green tuft angled up,
+        /// and a thick brown flower spear with a navy tip above it.
+        /// </summary>
         public static void Balga(ComicMesh m, Vector3 p, float s, int seed)
         {
             var r = Rng(seed);
-            float trunk = s * F(r, .7f, 1.3f);
+            float trunk = s * F(r, 1.1f, 1.6f), tr = .22f * s;
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, .08f, 0), tr * 1.45f, .16f, R.ink, 8, .9f);
             m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + V(0, trunk * .5f, 0), .2f * s, trunk, BalgaTrunk, 6, .9f);
-            Vector3 top = p + V(0, trunk, 0);
-            m.Surface = ComicSurface.Foliage;
-            for (int i = 0; i < 12; i++)
+            m.Cylinder(p + V(0, trunk * .5f, 0), tr, trunk, BalgaTrunk, 8, .9f);
+            Vector3 crown = p + V(0, trunk, 0);
+            float thick = Mathf.Max(.065f, .07f * s), deep = Mathf.Max(.055f, .055f * s);
+            // (leaves, degrees below (-) / above (+) horizontal, length, start height, colour a, colour b)
+            var rings = new (int n, float pitch, float len, float rise, Color a, Color b)[]
             {
-                float a = (i * 30f + F(r, -8f, 8f)) * Mathf.Deg2Rad, up = i % 3 == 0 ? .9f : i % 3 == 1 ? .35f : -.15f;
-                Vector3 dir = new Vector3(Mathf.Cos(a), up, Mathf.Sin(a)).normalized;
-                m.Box(top + dir * .55f * s, V(.06f * s, .05f * s, 1.1f * s), i % 2 == 0 ? BalgaGrass : BalgaGrassDark, Quaternion.LookRotation(dir));
+                (12, -64f, 1.05f * s, -.04f * s, new Color(.74f, .66f, .36f), new Color(.6f, .57f, .3f)),    // outer skirt: dry straw / olive
+                (10, -48f, .9f * s, .06f * s, new Color(.52f, .56f, .27f), new Color(.45f, .5f, .23f)),      // inner skirt: olive
+                (9, 48f, .78f * s, .14f * s, new Color(.45f, .66f, .25f), new Color(.38f, .58f, .22f)),     // green tuft, up and out
+            };
+            m.Surface = ComicSurface.Foliage;
+            float spin = F(r, 0f, 360f);
+            for (int k = 0; k < rings.Length; k++)
+            {
+                var ring = rings[k];
+                for (int i = 0; i < ring.n; i++)
+                {
+                    float yaw = spin + (i + k * .5f) * 360f / ring.n + F(r, -6f, 6f), pitch = ring.pitch + F(r, -5f, 5f);
+                    Quaternion q = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(-pitch, 0f, 0f);
+                    Vector3 dir = q * Vector3.forward;
+                    Vector3 start = crown + V(0, ring.rise, 0) + Quaternion.Euler(0f, yaw, 0f) * V(0, 0, tr * .55f);
+                    m.Box(start + dir * ring.len * .5f, V(thick, deep, ring.len), i % 2 == 0 ? ring.a : ring.b, q);
+                }
             }
+            // Flower spear: thick brown stalk, the cream-brown flowering part, a navy tip.
             m.Surface = ComicSurface.Wood;
-            m.Beam(top, top + V(0, 1.7f * s, 0), .07f * s, Spear);
-            m.Box(top + V(0, 1.35f * s, 0), V(.13f * s, .7f * s, .13f * s), SpearFlower);
+            Rod(m, crown + V(0, .1f * s, 0), crown + V(0, 1.85f * s, 0), .085f * s, Spear);
+            m.Cylinder(crown + V(0, 1.45f * s, 0), .14f * s, .75f * s, SpearFlower, 8, .85f);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(crown + V(0, 1.95f * s, 0), .09f * s, .22f * s, R.ink, 8, .35f);
         }
 
-        /// <summary>Red-and-green kangaroo paw (WA's floral emblem): red woolly stems, green claw flowers.</summary>
+        /// <summary>Red-and-green kangaroo paw (WA's floral emblem): leaf blob, red 8-sided stems, green claw flowers.</summary>
         public static void KangarooPaw(ComicMesh m, Vector3 p, float s, int seed)
         {
             var r = Rng(seed);
-            m.Surface = ComicSurface.Foliage;
-            for (int i = 0; i < 4; i++)
-            {
-                float a = (i * 90f + F(r, -20f, 20f)) * Mathf.Deg2Rad;
-                Vector3 dir = new Vector3(Mathf.Cos(a) * .35f, 1f, Mathf.Sin(a) * .35f).normalized;
-                m.Box(p + dir * .3f * s, V(.08f * s, .6f * s, .03f * s), LeafGreen, Quaternion.FromToRotation(Vector3.up, dir) * Quaternion.Euler(0, i * 45f, 0));
-            }
+            Plant(m, p + V(0, .22f * s, 0), .62f * s, LeafGreen, Color.Lerp(LeafGreen, R.yellow, .25f));
             for (int i = 0; i < 3; i++)
             {
-                float a = (i * 120f + F(r, -30f, 30f)) * Mathf.Deg2Rad, tall = F(r, .9f, 1.25f) * s;
-                Vector3 tip = p + V(Mathf.Cos(a) * .22f * s, tall, Mathf.Sin(a) * .22f * s);
+                float a = (i * 120f + F(r, -30f, 30f)) * Mathf.Deg2Rad, tall = F(r, .95f, 1.25f) * s;
+                Vector3 tip = p + V(Mathf.Cos(a) * .24f * s, tall, Mathf.Sin(a) * .24f * s);
                 m.Surface = ComicSurface.Fabric;
-                m.Beam(p + V(0, .05f, 0), tip, .06f * s, PawRed);
-                m.Box(tip + V(0, .05f * s, 0), V(.14f * s, .12f * s, .14f * s), PawRed);
+                Rod(m, p + V(0, .2f * s, 0), tip, .04f * s, PawRed);
+                m.Box(tip + V(0, .05f * s, 0), V(.15f * s, .13f * s, .15f * s), PawRed);
                 m.Surface = ComicSurface.Foliage;
-                m.Box(tip + V(.08f * s, .17f * s, 0), V(.07f * s, .22f * s, .09f * s), PawGreen, Quaternion.Euler(0, 0, -28f));
-                m.Box(tip + V(-.08f * s, .17f * s, 0), V(.07f * s, .22f * s, .09f * s), PawGreen, Quaternion.Euler(0, 0, 28f));
+                m.Box(tip + V(.08f * s, .18f * s, 0), V(.08f * s, .24f * s, .1f * s), PawGreen, Quaternion.Euler(0, 0, -26f));
+                m.Box(tip + V(-.08f * s, .18f * s, 0), V(.08f * s, .24f * s, .1f * s), PawGreen, Quaternion.Euler(0, 0, 26f));
             }
         }
 
-        /// <summary>Banksia shrub: dark leaves and upright orange flower cones.</summary>
+        /// <summary>Banksia: a rounded shrub of dark blobs with a few upright yellow-orange flower cones.</summary>
         public static void Banksia(ComicMesh m, Vector3 p, float s, int seed)
         {
             var r = Rng(seed);
-            m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + V(0, .35f * s, 0), .1f * s, .7f * s, new Color(.42f, .33f, .27f), 6, .8f);
+            Plant(m, p + V(0, .7f * s, 0), 1.8f * s, BanksiaLeaf, Color.Lerp(BanksiaLeaf, GumLeafLight, .5f));
             m.Surface = ComicSurface.Foliage;
-            m.Ellipsoid(p + V(0, 1.15f * s, 0), V(1.7f * s, 1.15f * s, 1.6f * s), BanksiaLeaf);
-            for (int i = 0; i < 4; i++)
+            m.Ellipsoid(p + V(-.55f * s, .45f * s, .3f * s), V(1.1f * s, .8f * s, 1f * s), Color.Lerp(BanksiaLeaf, R.ink, .12f));
+            for (int i = 0; i < 3; i++)
             {
-                float a = (i * 90f + F(r, 0f, 40f)) * Mathf.Deg2Rad;
+                float a = (i * 120f + F(r, 0f, 40f)) * Mathf.Deg2Rad;
                 m.Surface = ComicSurface.Fabric;
-                m.Cylinder(p + V(Mathf.Cos(a) * .5f * s, 1.55f * s, Mathf.Sin(a) * .45f * s), .12f * s, .42f * s, i % 2 == 0 ? BanksiaCone : R.yellow, 6, .75f);
+                m.Cylinder(p + V(Mathf.Cos(a) * .5f * s, 1.25f * s, Mathf.Sin(a) * .45f * s), .13f * s, .45f * s, i % 2 == 0 ? BanksiaCone : R.yellow, 8, .7f);
             }
         }
 
         public static void Shrub(ComicMesh m, Vector3 p, float s, Color c)
         {
-            m.Surface = ComicSurface.Foliage;
-            m.Ellipsoid(p + V(0, .45f * s, 0), V(1.5f * s, .95f * s, 1.3f * s), c);
+            Plant(m, p + V(0, .42f * s, 0), 1.45f * s, c, Color.Lerp(c, R.yellow, .25f));
         }
 
-        /// <summary>Everlasting daisies (pink paper daisies): a low bed of little pink and white heads.</summary>
+        /// <summary>Everlasting daisies (pink paper daisies) in a raised limestone bed with a cream rim.</summary>
         public static void DaisyBed(ComicMesh m, float x0, float x1, float z0, float z1, float y, System.Random r, int heads)
         {
+            float xa = Mathf.Min(x0, x1), xb = Mathf.Max(x0, x1), xc = (xa + xb) * .5f, zc = (z0 + z1) * .5f;
+            m.Surface = ComicSurface.Concrete;
+            m.Box(V(xc, y + .14f, zc), V(xb - xa, .28f, z1 - z0), Limestone);
+            m.Box(V(xc, y + .3f, zc), V(xb - xa + .06f, .08f, z1 - z0 + .06f), LimestoneCap);
             m.Surface = ComicSurface.Foliage;
-            m.Box(V((x0 + x1) * .5f, y + .1f, (z0 + z1) * .5f), V(Mathf.Abs(x1 - x0), .2f, z1 - z0), Lawn);
+            m.Box(V(xc, y + .31f, zc), V(xb - xa - .3f, .1f, z1 - z0 - .3f), Lawn);
             for (int i = 0; i < heads; i++)
             {
-                float x = F(r, Mathf.Min(x0, x1) + .2f, Mathf.Max(x0, x1) - .2f), z = F(r, z0 + .2f, z1 - .2f);
+                float x = F(r, xa + .35f, xb - .35f), z = F(r, z0 + .35f, z1 - .35f), turn = F(r, 0f, 90f);
                 Color c = i % 4 == 3 ? Color.white : i % 4 == 2 ? new Color(.98f, .7f, .8f) : PinkDaisy;
                 m.Surface = ComicSurface.Fabric;
-                m.Box(V(x, y + .3f, z), V(.26f, .1f, .26f), c, Quaternion.Euler(0, F(r, 0f, 90f), 0));
-                m.Box(V(x, y + .36f, z), V(.1f, .04f, .1f), DaisyCentre);
+                m.Box(V(x, y + .5f, z), V(.3f, .07f, .12f), c, Quaternion.Euler(0, turn, 0));
+                m.Box(V(x, y + .5f, z), V(.3f, .07f, .12f), c, Quaternion.Euler(0, turn + 90f, 0));
+                m.Box(V(x, y + .55f, z), V(.11f, .06f, .11f), DaisyCentre);
+                m.Box(V(x, y + .42f, z), V(.06f, .16f, .06f), LeafGreen);
             }
         }
 
-        /// <summary>Washington / date palm: a leaning ringed trunk and drooping fronds.</summary>
+        /// <summary>Washington palm: ringed 8-sided trunk segments, a crown knob, fronds of three thick bent slabs arching down.</summary>
         public static void Palm(ComicMesh m, Vector3 p, float h, int seed)
         {
             var r = Rng(seed);
-            float lean = F(r, -5f, 5f);
-            Quaternion q = Quaternion.Euler(F(r, -4f, 4f), 0, lean);
+            Quaternion q = Quaternion.Euler(F(r, -4f, 4f), 0, F(r, -5f, 5f));
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, .1f, 0), .45f, .2f, R.ink, 8, .9f);
             m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + q * V(0, h * .5f, 0), .3f, h, PalmTrunk, 6, .8f, q);
-            Vector3 top = p + q * V(0, h, 0);
-            m.Cylinder(top + V(0, -.3f, 0), .38f, .7f, new Color(.45f, .36f, .22f), 6, 1.1f);
-            m.Surface = ComicSurface.Foliage;
-            for (int i = 0; i < 8; i++)
+            const int segs = 4;
+            for (int i = 0; i < segs; i++)
             {
-                float a = i * 45f + F(r, -10f, 10f), droop = i % 2 == 0 ? 25f : 5f;
-                Quaternion f = Quaternion.Euler(0, a, 0) * Quaternion.Euler(droop, 0, 0);
-                m.Box(top + f * V(0, 0, 1.4f), V(.9f, .06f, 2.9f), i % 2 == 0 ? PalmLeaf : PalmLeafDark, f);
+                float y0 = h * i / segs, len = h / segs;
+                float rad = Mathf.Lerp(.32f, .24f, (float)i / segs);
+                m.Cylinder(p + q * V(0, y0 + len * .5f, 0), rad, len - .06f, i % 2 == 0 ? PalmTrunk : Color.Lerp(PalmTrunk, R.ink, .18f), 8, .9f, q);
+            }
+            Vector3 top = p + q * V(0, h, 0);
+            m.Cylinder(top + V(0, .2f, 0), .42f, .6f, new Color(.45f, .36f, .22f), 8, .75f);
+            m.Surface = ComicSurface.Foliage;
+            for (int i = 0; i < 7; i++)
+            {
+                Quaternion yaw = Quaternion.Euler(0, i * 51.4f + F(r, -10f, 10f), 0);
+                Vector3 at = top + V(0, .35f, 0);
+                float pitch = -12f + F(r, -6f, 6f);
+                for (int k = 0; k < 3; k++)
+                {
+                    Quaternion f = yaw * Quaternion.Euler(pitch, 0, 0);
+                    float len = 1.75f - k * .25f, wide = .85f - k * .2f;
+                    Vector3 mid = at + f * V(0, 0, len * .5f);
+                    m.Box(mid, V(wide, .09f, len + .05f), (i + k) % 2 == 0 ? PalmLeaf : PalmLeafDark, f);
+                    at += f * V(0, 0, len);
+                    pitch += 26f;
+                }
             }
         }
 
@@ -430,7 +498,8 @@ namespace CityScooter.EditorTools.Districts
             float w = TextWidth(text, px) + 1.2f, h = 5 * px + .9f;
             m.Surface = ComicSurface.Concrete;
             m.Box(p + V(0, h * .5f - .3f, 0), V(w, h + .6f, .7f), stone);
-            m.Box(p + V(0, h + .05f, 0), V(w + .2f, .14f, .85f), LimestoneCap);
+            m.Box(p + V(0, .12f, 0), V(w + .14f, .24f, .84f), R.ink);             // navy plinth band
+            m.Box(p + V(0, h + .05f, 0), V(w + .2f, .14f, .85f), LimestoneCap);  // cream cap
             Text(m, text, p.x, p.y + h * .55f, p.z - .36f, px, letters);
         }
 
@@ -605,6 +674,13 @@ namespace CityScooter.EditorTools.Districts
         public static void BuildBatch()
         {
             try { Build(); AssetDatabase.SaveAssets(); EditorApplication.Exit(0); }
+            catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
+        }
+
+        /// <summary>Build both districts, then render their props atlases (run with graphics, i.e. without -nographics).</summary>
+        public static void BuildAndAtlasBatch()
+        {
+            try { Build(); AssetDatabase.SaveAssets(); ParkRiverAtlas.Render(); EditorApplication.Exit(0); }
             catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
         }
     }
