@@ -1,0 +1,37 @@
+MATILDA BAY（id matilda，order 20）参考来源与取用内容
+=====================================================
+参考图只存在仓库外 D:\CityScooter-refs\matilda\，不进仓库、不进游戏。生成代码：Assets/_Project/Scripts/Editor/Districts/CrawleyBuilder.cs
+
+视频（YouTube 预览帧 storyboard sb0 + 封面图）
+- Cycle into Perth's CBD
+  https://www.youtube.com/watch?v=WTtoAMZY4y0
+  取用：珀斯河边共享道的红色沥青（砖红偏暗）+ 白色中心虚线；道两边是浅绿草坪、白千层/桉树，
+        远处是 CBD 蓝色玻璃高楼；Mounts Bay Rd 一侧的石灰岩坡和灌木。
+- Mounts Bay Cruise Perth Cycling
+  https://www.youtube.com/watch?v=COe3VzBYowg  （只看了封面/标题，没取到帧）
+- Perth Blue Boat House Walk: Kings Park to Crawley Edge Boatshed
+  https://www.youtube.com/watch?v=ivTJm_I5nwc   封面 https://i.ytimg.com/vi/ivTJm_I5nwc/maxresdefault.jpg
+  取用：Crawley Edge 船屋——浅蓝色横向挡板墙、白色转角板和窗框、正面山墙朝岸（中间白门、两侧各一扇白框小窗），
+        浅灰白色屋顶，屋脊上一根旗杆；立在木桩上，一条窄的灰色木栈桥从岸边伸到船屋。天鹅河水面大、平、深蓝带白浪，对岸很低很平。
+- Crawley Edge Boatshed | Blue Boat House | Perth
+  https://www.youtube.com/watch?v=f5u-4EvuYh8   封面 https://i.ytimg.com/vi/f5u-4EvuYh8/hqdefault.jpg
+  取用：栈桥木板的灰褐色、船屋窗框比例。
+
+颜色（sRGB）
+- 红色共享道 #A8483A，白虚线 #F4F4EE；陆侧人行道沿用街道铺地色
+- 河水 #4A98D2（近岸）/ #2F7EC0（远处），波纹 #9ACDEC，白浪 #F4F4EE；沙滩 #E8D6A6
+- 河边草坪 #7DB24E；西澳白千层（WA peppermint，垂枝）#5F8B3A / #7FA44C，树干 #6B5745
+- Kings Park 灌木坡 #6E7E45 / #4F6334，石灰岩露头 #D9CDA8
+- 船屋墙 #78A6D8，白色装饰 #F4F4EE，屋顶 #E3E8EA，窗 #2C3A4A；栈桥木 #A39684，木桩 #6E5E4E
+- 野餐桌木 #9C6B43，BBQ 亭绿色屋顶 #3F7055
+- 黑天鹅 #1B1D24，红喙 #D8322B + 白色喙尖，翅尖白
+- 冰桶 esky 蓝 #2D6DB5 + 白盖；野餐篮藤色 #C49A55 + 红白格布
+
+比例
+- 船屋 6 m 宽、5 m 深、3 m 墙高、山墙升 1.6 m；平台比水面高约 0.9 m；栈桥 1.7 m 宽，从岸边伸出约 23 m。
+- 草坪 7 m 宽、沙边 2.5 m，然后是河；陆侧草坪到 32 m，再往外是升到 20 m 的灌木坡（Kings Park 崖）。
+- 远景：河面一直铺到对岸（x 280 m 外的低岸、树和浅色房子），前方右侧是淡蓝灰的 CBD 高楼剪影，湖面散落帆船。
+
+说明
+- 河在骑行方向右侧（从 Crawley 往市中心，河在东南边）。
+- 不做任何商标、文字。船屋的旗子只是一块深蓝色。
