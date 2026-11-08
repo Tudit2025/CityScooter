@@ -70,8 +70,7 @@ namespace CityScooter.EditorTools.Districts
                 d.sunColor = new Color(1f, .94f, .8f);
                 d.sunIntensity = 1.4f;
                 d.farScenery = far;
-                d.gateway = null;
-                d.ambience = null; d.ambienceVolume = .35f;
+                // gateway and ambience belong to the district system (DistrictSetup): not touched here.
             });
             AssetDatabase.SaveAssets();
             Debug.Log("[KingsPark] built " + (chunks.Count + 2) + " chunks: " + string.Join("; ", Report));
@@ -169,7 +168,7 @@ namespace CityScooter.EditorTools.Districts
             // Right: botanic garden beds behind a limestone edge, the DNA Tower above the bush.
             ParkGround(c, 1, 0f, 40f, 30f);
             LimestoneEdge(c, 1, 0f, 40f, .4f);
-            for (float z = 3f; z < 38f; z += 12f) DaisyBed(c.DeepFlat, 9.2f, 13.5f, z, z + 8f, .14f, c.Rnd, 24);
+            for (float z = 3f; z < 38f; z += 12f) DaisyBed(c.DeepFlat, 9.2f, 13.5f, z, z + 8f, .14f, c.Rnd, 14);
             for (float z = 6f; z < 38f; z += 7f) KangarooPaw(c.Props, c.P(F(c.Rnd, 14.5f, 16.5f), .14f, z), F(c.Rnd, 1.1f, 1.4f), c.NextSeed());
             Balga(c.Props, c.P(18.5f, .12f, 9f), 1.3f, 7); Balga(c.Props, c.P(20f, .12f, 31f), 1.1f, 8);
             Banksia(c.Props, c.P(17.5f, .12f, 21f), 1.2f, 9);
@@ -181,7 +180,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         /// <summary>The DNA Tower: a white double-helix lookout staircase (15 m), a well-known Kings Park climb.</summary>
-        static void DnaTower(ComicMesh m, Vector3 p)
+        internal static void DnaTower(ComicMesh m, Vector3 p)
         {
             Color white = new Color(.97f, .97f, .95f), grey = new Color(.84f, .87f, .9f);
             m.Surface = ComicSurface.Plaster;
@@ -220,8 +219,8 @@ namespace CityScooter.EditorTools.Districts
             // Right: garden bush the walkway flies through; tall gums lean over it.
             ParkGround(c, 1, 0f, 40f, 12f);
             LimestoneEdge(c, 1, 0f, 40f);
-            for (float z = 1f; z < 40f; z += 8f) Gum(c.Front, c.P(F(c.Rnd, 10f, 12f), .1f, z + F(c.Rnd, -1f, 1f)), F(c.Rnd, 18f, 22f), c.NextSeed());
-            Undergrowth(c, 1, 4, 13f, 22f);
+            for (float z = 1f; z < 40f; z += 10f) Gum(c.Front, c.P(F(c.Rnd, 10f, 12f), .1f, z + F(c.Rnd, -1f, 1f)), F(c.Rnd, 18f, 22f), c.NextSeed());
+            Undergrowth(c, 1, 3, 13f, 22f);
             DeepBush(c, 1, 0f, 40f, 22f);
             WalkwayArt(c, z0, zr, zl);
             Gully(c, zl, zg);
@@ -239,43 +238,47 @@ namespace CityScooter.EditorTools.Districts
             ComicMesh m = c.FrontFlat; // sheared with the road: the Ramp's height is above the road
             float x = WalkwayX, w = WalkwayWidth * .5f, H = WalkwayHeight;
             float Deck(float z) => z <= z0 ? 0f : z >= zr ? H : H * (z - z0) / (zr - z0);
-            // Deck surface and its steel edge beams (in 2 m spans).
-            for (float a = z0; a < zl - .001f; a += 2f)
+            // Deck: a closed dark steel-mesh slab between closed steel edge beams, glass panels as thin closed slabs,
+            // round handrails on round posts (in 2 m spans).
+            int span = 0;
+            for (float a = z0; a < zl - .001f; a += 2f, span++)
             {
                 float b = a + 2f, ya = Deck(a), yb = Deck(b);
                 m.Surface = ComicSurface.Metal;
-                Face(m, V(x - w, ya, a), V(x - w, yb, b), V(x + w, yb, b), V(x + w, ya, a), DeckMesh, Vector3.up);
+                SlopeBox(m, x - w + .16f, x + w - .16f, a, b, ya - .4f, ya, yb - .4f, yb, DeckMesh);
                 for (int s = -1; s <= 1; s += 2)
                 {
-                    float e = x + s * w;
+                    float e = x + s * w, ei = e - s * .16f, g0 = e - s * .12f, g1 = e - s * .05f;
                     m.Surface = ComicSurface.PaintedMetal;
-                    Face(m, V(e, ya - .45f, a), V(e, yb - .45f, b), V(e, yb + .12f, b), V(e, ya + .12f, a), Steel, V(s, 0, 0));
-                    Face(m, V(e - s * .18f, ya + .12f, a), V(e - s * .18f, yb + .12f, b), V(e, yb + .12f, b), V(e, ya + .12f, a), Steel, Vector3.up);
-                    // Glass panel and the handrail on top.
+                    SlopeBox(m, Mathf.Min(e, ei), Mathf.Max(e, ei), a, b, ya - .5f, ya + .14f, yb - .5f, yb + .14f, Steel);
                     m.Surface = ComicSurface.Glass;
-                    Face(m, V(e - s * .08f, ya + .12f, a + .06f), V(e - s * .08f, yb + .12f, b - .06f), V(e - s * .08f, yb + 1.15f, b - .06f), V(e - s * .08f, ya + 1.15f, a + .06f), Glass, V(-s, 0, 0));
+                    SlopeBox(m, Mathf.Min(g0, g1), Mathf.Max(g0, g1), a + .05f, b - .05f, ya + .14f, ya + 1.12f, yb + .14f, yb + 1.12f, Glass);
                     m.Surface = ComicSurface.Metal;
-                    m.Beam(V(e - s * .08f, ya + 1.2f, a), V(e - s * .08f, yb + 1.2f, b), .09f, Steel);
-                    m.Box(V(e - s * .08f, ya + .66f, a), V(.07f, 1.1f, .07f), SteelDark);
+                    if (span % 2 == 0) m.Cylinder(V(e - s * .085f, ya + .67f, a), .045f, 1.06f, SteelDark, 8);
                 }
-                // Mesh joints across the deck.
-                m.Surface = ComicSurface.Plain;
-                Face(m, V(x - w + .2f, ya + .01f, a - .03f), V(x - w + .2f, ya + .01f, a + .03f), V(x + w - .2f, ya + .01f, a + .03f), V(x + w - .2f, ya + .01f, a - .03f), SteelDark, Vector3.up, false);
+                m.Surface = ComicSurface.Metal;
+                m.Box(V(x, Mathf.Min(ya, yb) + .02f, a + 1f), V(WalkwayWidth - .5f, .06f, .08f), SteelDark); // mesh joint strip
             }
-            for (int s = -1; s <= 1; s += 2) m.Box(V(x + s * (w - .08f), H + .66f, zl), V(.08f, 1.1f, .08f), SteelDark);
-            // Lip: deck end plate with the yellow-and-black edge.
+            for (int s = -1; s <= 1; s += 2)
+            {
+                float rx = x + s * (w - .085f);
+                m.Cylinder(V(rx, H + .67f, zl), .045f, 1.06f, SteelDark, 8);
+                m.Surface = ComicSurface.Metal;
+                Rod(m, V(rx, 1.2f, z0), V(rx, H + 1.2f, zr), .05f, Steel);   // handrails: one round rail per straight run
+                Rod(m, V(rx, H + 1.2f, zr), V(rx, H + 1.2f, zl), .05f, Steel);
+            }
+            // Lip: yellow-and-black edge painted on the deck end.
             m.Surface = ComicSurface.PaintedMetal;
-            Face(m, V(x - w, H - .45f, zl), V(x + w, H - .45f, zl), V(x + w, H + .12f, zl), V(x - w, H + .12f, zl), Steel, Vector3.forward);
             for (int i = 0; i < 6; i++)
             {
-                float xa = x - w + WalkwayWidth * i / 6f, xb = x - w + WalkwayWidth * (i + 1) / 6f;
+                float xa = x - w + .16f + (WalkwayWidth - .32f) * i / 6f, xb = x - w + .16f + (WalkwayWidth - .32f) * (i + 1) / 6f;
                 Face(m, V(xa, H + .015f, zl - .5f), V(xa, H + .015f, zl), V(xb, H + .015f, zl), V(xb, H + .015f, zl - .5f), i % 2 == 0 ? R.yellow : R.ink, Vector3.up, false);
             }
             // Columns under the climbing part, the arch under the flat span (the bridge's signature curve).
             m.Surface = ComicSurface.PaintedMetal;
             for (float z = z0 + 4f; z < zr + .1f; z += 3f)
-                for (int s = -1; s <= 1; s += 2) m.Box(V(x + s * (w - .3f), (Deck(z) - .45f) * .5f, z), V(.22f, Deck(z) - .45f, .22f), SteelDark);
-            const int seg = 10;
+                for (int s = -1; s <= 1; s += 2) m.Cylinder(V(x + s * (w - .3f), (Deck(z) - .45f) * .5f, z), .13f, Deck(z) - .45f, SteelDark, 8);
+            const int seg = 8;
             for (int s = -1; s <= 1; s += 2)
             {
                 float ax = x + s * (w - .35f);
@@ -284,8 +287,8 @@ namespace CityScooter.EditorTools.Districts
                     float t0 = (float)i / seg, t1 = (float)(i + 1) / seg;
                     float za = Mathf.Lerp(zr - 1f, zl - .4f, t0), zb = Mathf.Lerp(zr - 1f, zl - .4f, t1);
                     float ya = Mathf.Sin(t0 * Mathf.PI) * (H - .7f), yb = Mathf.Sin(t1 * Mathf.PI) * (H - .7f);
-                    m.Beam(V(ax, ya, za), V(ax, yb, zb), .3f, Steel);
-                    if (i % 2 == 1 && ya < H - .8f) m.Box(V(ax, (ya + H - .45f) * .5f, za), V(.1f, H - .45f - ya, .1f), SteelDark);
+                    Rod(m, V(ax, ya, za), V(ax, yb, zb), .16f, Steel);
+                    if (i % 2 == 1 && ya < H - .8f) m.Cylinder(V(ax, (ya + H - .45f) * .5f, za), .06f, H - .45f - ya, SteelDark, 8);
                 }
             }
             // Entrance portal with the name board (dark park green, cream pixel letters), high enough to ride under.
@@ -294,10 +297,12 @@ namespace CityScooter.EditorTools.Districts
             Color board = new Color(.16f, .3f, .2f);
             u.Surface = ComicSurface.PaintedMetal;
             // One post beyond the sidewalk (out of reach) and an arm over the walkway lane.
-            u.Box(c.P(Edge + .45f, 2.5f, pz), V(.24f, 5f, .24f), SteelDark);
+            u.Cylinder(c.P(Edge + .45f, .12f, pz), .26f, .24f, R.ink, 8, .9f);
+            u.Cylinder(c.P(Edge + .45f, 2.5f, pz), .13f, 5f, SteelDark, 8);
             u.Box(c.P((x - w + Edge + .45f) * .5f, 4.62f, pz), V(Edge + .45f - (x - w), .14f, .14f), SteelDark);
             u.Box(c.P(x, 3.98f, pz), V(WalkwayWidth + .3f, .95f, .14f), board);
-            u.Box(c.P(x, 4.5f, pz), V(WalkwayWidth + .4f, .1f, .2f), Steel);
+            u.Box(c.P(x, 4.5f, pz), V(WalkwayWidth + .4f, .12f, .22f), R.ink);
+            u.Box(c.P(x, 3.47f, pz), V(WalkwayWidth + .36f, .08f, .2f), R.cream);
             Text(u, "FEDERATION", x, c.Y(pz) + 4.2f, pz - .08f, .066f, LimestoneCap);
             Text(u, "WALKWAY", x, c.Y(pz) + 3.78f, pz - .08f, .066f, LimestoneCap);
         }
@@ -356,13 +361,21 @@ namespace CityScooter.EditorTools.Districts
             return c.Save();
         }
 
-        static void Viewer(ComicMesh m, Vector3 p)
+        internal static void Viewer(ComicMesh m, Vector3 p)
         {
+            Color green = new Color(.2f, .5f, .32f);
             m.Surface = ComicSurface.PaintedMetal;
-            m.Cylinder(p + V(0, .45f, 0), .07f, .9f, R.ink, 6);
-            m.Box(p + V(0, 1f, 0), V(.42f, .3f, .3f), new Color(.2f, .5f, .32f), Quaternion.Euler(0, -90f, 0));
-            m.Box(p + V(.12f, 1f, .1f), V(.18f, .1f, .1f), R.ink, Quaternion.Euler(0, -90f, 0));
-            m.Box(p + V(.12f, 1f, -.1f), V(.18f, .1f, .1f), R.ink, Quaternion.Euler(0, -90f, 0));
+            m.Cylinder(p + V(0, .08f, 0), .2f, .16f, R.ink, 8, .9f);
+            m.Cylinder(p + V(0, .52f, 0), .07f, .76f, green, 8);
+            m.Cylinder(p + V(0, .93f, 0), .11f, .08f, R.cream, 8);
+            m.Box(p + V(0, 1.1f, 0), V(.32f, .28f, .44f), green);
+            m.Box(p + V(0, 1.26f, 0), V(.36f, .06f, .48f), R.ink);
+            m.Surface = ComicSurface.Glass;
+            foreach (float dz in new[] { -.11f, .11f })
+            {
+                m.Cylinder(p + V(.19f, 1.1f, dz), .08f, .08f, R.glass, 8, 1f, Quaternion.Euler(0, 0, 90f));
+                m.Cylinder(p + V(-.2f, 1.12f, dz), .05f, .1f, R.ink, 8, 1f, Quaternion.Euler(0, 0, 90f));
+            }
         }
 
         static RoadChunk BushDescent()
@@ -433,18 +446,18 @@ namespace CityScooter.EditorTools.Districts
 
         // ------------------------------------------------------------------ obstacles, animals, ramp, far view
 
-        /// <summary>A fallen gum branch across a lane: jump it (or punch it away).</summary>
+        /// <summary>A fallen gum branch across a lane: jump it (or punch it away). Round limbs, a broken end, leaf blobs.</summary>
         static GameObject GumBranch()
         {
             var m = new ComicMesh();
-            m.Surface = ComicSurface.Plaster;
-            m.Beam(V(-1.15f, .22f, .05f), V(1.1f, .32f, -.1f), .3f, GumBark);
-            m.Beam(V(.2f, .3f, 0f), V(.7f, .55f, .45f), .14f, GumBark);
-            m.Beam(V(-.5f, .25f, 0f), V(-.9f, .5f, -.4f), .12f, GumBark);
-            m.Box(V(-.3f, .3f, .14f), V(.5f, .2f, .06f), GumPatch, Quaternion.Euler(0, 0, 3f));
-            m.Surface = ComicSurface.Foliage;
-            m.Ellipsoid(V(.85f, .6f, .5f), V(1f, .55f, .8f), GumLeaf);
-            m.Ellipsoid(V(-1f, .55f, -.45f), V(.8f, .45f, .7f), GumLeafLight);
+            m.Surface = ComicSurface.Wood;
+            Rod(m, V(-1.15f, .17f, .05f), V(1.1f, .24f, -.1f), .17f, GumBark, .75f);
+            Rod(m, V(.2f, .24f, 0f), V(.72f, .55f, .45f), .08f, GumBark, .7f);
+            Rod(m, V(-.5f, .2f, 0f), V(-.92f, .48f, -.4f), .07f, GumBark, .7f);
+            m.Cylinder(V(-1.17f, .17f, .05f), .18f, .1f, new Color(.86f, .68f, .55f), 8, 1f, Quaternion.Euler(0, 0, 90f)); // broken end
+            m.Box(V(-.3f, .26f, .14f), V(.5f, .15f, .07f), GumPatch, Quaternion.Euler(0, 0, 3f));
+            Plant(m, V(.82f, .55f, .5f), .95f, GumLeaf, GumLeafLight);
+            Plant(m, V(-.95f, .48f, -.42f), .75f, GumLeafDark, GumLeafLight);
             string path = PrefabFolder + "/OBS_KingsPark_GumBranch.prefab";
             return SavePrefab(path, MeshFolder, m, true, true, root =>
             {
@@ -458,21 +471,25 @@ namespace CityScooter.EditorTools.Districts
         static GameObject Magpie()
         {
             var b = new ComicMesh();
-            Color black = new Color(.1f, .1f, .12f), white = new Color(.97f, .97f, .95f), beak = new Color(.8f, .8f, .78f);
+            Color black = new Color(.1f, .1f, .12f), white = new Color(.97f, .97f, .95f), beak = new Color(.82f, .82f, .8f), eye = new Color(.75f, .25f, .1f);
             b.Surface = ComicSurface.Fabric;
-            b.Ellipsoid(V(0, .42f, .05f), V(.32f, .3f, .52f), black);
-            b.Box(V(0, .52f, .12f), V(.28f, .08f, .3f), white);                    // white back / nape
-            b.Box(V(.155f, .43f, .02f), V(.04f, .12f, .26f), white);               // wing patches
-            b.Box(V(-.155f, .43f, .02f), V(.04f, .12f, .26f), white);
-            b.Box(V(0, .4f, .38f), V(.16f, .05f, .26f), black, Quaternion.Euler(-14f, 0, 0)); // tail
-            b.Box(V(0, .42f, .29f), V(.17f, .055f, .08f), white, Quaternion.Euler(-14f, 0, 0));
-            b.Ellipsoid(V(0, .63f, -.2f), V(.2f, .2f, .22f), black);               // head
-            b.Box(V(0, .6f, -.37f), V(.06f, .06f, .16f), beak, Quaternion.Euler(8f, 0, 0));
-            b.Box(V(.085f, .66f, -.25f), V(.02f, .035f, .035f), new Color(.75f, .25f, .1f));
-            b.Box(V(-.085f, .66f, -.25f), V(.02f, .035f, .035f), new Color(.75f, .25f, .1f));
+            b.Box(V(0, .44f, .06f), V(.32f, .28f, .5f), black, Quaternion.Euler(-8f, 0, 0));   // body
+            b.Box(V(0, .4f, -.14f), V(.3f, .24f, .16f), black);                                   // chest
+            b.Box(V(0, .6f, -.06f), V(.24f, .16f, .14f), white);                                  // white nape
+            foreach (float x in new[] { -.165f, .165f }) b.Box(V(x, .5f, .02f), V(.05f, .12f, .22f), white); // shoulder patches
+            b.Box(V(0, .4f, .3f), V(.3f, .1f, .1f), white);                                       // white rump band
+            b.Box(V(0, .38f, .46f), V(.2f, .08f, .26f), black, Quaternion.Euler(-10f, 0, 0));    // tail
+            b.Box(V(0, .66f, -.2f), V(.22f, .2f, .22f), black);                                   // head
+            b.Surface = ComicSurface.Plastic;
+            b.Box(V(0, .63f, -.37f), V(.08f, .08f, .14f), beak);
+            b.Box(V(0, .62f, -.46f), V(.06f, .06f, .06f), R.ink);
+            foreach (float x in new[] { -.112f, .112f }) b.Box(V(x, .69f, -.25f), V(.03f, .05f, .05f), eye);
             b.Surface = ComicSurface.PaintedMetal;
-            b.Box(V(.06f, .14f, .02f), V(.03f, .28f, .03f), new Color(.25f, .25f, .27f));
-            b.Box(V(-.06f, .14f, .02f), V(.03f, .28f, .03f), new Color(.25f, .25f, .27f));
+            foreach (float x in new[] { -.07f, .07f })
+            {
+                b.Cylinder(V(x, .16f, .0f), .03f, .3f, new Color(.25f, .25f, .27f), 8);
+                b.Box(V(x, .025f, -.04f), V(.08f, .05f, .16f), R.ink);
+            }
             var m = new ComicMesh();
             m.Add(b, Vector3.zero, Quaternion.identity, Vector3.one * 1.35f);
             return SaveWalker(PrefabFolder + "/PED_KingsPark_Magpie.prefab", MeshFolder, m, V(0, .5f, 0), V(.55f, 1f, .9f), .5f, true, true);

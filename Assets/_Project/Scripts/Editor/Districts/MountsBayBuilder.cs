@@ -79,8 +79,7 @@ namespace CityScooter.EditorTools.Districts
                 d.sunColor = new Color(1f, .97f, .92f);
                 d.sunIntensity = 1.4f;
                 d.farScenery = far;
-                d.gateway = null;
-                d.ambience = null; d.ambienceVolume = .35f;
+                // gateway and ambience belong to the district system (DistrictSetup): not touched here.
             });
             AssetDatabase.SaveAssets();
             Debug.Log("[MountsBay] built " + (chunks.Count + 2) + " chunks: " + string.Join("; ", Report));
@@ -131,24 +130,33 @@ namespace CityScooter.EditorTools.Districts
             }
         }
 
-        static void Yacht(ComicMesh m, Vector3 p, float s, Color hull)
+        /// <summary>A yacht: white hull with a coloured band and navy deck stripe, round mast, sail of stacked thick slabs.</summary>
+        internal static void Yacht(ComicMesh m, Vector3 p, float s, Color hull)
         {
             m.Surface = ComicSurface.PaintedMetal;
             m.Box(p + V(0, .35f * s, 0), V(1.4f * s, .7f * s, 4.2f * s), Color.white);
-            m.Box(p + V(0, .62f * s, 0), V(1.42f * s, .12f * s, 4.22f * s), hull);
-            m.Beam(p + V(0, .6f * s, .2f * s), p + V(0, 6.5f * s, .2f * s), .1f * s, R.ink);
+            m.Box(p + V(0, .58f * s, 0), V(1.42f * s, .14f * s, 4.22f * s), hull);
+            m.Box(p + V(0, .74f * s, .4f * s), V(.9f * s, .1f * s, 2f * s), R.ink);
+            m.Surface = ComicSurface.Metal;
+            m.Cylinder(p + V(0, 3.6f * s, .2f * s), .07f * s, 5.8f * s, R.ink, 8);
             m.Surface = ComicSurface.Fabric;
-            m.Tri(p + V(0, 1f * s, .35f * s), p + V(0, 6.3f * s, .35f * s), p + V(0, 1f * s, 2.2f * s), Color.white);
-            m.Tri(p + V(0, 1f * s, 2.2f * s), p + V(0, 6.3f * s, .35f * s), p + V(0, 1f * s, .35f * s), Color.white);
+            for (int k = 0; k < 5; k++)
+            {
+                float y = (1.1f + k * 1f) * s, len = (1.9f - k * .34f) * s;
+                m.Box(p + V(0, y + .48f * s, .3f * s + len * .5f), V(.08f * s, .98f * s, len), Color.white);
+            }
         }
 
-        static void Lamp(ComicMesh m, Vector3 p, int armSide)
+        /// <summary>Riverside lamp: navy base, round grey post, arm and a cream lamp head with a navy cap.</summary>
+        internal static void Lamp(ComicMesh m, Vector3 p, int armSide)
         {
+            Color post = new Color(.28f, .32f, .36f);
             m.Surface = ComicSurface.PaintedMetal;
-            m.Cylinder(p + V(0, .15f, 0), .2f, .3f, R.ink, 6);
-            m.Box(p + V(0, 3.5f, 0), V(.13f, 7f, .13f), new Color(.28f, .32f, .36f));
-            m.Box(p + V(armSide * .7f, 6.95f, 0), V(1.4f, .1f, .1f), new Color(.28f, .32f, .36f));
-            m.Box(p + V(armSide * 1.35f, 6.85f, 0), V(.55f, .16f, .3f), R.cream);
+            m.Cylinder(p + V(0, .15f, 0), .22f, .3f, R.ink, 8, .9f);
+            m.Cylinder(p + V(0, 3.6f, 0), .08f, 6.9f, post, 8, .8f);
+            m.Box(p + V(armSide * .7f, 6.95f, 0), V(1.4f, .1f, .1f), post);
+            m.Box(p + V(armSide * 1.35f, 6.82f, 0), V(.55f, .16f, .32f), R.cream);
+            m.Box(p + V(armSide * 1.35f, 6.94f, 0), V(.6f, .08f, .36f), R.ink);
         }
 
         // ------------------------------------------------------------------ the escarpment side (right)
@@ -398,9 +406,9 @@ namespace CityScooter.EditorTools.Districts
                 m.Surface = ComicSurface.PaintedMetal;
                 foreach (float rz in new[] { za + .1f, zb - .1f })
                 {
-                    m.Beam(c.P(fx + run * .5f, fy + rise + .95f, rz), c.P(sx - run * .5f, sy + .95f, rz), .08f, rail);
+                    Rod(m, c.P(fx + run * .5f, fy + rise + .95f, rz), c.P(sx - run * .5f, sy + .95f, rz), .05f, rail);
                     for (int k = 0; k < perFlight; k += 3)
-                        m.Box(c.P(fx + (k + .5f) * run, fy + (k + 1) * rise + .48f, rz), V(.07f, .96f, .07f), rail);
+                        m.Cylinder(c.P(fx + (k + .5f) * run, fy + (k + 1) * rise + .48f, rz), .04f, .96f, rail, 8);
                 }
                 float lx = f < flights - 1 ? landing : hillEnd + 1f - sx;
                 Tread(sx, sx + lx, sy);
@@ -422,7 +430,7 @@ namespace CityScooter.EditorTools.Districts
             return c.Save();
         }
 
-        static void Climber(ComicMesh m, Vector3 p, Color top)
+        internal static void Climber(ComicMesh m, Vector3 p, Color top)
         {
             Color skin = new Color(.86f, .64f, .5f);
             m.Surface = ComicSurface.Fabric;
@@ -492,25 +500,35 @@ namespace CityScooter.EditorTools.Districts
                 ComicMesh m = s.Front;
                 Vector3 b = s.P(-22f, .3f, 18f);
                 m.Surface = ComicSurface.Brick;
-                m.Box(b + V(0, 5f, 0), V(14f, 10f, 26f), Brick);
-                m.Box(b + V(0, 10.6f, 0), V(14.4f, 1.2f, 26.4f), BrickDark);
-                m.Box(b + V(2f, 7f, 15.5f), V(10f, 14f, 5f), Brick);
-                m.Box(b + V(1f, 9f, -15f), V(8f, 18f, 6f), Brick);
-                m.Box(b + V(1f, 18.6f, -15f), V(8.6f, 1.2f, 6.6f), BrickDark);
-                m.Box(b + V(1f, 20f, -15f), V(5f, 2.2f, 4f), R.cream);
-                m.Surface = ComicSurface.Plain;
-                for (int level = 0; level < 3; level++)
-                    for (int i = 0; i < 6; i++)
-                    {
-                        float z = b.z - 10f + i * 4f, yy = b.y + 1.6f + level * 3f;
-                        Face(m, V(b.x + 7.02f, yy, z - .7f), V(b.x + 7.02f, yy, z + .7f), V(b.x + 7.02f, yy + 1.9f, z + .7f), V(b.x + 7.02f, yy + 1.9f, z - .7f), R.ink, Vector3.right, false);
-                        Face(m, V(b.x + 7.04f, yy + 1.9f, z - .8f), V(b.x + 7.04f, yy + 1.9f, z + .8f), V(b.x + 7.04f, yy + 2.15f, z + .8f), V(b.x + 7.04f, yy + 2.15f, z - .8f), R.cream, Vector3.right, false);
-                    }
-                for (int level = 0; level < 5; level++)
+                void Block(Vector3 c, Vector3 size)
                 {
-                    float yy = b.y + 2f + level * 3.2f, z = b.z - 15f;
-                    Face(m, V(b.x + 5.02f, yy, z - .8f), V(b.x + 5.02f, yy, z + .8f), V(b.x + 5.02f, yy + 2f, z + .8f), V(b.x + 5.02f, yy + 2f, z - .8f), R.ink, Vector3.right, false);
+                    m.Surface = ComicSurface.Brick;
+                    m.Box(c, size, Brick);
+                    m.Surface = ComicSurface.Concrete;
+                    m.Box(c + V(0, -size.y * .5f + .35f, 0), V(size.x + .1f, .7f, size.z + .1f), R.ink);              // navy plinth
+                    m.Surface = ComicSurface.PaintedMetal;
+                    m.Box(c + V(0, size.y * .5f - .15f, 0), V(size.x + .3f, .3f, size.z + .3f), BrickDark);           // cornice
+                    m.Box(c + V(0, size.y * .5f + .06f, 0), V(size.x + .16f, .12f, size.z + .16f), R.cream);         // cream cap
                 }
+                Block(b + V(0, 5f, 0), V(14f, 10f, 26f));
+                Block(b + V(2f, 7f, 15.5f), V(10f, 14f, 5f));
+                Block(b + V(1f, 9f, -15f), V(8f, 18f, 6f));
+                m.Surface = ComicSurface.Concrete;
+                m.Box(b + V(1f, 19.2f, -15f), V(5f, 2.2f, 4f), R.cream);
+                m.Box(b + V(1f, 20.4f, -15f), V(5.4f, .2f, 4.4f), R.ink);
+                // Arched windows: navy recessed boxes with cream sills and cream arch heads (facing the road, +x).
+                void Window(float fx, float y, float z, float w, float h)
+                {
+                    m.Surface = ComicSurface.PaintedMetal;
+                    m.Box(V(fx, y + h * .5f, z), V(.1f, h, w), R.ink);
+                    m.Box(V(fx + .02f, y + h * .5f, z), V(.08f, h - .2f, w - .2f), R.glass);
+                    m.Surface = ComicSurface.Concrete;
+                    m.Box(V(fx + .08f, y - .06f, z), V(.22f, .12f, w + .3f), R.cream);
+                    m.Box(V(fx + .04f, y + h + .1f, z), V(.14f, .2f, w + .2f), R.cream);
+                }
+                for (int level = 0; level < 3; level++)
+                    for (int i = 0; i < 6; i++) Window(b.x + 7f, b.y + 1.6f + level * 3f, b.z - 10f + i * 4f, 1.4f, 1.9f);
+                for (int level = 0; level < 5; level++) Window(b.x + 5f, b.y + 2f + level * 3.2f, b.z - 15f, 1.6f, 2f);
                 for (float z = 6f; z < 40f; z += 14f) Palm(s.Front, s.P(-12f, .3f, z), F(s.Rnd, 8f, 10f), s.NextSeed());
             });
             Side(c, 1, s => CliffSide(s, 0f, 40f, 3f, 22f, 12f));
@@ -597,12 +615,14 @@ namespace CityScooter.EditorTools.Districts
             var m = new ComicMesh();
             Color body = new Color(.16f, .38f, .24f), lid = new Color(1f, .8f, .1f);
             m.Surface = ComicSurface.Plastic;
-            m.Box(V(0, .52f, 0), V(.62f, .98f, .72f), body);
-            m.Box(V(0, 1.05f, -.02f), V(.68f, .08f, .8f), lid);
-            m.Box(V(0, 1f, .4f), V(.5f, .08f, .08f), R.ink);
-            m.Box(V(0, .7f, -.37f), V(.3f, .2f, .02f), Color.white);
+            m.Box(V(0, .54f, 0), V(.62f, .96f, .72f), body);
+            m.Box(V(0, .1f, 0), V(.66f, .2f, .76f), R.ink);                    // navy base
+            m.Box(V(0, 1.06f, -.02f), V(.7f, .1f, .82f), lid);
+            m.Box(V(0, 1.01f, .42f), V(.52f, .09f, .09f), R.ink);              // handle
+            m.Box(V(0, .7f, -.37f), V(.32f, .22f, .05f), R.cream);             // label
+            m.Box(V(0, .7f, -.4f), V(.18f, .05f, .02f), R.ink);
             m.Surface = ComicSurface.Rubber;
-            for (int s = -1; s <= 1; s += 2) m.Cylinder(V(s * .3f, .12f, .3f), .12f, .08f, R.ink, 8, 1f, Quaternion.Euler(0, 0, 90f));
+            for (int s = -1; s <= 1; s += 2) m.Cylinder(V(s * .3f, .13f, .3f), .13f, .1f, R.ink, 8, 1f, Quaternion.Euler(0, 0, 90f));
             return SavePrefab(PrefabFolder + "/OBS_MountsBay_WheelieBin.prefab", MeshFolder, m, true, true, root =>
             {
                 Box(root, V(0, .55f, 0), V(.7f, 1.1f, .8f));
@@ -611,28 +631,33 @@ namespace CityScooter.EditorTools.Districts
             });
         }
 
-        /// <summary>Australian pelican: white with black wings, a huge pale-pink bill. Animal, not punchable.</summary>
+        /// <summary>Australian pelican: chunky white body, black wings and tail, a huge pale-pink bill and pouch built from slabs.</summary>
         static GameObject Pelican()
         {
             var m = new ComicMesh();
-            Color white = new Color(.97f, .97f, .95f), black = new Color(.12f, .12f, .14f), bill = new Color(.98f, .78f, .7f), legs = new Color(.55f, .6f, .68f);
+            Color white = new Color(.97f, .97f, .95f), black = new Color(.12f, .12f, .14f), bill = new Color(.98f, .78f, .7f),
+                pouch = new Color(.98f, .86f, .6f), legs = new Color(.55f, .6f, .68f);
             m.Surface = ComicSurface.Fabric;
-            m.Ellipsoid(V(0, .62f, .12f), V(.55f, .5f, .85f), white);
-            m.Box(V(.26f, .66f, .26f), V(.08f, .32f, .6f), black, Quaternion.Euler(-10f, 0, 0));
-            m.Box(V(-.26f, .66f, .26f), V(.08f, .32f, .6f), black, Quaternion.Euler(-10f, 0, 0));
-            m.Box(V(0, .7f, .58f), V(.3f, .12f, .3f), black, Quaternion.Euler(-20f, 0, 0));
-            m.Beam(V(0, .8f, -.15f), V(0, 1.12f, -.25f), .16f, white);
-            m.Ellipsoid(V(0, 1.18f, -.3f), V(.22f, .22f, .26f), white);
-            m.Box(V(.07f, 1.22f, -.38f), V(.02f, .04f, .04f), R.ink);
-            m.Box(V(-.07f, 1.22f, -.38f), V(.02f, .04f, .04f), R.ink);
+            m.Ellipsoid(V(0, .64f, .12f), V(.6f, .54f, .9f), white);
+            foreach (float x in new[] { -.27f, .27f })
+            {
+                m.Box(V(x, .74f, .12f), V(.09f, .22f, .5f), white, Quaternion.Euler(-10f, 0, 0));   // white upper wing
+                m.Box(V(x, .68f, .5f), V(.09f, .24f, .4f), black, Quaternion.Euler(-10f, 0, 0));   // black flight feathers
+            }
+            m.Box(V(0, .72f, .6f), V(.32f, .14f, .32f), black, Quaternion.Euler(-20f, 0, 0));
+            Rod(m, V(0, .82f, -.12f), V(0, 1.14f, -.24f), .1f, white);
+            m.Ellipsoid(V(0, 1.2f, -.3f), V(.26f, .24f, .3f), white);
+            foreach (float x in new[] { -.08f, .08f }) m.Box(V(x, 1.25f, -.39f), V(.04f, .05f, .05f), R.ink);
             m.Surface = ComicSurface.Plastic;
-            m.Box(V(0, 1.13f, -.68f), V(.1f, .07f, .6f), bill, Quaternion.Euler(14f, 0, 0));
-            m.Box(V(0, 1.03f, -.62f), V(.12f, .14f, .48f), Color.Lerp(bill, R.yellow, .3f), Quaternion.Euler(18f, 0, 0));
+            m.Box(V(0, 1.15f, -.72f), V(.13f, .08f, .7f), bill, Quaternion.Euler(12f, 0, 0));          // upper bill
+            m.Box(V(0, 1.06f, -.66f), V(.15f, .16f, .56f), pouch, Quaternion.Euler(16f, 0, 0));       // pouch
+            m.Box(V(0, 1.1f, -1.05f), V(.1f, .1f, .1f), new Color(.9f, .55f, .45f));                    // hooked tip
             m.Surface = ComicSurface.PaintedMetal;
-            m.Box(V(.1f, .2f, .1f), V(.06f, .4f, .06f), legs);
-            m.Box(V(-.1f, .2f, .1f), V(.06f, .4f, .06f), legs);
-            m.Box(V(.1f, .02f, .02f), V(.16f, .04f, .2f), legs);
-            m.Box(V(-.1f, .02f, .02f), V(.16f, .04f, .2f), legs);
+            foreach (float x in new[] { -.11f, .11f })
+            {
+                m.Cylinder(V(x, .2f, .1f), .04f, .4f, legs, 8);
+                m.Box(V(x, .03f, .02f), V(.18f, .06f, .22f), legs);
+            }
             return SaveWalker(PrefabFolder + "/PED_MountsBay_Pelican.prefab", MeshFolder, m, V(0, .65f, 0), V(.7f, 1.3f, 1.4f), .4f, true, true);
         }
 
@@ -642,26 +667,32 @@ namespace CityScooter.EditorTools.Districts
             var m = new ComicMesh();
             Color jersey = new Color(.1f, .62f, .6f), shorts = R.ink, skin = new Color(.86f, .64f, .5f), helmet = R.yellow, frame = R.red;
             m.Surface = ComicSurface.Rubber;
-            foreach (float z in new[] { -.55f, .55f }) m.Cylinder(V(0, .36f, z), .34f, .05f, R.ink, 10, 1f, Quaternion.Euler(0, 0, 90f));
+            foreach (float z in new[] { -.55f, .55f })
+            {
+                m.Cylinder(V(0, .36f, z), .34f, .08f, R.ink, 10, 1f, Quaternion.Euler(0, 0, 90f));
+                m.Cylinder(V(0, .36f, z), .08f, .12f, Steel, 8, 1f, Quaternion.Euler(0, 0, 90f));
+            }
             m.Surface = ComicSurface.PaintedMetal;
-            m.Beam(V(0, .36f, .55f), V(0, .62f, .05f), .05f, frame);
-            m.Beam(V(0, .62f, .05f), V(0, .92f, .12f), .05f, frame);
-            m.Beam(V(0, .62f, .05f), V(0, .95f, -.45f), .05f, frame);
-            m.Beam(V(0, .95f, -.45f), V(0, .36f, -.55f), .05f, frame);
-            m.Beam(V(0, .92f, .12f), V(0, .95f, -.45f), .05f, frame);
-            m.Box(V(0, 1.06f, -.5f), V(.46f, .04f, .04f), R.ink);
-            m.Box(V(0, .96f, .14f), V(.12f, .05f, .26f), R.ink);
+            Rod(m, V(0, .36f, .55f), V(0, .62f, .05f), .035f, frame);
+            Rod(m, V(0, .62f, .05f), V(0, .92f, .12f), .035f, frame);
+            Rod(m, V(0, .62f, .05f), V(0, .95f, -.45f), .035f, frame);
+            Rod(m, V(0, .95f, -.45f), V(0, .36f, -.55f), .035f, frame);
+            Rod(m, V(0, .92f, .12f), V(0, .95f, -.45f), .035f, frame);
+            m.Box(V(0, 1.06f, -.5f), V(.48f, .06f, .06f), R.ink);
+            m.Box(V(0, .97f, .14f), V(.13f, .07f, .27f), R.ink);
             m.Surface = ComicSurface.Fabric;
             m.Beam(V(.1f, 1f, .1f), V(.11f, .66f, -.1f), .14f, shorts);
             m.Beam(V(.11f, .66f, -.1f), V(.1f, .45f, .08f), .11f, skin);
             m.Beam(V(-.1f, 1f, .1f), V(-.11f, .78f, .12f), .14f, shorts);
             m.Beam(V(-.11f, .78f, .12f), V(-.1f, .5f, .02f), .11f, skin);
             m.Box(V(0, 1.28f, -.08f), V(.42f, .26f, .62f), jersey, Quaternion.Euler(-35f, 0, 0));
+            m.Box(V(0, 1.31f, -.06f), V(.44f, .07f, .5f), R.cream, Quaternion.Euler(-35f, 0, 0));   // jersey stripe
             m.Beam(V(.2f, 1.42f, -.25f), V(.21f, 1.08f, -.48f), .1f, skin);
             m.Beam(V(-.2f, 1.42f, -.25f), V(-.21f, 1.08f, -.48f), .1f, skin);
             m.Box(V(0, 1.55f, -.38f), V(.22f, .22f, .22f), skin);
             m.Surface = ComicSurface.Plastic;
             m.Ellipsoid(V(0, 1.68f, -.36f), V(.3f, .2f, .36f), helmet);
+            m.Box(V(0, 1.64f, -.36f), V(.32f, .06f, .38f), R.ink);
             return SaveWalker(PrefabFolder + "/PED_MountsBay_Cyclist.prefab", MeshFolder, m, V(0, .9f, 0), V(.6f, 1.8f, 1.8f), 3f, false, false);
         }
 
