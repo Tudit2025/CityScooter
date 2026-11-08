@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_CBD
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: cbd
+  displayName: PERTH CBD
+  order: 50
+  length: {x: 480, y: 640}
+  chunks:
+  - {fileID: 1552585047098679710, guid: e0c5ea7b76ff27b41bf3a411e0505c09, type: 3}
+  - {fileID: 3316886743491673634, guid: eefbb7d1dc93a6342837f9c81b451b8f, type: 3}
+  - {fileID: 9153950767318188957, guid: c118e46cb2ca7b64383850fbb3e013ee, type: 3}
+  - {fileID: 2353761460489630496, guid: 0f988958c97a56a4686ca51c162fd06d, type: 3}
+  - {fileID: 6471803498328572513, guid: 11406f850aacee14f956d2c86f83ed83, type: 3}
+  - {fileID: 6881607737356257674, guid: 3790e09d02f73ca49b2167f026f24271, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 1179748422816541349, guid: eba0d287d4053ca498696701858fd038, type: 3}
+  exit: {fileID: 5271302885337421999, guid: 754da8f7f8c6e194583e642f19959e2c, type: 3}
+  allowBoulevard: 1
+  obstacles:
+  - {fileID: 5475644072903381760, guid: c496068eedf870141be539ff37817d7d, type: 3}
+  - {fileID: 2012374524003700131, guid: c8a81388d2674de43995a5955ab2048d, type: 3}
+  - {fileID: 6829796773104012488, guid: df4af3076cfa77744951916a60395696, type: 3}
+  - {fileID: 530483984839865605, guid: b01751fc203ce684c8d98b1c90370f49, type: 3}
+  - {fileID: 534185336433319250, guid: ce5c61c811b2ff446b2a46bab0ce5f5e, type: 3}
+  - {fileID: 6246465025506993840, guid: 6155db4ab763d9d47adbc66494c2add5, type: 3}
+  - {fileID: 3252785564823809802, guid: eef0a39a68ecfdb43a6831f7c8928987, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: 3256659962f960d409105dbb393657c3, type: 2}
+  - {fileID: 11400000, guid: d12eedbd87110334ca2fa7137e6a8691, type: 2}
+  - {fileID: 11400000, guid: 4a6cc6f8a8ce7bd4a8ca5f5916423578, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 416bace6f208e294a813b975b4690f17, type: 2}
+  - {fileID: 11400000, guid: 8578d9f54835f0d46a5d163be53caf5b, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: b44e8e9120f2ba547afe612562572111, type: 2}
+  - {fileID: 11400000, guid: f7b4a55b20b8bbf4e98de7d868f4aff7, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  - {fileID: 11400000, guid: 6e7c690878e1b4c4eaae50a5a0d90a33, type: 2}
+  - {fileID: 11400000, guid: eda3cd239fb42414298f4dfdcc11d28c, type: 2}
+  - {fileID: 11400000, guid: 6f05f28e5f36e7e4b875834836833224, type: 2}
+  - {fileID: 11400000, guid: ca3d6985192101448a9a1ea8d5f7473a, type: 2}
+  pedestrians:
+  - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}
+  - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}
+  - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}
+  - {fileID: 5269257977654849716, guid: b0829f5f782ffbf45b7b77bb8e0a3c56, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 1036303239612383499, guid: 8e9809eee542be54dbb9f901b9443560, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  ramps:
+  - {fileID: 598258978654334442, guid: aa7e51455dd5e0e45b4d057ebd018ea2, type: 3}
+  - {fileID: 3236270504573202724, guid: f417d438ab501ed4f8fb99569c155777, type: 3}
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.66, g: 0.76, b: 0.86, a: 1}
+  skyTint: {r: 0.93, g: 0.97, b: 1, a: 1}
+  ambientSky: {r: 0.62, g: 0.74, b: 0.9, a: 1}
+  ambientEquator: {r: 0.78, g: 0.8, b: 0.83, a: 1}
+  ambientGround: {r: 0.5, g: 0.51, b: 0.55, a: 1}
+  sunColor: {r: 1, g: 0.96, b: 0.9, a: 1}
+  sunIntensity: 1.25
+  farScenery: {fileID: 6385569532575400233, guid: 923e0beb10cc27845ab89557f4ac2f70, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
