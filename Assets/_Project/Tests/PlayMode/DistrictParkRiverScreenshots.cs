@@ -135,15 +135,18 @@ namespace CityScooter.Tests
             District d = Load("Assets/_Project/Data/Districts/District_MountsBay.asset");
             Assert.NotNull(d);
             Use(d);
-            PlaceRamp(d, 2.6f, 152f);
-            // Chunks: entry 0, Towers 40, Narrows 80, JacobsLadder 120, Escarpment 160, Inlet 200, Brewery 240, exit 280.
-            yield return Shot("mountsbay", "01-entry.png", 0f, 1f);
-            yield return Shot("mountsbay", "02-towers-and-palms.png", -1.5f, 42f);
-            yield return Shot("mountsbay", "03-narrows-bridge.png", 0f, 84f);
-            yield return Shot("mountsbay", "04-jacobs-ladder.png", 2.5f, 118f);
-            yield return Shot("mountsbay", "05-escarpment-river.png", -5.5f, 162f);
-            yield return Shot("mountsbay", "06-inlet-jump.png", 0f, 198f);
-            yield return Shot("mountsbay", "07-brewery.png", 0f, 244f);
+            PlaceRamp(d, 2f, 172f);
+            // 4-lane road (lane centres x = -6, -2, 2, 6). Chunks: entry 0 (widens), Towers 40, Narrows 80, JacobsLadder 120
+            // (stairs at z 140), Escarpment 160, Inlet 200, Brewery 240, exit 280 (narrows).
+            yield return Shot("mountsbay", "01-entry-widening.png", 0f, 1f);
+            yield return Shot("mountsbay", "02-towers-and-palms.png", -2f, 42f);
+            yield return Shot("mountsbay", "03-narrows-bridge.png", 2f, 84f);
+            yield return Shot("mountsbay", "04-jacobs-ladder.png", 6f, 112f);
+            yield return Shot("mountsbay", "04b-jacobs-ladder-near.png", 9.5f, 128f);
+            yield return Shot("mountsbay", "05-escarpment-river.png", -10f, 162f);
+            yield return Shot("mountsbay", "06-inlet-jump.png", -2f, 198f);
+            yield return Shot("mountsbay", "07-brewery.png", 2f, 246f);
+            yield return Shot("mountsbay", "08-exit-narrowing.png", 0f, 284f);
         }
 
         static void Capture(Camera camera, string id, string file)
