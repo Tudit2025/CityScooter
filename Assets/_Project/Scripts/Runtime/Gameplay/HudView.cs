@@ -211,7 +211,7 @@ namespace CityScooter.Gameplay
             if (_hint == null) return;
             _hint.text = _shownKeys
                 ? "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake  ·  F punch  ·  R bell  ·  E boost  ·  T cartoon"
-                : "Tilt your micro:bit to steer  ·  A to jump  ·  B to brake  ·  punch, bell, boost: program them on your micro:bit!";
+                : "Tilt your micro:bit to steer  ·  A to jump  ·  B to brake  ·  punch, bell, boost, tricks: program them on your micro:bit!";
         }
 
         void RedrawForKeys()
