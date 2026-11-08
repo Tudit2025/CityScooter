@@ -207,13 +207,17 @@ namespace CityScooter.Gameplay
             // Jump arc (also from a ramp top: then it floats like a ramp flight).
             if (input.Jump && !Airborne && _runTime >= T.jumpLockAtStart)
                 TakeOff(T.jumpVelocity, _onRamp != null ? HangOf(_onRamp) : 1f, false, from.z);
-            else if (!Airborne && _groundH > 0.02f && ground < _groundH - 0.02f)
+            else if (!Airborne && _onRamp != null && PastLip(_onRamp, x, road, nextZ))
             {
-                // The ground drops away faster than the rider would fall: past the lip, fly; off a ramp's side, drop.
+                // Rode off the lip: fly, whatever comes after it (the road, a gap, or a deck coming back down).
                 Ramp was = _onRamp;
-                bool lip = was != null && was.transform.InverseTransformPoint(new Vector3(x, road, nextZ)).z >= was.Length - 0.05f;
-                if (lip) TakeOff(Mathf.Min(Speed * was.Slope * was.launch * T.rampLaunch, T.rampMaxLaunchVelocity), HangOf(was), true, from.z);
-                else TakeOff(0f, 1f, false, from.z);
+                TakeOff(Mathf.Min(Speed * was.Slope * was.launch * T.rampLaunch, T.rampMaxLaunchVelocity), HangOf(was), true, from.z);
+            }
+            else if (!Airborne && _groundH > 0.02f && _groundH - ground > Speed * dt * 0.7f + 0.05f)
+            {
+                // The ground drops away faster than the rider can follow it (off a ramp's side): drop.
+                // A gently falling surface (a deck coming back down: a Ramp turned round) is simply followed.
+                TakeOff(0f, 1f, false, from.z);
             }
 
             if (Airborne)
@@ -253,6 +257,10 @@ namespace CityScooter.Gameplay
         // ---- Ramps and air (v0.3)
 
         float HangOf(Ramp r) => Mathf.Clamp(r.hangGravity * T.rampHangGravity, 0.1f, 2f);
+
+        // Past the lip of a ramp that faces the way the rider goes (a ramp turned round is a deck going down: no lip).
+        static bool PastLip(Ramp r, float x, float road, float z) =>
+            r.transform.forward.z > 0.5f && r.transform.InverseTransformPoint(new Vector3(x, road, z)).z >= r.Length - 0.05f;
 
         // Height above the road of whatever the rider would stand on here: the highest ramp, or 0 (the road).
         // Riding into a ramp's side (or flying into it low) does not lift the rider up onto it.
@@ -337,7 +345,8 @@ namespace CityScooter.Gameplay
             if (Airborne) return BigAir ? -Mathf.Atan2(_vy, Mathf.Max(4f, Speed)) * Mathf.Rad2Deg * 0.6f : 0f;
             if (_onRamp == null) return 0f;
             float lz = _onRamp.transform.InverseTransformPoint(transform.position).z;
-            return lz < _onRamp.rise ? -Mathf.Atan(_onRamp.Slope) * Mathf.Rad2Deg : 0f;
+            float dir = _onRamp.transform.forward.z >= 0f ? 1f : -1f; // nose down on a deck coming back down
+            return lz < _onRamp.rise ? -Mathf.Atan(_onRamp.Slope) * Mathf.Rad2Deg * dir : 0f;
         }
 
         void PoseModel(Quaternion baseRotation)

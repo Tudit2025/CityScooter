@@ -307,6 +307,45 @@ namespace CityScooter.Tests
             Assert.AreEqual("SPLASH!", _game.EndTitle);
         }
 
+        // CHN_Quay_Bridge: a hump (rise 10, height 2.2, top 8) whose deck comes back down over 8 m. The way down is a
+        // Ramp turned round (yaw 180, pivot at the bottom end): slow riders land on it and ride down, fast ones fly over.
+        [UnityTest]
+        public IEnumerator BridgeHump_Slow_LandsOnTheDeckComingDown_AndRidesItDown() => BridgeHump(6f);
+
+        [UnityTest]
+        public IEnumerator BridgeHump_Fast_FliesOverTheDeckComingDown() => BridgeHump(13f);
+
+        IEnumerator BridgeHump(float speed)
+        {
+            _tuning.startSpeed = _tuning.maxSpeed = speed;
+            yield return Ride();
+            float z = Rider.transform.position.z + 12f;
+            Ramp up = AuthoredRamp(z, 0f, 16f, 10f, 2.2f, 8f);
+            Ramp down = AuthoredRamp(z + 26f, 0f, 16f, 8f, 2.2f, 0f);
+            down.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            int takeOffs = 0;
+            System.Action<bool> onTakeOff = _ => takeOffs++;
+            Rider.TookOff += onTakeOff;
+            try
+            {
+                float worst = 0f;
+                while ((Rider.transform.position.z < z + 30f || Rider.Airborne) && Rider.transform.position.z < z + 60f && _game.State == RunState.Running)
+                {
+                    Vector3 p = Rider.transform.position;
+                    float road = _game.track.SurfaceHeightAt(p.x, p.z);
+                    float deck = Mathf.Max(up.WorldHeightAt(p.x, p.z, road, out _), down.WorldHeightAt(p.x, p.z, road, out _));
+                    worst = Mathf.Max(worst, deck - (p.y - road));
+                    yield return null;
+                }
+                Assert.AreEqual(RunState.Running, _game.State);
+                Assert.Less(worst, 0.12f, "never inside the deck");
+                Assert.AreEqual(1, takeOffs, "one flight off the crest, no hopping down the deck");
+                Assert.IsFalse(Rider.Airborne);
+                Assert.AreEqual(0f, Rider.HeightAboveRoad, 0.05f, "back on the road");
+            }
+            finally { Rider.TookOff -= onTakeOff; }
+        }
+
         [UnityTest]
         public IEnumerator OffsetGap_OnlyCoversItsOwnLanes()
         {

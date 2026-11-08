@@ -81,14 +81,18 @@ namespace CityScooter.Track
             {
                 Ramp r = ActiveList[i];
                 if (r == null) continue;
-                // Cheap reject: ramps are at most a few tens of metres long.
+                // Cheap reject: ramps are at most a few tens of metres long (either way: a ramp turned round is a deck
+                // coming back down, see the class summary).
                 float dz = worldZ - r.transform.position.z;
-                if (dz < -1f || dz > r.Length * r.transform.lossyScale.z + 1f) continue;
+                if (Mathf.Abs(dz) > r.Length * r.transform.lossyScale.z + 1f) continue;
                 float h = r.WorldHeightAt(worldX, worldZ, roadY, out float lz);
                 if (h > best) { best = h; ramp = r; localZ = lz; }
             }
             return best;
         }
+
+        // A Ramp turned round (yaw 180, pivot at the BOTTOM end) describes a deck coming back down, e.g. a bridge hump:
+        // the rider lands on it or rides down it; it has no lip (RiderController only launches off ramps facing +Z).
 
         /// <summary>World z of the lip (the end of the ramp).</summary>
         public float LipZ => transform.TransformPoint(new Vector3(0f, height, Length)).z;

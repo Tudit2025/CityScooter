@@ -910,7 +910,7 @@ namespace CityScooter.Gameplay
             {
                 Ramp r = Ramp.Active[i];
                 if (r == null) continue;
-                float r0 = r.transform.position.z, r1 = r.LipZ + 40f; // authored ramps: about a flight beyond the lip
+                float r0 = Mathf.Min(r.transform.position.z, r.LipZ), r1 = Mathf.Max(r.transform.position.z, r.LipZ) + 40f; // about a flight beyond
                 if (r1 + T.rampMinGap > from && r0 - T.rampMinGap < to) { after = r1 + T.rampMinGap; return false; }
             }
             for (int i = 0; i < RoadGap.Active.Count; i++)
