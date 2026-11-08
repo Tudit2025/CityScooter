@@ -83,26 +83,26 @@ MonoBehaviour:
     - id: PlaneTree
       position: {x: -4.9, y: 0.042646542, z: 2}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: -4.9, y: -0.9014743, z: 14}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: -4.9, y: -1.8455949, z: 26}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: -4.9, y: -2.7897158, z: 38}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: Bench
       position: {x: -5.1, y: -0.50809056, z: 9}
@@ -125,26 +125,26 @@ MonoBehaviour:
     - id: PlaneTree
       position: {x: 4.9, y: 0.042646542, z: 2}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 4.9, y: -0.9014743, z: 14}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 4.9, y: -1.8455949, z: 26}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 4.9, y: -2.7897158, z: 38}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.53, z: 0}
-      size: {x: 0.4, y: 3.06, z: 0.4}
+      centre: {x: 0, y: 1.3499999, z: 0}
+      size: {x: 0.4, y: 2.6999998, z: 0.4}
       canJumpOver: 0
     - id: Bench
       position: {x: 5.1, y: -0.50809056, z: 9}

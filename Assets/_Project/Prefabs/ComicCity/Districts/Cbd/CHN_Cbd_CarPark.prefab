@@ -84,32 +84,32 @@ MonoBehaviour:
     - id: PlaneTree
       position: {x: -8.95, y: -2.2389786, z: 31}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -0.03603019, z: 3}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -0.8227975, z: 13}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -1.6095648, z: 23}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -2.396332, z: 33}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: StreetLamp
       position: {x: 8.55, y: -1.216181, z: 18}

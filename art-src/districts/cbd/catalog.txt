@@ -1,13 +1,13 @@
-OBS_Cbd_Planter 304 tris
-OBS_Cbd_Kiosk 208 tris
-OBS_Cbd_CafeSet 208 tris
-CHN_Cbd_Entry 14520 tris, 6 renderers
-CHN_Cbd_Widen 12980 tris, 6 renderers
-CHN_Cbd_Narrow 13520 tris, 6 renderers
-CHN_Cbd_Terrace 14768 tris, 6 renderers
-CHN_Cbd_TownHall 14388 tris, 6 renderers
-CHN_Cbd_MallArcade 15112 tris, 6 renderers
-CHN_Cbd_MallShops 15308 tris, 6 renderers
-CHN_Cbd_Plaza 17948 tris, 6 renderers
-CHN_Cbd_CarPark 12168 tris, 6 renderers
-CHN_Cbd_Exit 14102 tris, 6 renderers
+OBS_Cbd_Planter 712 tris
+OBS_Cbd_Kiosk 576 tris
+OBS_Cbd_CafeSet 432 tris
+CHN_Cbd_Entry 18072 tris, 6 renderers
+CHN_Cbd_Widen 14036 tris, 6 renderers
+CHN_Cbd_Narrow 14576 tris, 6 renderers
+CHN_Cbd_Terrace 18336 tris, 6 renderers
+CHN_Cbd_TownHall 16900 tris, 6 renderers
+CHN_Cbd_MallArcade 18280 tris, 6 renderers
+CHN_Cbd_MallShops 19532 tris, 6 renderers
+CHN_Cbd_Plaza 22108 tris, 6 renderers
+CHN_Cbd_CarPark 14808 tris, 6 renderers
+CHN_Cbd_Exit 17654 tris, 6 renderers

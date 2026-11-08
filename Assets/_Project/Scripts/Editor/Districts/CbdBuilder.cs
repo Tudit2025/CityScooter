@@ -128,8 +128,25 @@ namespace CityScooter.EditorTools.Districts
             EditorUtility.SetDirty(d);
             AssetDatabase.SaveAssets();
             K.WriteReport("art-src/districts/cbd/catalog.txt");
+            K.RenderAtlas("art-src/districts/cbd/props-atlas.png", new List<(string, GameObject, ComicMesh)>
+            {
+                ("PlaneTree", null, Atlas(m => K.PlaneTree(m, null, Vector3.zero, 1f))),
+                ("PlaneTreeFar", null, Atlas(m => K.PlaneTree(m, null, Vector3.zero, 1.25f, true))),
+                ("TrafficLight", null, Atlas(m => K.TrafficLight(m, null, 1, 0f, 0f, 0f))),
+                ("CafeUmbrella", null, Atlas(m => K.CafeUmbrella(m, null, Vector3.zero, K.Hex("F4F2EA")))),
+                ("Planter", planter.gameObject, null),
+                ("Kiosk", kiosk.gameObject, null),
+                ("CafeSet", cafe.gameObject, null),
+                ("Bus", busOncoming, null),
+                ("Van", vanAhead, null),
+                ("CarParkRamp", carParkRamp.gameObject, null),
+                ("LoadingDock", dockRamp.gameObject, null),
+                ("BusShelter", AssetDatabase.LoadAssetAtPath<GameObject>(ComicCityBuilder.Prefabs + "/Props/PRP_BusShelter.prefab"), null),
+            });
             Debug.Log("[Districts/CBD] built " + (ChunkIds.Length + 2) + " chunks: " + string.Join("; ", K.Report));
         }
+
+        static ComicMesh Atlas(Action<ComicMesh> build) { var m = new ComicMesh(); build(m); return m; }
 
         public static void BuildBatch()
         {
@@ -358,8 +375,8 @@ namespace CityScooter.EditorTools.Districts
                     GlassTower(d, new CqLot(1, 18, 30, E + set, 16, d.Base(24)), 86, GlassTeal, FrameLight, 1);
                     ConcreteTower(d, new CqLot(1, 30, 40, E + set, 16, d.Base(35)), 44);
                 }
-                for (float z = 5; z < 40; z += 11) K.CafeUmbrella(d.Props, d.Collisions, new Vector3(s * (E + 2.6f), d.Ground(z), z), s < 0 ? K.Hex("F4F2EA") : K.Hex("2F6B66"));
-                for (float z = 0; z < 40; z += 13.3f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z + 2), z + 2), 1f);
+                for (float z = 6; z < 40; z += 13) K.CafeUmbrella(d.Props, d.Collisions, new Vector3(s * (E + 2.6f), d.Ground(z), z), s < 0 ? K.Hex("F4F2EA") : K.Hex("2F6B66"));
+                for (float z = 0; z < 40; z += 14f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z + 3), z + 3), 1f);
                 DeepTowers(d, s, 0, 40, 8 + s);
             }
             K.Lamp(d.Props, d.Collisions, -1, d.Ground(27f), 27f, h);
@@ -822,7 +839,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Calm end of an entry/exit chunk: low sandstone wall, hedge and lawn (sheared with the sidewalk), park trees behind.
-        internal static void GardenEdge(CqChunkDraft d, int s, float z0, float z1)
+        internal static void GardenEdge(CqChunkDraft d, int s, float z0, float z1, float lawn = 50f)
         {
             ComicMesh m = d.SlopedFrontage;
             float k = K.Kerb;
@@ -831,7 +848,7 @@ namespace CityScooter.EditorTools.Districts
             K.SideBox(m, s, z0, z1, k + .75f, k + .9f, -.02f, .57f, Trim);
             m.Surface = ComicSurface.Foliage;
             K.SideBox(m, s, z0 + .4f, z1 - .4f, k + .4f, k + 1.5f, .7f, 1.7f, K.Hex("4E7F3A"));
-            K.SideBox(m, s, z0, z1, -2.4f, k + .3f, .5f, 50f, K.Hex("6E9A45"));
+            K.SideBox(m, s, z0, z1, -2.4f, k + .3f, .5f, lawn, K.Hex("6E9A45"));
             d.Walls.Add(new Bounds(new Vector3(s * (K.Edge + 7f), d.Y((z0 + z1) * .5f) + 1f, (z0 + z1) * .5f), new Vector3(13.5f, 4f, z1 - z0)));
         }
 
@@ -839,7 +856,7 @@ namespace CityScooter.EditorTools.Districts
         {
             for (float z = z0 + 3f; z < z1; z += 6f)
                 for (int row = 0; row < 3; row++)
-                    K.PlaneTree(d.Deep, null, new Vector3(s * (K.Edge + 6f + row * 9f + (z + row * 2f) % 3f), d.Ground(z) + .3f, z + row * 2.5f - 2f), 1.25f + row * .2f);
+                    K.PlaneTree(d.Deep, null, new Vector3(s * (K.Edge + 6f + row * 9f + (z + row * 2f) % 3f), d.Ground(z) + .3f, z + row * 2.5f - 2f), 1.1f + row * .15f, true);
         }
 
         // Second and third rows of towers (no outline, no shadows), like the street chunks' deep city.
@@ -889,93 +906,142 @@ namespace CityScooter.EditorTools.Districts
 
         static ComicMesh PlanterMesh()
         {
-            var m = new ComicMesh { Surface = ComicSurface.Concrete };
-            m.Box(new Vector3(0, .32f, 0), new Vector3(1.5f, .64f, 1.5f), Granite);
-            m.Box(new Vector3(0, .66f, 0), new Vector3(1.6f, .08f, 1.6f), K.R.cream);
+            var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
+            m.Box(new Vector3(0, .05f, 0), new Vector3(1.5f, .1f, 1.5f), K.R.ink);
+            m.Surface = ComicSurface.Concrete;
+            m.Box(new Vector3(0, .38f, 0), new Vector3(1.38f, .56f, 1.38f), Granite);
+            m.Box(new Vector3(0, .7f, 0), new Vector3(1.5f, .1f, 1.5f), K.R.cream);
+            K.Plant(m, new Vector3(-.3f, .95f, .15f), .85f);
+            K.Plant(m, new Vector3(.3f, .92f, -.2f), .75f, K.Hex("4F7F38"));
             m.Surface = ComicSurface.Foliage;
-            m.Ellipsoid(new Vector3(0, .82f, 0), new Vector3(1.3f, .5f, 1.3f), K.R.green);
-            m.Ellipsoid(new Vector3(.2f, .95f, -.1f), new Vector3(.7f, .4f, .7f), K.Hex("E05A8A"));
+            m.Ellipsoid(new Vector3(.25f, 1.1f, .3f), new Vector3(.4f, .3f, .4f), K.Hex("E05A8A"));
             return m;
         }
 
+        // Mall kiosk: ink base, teal body with cream corner posts, framed glass, counter, striped awning, red roof.
         static ComicMesh KioskMesh()
         {
             var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
-            m.Box(new Vector3(0, .1f, 0), new Vector3(1.9f, .2f, 1.9f), K.R.ink);
-            m.Box(new Vector3(0, 1.1f, 0), new Vector3(1.6f, 1.8f, 1.6f), K.Hex("2F6B66"));
-            m.Surface = ComicSurface.Glass;
-            m.Box(new Vector3(0, 1.35f, -.81f), new Vector3(1.2f, .8f, .04f), K.R.glass);
-            m.Box(new Vector3(-.81f, 1.35f, 0), new Vector3(.04f, .8f, 1.2f), K.R.glass);
+            Color body = K.Hex("2F6B66");
+            m.Box(new Vector3(0, .08f, 0), new Vector3(1.9f, .16f, 1.9f), K.R.ink);
+            m.Box(new Vector3(0, 1.1f, 0), new Vector3(1.6f, 1.9f, 1.6f), body);
+            for (int x = -1; x <= 1; x += 2) for (int z = -1; z <= 1; z += 2) m.Box(new Vector3(x * .78f, 1.1f, z * .78f), new Vector3(.14f, 1.9f, .14f), K.R.cream);
+            foreach (Quaternion q in new[] { Quaternion.identity, Quaternion.Euler(0, 90, 0), Quaternion.Euler(0, 180, 0) })
+            {
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Box(q * new Vector3(0, 1.4f, .8f), new Vector3(1.2f, .86f, .06f), K.R.ink, q);
+                m.Surface = ComicSurface.Glass;
+                m.Box(q * new Vector3(0, 1.4f, .83f), new Vector3(1.06f, .72f, .04f), K.R.glass, q);
+            }
+            m.Surface = ComicSurface.Wood;
+            m.Box(new Vector3(0, .95f, .95f), new Vector3(1.5f, .08f, .32f), K.R.cream);
+            m.Surface = ComicSurface.Fabric;
+            for (int i = 0; i < 6; i++) m.Box(new Vector3(-.75f + (i + .5f) * .25f, 1.98f, 1.02f), new Vector3(.25f, .08f, .5f), i % 2 == 0 ? K.R.red : K.R.cream, Quaternion.Euler(18, 0, 0));
             m.Surface = ComicSurface.PaintedMetal;
-            m.Box(new Vector3(0, .9f, -.9f), new Vector3(1.6f, .08f, .3f), K.R.cream);       // counter
-            m.Box(new Vector3(0, 2.15f, 0), new Vector3(2f, .2f, 2f), K.R.cream);
-            m.Cylinder(new Vector3(0, 2.45f, 0), 1.15f, .4f, K.R.red, 8, .2f);
+            m.Box(new Vector3(0, 2.11f, 0), new Vector3(2f, .14f, 2f), K.R.ink);
+            m.Cylinder(new Vector3(0, 2.48f, 0), 1.3f, .6f, K.R.red, 4, .12f, Quaternion.Euler(0, 45, 0));
+            m.Cylinder(new Vector3(0, 2.85f, 0), .1f, .2f, K.R.cream, 8);
             return m;
         }
 
         static ComicMesh CafeSetMesh()
         {
-            var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
-            m.Cylinder(new Vector3(0, .37f, 0), .05f, .74f, K.R.ink, 6);
-            m.Cylinder(new Vector3(0, .75f, 0), .38f, .05f, K.R.cream, 8);
-            for (int s = -1; s <= 1; s += 2)
-            {
-                m.Box(new Vector3(s * .62f, .23f, 0), new Vector3(.4f, .46f, .4f), K.Hex("2F6B66"));
-                m.Box(new Vector3(s * .8f, .6f, 0), new Vector3(.06f, .5f, .4f), K.Hex("2F6B66"));
-            }
+            var m = new ComicMesh();
+            K.CafeSet(m, Vector3.zero, K.Hex("2F6B66"));
             return m;
         }
 
-        // A generic city bus (no brand, no text): white body, teal skirt, dark windows. Front at +Z.
+        // Wheels like the kit's cars: ink tyre, silver hub.
+        static void Wheels(ComicMesh m, float x, float r, float y, params float[] zs)
+        {
+            m.Surface = ComicSurface.Rubber;
+            foreach (float z in zs)
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    m.Surface = ComicSurface.Rubber;
+                    m.Cylinder(new Vector3(s * x, y, z), r, .3f, K.R.ink, 8, 1, Quaternion.Euler(0, 0, 90));
+                    m.Surface = ComicSurface.Metal;
+                    m.Cylinder(new Vector3(s * (x + .03f), y, z), r * .45f, .3f, K.Hex("D1DBE5"), 8, 1, Quaternion.Euler(0, 0, 90));
+                }
+        }
+
+        // A generic city bus (no brand, no text): white body, teal skirt, window band with ink pillars, doors, lights,
+        // ink bumpers and trims, wheels with hubs. Front at +Z.
         static ComicMesh BusMesh()
         {
             var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
-            Color body = K.Hex("F2F2EE"), skirt = K.Hex("2F8C7E");
+            Color body = K.Hex("F2F2EE"), skirt = K.Hex("2F8C7E"), dark = K.Hex("26333D");
             float L = 12f, hz = L / 2;
-            m.Box(new Vector3(0, 1.75f, 0), new Vector3(2.5f, 2.7f, L), body);
-            m.Box(new Vector3(0, .62f, 0), new Vector3(2.52f, .55f, L + .02f), skirt);
-            m.Surface = ComicSurface.Glass;
-            for (int s = -1; s <= 1; s += 2) m.Box(new Vector3(s * 1.26f, 2.1f, -.4f), new Vector3(.02f, 1.1f, L - 2.4f), K.Hex("26333D"));
-            m.Box(new Vector3(0, 1.95f, hz + .01f), new Vector3(2.2f, 1.5f, .03f), K.Hex("26333D"));
-            m.Box(new Vector3(0, 2.3f, -hz - .01f), new Vector3(2f, .8f, .03f), K.Hex("26333D"));
-            m.Surface = ComicSurface.PaintedMetal;
-            m.Box(new Vector3(0, 3.02f, hz - .2f), new Vector3(1.6f, .28f, .12f), K.R.ink);    // destination board (blank)
-            m.Box(new Vector3(0, 3.02f, hz - .14f), new Vector3(1.4f, .18f, .02f), K.Hex("F3B23A"));
-            m.Box(new Vector3(0, 3.18f, -1f), new Vector3(1.8f, .3f, 3f), K.Hex("C9CDD2"));    // roof unit
+            m.Box(new Vector3(0, 1.8f, 0), new Vector3(2.5f, 2.6f, L), body);
+            m.Box(new Vector3(0, .72f, 0), new Vector3(2.54f, .5f, L + .04f), skirt);
+            m.Box(new Vector3(0, 3.12f, 0), new Vector3(2.4f, .1f, L - .2f), K.R.ink);                      // roof edge trim
+            m.Box(new Vector3(0, 3.3f, -1.2f), new Vector3(1.8f, .3f, 3.2f), K.Hex("C9CDD2"));               // roof unit
+            m.Box(new Vector3(0, 3.47f, -1.2f), new Vector3(1.86f, .06f, 3.26f), K.R.ink);
             for (int s = -1; s <= 1; s += 2)
             {
-                m.Box(new Vector3(s * .9f, .95f, hz + .02f), new Vector3(.35f, .2f, .04f), K.R.cream);
-                m.Box(new Vector3(s * .95f, .95f, -hz - .02f), new Vector3(.3f, .25f, .04f), K.R.red);
+                m.Surface = ComicSurface.Glass;
+                m.Box(new Vector3(s * 1.255f, 2.2f, -.6f), new Vector3(.06f, 1.05f, L - 3f), dark);
+                m.Surface = ComicSurface.PaintedMetal;
+                for (float z = -hz + 1f; z < hz - 2f; z += 1.6f) m.Box(new Vector3(s * 1.275f, 2.2f, z), new Vector3(.06f, 1.1f, .14f), K.R.ink);
+                m.Box(new Vector3(s * 1.27f, 1.55f, 0), new Vector3(.06f, .1f, L - .3f), K.R.ink);         // belt line
             }
-            m.Surface = ComicSurface.Rubber;
+            // doors on the kerb side (left), front and middle
+            foreach (float z in new[] { hz - 1.4f, -.8f })
+            {
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Box(new Vector3(-1.27f, 1.65f, z), new Vector3(.07f, 2.3f, 1.2f), K.R.ink);
+                m.Surface = ComicSurface.Glass;
+                m.Box(new Vector3(-1.3f, 1.75f, z), new Vector3(.05f, 1.9f, 1f), dark);
+            }
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(new Vector3(0, 2f, hz + .02f), new Vector3(2.36f, 1.66f, .06f), K.R.ink);
+            m.Surface = ComicSurface.Glass;
+            m.Box(new Vector3(0, 1.98f, hz + .05f), new Vector3(2.2f, 1.45f, .04f), dark);
+            m.Box(new Vector3(0, 2.4f, -hz - .04f), new Vector3(2f, .8f, .06f), dark);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(new Vector3(0, 3f, hz + .02f), new Vector3(1.7f, .3f, .1f), K.R.ink);                      // destination board, blank
+            m.Box(new Vector3(0, 3f, hz + .08f), new Vector3(1.5f, .18f, .04f), K.Hex("F3B23A"));
+            m.Box(new Vector3(0, .5f, hz + .08f), new Vector3(2.56f, .3f, .14f), K.R.ink);                   // bumpers
+            m.Box(new Vector3(0, .5f, -hz - .08f), new Vector3(2.56f, .3f, .14f), K.R.ink);
             for (int s = -1; s <= 1; s += 2)
-                foreach (float z in new[] { hz - 2.4f, -hz + 2.8f })
-                    m.Cylinder(new Vector3(s * 1.15f, .5f, z), .5f, .32f, K.R.ink, 8, 1, Quaternion.Euler(0, 0, 90));
+            {
+                m.Box(new Vector3(s * .9f, .95f, hz + .04f), new Vector3(.38f, .2f, .06f), K.R.cream);
+                m.Box(new Vector3(s * .95f, 1f, -hz - .04f), new Vector3(.3f, .28f, .06f), K.R.red);
+            }
+            Wheels(m, 1.12f, .5f, .5f, hz - 2.4f, -hz + 2.8f);
             return m;
         }
 
-        // A plain delivery van (no brand). Front at +Z.
+        // A plain delivery van (no brand): cab and box body, framed windscreen and side windows, ink bumpers and trims,
+        // a red stripe, rear doors, lights, wheels with hubs. Front at +Z.
         static ComicMesh VanMesh()
         {
             var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
-            Color body = K.Hex("E8E4D8");
-            m.Box(new Vector3(0, 1.35f, -.5f), new Vector3(2f, 2.1f, 4f), body);
-            m.Box(new Vector3(0, .95f, 1.9f), new Vector3(1.95f, 1.3f, 1.2f), body);
-            m.Box(new Vector3(0, .55f, 0), new Vector3(2.02f, .3f, 5.1f), K.R.red);
-            m.Surface = ComicSurface.Glass;
-            m.Box(new Vector3(0, 1.75f, 1.32f), new Vector3(1.8f, .7f, .03f), K.Hex("26333D"));
-            for (int s = -1; s <= 1; s += 2) m.Box(new Vector3(s * 1.0f, 1.75f, 1.8f), new Vector3(.02f, .55f, .8f), K.Hex("26333D"));
+            Color body = K.Hex("E8E4D8"), dark = K.Hex("26333D");
+            m.Box(new Vector3(0, 1.4f, -.55f), new Vector3(2f, 2.1f, 4f), body);
+            m.Box(new Vector3(0, 1f, 1.95f), new Vector3(1.96f, 1.3f, 1.1f), body);
+            m.Box(new Vector3(0, 1.9f, 1.55f), new Vector3(1.9f, .5f, .4f), body);
+            m.Box(new Vector3(0, .62f, -.1f), new Vector3(2.04f, .26f, 5f), K.R.red);
+            m.Box(new Vector3(0, 2.48f, -.55f), new Vector3(2.04f, .08f, 4.04f), K.R.ink);
             m.Surface = ComicSurface.PaintedMetal;
-            m.Box(new Vector3(0, 1.4f, -2.51f), new Vector3(.04f, 1.8f, .02f), K.R.ink);
+            m.Box(new Vector3(0, 1.72f, 1.78f), new Vector3(1.84f, .78f, .06f), K.R.ink);
+            m.Surface = ComicSurface.Glass;
+            m.Box(new Vector3(0, 1.72f, 1.82f), new Vector3(1.7f, .64f, .04f), dark);
             for (int s = -1; s <= 1; s += 2)
             {
-                m.Box(new Vector3(s * .7f, .95f, 2.52f), new Vector3(.35f, .18f, .04f), K.R.cream);
-                m.Box(new Vector3(s * .8f, .9f, -2.52f), new Vector3(.25f, .3f, .04f), K.R.red);
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Box(new Vector3(s * .99f, 1.7f, 1.95f), new Vector3(.06f, .62f, .9f), K.R.ink);
+                m.Surface = ComicSurface.Glass;
+                m.Box(new Vector3(s * 1.01f, 1.7f, 1.95f), new Vector3(.04f, .5f, .78f), dark);
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Box(new Vector3(s * 1.02f, 1.35f, -.55f), new Vector3(.06f, .08f, 3.9f), K.R.ink);       // side trim
+                m.Box(new Vector3(s * .72f, 1f, 2.52f), new Vector3(.36f, .2f, .06f), K.R.cream);
+                m.Box(new Vector3(s * .8f, 1.1f, -2.57f), new Vector3(.24f, .34f, .06f), K.R.red);
             }
-            m.Surface = ComicSurface.Rubber;
-            for (int s = -1; s <= 1; s += 2)
-                foreach (float z in new[] { 1.5f, -1.7f })
-                    m.Cylinder(new Vector3(s * .95f, .38f, z), .38f, .26f, K.R.ink, 8, 1, Quaternion.Euler(0, 0, 90));
+            m.Box(new Vector3(0, 1.45f, -2.57f), new Vector3(.06f, 1.8f, .06f), K.R.ink);                  // rear doors split
+            m.Box(new Vector3(0, .45f, 2.58f), new Vector3(2.04f, .26f, .14f), K.R.ink);
+            m.Box(new Vector3(0, .45f, -2.6f), new Vector3(2.04f, .26f, .14f), K.R.ink);
+            Wheels(m, .95f, .38f, .38f, 1.55f, -1.75f);
             return m;
         }
     }
@@ -1321,7 +1387,21 @@ namespace CityScooter.EditorTools.Districts
                 if (r.Top > .01f) Face(m, V(x, 0, z1), V(x, h, z1), V(x, h, z2), V(x, 0, z2), side, n);
                 if (lipBottom < 0f) Face(m, V(x, lipBottom, z1), V(x, 0, z1), V(x, 0, z2), V(x, lipBottom, z2), side, n);
             }
-            if (!stripes) return;
+            if (!stripes)
+            {
+                // timber deck: board joints, a cream nosing on the lip and ink skirting along the sides
+                Color joint = Color.Lerp(top, R.ink, .35f);
+                for (float t = .12f; t < 1f; t += .12f)
+                {
+                    float z = z0 + r.Rise * t, y = h * t + .012f;
+                    Face(m, V(x0, y, z), V(x0, y, z + .05f), V(x1, y, z + .05f), V(x1, y, z), joint, Vector3.up, false);
+                }
+                m.Surface = ComicSurface.Wood;
+                m.Box(V(r.X, h + .04f, z2 - .12f), V(r.Width + .04f, .1f, .24f), R.cream);
+                m.Surface = ComicSurface.PaintedMetal;
+                foreach (float x in new[] { x0, x1 }) m.Box(V(x, .05f, (z0 + z2) * .5f), V(.08f, .1f, z2 - z0), R.ink);
+                return;
+            }
             // yellow and black hazard stripes along the lip and the sides, so the rider reads it from far away
             int n2 = Mathf.Max(4, Mathf.RoundToInt(r.Width / .5f));
             for (int i = 0; i < n2; i++)
@@ -1360,59 +1440,147 @@ namespace CityScooter.EditorTools.Districts
         public static void Thin(List<DressingObstacle> collisions, string id, Vector3 p, float height, float size = .4f) =>
             collisions?.Add(new DressingObstacle { id = id, position = p, rotation = Vector3.zero, centre = V(0, height * .5f, 0), size = V(size, height, size), canJumpOver = false });
 
-        /// <summary>London plane tree: grey-brown trunk, a few round canopy blobs, a grate.</summary>
-        public static void PlaneTree(ComicMesh m, List<DressingObstacle> collisions, Vector3 p, float scale)
+        static readonly Color Bark = Hex("8C7A62"), Silver = new Color(.82f, .86f, .9f);
+
+        /// <summary>The comic kit's plant blob (ComicKitGeometry Prop "tree" / "planter" Plant helper): a faceted
+        /// ellipsoid and a smaller, lighter one on top of it.</summary>
+        public static void Plant(ComicMesh m, Vector3 c, float size, Color? green = null)
         {
-            m.Surface = ComicSurface.PaintedMetal;
-            m.Box(p + V(0, .03f, 0), V(1.3f, .06f, 1.3f), R.ink);
-            m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + V(0, 1.7f * scale, 0), .17f * scale, 3.4f * scale, Hex("8C8270"), 6, .75f);
-            m.Beam(p + V(0, 2.9f * scale, 0), p + V(.8f * scale, 3.9f * scale, .2f * scale), .14f * scale, Hex("8C8270"));
+            Color g = green ?? R.green;
             m.Surface = ComicSurface.Foliage;
-            Color g0 = Hex("5E8F3E"), g1 = Hex("7FA84A");
-            m.Ellipsoid(p + V(0, 4.4f * scale, 0), V(3.6f, 2.4f, 3.6f) * scale, g0);
-            m.Ellipsoid(p + V(.9f * scale, 4.9f * scale, .3f * scale), V(2.4f, 1.9f, 2.4f) * scale, g1);
-            m.Ellipsoid(p + V(-.8f * scale, 4.0f * scale, -.5f * scale), V(2.2f, 1.6f, 2.2f) * scale, Color.Lerp(g0, g1, .5f));
-            Thin(collisions, "PlaneTree", p, 3.4f * scale);
+            m.Ellipsoid(c, new Vector3(size, size * .7f, size), g);
+            m.Ellipsoid(c + new Vector3(size * .23f, size * .15f, 0), new Vector3(size * .65f, size * .6f, size * .65f), Color.Lerp(g, R.yellow, .25f));
         }
 
+        /// <summary>Tree pit like the kit's TreePit: ink frame, pavement top, ink root ring.</summary>
+        public static void TreePit(ComicMesh m, Vector3 p, float size)
+        {
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(p + V(0, .05f, 0), V(size, .1f, size), R.ink);
+            m.Surface = ComicSurface.Concrete;
+            m.Box(p + V(0, .11f, 0), V(size * .84f, .06f, size * .84f), R.pavement);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, .16f, 0), .3f, .08f, R.ink, 8);
+        }
+
+        /// <summary>London plane tree, the kit's street tree made bigger: tapered 8-sided trunk on a tree pit, two
+        /// limbs, a canopy of clustered two-tone blobs (far = fewer blobs and no pit, for the deep city).</summary>
+        public static void PlaneTree(ComicMesh m, List<DressingObstacle> collisions, Vector3 p, float scale, bool far = false)
+        {
+            if (!far) TreePit(m, p, 1.4f);
+            float h = 3f * scale;
+            m.Surface = ComicSurface.Wood;
+            m.Cylinder(p + V(0, h * .5f + .1f, 0), .24f * scale, h, Bark, 8, .72f);
+            m.Cylinder(p + V(.5f * scale, h + .2f * scale, .1f * scale), .12f * scale, 1.5f * scale, Bark, 8, .7f, Quaternion.Euler(0, 0, -40));
+            // a broad, spreading crown: one big blob and two side blobs hanging a little lower
+            Vector3 crown = p + V(0, h + 1.45f * scale, 0);
+            Plant(m, crown, 3.6f * scale);
+            Plant(m, crown + V(1.55f, -.55f, .5f) * scale, 2.5f * scale, Hex("4F7F38"));
+            if (!far) Plant(m, crown + V(-1.5f, -.45f, -.55f) * scale, 2.6f * scale, Hex("6A9A40"));
+            Thin(collisions, "PlaneTree", p, h);
+        }
+
+        /// <summary>A slab from a to b (thick, width tapering wa -> wb), top colour up, darker underside: palm fronds.</summary>
+        static void Slab(ComicMesh m, Vector3 a, Vector3 b, Vector3 side, float wa, float wb, float thick, Color top, Color under)
+        {
+            Vector3 along = (b - a).normalized, n = Vector3.Cross(along, side).normalized;
+            if (n.y < 0f) n = -n;
+            Vector3 A(float w, float t) => a + side * w + n * t;
+            Vector3 B(float w, float t) => b + side * w + n * t;
+            float ha = wa * .5f, hb = wb * .5f, ht = thick * .5f;
+            Color edge = Color.Lerp(top, under, .5f);
+            Face(m, A(-ha, ht), B(-hb, ht), B(hb, ht), A(ha, ht), top, n);
+            Face(m, A(-ha, -ht), B(-hb, -ht), B(hb, -ht), A(ha, -ht), under, -n);
+            Face(m, A(-ha, -ht), B(-hb, -ht), B(-hb, ht), A(-ha, ht), edge, -side);
+            Face(m, A(ha, -ht), B(hb, -ht), B(hb, ht), A(ha, ht), edge, side);
+            Face(m, A(-ha, -ht), A(ha, -ht), A(ha, ht), A(-ha, ht), edge, -along);
+            Face(m, B(-hb, -ht), B(hb, -ht), B(hb, ht), B(-hb, ht), edge, along);
+        }
+
+        /// <summary>Palm: ringed 8-sided trunk with a slight curve, ink root ring and crown boot, coconuts, 9 fronds of
+        /// four thick bent slabs arching out and drooping, darker underneath.</summary>
         public static void Palm(ComicMesh m, List<DressingObstacle> collisions, Vector3 p, float height, int seed)
         {
-            m.Surface = ComicSurface.Wood;
-            Color trunk = Hex("8B6B4A"), ring = Hex("6E5238");
-            float lean = (seed % 3 - 1) * .25f;
-            int segs = Mathf.Max(4, Mathf.RoundToInt(height / 1.1f));
+            Color trunk = Hex("9A7652"), trunkDark = Hex("85653F");
+            float lean = .35f + (Mathf.Abs(seed * 37) % 4) * .12f;
+            Vector3 dir = Quaternion.Euler(0, seed * 71f, 0) * Vector3.right;
+            Vector3 At(float y) => p + V(0, y, 0) + dir * (lean * y * y / (height * height));
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, .06f, 0), .42f, .12f, R.ink, 8);
+            int segs = Mathf.Max(5, Mathf.RoundToInt(height / .95f));
             for (int i = 0; i < segs; i++)
             {
-                float y = height * (i + .5f) / segs;
-                m.Cylinder(p + V(lean * y / height, y, 0), .26f - .07f * i / segs, height / segs * .96f, i % 2 == 0 ? trunk : ring, 6, .92f);
+                Vector3 a = At(height * i / segs), b = At(height * (i + 1) / segs);
+                Quaternion q = Quaternion.FromToRotation(Vector3.up, b - a);
+                float r = .26f - .08f * i / segs, len = (b - a).magnitude;
+                m.Surface = ComicSurface.Wood;
+                m.Cylinder((a + b) * .5f, r, len * .9f, i % 2 == 0 ? trunk : trunkDark, 8, .9f, q);
+                if (i < segs - 1) { m.Surface = ComicSurface.PaintedMetal; m.Cylinder(b, r * .92f + .03f, len * .14f, R.ink, 8, 1f, q); }
             }
-            Vector3 crown = p + V(lean, height, 0);
-            m.Surface = ComicSurface.Foliage;
-            Color f0 = Hex("4F8A3A"), f1 = Hex("6FA84A");
+            Vector3 top = At(height);
+            Quaternion tq = Quaternion.FromToRotation(Vector3.up, top - At(height - .6f));
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(top + tq * V(0, .15f, 0), .3f, .5f, R.ink, 8, .65f, tq);                   // the ink boot
+            m.Surface = ComicSurface.Wood;
+            for (int k = 0; k < 3; k++) m.Box(top + Quaternion.Euler(0, k * 120f + seed * 20f, 0) * V(.27f, -.12f, 0), V(.22f, .22f, .22f), Hex("6E5238"));
+            Color f0 = Hex("4F8A3A"), f1 = Hex("6FA84A"), under = Hex("335E27");
+            float[] len4 = { .85f, .8f, .7f, .55f }, w4 = { .5f, .62f, .5f, .2f }, ang = { 38f, 8f, -24f, -55f };
             for (int i = 0; i < 9; i++)
             {
-                float yaw = i * 40f + seed * 13f, pitch = 22f + (i % 3) * 12f;
-                Quaternion q = Quaternion.Euler(pitch, yaw, 0);
-                m.Box(crown + q * V(0, 0, 1.25f), V(.55f, .06f, 2.6f), i % 2 == 0 ? f0 : f1, q);
+                Vector3 outDir = Quaternion.Euler(0, i * 40f + seed * 17f, 0) * Vector3.forward, side = Vector3.Cross(Vector3.up, outDir);
+                Vector3 a = top + tq * V(0, .35f, 0) + outDir * .12f;
+                float tilt = (i % 3) * 7f;
+                for (int k = 0; k < 4; k++)
+                {
+                    float th = (ang[k] - tilt) * Mathf.Deg2Rad;
+                    Vector3 b = a + (outDir * Mathf.Cos(th) + Vector3.up * Mathf.Sin(th)) * len4[k];
+                    Slab(m, a, b + (b - a).normalized * .06f, side, k == 0 ? .3f : w4[k - 1], w4[k], .08f, i % 2 == 0 ? f0 : f1, under);
+                    a = b;
+                }
             }
-            m.Ellipsoid(crown + V(0, -.2f, 0), V(.6f, .5f, .6f), Hex("6E5238"));
             Thin(collisions, "Palm", p, height);
         }
 
-        public static void CafeUmbrella(ComicMesh m, List<DressingObstacle> collisions, Vector3 p, Color canopy)
+        static void CafeTable(ComicMesh m, Vector3 p)
         {
             m.Surface = ComicSurface.PaintedMetal;
-            m.Cylinder(p + V(0, 1.2f, 0), .05f, 2.4f, R.ink, 6);
-            m.Surface = ComicSurface.Fabric;
-            m.Cylinder(p + V(0, 2.35f, 0), 1.45f, .45f, canopy, 8, .06f);
+            m.Cylinder(p + V(0, .05f, 0), .3f, .1f, R.ink, 8);
+            m.Cylinder(p + V(0, .4f, 0), .06f, .62f, R.ink, 8);
+            m.Surface = ComicSurface.Wood;
+            m.Cylinder(p + V(0, .75f, 0), .46f, .08f, R.cream, 8);
+        }
+
+        /// <summary>A cafe chair facing +Z at yaw 0: two ink leg frames, a thick plastic seat and backrest, ink top trim.</summary>
+        public static void CafeChair(ComicMesh m, Vector3 p, float yaw, Color seat)
+        {
+            Quaternion q = Quaternion.Euler(0, yaw, 0);
+            void B(Vector3 c, Vector3 size, Color col, ComicSurface surface) { m.Surface = surface; m.Box(p + q * c, size, col, q); }
+            B(V(0, .22f, .17f), V(.42f, .44f, .06f), R.ink, ComicSurface.PaintedMetal);
+            B(V(0, .22f, -.17f), V(.42f, .44f, .06f), R.ink, ComicSurface.PaintedMetal);
+            B(V(0, .48f, 0), V(.46f, .08f, .46f), seat, ComicSurface.Plastic);
+            B(V(0, .76f, -.21f), V(.46f, .5f, .08f), seat, ComicSurface.Plastic);
+            B(V(0, 1.03f, -.21f), V(.48f, .07f, .1f), R.ink, ComicSurface.PaintedMetal);
+        }
+
+        /// <summary>Cafe table with two chairs (facing each other across it, along x).</summary>
+        public static void CafeSet(ComicMesh m, Vector3 p, Color seat)
+        {
+            CafeTable(m, p);
+            CafeChair(m, p + V(-.72f, 0, 0), 90f, seat);
+            CafeChair(m, p + V(.72f, 0, 0), -90f, seat);
+        }
+
+        /// <summary>Cafe table, two chairs and a market umbrella: 8-sided pole, closed canopy cone, valance band, finial.</summary>
+        public static void CafeUmbrella(ComicMesh m, List<DressingObstacle> collisions, Vector3 p, Color canopy)
+        {
+            CafeSet(m, p, Hex("2F6B66"));
             m.Surface = ComicSurface.PaintedMetal;
-            m.Cylinder(p + V(0, .74f, 0), .45f, .05f, R.cream, 8);
-            for (int s = -1; s <= 1; s += 2)
-            {
-                m.Box(p + V(s * .7f, .23f, 0), V(.4f, .46f, .4f), R.ink);
-                m.Box(p + V(s * .88f, .6f, 0), V(.05f, .5f, .4f), R.ink);
-            }
+            m.Cylinder(p + V(0, 1.55f, 0), .05f, 1.6f, R.ink, 8);
+            m.Surface = ComicSurface.Fabric;
+            m.Cylinder(p + V(0, 2.5f, 0), 1.45f, .45f, canopy, 8, .08f);
+            m.Cylinder(p + V(0, 2.22f, 0), 1.47f, .12f, Color.Lerp(canopy, R.ink, .3f), 8);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, 2.8f, 0), .09f, .18f, R.cream, 8);
             collisions?.Add(new DressingObstacle { id = "CafeUmbrella", position = p, rotation = Vector3.zero, centre = V(0, .6f, 0), size = V(1.9f, 1.2f, .9f), canJumpOver = false });
         }
 
@@ -1420,11 +1588,23 @@ namespace CityScooter.EditorTools.Districts
         {
             Vector3 p = V(side * (half + .45f), y, z);
             m.Surface = ComicSurface.PaintedMetal;
-            m.Cylinder(p + V(0, 1.8f, 0), .08f, 3.6f, R.ink, 6);
-            m.Box(p + V(0, 3.2f, -.05f), V(.42f, 1.15f, .3f), Hex("2C3238"));
+            m.Cylinder(p + V(0, .08f, 0), .2f, .16f, R.ink, 8);
+            m.Cylinder(p + V(0, 1.85f, 0), .08f, 3.5f, R.ink, 8);
+            m.Box(p + V(0, 3.2f, 0), V(.46f, 1.2f, .34f), Hex("2C3238"));
+            m.Box(p + V(0, 3.82f, 0), V(.5f, .08f, .38f), R.cream);
             Color[] lamps = { Hex("E8322B"), Hex("F3B23A"), Hex("3DBE5A") };
-            for (int i = 0; i < 3; i++) m.Box(p + V(0, 3.55f - i * .35f, -.21f), V(.24f, .24f, .03f), i == 2 ? lamps[2] : Color.Lerp(lamps[i], R.ink, .55f));
-            m.Box(p + V(0, 1.2f, -.08f), V(.3f, .4f, .2f), R.yellow);                         // push-button box
+            for (int i = 0; i < 3; i++)
+            {
+                float ly = 3.56f - i * .36f;
+                m.Surface = ComicSurface.Glass;
+                m.Box(p + V(0, ly, -.18f), V(.24f, .24f, .06f), i == 2 ? lamps[2] : Color.Lerp(lamps[i], R.ink, .55f));
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Box(p + V(0, ly + .15f, -.27f), V(.32f, .06f, .18f), R.ink);                        // visor
+            }
+            m.Surface = ComicSurface.Plastic;
+            m.Box(p + V(0, 1.15f, -.1f), V(.26f, .38f, .16f), R.yellow);                               // push-button box
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(p + V(0, 1.2f, -.19f), V(.12f, .12f, .04f), R.ink);
             Thin(collisions, "TrafficLight", p, 3.6f, .3f);
         }
 
@@ -1678,6 +1858,48 @@ namespace CityScooter.EditorTools.Districts
             }
             if (list.Count == 0 && theme.pedestrians != null) list.AddRange(theme.pedestrians.Where(p => p != null));
             return list.ToArray();
+        }
+
+        /// <summary>Renders a grid of props on the light-blue preview background, like the comic city's 03-props.png
+        /// (same camera angle and lighting as ComicCityPreview.RenderSheet). Items are prefabs or loose meshes.</summary>
+        public static void RenderAtlas(string file, IList<(string name, GameObject prefab, ComicMesh mesh)> items)
+        {
+            ArtPreviewUtility.NewPreviewScene();
+            const int tile = 300, cols = 6;
+            int rows = Mathf.CeilToInt(items.Count / (float)cols);
+            var sheet = new Texture2D(cols * tile, rows * tile, TextureFormat.RGB24, false);
+            sheet.SetPixels(Enumerable.Repeat(new Color(.82f, .87f, .9f), sheet.width * sheet.height).ToArray());
+            var temp = new List<Object>();
+            for (int i = 0; i < items.Count; i++)
+            {
+                GameObject go;
+                if (items[i].prefab != null) go = (GameObject)PrefabUtility.InstantiatePrefab(items[i].prefab);
+                else
+                {
+                    go = new GameObject(items[i].name);
+                    Mesh mesh = items[i].mesh.Bake(items[i].name);
+                    temp.Add(mesh);
+                    go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    go.AddComponent<MeshRenderer>().sharedMaterial = Palette;
+                    var ink = new GameObject("InkOutline");
+                    ink.transform.SetParent(go.transform, false);
+                    ink.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    ink.AddComponent<MeshRenderer>().sharedMaterial = Ink;
+                }
+                Bounds b = ArtPreviewUtility.WorldBounds(go);
+                float extent = Mathf.Max(b.size.x, b.size.y, b.size.z);
+                Vector3 aim = b.center;
+                Camera cam = ArtPreviewUtility.CreateCamera(aim + new Vector3(1, .65f, 1.4f).normalized * extent * 2, aim, 32, 600);
+                cam.orthographic = true; cam.orthographicSize = Mathf.Max(.6f, extent * .7f);
+                Object.DestroyImmediate(ArtPreviewUtility.Render(cam, tile, tile));
+                Texture2D tex = ArtPreviewUtility.Render(cam, tile, tile);
+                sheet.SetPixels((i % cols) * tile, (rows - 1 - i / cols) * tile, tile, tile, tex.GetPixels());
+                Object.DestroyImmediate(tex); Object.DestroyImmediate(cam.gameObject); Object.DestroyImmediate(go);
+            }
+            sheet.Apply();
+            ArtPreviewUtility.SavePng(sheet, file);
+            Object.DestroyImmediate(sheet);
+            foreach (Object o in temp) Object.DestroyImmediate(o);
         }
 
         public static void WriteReport(string file)
