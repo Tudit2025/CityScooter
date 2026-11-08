@@ -244,6 +244,7 @@ namespace CityScooter.Gameplay
             _collisionTransformsDirty=true;
             var active = new Active { Key = key, Chunk = chunk, StartZ = _nextZ, District = _route != null ? _route[_dIndex] : null };
             _active.Add(active);
+            AuthoredOn(chunk); // ---- Districts (v0.3): the chunk's own ramps and gaps, before anything is placed on it
             PlaceGateway(active); // ---- Districts (v0.3)
             Populate(active);
             PlacePending(active);
@@ -252,6 +253,7 @@ namespace CityScooter.Gameplay
             _nextY += chunk.endHeight;
             _chunkCounter++;
             _lastChunkKey = key;
+            _lastEndHalfWidth = chunk.HalfWidthAt(chunk.length); // ---- Districts (v0.3)
         }
 
         object PickChunk()
@@ -265,6 +267,7 @@ namespace CityScooter.Gameplay
             RoadChunk[] chunks = _route != null ? _route[_dIndex].chunks : theme.chunks;
             bool ordered = _route != null ? _route[_dIndex].orderedChunks : theme.orderedChunks;
             int level = T.DifficultyLevel(_nextZ - _runStartZ);
+            if (_route != null) return PickDistrictChunk(chunks, ordered, level); // ---- Districts (v0.3): also matching road widths
             if (ordered)
             {
                 for (int i = 0; i < chunks.Length; i++)
@@ -287,6 +290,44 @@ namespace CityScooter.Gameplay
             }
             return FirstChunk(chunks);
         }
+
+        // ---- Districts (v0.3): like the theme's picking, but a chunk must start as wide as the last one ended (districts mix
+        // 4-lane and street chunks: CBD Widen / Terrace / Narrow / Mall). Ordered: the first fitting chunk of the cycle from
+        // the current position (the cycle continues after it). If none fits, as before.
+        object PickDistrictChunk(RoadChunk[] chunks, bool ordered, int level)
+        {
+            int n = chunks.Length;
+            if (ordered)
+            {
+                for (int pass = 0; pass < 2; pass++)
+                    for (int i = 0; i < n; i++)
+                    {
+                        RoadChunk candidate = chunks[((_streetIndex + i) % n + n) % n];
+                        if (candidate == null || candidate.minDifficulty > level || (pass == 0 && !WidthFits(candidate))) continue;
+                        if (pass == 0) _streetIndex += i;
+                        return candidate.gameObject;
+                    }
+                return FirstChunk(chunks);
+            }
+            for (int pass = 0; pass < 2; pass++)
+            {
+                float total = 0f;
+                foreach (RoadChunk c in chunks)
+                    if (c != null && c.minDifficulty <= level && (object)c.gameObject != _lastChunkKey && (pass == 1 || WidthFits(c))) total += Mathf.Max(0f, c.weight);
+                if (total <= 0f) continue;
+                double pick = _rng.NextDouble() * total;
+                foreach (RoadChunk c in chunks)
+                {
+                    if (c == null || c.minDifficulty > level || (object)c.gameObject == _lastChunkKey || (pass == 0 && !WidthFits(c))) continue;
+                    pick -= Mathf.Max(0f, c.weight);
+                    if (pick <= 0) return c.gameObject;
+                }
+            }
+            return FirstChunk(chunks);
+        }
+
+        float _lastEndHalfWidth = float.NaN; // ---- Districts (v0.3): road half width where the last laid chunk ends
+        bool WidthFits(RoadChunk c) => float.IsNaN(_lastEndHalfWidth) || Mathf.Abs(c.HalfWidthAt(0f) - _lastEndHalfWidth) < 0.01f;
 
         static object FirstChunk(RoadChunk[] chunks)
         {
@@ -387,7 +428,7 @@ namespace CityScooter.Gameplay
 
                 _rowScratch.Clear();
                 foreach (SpawnSlot s in slots)
-                    if (s.kind != SpawnKind.JumpObstacle) _rowScratch.Add(s);
+                    if (s.kind != SpawnKind.JumpObstacle && !Blocked(a.Chunk, s.transform.localPosition.x, s.transform.localPosition.z)) _rowScratch.Add(s); // ---- Districts (v0.3): not on an authored ramp / gap
                 Shuffle(_rowScratch);
                 int maxObstacles = Mathf.Max(0, _rowScratch.Count - 1);
                 int placedObstacles = 0;
@@ -486,6 +527,7 @@ namespace CityScooter.Gameplay
                 float side = _rng.NextDouble() < 0.5 ? -1f : 1f;
                 float x = side * Mathf.Lerp(c.halfWidth + 0.8f, c.halfWidth + c.sidewalkWidth - 0.6f, (float)_rng.NextDouble());
                 float z = Mathf.Lerp(2f, Mathf.Max(3f, c.length - 2f), (float)_rng.NextDouble());
+                if (Blocked(c, x, z)) continue; // ---- Districts (v0.3): nobody stands over water, a drop or on a ramp
                 Vector3 local = new Vector3(x, c.HeightAt(z) + c.SidewalkOffsetAt(x), z);
                 Vector3 world = c.transform.TransformPoint(local);
                 // Not inside a bench, a bin, a bus shelter or another person.
@@ -510,9 +552,16 @@ namespace CityScooter.Gameplay
             // Patterns are authored for one road width: never on a boulevard transition, and on a boulevard only
             // when the whole pattern fits inside its full-width part.
             if (a.Chunk.ChangesWidth) return;
+            if (AuthoredOn(a.Chunk).Any) return; // ---- Districts (v0.3): never on a chunk with its own ramp or road gap
             bool wide = OnBoulevard(a.StartZ);
-            HazardPattern[] list = wide && theme.boulevardHazards != null && theme.boulevardHazards.Length > 0 ? theme.boulevardHazards
-                : Own(a.District != null ? a.District.hazards : null, theme.hazards); // ---- Districts (v0.3)
+            // ---- Districts (v0.3): a chunk wider than the street (Mounts Bay's divided road) also uses the 4-lane rules;
+            // planned boulevards keep the boulevard list, other chunks use their district's own patterns first.
+            bool wideChunk = wide || a.Chunk.halfWidth > StreetHalfWidth + 0.01f;
+            HazardPattern[] own = a.District != null ? a.District.hazards : null;
+            bool hasBoulevardList = theme.boulevardHazards != null && theme.boulevardHazards.Length > 0;
+            HazardPattern[] list = wide && hasBoulevardList ? theme.boulevardHazards
+                : own != null && own.Length > 0 ? own
+                : wideChunk && hasBoulevardList ? theme.boulevardHazards : theme.hazards;
             if (list == null || list.Length == 0) return;
             if (a.StartZ < _nextHazardZ) return;
             if (_rng.NextDouble() >= Mathf.Lerp(T.hazardChanceStart, T.hazardChanceMax, d01))
@@ -523,7 +572,7 @@ namespace CityScooter.Gameplay
             float start = a.StartZ + 5f;
             float room = wide ? _wideUntil - 6f - start : float.MaxValue;
             if (!DistrictPatternRoom(a, start, ref room)) return; // ---- Districts (v0.3): not across a district boundary
-            HazardPattern p = PickPattern(list, level, a.Chunk.halfWidth, room);
+            HazardPattern p = PickPattern(list, level, a.Chunk.halfWidth, room, IsMall(a.Chunk));
             if (p == null) return;
             SchedulePattern(p, start, p.allowMirror && _rng.NextDouble() < 0.5, Mathf.Max(0f, a.Chunk.halfWidth - p.roadHalfWidth));
         }
@@ -554,7 +603,7 @@ namespace CityScooter.Gameplay
                 for (float z = start - 6f; z <= end + 6f && z < _nextZ; z += 5f)
                 {
                     RoadChunk c = ChunkAt(z, out float chunkStart);
-                    if (c == null || !c.ChangesWidth) continue;
+                    if (c == null || !(c.ChangesWidth || (IsMall(c) && HasMovers(p)))) continue; // ---- Districts (v0.3): cars not in a mall
                     start = chunkStart + c.length + 8f;
                     moved = true;
                     break;
@@ -638,9 +687,10 @@ namespace CityScooter.Gameplay
         }
 
         // Patterns for this road width (never wider than the road) that fit in the room left (boulevard).
-        HazardPattern PickPattern(HazardPattern[] list, int level, float roadHalfWidth, float room)
+        HazardPattern PickPattern(HazardPattern[] list, int level, float roadHalfWidth, float room, bool noTraffic = false)
         {
-            bool Fits(HazardPattern h) => h != null && h.minLevel <= level && h.roadHalfWidth <= roadHalfWidth + 0.01f && h.length <= room;
+            bool Fits(HazardPattern h) => h != null && h.minLevel <= level && h.roadHalfWidth <= roadHalfWidth + 0.01f && h.length <= room
+                && !(noTraffic && HasMovers(h)); // ---- Districts (v0.3): no cars in a pedestrian mall
             float total = 0f;
             foreach (HazardPattern h in list) if (Fits(h)) total += Mathf.Max(0f, h.weight);
             if (total <= 0f) return null;
@@ -662,6 +712,7 @@ namespace CityScooter.Gameplay
                 PendingEntry e = _pending[i];
                 if (e.Z < a.StartZ || e.Z >= end) continue;
                 float local = e.Z - a.StartZ;
+                if (Blocked(a.Chunk, e.X, local)) { _pending.RemoveAt(i--); continue; } // ---- Districts (v0.3): not on a ramp or over a gap
                 Place(a, e.Key, new Vector3(e.X, a.Chunk.HeightAt(local) + a.Chunk.SidewalkOffsetAt(e.X, local), local), e.Yaw, true);
                 _patternItems.Add(new PatternItem { Pattern = e.Pattern, Chunk = a, Instance = a.Spawned[a.Spawned.Count - 1].Instance });
                 _pending.RemoveAt(i--);
@@ -688,10 +739,12 @@ namespace CityScooter.Gameplay
                 PendingEntry e = _pendingMovers[i];
                 if (riderZ < e.MeetZ - lead) continue;
                 _pendingMovers.RemoveAt(i--);
+                if (MallAt(e.MeetZ)) continue; // ---- Districts (v0.3): no traffic in a pedestrian mall
                 float speed = e.Mover.fractionOfRiderSpeed > 0f ? riderSpeed * e.Mover.fractionOfRiderSpeed : e.Mover.speed;
                 float t = Mathf.Max(0.5f, (e.MeetZ - riderZ) / riderSpeed);
                 // Keep it inside the stretch where cars live (a slow rider makes the meeting time long), and never on top of the rider.
                 float z = Mathf.Clamp(e.Z - speed * t, riderZ + 40f, riderZ + buildAhead + 100f);
+                if (MallAt(z)) continue; // ---- Districts (v0.3)
                 GameObject go = Get(e.Key, () => CreateSpawnable(e.Key));
                 go.transform.SetParent(transform, true);
                 float x = MoverX(e.X, z);
@@ -860,6 +913,66 @@ namespace CityScooter.Gameplay
 
         static T[] Own<T>(T[] own, T[] fallback) => own != null && own.Length > 0 ? own : fallback;
 
+        // Ramps and road gaps authored in a chunk (jetty, river inlet, the end of a raised walkway, a loading-dock kicker):
+        // random obstacles, street life and hazard pattern entries are never put on them, and no hazard pattern starts on
+        // such a chunk. Looked up once per chunk instance when it is laid (its own children only, not what is placed on it).
+        sealed class Authored { public RoadGap[] Gaps; public Ramp[] Ramps; public bool Any => Gaps.Length > 0 || Ramps.Length > 0; }
+        readonly Dictionary<RoadChunk, Authored> _authored = new Dictionary<RoadChunk, Authored>();
+        const float StreetHalfWidth = 4f; // the standard street (District contract); wider = 4-lane rules
+
+        Authored AuthoredOn(RoadChunk c)
+        {
+            if (!_authored.TryGetValue(c, out Authored a))
+                _authored[c] = a = new Authored { Gaps = c.GetComponentsInChildren<RoadGap>(true), Ramps = c.GetComponentsInChildren<Ramp>(true) };
+            return a;
+        }
+
+        /// <summary>True where an authored ramp (with 1 m around it and 3 m after the lip) or road gap of this chunk is.</summary>
+        bool Blocked(RoadChunk c, float localX, float localZ)
+        {
+            if (c == null) return false;
+            Authored a = AuthoredOn(c);
+            if (!a.Any) return false;
+            Vector3 world = c.transform.TransformPoint(new Vector3(localX, 0f, localZ));
+            foreach (RoadGap g in a.Gaps)
+            {
+                if (g == null) continue;
+                Vector3 p = g.transform.InverseTransformPoint(world);
+                if (g.Contains(p.x, p.z)) return true;
+            }
+            foreach (Ramp r in a.Ramps)
+            {
+                if (r == null) continue;
+                Vector3 p = r.transform.InverseTransformPoint(world);
+                if (Mathf.Abs(p.x) <= r.width * 0.5f + 1f && p.z >= -1f && p.z <= r.Length + 3f) return true;
+            }
+            return false;
+        }
+
+        /// <summary>4-lane road at world z: a planned boulevard section, or a chunk that is wider than the street
+        /// (e.g. Mounts Bay Road's divided road). Hazard patterns there use the boulevard rules.</summary>
+        public bool IsWideAt(float z) => OnBoulevard(z) || HalfWidthAt(z) > StreetHalfWidth + 0.01f;
+
+        // Pedestrian malls (RoadChunk.roadType) have no moving traffic: patterns with cars are not put there.
+        readonly Dictionary<HazardPattern, bool> _hasMovers = new Dictionary<HazardPattern, bool>();
+        bool HasMovers(HazardPattern p)
+        {
+            if (p == null) return false;
+            if (!_hasMovers.TryGetValue(p, out bool movers))
+            {
+                foreach (HazardPattern.Entry e in p.entries)
+                    if ((e.prefab != null && e.prefab.GetComponent<Mover>() != null) || (e.mirrorPrefab != null && e.mirrorPrefab.GetComponent<Mover>() != null)) { movers = true; break; }
+                _hasMovers[p] = movers;
+            }
+            return movers;
+        }
+        static bool IsMall(RoadChunk c) => c != null && c.roadType == RoadType.PedestrianMall;
+        bool MallAt(float z)
+        {
+            Active a = _active.Count > 0 && z >= _active[0].StartZ && z < _nextZ ? ActiveAt(z) : null;
+            return a != null && IsMall(a.Chunk);
+        }
+
         // Animals on the sidewalks (peacocks, swans: Obstacle.animal) keep their prefab's own slow pace; people stroll
         // at 0.7-1.5 m/s as before.
         static float AnimalPace(GameObject prefab, float walk)
@@ -876,6 +989,7 @@ namespace CityScooter.Gameplay
             _spans.Clear();
             _forcedChunk = null;
             _filling = null;
+            _lastEndHalfWidth = float.NaN;
             _gatewayDue = false;
             DistrictBoundaries = 0;
             StartDistrict = null;
@@ -901,10 +1015,23 @@ namespace CityScooter.Gameplay
             _dPhase = DistrictPhase.Entry;
             _streetIndex = 0; // the district's own chunk order starts from its first chunk
             _sectionStreetIndex = int.MinValue;
+            _dOverrun = 0;
             _gatewayDue = true;
         }
 
         static float ExitLength(District d) => d.exit != null ? Mathf.Max(1f, d.exit.length) : 0f;
+
+        int _dOverrun;
+
+        // Half width where the next piece starts: this district's exit, else the next district's entry (else its first
+        // chunk), normally the standard street (4).
+        float NextStartHalfWidth(District d)
+        {
+            if (d.exit != null) return d.exit.HalfWidthAt(0f);
+            District next = _route[(_dIndex + 1) % _route.Length];
+            if (next.entry != null) return next.entry.HalfWidthAt(0f);
+            return next.chunks != null && next.chunks.Length > 0 && next.chunks[0] != null ? next.chunks[0].HalfWidthAt(0f) : StreetHalfWidth;
+        }
 
         // Lead-in, entry and exit chunks; null = one of the district's own chunks (PickChunk).
         RoadChunk NextDistrictChunk()
@@ -931,6 +1058,15 @@ namespace CityScooter.Gameplay
                         if (_route.Length < 2) return null; // one district: no boundaries
                         float exit = ExitLength(d);
                         if (_nextZ + exit < _dEnd) return null;
+                        // The road must be as wide where the exit (or the next district) starts as where the last chunk
+                        // ended: CBD may be in its 4-lane part when its length runs out. Keep laying its own chunks
+                        // (at most one pass of its cycle) until the widths meet.
+                        float need = NextStartHalfWidth(d);
+                        if (!float.IsNaN(_lastEndHalfWidth) && Mathf.Abs(_lastEndHalfWidth - need) > 0.01f)
+                        {
+                            if (_dOverrun++ < Mathf.Max(1, d.chunks.Length)) return null;
+                            Debug.LogWarning("[Districts] " + d.id + ": its chunks never end " + need + " m wide (half width) for its exit / the next district; road width jumps at z " + _nextZ);
+                        }
                         PlanBoundary(_nextZ + exit);
                         _dPhase = DistrictPhase.Leaving;
                         if (d.exit != null) return d.exit;

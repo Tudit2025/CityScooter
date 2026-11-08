@@ -269,6 +269,206 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
+        public IEnumerator NoPeopleOrPatternEntries_OverARoadGap()
+        {
+            RoadChunk gapChunk = Chunk("BGap");
+            foreach (SpawnSlot s in gapChunk.GetComponentsInChildren<SpawnSlot>()) Object.DestroyImmediate(s.gameObject); // no slots over water
+            var gap = new GameObject("Inlet").AddComponent<RoadGap>();
+            gap.transform.SetParent(gapChunk.transform, false);
+            gap.transform.localPosition = new Vector3(0f, 0f, 5f);
+            gap.length = 30f; // z 5..35, the whole width (road and sidewalks)
+            GameObject walker = Template("PED_Walker");
+            walker.AddComponent<Obstacle>().kind = ObstacleKind.Person;
+            walker.AddComponent<BoxCollider>().center = new Vector3(0f, .5f, 0f);
+            walker.AddComponent<Pedestrian>();
+            _b.chunks = new[] { gapChunk };
+            _b.length = new Vector2(400f, 400f);
+            _b.pedestrians = new[] { walker };
+            _tuning.sidewalkPeople = new Vector2(8f, 8f);
+            _tuning.maxPeople = 200;
+            _game.EnterReady();
+            yield return RiderTo(150f);
+            var people = Track.GetComponentsInChildren<Pedestrian>().Where(p => p.name.StartsWith("PED_Walker")).ToList();
+            Assert.IsNotEmpty(people, "people on BRAVO's entry chunk at least");
+            foreach (Pedestrian p in people)
+                if (p.transform.parent.name.StartsWith("BGap"))
+                    Assert.That(p.transform.localPosition.z, Is.LessThan(5f).Or.GreaterThan(35f), "nobody stands over the inlet");
+
+            // A pattern over the gap: its entries there are left out, the rest are placed.
+            Obstacle cone = ObstaclePrefab("OBS_Cone");
+            var pattern = Keep(ScriptableObject.CreateInstance<HazardPattern>());
+            pattern.length = 40f;
+            pattern.entries = new[]
+            {
+                new HazardPattern.Entry { prefab = cone.gameObject, x = -2f, z = 2f },
+                new HazardPattern.Entry { prefab = cone.gameObject, x = 0f, z = 20f },
+                new HazardPattern.Entry { prefab = cone.gameObject, x = 6f, z = 25f },
+            };
+            RoadChunk c = Track.ChunkAt(250f, out float start);
+            Assert.AreEqual("BGap", Name(c));
+            Track.PlacePattern(pattern, start);
+            var cones = c.GetComponentsInChildren<Obstacle>().Where(o => o.name.StartsWith("OBS_Cone")).ToList();
+            Assert.AreEqual(1, cones.Count, "only the cone before the gap");
+            Assert.AreEqual(2f, cones[0].transform.localPosition.z, .01f);
+        }
+
+        HazardPattern Pattern(string name, float length, params HazardPattern.Entry[] entries)
+        {
+            var p = Keep(ScriptableObject.CreateInstance<HazardPattern>());
+            p.name = name; p.length = length; p.entries = entries; p.allowMirror = false; p.meetAtZ = length * .5f;
+            return p;
+        }
+
+        readonly List<(HazardPattern p, float start)> _scheduled = new List<(HazardPattern, float)>();
+        void OnScheduled(HazardPattern p, float start) => _scheduled.Add((p, start));
+
+        void HazardsEverywhere()
+        {
+            _scheduled.Clear(); // the fixture is reused between tests
+            _tuning.hazardStartDistance = 0f;
+            _tuning.hazardChanceStart = _tuning.hazardChanceMax = 1f;
+            _tuning.hazardGap = 0f;
+        }
+
+        // Mounts Bay Road style: a district whose road is 4 lanes all the way (entry widens 4 -> 8, exit narrows back).
+        [UnityTest]
+        public IEnumerator WideDistrict_UsesTheFourLaneRules_NoPatternOnItsTransitions()
+        {
+            Obstacle cone = ObstaclePrefab("OBS_PatternCone");
+            HazardPattern street = Pattern("HZ_TestStreet", 20f,
+                new HazardPattern.Entry { prefab = cone.gameObject, x = -2f, z = 5f },
+                new HazardPattern.Entry { prefab = cone.gameObject, x = -5.5f, z = 10f }); // on the street's sidewalk
+            District wide = MakeDistrict("wide", 15, 300f, new[] { Chunk("WWide", 8f) }, Chunk("WIn", 4f, 8f), Chunk("WOut", 8f, 4f), Color.green, 1f);
+            wide.hazards = new[] { street };
+            _theme.districts = new[] { _b, wide, _a };
+            HazardsEverywhere();
+            _game.EnterReady();
+            Track.PatternScheduled += OnScheduled;
+            try
+            {
+                var laid = new SortedDictionary<int, string>();
+                yield return March(560f, laid);
+                string all = string.Join(",", laid.Select(kv => kv.Key + ":" + kv.Value));
+                Assert.AreEqual("WIn", laid.TryGetValue(200, out string at200) ? at200 : "none", "ALPHA 0..200, then the wide district's entry: " + all);
+                Assert.AreEqual("WOut", laid.TryGetValue(480, out string at480) ? at480 : "none", "its exit (300 m rounded up to whole chunks) before BRAVO: " + all);
+                Assert.IsNotEmpty(_scheduled, "patterns in the wide district");
+                foreach ((HazardPattern p, float start) in _scheduled)
+                {
+                    Assert.AreSame(street, p);
+                    Assert.That(start, Is.InRange(245f, 480f - p.length), "on the full-width chunks only, never on WIn / WOut (" + start + ")");
+                }
+            }
+            finally { Track.PatternScheduled -= OnScheduled; }
+            _game.EnterReady(); // same seed: the same road again, now with the wide part built around the rider
+            yield return RiderTo(260f);
+            Assert.IsTrue(Track.IsWideAt(300f));
+            Assert.IsFalse(Track.IsWideAt(205f), "the start of the widening");
+            var cones = Track.GetComponentsInChildren<Obstacle>().Where(o => o.name.StartsWith("OBS_PatternCone")).Select(o => o.transform.localPosition.x).ToList();
+            Assert.IsNotEmpty(cones);
+            Assert.IsTrue(cones.All(x => Mathf.Abs(x + 2f) < .01f || Mathf.Abs(x + 9.5f) < .01f), "road entries stay in their lane, sidewalk entries move out with the kerb: " + string.Join(",", cones));
+            Assert.IsTrue(cones.Any(x => Mathf.Abs(x + 9.5f) < .01f));
+        }
+
+        // CBD style: its ordered cycle widens to 4 lanes and narrows back (Widen, Terrace, Hall, Narrow, Mall); Mounts Bay
+        // style: 4 lanes between its entry and exit. Wherever a district's length runs out, the road width must meet.
+        [UnityTest]
+        public IEnumerator MixedWidthDistricts_RoadWidthMeetsAtEverySeam_Over3km()
+        {
+            District cbd = MakeDistrict("cbdlike", 15, 300f, new[] { Chunk("CWiden", 4f, 8f), Chunk("CTerrace", 8f), Chunk("CHall", 8f), Chunk("CNarrow", 8f, 4f), Chunk("CMall") },
+                Chunk("CEntry"), Chunk("CExit"), Color.gray, 1f);
+            cbd.length = new Vector2(150f, 450f);
+            District mounts = MakeDistrict("mountslike", 25, 200f, new[] { Chunk("MWide", 8f) }, Chunk("MIn", 4f, 8f), Chunk("MOut", 8f, 4f), Color.cyan, 1f);
+            mounts.length = new Vector2(120f, 300f);
+            _a.length = new Vector2(120f, 260f);
+            _b.length = new Vector2(120f, 260f);
+            _theme.districts = new[] { _a, cbd, _b, mounts };
+            var byName = new Dictionary<string, RoadChunk>();
+            foreach (District d in _theme.districts)
+                foreach (RoadChunk c in d.chunks.Concat(new[] { d.entry, d.exit }))
+                    if (c != null) byName[c.name] = c;
+            _game.EnterReady();
+            var laid = new SortedDictionary<int, string>();
+            yield return March(3000f, laid);
+            var list = laid.ToList();
+            int seams = 0;
+            for (int i = 1; i < list.Count; i++)
+            {
+                RoadChunk prev = byName[list[i - 1].Value], cur = byName[list[i].Value];
+                Assert.AreEqual(list[i - 1].Key + 40, list[i].Key, "chunks end to end");
+                Assert.AreEqual(prev.HalfWidthAt(prev.length), cur.HalfWidthAt(0f), .001f,
+                    "road width at z " + list[i].Key + " (" + prev.name + " -> " + cur.name + "): " + string.Join(",", list.Skip(Mathf.Max(0, i - 6)).Take(8).Select(kv => kv.Key + ":" + kv.Value)));
+                seams++;
+            }
+            Assert.Greater(Track.DistrictBoundaries, 8, "several loops of the route");
+            Assert.Greater(seams, 60);
+        }
+
+        [UnityTest]
+        public IEnumerator PedestrianMall_GetsNoTraffic()
+        {
+            GameObject car = Template("CAR_Test");
+            car.AddComponent<BoxCollider>();
+            car.AddComponent<Obstacle>();
+            car.AddComponent<Mover>().speed = -12f;
+            HazardPattern traffic = Pattern("HZ_TestCar", 40f, new HazardPattern.Entry { prefab = car, x = 2f, z = 20f });
+            RoadChunk mall = Chunk("BMall");
+            mall.roadType = RoadType.PedestrianMall;
+            _b.chunks = new[] { mall };
+            _b.hazards = new[] { traffic };
+            HazardsEverywhere();
+            _game.EnterReady();
+            Track.PatternScheduled += OnScheduled;
+            try
+            {
+                yield return RiderTo(150f);
+                Assert.IsFalse(_scheduled.Any(s => s.start >= 240f && s.start < 320f), "no traffic pattern starts in the mall");
+                _game.StartRun();
+                yield return RiderTo(150f, 1);
+                _scheduled.Clear();
+                Assert.IsTrue(Track.TryPlacePatternAhead(traffic, 60f));
+                Assert.AreEqual(1, _scheduled.Count);
+                float start = _scheduled[0].start;
+                Assert.That(start, Is.GreaterThanOrEqualTo(320f), "a program's car goes past the mall (" + start + ")");
+            }
+            finally { Track.PatternScheduled -= OnScheduled; }
+        }
+
+        [UnityTest]
+        public IEnumerator AuthoredRamp_NoObstaclesOnIt_NoPatternOnItsChunk()
+        {
+            RoadChunk rampChunk = Chunk("BRamp");
+            var ramp = new GameObject("Kicker").AddComponent<Ramp>();
+            ramp.transform.SetParent(rampChunk.transform, false);
+            ramp.transform.localPosition = new Vector3(-2.6f, 0f, 8f);
+            ramp.width = 2f; ramp.rise = 4f; ramp.top = 0f;
+            Obstacle cone = ObstaclePrefab("OBS_PatternCone");
+            _b.chunks = new[] { rampChunk };
+            _b.hazards = new[] { Pattern("HZ_TestCones", 20f, new HazardPattern.Entry { prefab = cone.gameObject, x = 0f, z = 5f }) };
+            _tuning.obstacleChanceStart = _tuning.obstacleChanceMax = 1f;
+            HazardsEverywhere();
+            _game.EnterReady();
+            Track.PatternScheduled += OnScheduled;
+            try
+            {
+                yield return RiderTo(150f);
+                Assert.IsFalse(_scheduled.Any(s => s.start >= 240f && s.start < 320f), "no pattern starts on a chunk with its own ramp");
+            }
+            finally { Track.PatternScheduled -= OnScheduled; }
+            int checkedChunks = 0;
+            foreach (float z in new[] { 250f, 290f })
+            {
+                RoadChunk c = Track.ChunkAt(z, out _);
+                Assert.AreEqual("BRamp", Name(c));
+                checkedChunks++;
+                var obstacles = c.GetComponentsInChildren<Obstacle>().Select(o => o.transform.localPosition).ToList();
+                Assert.IsNotEmpty(obstacles);
+                foreach (Vector3 p in obstacles)
+                    Assert.IsFalse(Mathf.Abs(p.x + 2.6f) < 2f && p.z > 7f && p.z < 15f, "nothing on the kicker: " + p);
+            }
+            Assert.AreEqual(2, checkedChunks);
+        }
+
+        [UnityTest]
         public IEnumerator Boulevards_OnlyInDistrictsThatAllowThem_NeverAcrossABoundary()
         {
             _theme.boulevardIn = Chunk("BIn", 4f, 8f);
