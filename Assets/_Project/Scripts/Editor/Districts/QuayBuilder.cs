@@ -246,6 +246,9 @@ namespace CityScooter.EditorTools.Districts
             LeftPromenadeLand(d, 0, z0);
             LeftPromenadeLand(d, z3, 40);
             d.Ramps.Add(new CqRampSpec { Name = "BridgeHump", X = 0f, Z = z0, Width = 2f * K.Edge, Rise = BridgeRise, Height = BridgeHeight, Top = BridgeTop, Launch = 1f, Hang = .5f });
+            // The deck coming back down (system B): a reversed ramp, pivot at the foot (z3), rising back towards the crown,
+            // so slow riders land on it and ride down instead of sinking into the deck; fast ones fly over it.
+            d.Ramps.Add(new CqRampSpec { Name = "BridgeDown", X = 0f, Z = z3, Width = 2f * K.Edge, Rise = BridgeDown, Height = BridgeHeight, Top = 0f, Launch = 1f, Hang = .5f, Yaw = 180f });
             BridgeDeck(d, z0, z1, z2, z3);
             d.KeepOut.Add(KeepOutBox(d, -1, z0, z3)); d.KeepOut.Add(KeepOutBox(d, 1, z0, z3));
             // No obstacles on the hump or where riders land; a row of gifts after it, a gap in the middle for a lane.

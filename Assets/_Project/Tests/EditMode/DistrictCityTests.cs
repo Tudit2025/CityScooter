@@ -44,11 +44,11 @@ namespace CityScooter.Tests
             Assert.That(d.length.x, Is.GreaterThanOrEqualTo(200f));
             Assert.That(d.length.y, Is.GreaterThanOrEqualTo(d.length.x));
             Assert.IsTrue(d.HasChunks);
-            Assert.That(d.chunks.Length, Is.InRange(4, 6), "4-6 chunk variants");
+            Assert.That(d.chunks.Length, Is.InRange(4, 8), "4-6 variants (plus the CBD's widen / narrow transitions)");
             Assert.AreEqual(d.chunks.Length, d.chunks.Distinct().Count(), "variants are different chunks");
             Assert.NotNull(d.entry); Assert.NotNull(d.exit);
             Assert.IsTrue(d.orderedChunks);
-            Assert.AreEqual(cbd, d.allowBoulevard, "boulevards only in the CBD");
+            Assert.IsFalse(d.allowBoulevard, "no boulevard sections: the Terrace is 4 lanes by itself, the quay is a promenade");
             Assert.That(d.obstacles, Is.Not.Null.And.Not.Empty); Assert.IsTrue(d.obstacles.All(o => o != null));
             Assert.That(d.pedestrians, Is.Not.Null.And.Not.Empty); Assert.IsTrue(d.pedestrians.All(p => p != null && p.GetComponent<Pedestrian>() != null));
             Assert.That(d.hazards, Is.Not.Null.And.Not.Empty); Assert.IsTrue(d.hazards.All(h => h != null));
@@ -68,6 +68,10 @@ namespace CityScooter.Tests
                 Assert.IsTrue(d.hazards.Any(h => h.name.StartsWith("HZ_Roadworks")), "roadworks from the street");
                 Assert.IsTrue(d.hazards.Any(h => h.name.StartsWith("HZ_Police")), "police from the street");
                 Assert.IsTrue(d.chunks.Any(c => c.roadType == RoadType.PedestrianMall), "Hay Street Mall chunks");
+                Assert.That(d.chunks.Count(c => !c.ChangesWidth && c.halfWidth >= 7.99f), Is.GreaterThanOrEqualTo(3), "the 4-lane Terrace (halfWidth 8)");
+                foreach (RoadChunk c in d.chunks.Where(c => c.roadType == RoadType.PedestrianMall))
+                    Assert.IsTrue(!c.ChangesWidth && Mathf.Abs(c.halfWidth - 4f) < 1e-4f, c.name + ": Hay Street Mall stays narrow");
+                Assert.IsTrue(d.hazards.Any(h => h.roadHalfWidth >= 7.99f), "4-lane traffic patterns for the Terrace");
             }
             else
             {
@@ -77,17 +81,32 @@ namespace CityScooter.Tests
             }
         }
 
+        static bool IsStandardOrWide(float w) => Mathf.Abs(w - 4f) < 1e-4f || Mathf.Abs(w - 8f) < 1e-4f;
+
         [TestCaseSource(nameof(Paths))]
         public void EveryChunk_KeepsTheStreetCrossSection_Length_AndSlope(string path)
         {
-            foreach (RoadChunk c in AllChunks(Load(path)))
+            District d = Load(path);
+            // The district starts and ends at the standard street (entry and exit at both ends), and so does its ordered
+            // cycle (first chunk starts, last chunk ends at 4); inside it the road may be 4 lanes (halfWidth 8).
+            Assert.AreEqual(4f, d.entry.HalfWidthAt(0f), 1e-4f, "entry starts at the street width");
+            Assert.AreEqual(4f, d.entry.HalfWidthAt(d.entry.length), 1e-4f, "entry ends at the street width");
+            Assert.AreEqual(4f, d.exit.HalfWidthAt(0f), 1e-4f, "exit starts at the street width");
+            Assert.AreEqual(4f, d.exit.HalfWidthAt(d.exit.length), 1e-4f, "exit ends at the street width");
+            Assert.AreEqual(4f, d.chunks[0].HalfWidthAt(0f), 1e-4f, d.chunks[0].name + ": the cycle starts at the street width");
+            RoadChunk last = d.chunks[d.chunks.Length - 1];
+            Assert.AreEqual(4f, last.HalfWidthAt(last.length), 1e-4f, last.name + ": the cycle ends at the street width");
+            for (int i = 0; i + 1 < d.chunks.Length; i++)
+                Assert.AreEqual(d.chunks[i].HalfWidthAt(d.chunks[i].length), d.chunks[i + 1].HalfWidthAt(0f), 1e-4f, d.chunks[i].name + " -> " + d.chunks[i + 1].name + ": widths meet at the seam");
+            foreach (RoadChunk c in AllChunks(d))
             {
-                Assert.AreEqual(4f, c.halfWidth, c.name + " halfWidth");
+                Assert.IsTrue(IsStandardOrWide(c.halfWidth), c.name + " halfWidth " + c.halfWidth);
+                Assert.IsTrue(c.endHalfWidth == 0f || IsStandardOrWide(c.endHalfWidth), c.name + " endHalfWidth " + c.endHalfWidth);
                 Assert.AreEqual(4f, c.sidewalkWidth, c.name + " sidewalkWidth");
                 Assert.AreEqual(.2f, c.sidewalkHeight, 1e-4f, c.name + " sidewalkHeight");
                 Assert.AreEqual(.3f, c.curbTransitionWidth, 1e-4f, c.name + " curbTransitionWidth");
-                Assert.IsTrue(c.endHalfWidth == 0f || Mathf.Abs(c.endHalfWidth - 4f) < 1e-4f, c.name + " ends at the street width");
-                Assert.AreEqual(4f, c.HalfWidthAt(0f), 1e-4f, c.name); Assert.AreEqual(4f, c.HalfWidthAt(c.length), 1e-4f, c.name);
+                for (float z = 0f; z < c.length; z += .5f)
+                    Assert.Less(Mathf.Abs(c.HalfWidthAt(z + .5f) - c.HalfWidthAt(z)), .15f, c.name + ": the width only changes smoothly, at z " + z);
                 Assert.Greater(c.length, 0f);
                 Assert.AreEqual(0f, Mathf.Repeat(c.length, 10f), 1e-3f, c.name + ": length is a multiple of 10 m");
                 float per40 = c.endHeight * 40f / c.length;
@@ -149,14 +168,18 @@ namespace CityScooter.Tests
                 foreach (SpawnSlot s in slots)
                 {
                     Vector3 p = s.transform.localPosition;
-                    Assert.That(new[] { -2.6f, 0f, 2.6f }.Any(x => Mathf.Abs(p.x - x) < 1e-3f), c.name + "/" + s.name + ": lanes x = -2.6 / 0 / 2.6");
+                    float[] lanes = c.HalfWidthAt(p.z) >= 7.9f ? new[] { -6f, -2f, 2f, 6f } : new[] { -2.6f, 0f, 2.6f, -2f, 2f };
+                    Assert.That(lanes.Any(x => Mathf.Abs(p.x - x) < 1e-3f), c.name + "/" + s.name + ": in a lane (street -2.6 / 0 / 2.6, 4 lanes -6 / -2 / 2 / 6)");
+                    Assert.LessOrEqual(Mathf.Abs(p.x), c.HalfWidthAt(p.z) - 1f, c.name + "/" + s.name + " stays well inside the kerbs");
                     Assert.AreEqual(c.HeightAt(p.z), p.y, 1e-3f, c.name + "/" + s.name + " sits on the road");
                     Assert.That(p.z, Is.InRange(0f, c.length), c.name + "/" + s.name);
                     foreach (Ramp r in ramps)
                     {
                         Vector3 rp = r.transform.localPosition;
                         bool inLane = Mathf.Abs(p.x - rp.x) <= r.width * .5f + 1.3f;
-                        Assert.IsFalse(inLane && p.z > rp.z - 3f && p.z < rp.z + r.Length + 6f, c.name + "/" + s.name + " is on or right next to ramp " + r.name);
+                        // a launch ramp: its run-up, deck and landing zone; a down ramp (yaw 180): the deck it describes
+                        bool near = IsDownRamp(r) ? p.z > rp.z - r.Length - 3f && p.z < rp.z + 3f : p.z > rp.z - 3f && p.z < rp.z + r.Length + 6f;
+                        Assert.IsFalse(inLane && near, c.name + "/" + s.name + " is on or right next to ramp " + r.name);
                     }
                     foreach (RoadGap g in gaps)
                     {
@@ -166,13 +189,13 @@ namespace CityScooter.Tests
                 }
                 // Every row keeps a free lane (the generator fills at most slots - 1 per row).
                 foreach (var row in slots.GroupBy(s => Mathf.RoundToInt(s.transform.localPosition.z * 2f)))
-                    Assert.LessOrEqual(row.Count(), 3, c.name + " row " + row.Key / 2f);
-                if (ramps.Length == 0 && gaps.Length == 0)
+                    Assert.LessOrEqual(row.Count(), 4, c.name + " row " + row.Key / 2f);
+                if (ramps.Length == 0 && gaps.Length == 0 && !c.ChangesWidth)
                 {
-                    // Plain chunks: exactly the street's rows (z = 10 / 25 per 40 m) and lanes.
+                    // Plain chunks: exactly the street's rows (z = 10 / 25 per 40 m), a slot on every lane centre.
                     var rows = slots.GroupBy(s => Mathf.RoundToInt(s.transform.localPosition.z)).OrderBy(g => g.Key).ToList();
                     CollectionAssert.AreEqual(new[] { 10, 25 }, rows.Select(r => r.Key).ToArray(), c.name);
-                    foreach (var row in rows) Assert.AreEqual(3, row.Count(), c.name + " row " + row.Key);
+                    foreach (var row in rows) Assert.AreEqual(c.halfWidth >= 7.9f ? 4 : 3, row.Count(), c.name + " row " + row.Key);
                 }
             }
         }
@@ -190,8 +213,13 @@ namespace CityScooter.Tests
                     CheckRamp(r, c.name + "/" + r.name);
                     Vector3 p = r.transform.localPosition;
                     Assert.AreEqual(c.HeightAt(p.z), p.y, 1e-3f, c.name + "/" + r.name + ": pivot on the road surface at the start of the run-up");
-                    Assert.AreEqual(Quaternion.identity, r.transform.localRotation, c.name + "/" + r.name);
-                    Assert.LessOrEqual(p.z + r.Length, c.length, c.name + "/" + r.name + " fits in its chunk");
+                    if (IsDownRamp(r)) Assert.GreaterOrEqual(p.z - r.Length, -.01f, c.name + "/" + r.name + " (down ramp) fits in its chunk");
+                    else
+                    {
+                        Assert.AreEqual(Quaternion.identity, r.transform.localRotation, c.name + "/" + r.name + ": launch ramps face +Z, down ramps yaw 180");
+                        Assert.LessOrEqual(p.z + r.Length, c.length, c.name + "/" + r.name + " fits in its chunk");
+                    }
+                    Assert.LessOrEqual(p.z, c.length + .01f, c.name + "/" + r.name);
                     Assert.LessOrEqual(Mathf.Abs(p.x) + r.width * .5f, c.RideableHalfWidth + .5f, c.name + "/" + r.name + " stays on the rideable width");
                 }
                 foreach (RoadGap g in c.GetComponentsInChildren<RoadGap>(true))
@@ -204,7 +232,7 @@ namespace CityScooter.Tests
                     bool roadWide = g.width <= 0f || g.width >= 2f * c.halfWidth;
                     if (!roadWide) continue;
                     // A ramp whose lip is at most 12 m before the gap, wide enough that nobody can ride round it.
-                    Ramp before = ramps.Where(r => r.transform.localPosition.z + r.Length <= gp.z + .01f && gp.z - (r.transform.localPosition.z + r.Length) <= 12f)
+                    Ramp before = ramps.Where(r => !IsDownRamp(r) && r.transform.localPosition.z + r.Length <= gp.z + .01f && gp.z - (r.transform.localPosition.z + r.Length) <= 12f)
                         .OrderByDescending(r => r.transform.localPosition.z + r.Length).FirstOrDefault();
                     Assert.NotNull(before, c.name + "/" + g.name + ": a road-wide gap needs a ramp ending within 12 m before it");
                     float covered = g.width <= 0f ? 2f * c.RideableHalfWidth : g.width;
@@ -216,6 +244,9 @@ namespace CityScooter.Tests
                 }
             }
         }
+
+        // A "down ramp" (yaw 180) describes a deck coming back down; it is not a launch.
+        static bool IsDownRamp(Ramp r) => Quaternion.Angle(r.transform.localRotation, Quaternion.Euler(0f, 180f, 0f)) < .5f;
 
         static void CheckRamp(Ramp r, string label)
         {
@@ -282,7 +313,7 @@ namespace CityScooter.Tests
             {
                 Assert.That(p.entries, Is.Not.Empty, p.name);
                 Assert.Greater(p.length, 0f, p.name);
-                Assert.AreEqual(4f, p.roadHalfWidth, p.name);
+                Assert.IsTrue(IsStandardOrWide(p.roadHalfWidth), p.name + " roadHalfWidth");
                 foreach (HazardPattern.Entry e in p.entries)
                 {
                     Assert.NotNull(e.prefab, p.name);
@@ -293,6 +324,7 @@ namespace CityScooter.Tests
                     Assert.IsFalse(p.allowMirror, p.name + ": traffic is never mirrored");
                     if (mover.fractionOfRiderSpeed > 0f) Assert.Less(e.x, 0f, p.name + ": slower traffic keeps left");
                     else { Assert.Greater(e.x, 0f, p.name + ": oncoming traffic on the right"); Assert.AreEqual(180f, e.yaw, p.name); }
+                    if (p.roadHalfWidth >= 7.99f) Assert.That(Mathf.Abs(e.x), Is.EqualTo(2f).Or.EqualTo(6f), p.name + ": 4-lane traffic drives in a lane (x = +-2 or +-6)");
                 }
                 foreach (bool mirror in p.allowMirror ? new[] { false, true } : new[] { false })
                 {
@@ -305,7 +337,7 @@ namespace CityScooter.Tests
                         Vector2 span = Span(e.prefab, x, yaw);
                         blocked.Add(new Vector2(span.x - RiderRadius - Margin, span.y + RiderRadius + Margin));
                     }
-                    Assert.IsTrue(HasGap(blocked, 4f, .3f), p.name + (mirror ? " (mirrored)" : "") + " leaves no straight lane on the road");
+                    Assert.IsTrue(HasGap(blocked, p.roadHalfWidth, .3f), p.name + (mirror ? " (mirrored)" : "") + " leaves no straight lane on the road");
                 }
             }
         }

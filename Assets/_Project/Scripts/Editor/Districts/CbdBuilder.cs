@@ -31,7 +31,10 @@ namespace CityScooter.EditorTools.Districts
         public const string DataFolder = "Assets/_Project/Data/Districts";
         public const string PatternFolder = DataFolder + "/cbd";
         public const string DistrictPath = DataFolder + "/District_CBD.asset";
-        public static readonly string[] ChunkIds = { "Terrace", "TownHall", "MallArcade", "MallShops", "Plaza", "CarPark" };
+        /// <summary>The ordered cycle: it starts and ends at the street width (4), the Terrace part between Widen and
+        /// Narrow is 4 lanes (halfWidth 8), Hay Street Mall stays narrow.</summary>
+        public static readonly string[] ChunkIds = { "Widen", "Terrace", "TownHall", "Plaza", "CarPark", "Narrow", "MallArcade", "MallShops" };
+        public const float WideHalf = 8f;
         public static string ChunkPath(string variant) => PrefabFolder + "/CHN_Cbd_" + variant + ".prefab";
         static string Pf(string name) => PrefabFolder + "/" + name + ".prefab";
 
@@ -63,6 +66,8 @@ namespace CityScooter.EditorTools.Districts
 
             // ---- chunks
             K.WriteChunk(Entry(drop), ChunkPath("Entry"));
+            K.WriteChunk(Widen(drop, true), ChunkPath("Widen"));
+            K.WriteChunk(Widen(drop, false), ChunkPath("Narrow"));
             K.WriteChunk(Terrace(drop), ChunkPath("Terrace"));
             K.WriteChunk(TownHall(drop), ChunkPath("TownHall"));
             K.WriteChunk(Mall(drop, true), ChunkPath("MallArcade"));
@@ -72,12 +77,14 @@ namespace CityScooter.EditorTools.Districts
             K.WriteChunk(Exit(drop), ChunkPath("Exit"));
             GameObject far = K.SaveFarScenery(Pf("FAR_Cbd_Towers"), "FAR_Cbd_Towers", FarTowers());
 
-            // ---- traffic patterns (Australia drives on the left: same-way traffic x = -2, oncoming x = +2, never mirrored)
+            // ---- traffic patterns for the 4-lane Terrace (roadHalfWidth 8, never on the mall or the narrow chunks).
+            // Australia drives on the left: same-way traffic x = -2 / -6, oncoming x = +2 / +6; buses in the kerb lanes.
             var patterns = new List<HazardPattern>
             {
-                K.Pattern(PatternFolder, "HZ_Cbd_BusOncoming", 100, 1, 1f, false, 55, (busOncoming, 2f, 55f, 180f)),
-                K.Pattern(PatternFolder, "HZ_Cbd_BusAhead", 100, 1, .9f, false, 50, (busAhead, -2f, 50f, 0f)),
-                K.Pattern(PatternFolder, "HZ_Cbd_DeliveryVans", 115, 2, .9f, false, 50, (vanAhead, -2f, 45f, 0f), (vanOncoming, 2f, 85f, 180f)),
+                K.Pattern(PatternFolder, "HZ_Cbd_BusOncoming", 100, 1, 1f, false, 55, WideHalf, (busOncoming, 6f, 55f, 180f)),
+                K.Pattern(PatternFolder, "HZ_Cbd_BusAhead", 100, 1, .9f, false, 50, WideHalf, (busAhead, -6f, 50f, 0f)),
+                K.Pattern(PatternFolder, "HZ_Cbd_DeliveryVans", 115, 2, .9f, false, 50, WideHalf, (vanAhead, -2f, 45f, 0f), (vanOncoming, 2f, 85f, 180f)),
+                K.Pattern(PatternFolder, "HZ_Cbd_BusAndVan", 120, 3, .7f, false, 55, WideHalf, (busAhead, -6f, 40f, 0f), (vanOncoming, 2f, 60f, 180f), (busOncoming, 6f, 100f, 180f)),
             };
 
             // ---- the district
@@ -89,15 +96,17 @@ namespace CityScooter.EditorTools.Districts
             d.orderedChunks = true;
             d.entry = AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath("Entry")).GetComponent<RoadChunk>();
             d.exit = AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath("Exit")).GetComponent<RoadChunk>();
-            d.allowBoulevard = true;
+            d.allowBoulevard = false; // the Terrace is 4 lanes by itself
             var obstacles = new List<Obstacle> { planter, kiosk, cafe };
             if (theme.obstacles != null) obstacles.AddRange(theme.obstacles.Where(o => o != null));
             d.obstacles = obstacles.ToArray();
             d.jumpObstacles = Array.Empty<Obstacle>();
             d.gifts = Array.Empty<Gift>();
-            // The street's own patterns (roadworks, police, crossings, cars) still happen here, plus buses and vans.
+            // The street's own patterns (roadworks, police, crossings, cars) still happen here, the 4-lane boulevard
+            // patterns for the Terrace, plus buses and vans.
             var hazards = new List<HazardPattern>();
             if (theme.hazards != null) hazards.AddRange(theme.hazards.Where(h => h != null && !h.name.StartsWith("HZ_Cbd_") && !h.name.StartsWith("HZ_Quay_")));
+            if (theme.boulevardHazards != null) hazards.AddRange(theme.boulevardHazards.Where(h => h != null && h.roadHalfWidth >= WideHalf - .01f && !hazards.Contains(h)));
             hazards.AddRange(patterns);
             d.hazards = hazards.ToArray();
             d.pedestrians = K.People(theme, "Office", "Office", "Office", "Courier", "Shopper", "Shopper", "Barista", "Student", "Tourist", "Elder", "Skater", "Jogger", "DogWalker");
@@ -171,56 +180,129 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
+        static CqChunkDraft Wide(string id, float drop)
+        {
+            var d = new CqChunkDraft(id, drop) { Half = WideHalf };
+            return d;
+        }
+
         static CqChunkDraft Terrace(float drop)
         {
-            var d = new CqChunkDraft("Cbd_Terrace", drop);
-            StreetRoad(d, false);
+            var d = Wide("Cbd_Terrace", drop);
+            K.WideStreetSurface(d.Road, d);
+            float E = d.Edge, h = d.Half;
             // Left: teal tower, sandstone bank, blue tower. Right: brick, tall tower with a crown, concrete ribbon tower.
-            GlassTower(d, new CqLot(-1, 0, 16, K.Edge, 16, d.Base(8)), 92, GlassTeal, FrameLight, 1);
-            SandstoneColonnade(d, new CqLot(-1, 16, 24, K.Edge, 14, d.Base(20)), 3);
-            GlassTower(d, new CqLot(-1, 24, 40, K.Edge, 16, d.Base(32)), 70, GlassBlue, FrameDark, 2);
-            BrickHeritage(d, new CqLot(1, 0, 8, K.Edge, 14, d.Base(4)), 3, true);
-            GlassTower(d, new CqLot(1, 8, 22, K.Edge, 16, d.Base(15)), 118, GlassNavy, FrameLight, 3);
-            ConcreteTower(d, new CqLot(1, 22, 34, K.Edge, 16, d.Base(28)), 54);
-            BrickHeritage(d, new CqLot(1, 34, 40, K.Edge, 14, d.Base(37)), 2, false);
+            GlassTower(d, new CqLot(-1, 0, 16, E, 16, d.Base(8)), 92, GlassTeal, FrameLight, 1);
+            SandstoneColonnade(d, new CqLot(-1, 16, 24, E, 14, d.Base(20)), 3);
+            GlassTower(d, new CqLot(-1, 24, 40, E, 16, d.Base(32)), 70, GlassBlue, FrameDark, 2);
+            BrickHeritage(d, new CqLot(1, 0, 8, E, 14, d.Base(4)), 3, true);
+            GlassTower(d, new CqLot(1, 8, 22, E, 16, d.Base(15)), 118, GlassNavy, FrameLight, 3);
+            ConcreteTower(d, new CqLot(1, 22, 34, E, 16, d.Base(28)), 54);
+            BrickHeritage(d, new CqLot(1, 34, 40, E, 14, d.Base(37)), 2, false);
             for (int s = -1; s <= 1; s += 2)
             {
-                for (float z = s < 0 ? 6 : 1; z < 40; z += 14) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 4.95f, d.Ground(z), z), .9f);
-                K.Lamp(d.Props, d.Collisions, s, d.Ground(s < 0 ? 13f : 33f), s < 0 ? 13f : 33f);
-                K.TrafficLight(d.Props, d.Collisions, s, d.Ground(37.5f), 37.5f);
+                for (float z = s < 0 ? 6 : 1; z < 40; z += 14) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z), z), .9f);
+                K.Lamp(d.Props, d.Collisions, s, d.Ground(s < 0 ? 13f : 33f), s < 0 ? 13f : 33f, h);
+                K.TrafficLight(d.Props, d.Collisions, s, d.Ground(37.5f), 37.5f, h);
                 DeepTowers(d, s, 0, 40, 3);
             }
-            K.PropFromKit(d.Props, d.Collisions, "BusShelter", new Vector3(5.6f, d.Ground(24f), 24f), -90f);
-            K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(-7.2f, d.Ground(29f), 29f), 90f);
+            K.PropFromKit(d.Props, d.Collisions, "BusShelter", new Vector3(h + 1.6f, d.Ground(24f), 24f), -90f);
+            K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(-(h + 3.2f), d.Ground(29f), 29f), 90f);
             d.StandardSlots();
             return d;
         }
 
         static CqChunkDraft TownHall(float drop)
         {
-            var d = new CqChunkDraft("Cbd_TownHall", drop);
-            StreetRoad(d, true);
+            var d = Wide("Cbd_TownHall", drop);
+            K.WideStreetSurface(d.Road, d);
+            float E = d.Edge, h = d.Half;
+            for (int x = -7; x <= 7; x++) K.Flat(d.Road, x - .27f, x + .27f, x - .27f, x + .27f, 1.2f, 4.6f, .036f, K.R.cream);
             // Left: a small paved forecourt (4 m) before the red-brick town hall with its clock tower, then sandstone.
             const float set = 4f;
             Forecourt(d, -1, 0, 26, set);
-            TownHallBuilding(d, new CqLot(-1, 2, 26, K.Edge + set, 16, d.Base(14)));
-            BrickHeritage(d, new CqLot(-1, 0, 2, K.Edge + set, 14, d.Base(1)), 2, false);
-            SandstoneColonnade(d, new CqLot(-1, 26, 40, K.Edge, 14, d.Base(33)), 3);
+            TownHallBuilding(d, new CqLot(-1, 2, 26, E + set, 16, d.Base(14)));
+            BrickHeritage(d, new CqLot(-1, 0, 2, E + set, 14, d.Base(1)), 2, false);
+            SandstoneColonnade(d, new CqLot(-1, 26, 40, E, 14, d.Base(33)), 3);
             // Right: green glass tower, blue tower, heritage corner.
-            GlassTower(d, new CqLot(1, 0, 16, K.Edge, 16, d.Base(8)), 104, GlassGreen, FrameLight, 0);
-            GlassTower(d, new CqLot(1, 16, 30, K.Edge, 16, d.Base(23)), 78, GlassPale, FrameDark, 2);
-            SandstoneColonnade(d, new CqLot(1, 30, 40, K.Edge, 14, d.Base(35)), 2);
-            K.PlaneTree(d.Props, d.Collisions, new Vector3(-10.2f, d.Ground(24.5f), 24.5f), 1f);
-            K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(-7.3f, d.Ground(14f), 14f), 90f);
-            for (float z = 4; z < 40; z += 12) K.PlaneTree(d.Props, d.Collisions, new Vector3(4.95f, d.Ground(z), z), 1f);
-            K.Lamp(d.Props, d.Collisions, 1, d.Ground(22f), 22f);
-            K.Lamp(d.Props, d.Collisions, -1, d.Ground(32f), 32f);
-            K.TrafficLight(d.Props, d.Collisions, -1, d.Ground(1f), 1f);
-            K.TrafficLight(d.Props, d.Collisions, 1, d.Ground(1f), 1f);
+            GlassTower(d, new CqLot(1, 0, 16, E, 16, d.Base(8)), 104, GlassGreen, FrameLight, 0);
+            GlassTower(d, new CqLot(1, 16, 30, E, 16, d.Base(23)), 78, GlassPale, FrameDark, 2);
+            SandstoneColonnade(d, new CqLot(1, 30, 40, E, 14, d.Base(35)), 2);
+            K.PlaneTree(d.Props, d.Collisions, new Vector3(-(E + 2.2f), d.Ground(24.5f), 24.5f), 1f);
+            K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(-(h + 3.3f), d.Ground(14f), 14f), 90f);
+            for (float z = 4; z < 40; z += 12) K.PlaneTree(d.Props, d.Collisions, new Vector3(h + .95f, d.Ground(z), z), 1f);
+            K.Lamp(d.Props, d.Collisions, 1, d.Ground(22f), 22f, h);
+            K.Lamp(d.Props, d.Collisions, -1, d.Ground(32f), 32f, h);
+            K.TrafficLight(d.Props, d.Collisions, -1, d.Ground(1f), 1f, h);
+            K.TrafficLight(d.Props, d.Collisions, 1, d.Ground(1f), 1f, h);
             DeepTowers(d, -1, 0, 40, 4);
             DeepTowers(d, 1, 0, 40, 5);
             d.StandardSlots();
             return d;
+        }
+
+        // The Terrace opens from the 2-lane street to 4 lanes (Widen) and closes again before the mall (Narrow), like the
+        // boulevard In / Out chunks: the kerbs angle out, a raised garden bed fills the corner up to the building line.
+        static CqChunkDraft Widen(float drop, bool widen)
+        {
+            var d = new CqChunkDraft(widen ? "Cbd_Widen" : "Cbd_Narrow", drop)
+            {
+                Half = widen ? K.Half : WideHalf, EndHalf = widen ? WideHalf : K.Half, WidthChangeZ = new Vector2(8f, 32f),
+            };
+            K.WideStreetSurface(d.Road, d);
+            float E = d.Edge;
+            float cornerFrom = widen ? 0f : 32f, cornerTo = cornerFrom + 8f;
+            for (int s = -1; s <= 1; s += 2)
+            {
+                // corner building at the street building line where the road is still narrow
+                var corner = new CqLot(s, cornerFrom, cornerTo, K.Edge, 14, d.Base(cornerFrom + 4f));
+                if (s < 0) BrickHeritage(d, corner, 3, true); else SandstoneColonnade(d, corner, 3);
+                float from = widen ? 8f : 0f, to = widen ? 40f : 32f;
+                if (s < 0)
+                {
+                    SandstoneColonnade(d, new CqLot(-1, from, from + 12f, E, 14, d.Base(from + 6f)), 3);
+                    GlassTower(d, new CqLot(-1, from + 12f, to, E, 16, d.Base((from + 12f + to) * .5f)), widen ? 84 : 100, widen ? GlassTeal : GlassBlue, FrameLight, widen ? 0 : 1);
+                }
+                else
+                {
+                    GlassTower(d, new CqLot(1, from, from + 18f, E, 16, d.Base(from + 9f)), widen ? 108 : 76, widen ? GlassNavy : GlassSilver, FrameLight, widen ? 3 : 2);
+                    ConcreteTower(d, new CqLot(1, from + 18f, to, E, 16, d.Base((from + 18f + to) * .5f)), widen ? 48 : 60);
+                }
+                GardenBed(d, s);
+                DeepTowers(d, s, 0, 40, widen ? 12 : 13);
+                float lampZ = widen ? 36f : 4f;
+                K.Lamp(d.Props, d.Collisions, s, d.Ground(lampZ), lampZ, d.HalfAt(lampZ));
+            }
+            // like the boulevard transitions: rows where the road is wide enough for sure
+            if (widen) { d.Slot(-2.6f, 5f); d.Slot(0f, 5f); d.Slot(2.6f, 5f); d.Slot(-2f, 25f); d.Slot(2f, 25f); }
+            else { d.Slot(-2f, 15f); d.Slot(2f, 15f); d.Slot(-2.6f, 35f); d.Slot(0f, 35f); d.Slot(2.6f, 35f); }
+            return d;
+        }
+
+        // Raised garden bed between the angled sidewalk edge and the 4-lane building line (sheared with the road).
+        static void GardenBed(CqChunkDraft d, int s)
+        {
+            ComicMesh m = d.SlopedFrontage;
+            float line = d.Edge, top = .9f, soil = .72f, wall = .3f;
+            Color wallColour = Color.Lerp(Sandstone, K.R.ink, .15f), green = K.Hex("4E7F3A");
+            for (float z = d.WidthChangeZ.x; z < d.WidthChangeZ.y - .01f; z += 1f)
+            {
+                float e0 = d.EdgeAt(z), e1 = d.EdgeAt(z + 1f);
+                if (line - e0 < .05f && line - e1 < .05f) continue;
+                float k0 = Mathf.Min(e0 + wall, line), k1 = Mathf.Min(e1 + wall, line);
+                m.Surface = ComicSurface.Concrete;
+                K.Face(m, K.V(s * e0, -.4f, z), K.V(s * e1, -.4f, z + 1f), K.V(s * e1, top, z + 1f), K.V(s * e0, top, z), wallColour, new Vector3(-s, 0, 0), false);
+                K.Face(m, K.V(s * e0, top, z), K.V(s * e1, top, z + 1f), K.V(s * k1, top, z + 1f), K.V(s * k0, top, z), Trim, Vector3.up, false);
+                m.Surface = ComicSurface.Foliage;
+                K.Face(m, K.V(s * k0, soil, z), K.V(s * k1, soil, z + 1f), K.V(s * line, soil, z + 1f), K.V(s * line, soil, z), green, Vector3.up, false);
+            }
+            foreach (float at in new[] { 12f, 18f, 24f, 28f })
+            {
+                float z = d.EndHalf > d.Half ? at : d.Length - at;
+                float inner = d.EdgeAt(z) + wall, room = line - inner;
+                if (room >= 2.2f) K.PlaneTree(d.Props, null, new Vector3(s * (inner + line) * .5f, d.Ground(z) + soil - K.Kerb, z), .85f);
+                else if (room >= .9f) K.PropFromKit(d.Props, null, "FlowerPot", new Vector3(s * (inner + line) * .5f, d.Ground(z) + soil - K.Kerb, z), 0f);
+            }
         }
 
         static CqChunkDraft Mall(float drop, bool arcade)
@@ -257,60 +339,63 @@ namespace CityScooter.EditorTools.Districts
         static CqChunkDraft Plaza(float drop)
         {
             // Open: the tallest towers stand back behind forecourts with cafe tables, so their whole height shows.
-            var d = new CqChunkDraft("Cbd_Plaza", drop);
-            StreetRoad(d, false);
+            var d = Wide("Cbd_Plaza", drop);
+            K.WideStreetSurface(d.Road, d);
+            float E = d.Edge, h = d.Half;
             const float set = 6f;
             for (int s = -1; s <= 1; s += 2)
             {
                 Forecourt(d, s, 0, 40, set);
                 if (s < 0)
                 {
-                    GlassTower(d, new CqLot(-1, 0, 8, K.Edge + set, 16, d.Base(4)), 40, GlassSilver, FrameLight, 0);
-                    CentralTower(d, new CqLot(-1, 8, 30, K.Edge + set, 22, d.Base(19)));
-                    GlassTower(d, new CqLot(-1, 30, 40, K.Edge + set, 16, d.Base(35)), 58, GlassBlue, FrameDark, 0);
+                    GlassTower(d, new CqLot(-1, 0, 8, E + set, 16, d.Base(4)), 40, GlassSilver, FrameLight, 0);
+                    CentralTower(d, new CqLot(-1, 8, 30, E + set, 22, d.Base(19)));
+                    GlassTower(d, new CqLot(-1, 30, 40, E + set, 16, d.Base(35)), 58, GlassBlue, FrameDark, 0);
                 }
                 else
                 {
-                    BracedTower(d, new CqLot(1, 0, 18, K.Edge + set, 18, d.Base(9)), 128);
-                    GlassTower(d, new CqLot(1, 18, 30, K.Edge + set, 16, d.Base(24)), 86, GlassTeal, FrameLight, 1);
-                    ConcreteTower(d, new CqLot(1, 30, 40, K.Edge + set, 16, d.Base(35)), 44);
+                    BracedTower(d, new CqLot(1, 0, 18, E + set, 18, d.Base(9)), 128);
+                    GlassTower(d, new CqLot(1, 18, 30, E + set, 16, d.Base(24)), 86, GlassTeal, FrameLight, 1);
+                    ConcreteTower(d, new CqLot(1, 30, 40, E + set, 16, d.Base(35)), 44);
                 }
-                for (float z = 5; z < 40; z += 11) K.CafeUmbrella(d.Props, d.Collisions, new Vector3(s * (K.Edge + 2.6f), d.Ground(z), z), s < 0 ? K.Hex("F4F2EA") : K.Hex("2F6B66"));
-                for (float z = 0; z < 40; z += 13.3f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 4.95f, d.Ground(z + 2), z + 2), 1f);
+                for (float z = 5; z < 40; z += 11) K.CafeUmbrella(d.Props, d.Collisions, new Vector3(s * (E + 2.6f), d.Ground(z), z), s < 0 ? K.Hex("F4F2EA") : K.Hex("2F6B66"));
+                for (float z = 0; z < 40; z += 13.3f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z + 2), z + 2), 1f);
                 DeepTowers(d, s, 0, 40, 8 + s);
             }
-            K.Lamp(d.Props, d.Collisions, -1, d.Ground(27f), 27f);
-            K.Lamp(d.Props, d.Collisions, 1, d.Ground(8f), 8f);
+            K.Lamp(d.Props, d.Collisions, -1, d.Ground(27f), 27f, h);
+            K.Lamp(d.Props, d.Collisions, 1, d.Ground(8f), 8f, h);
             d.StandardSlots();
             return d;
         }
 
         static CqChunkDraft CarPark(float drop)
         {
-            // A multi-storey car park with its exit ramp; a loading-dock kicker in the left lane of the road.
-            var d = new CqChunkDraft("Cbd_CarPark", drop);
-            StreetRoad(d, false);
-            CarParkBuilding(d, new CqLot(-1, 0, 26, K.Edge, 18, d.Base(13)));
-            BrickHeritage(d, new CqLot(-1, 26, 40, K.Edge, 14, d.Base(33)), 3, true);
-            GlassTower(d, new CqLot(1, 0, 14, K.Edge, 16, d.Base(7)), 88, GlassBlue, FrameLight, 3);
-            SandstoneColonnade(d, new CqLot(1, 14, 24, K.Edge, 14, d.Base(19)), 2);
-            GlassTower(d, new CqLot(1, 24, 40, K.Edge, 16, d.Base(32)), 66, GlassSilver, FrameDark, 0);
-            // Kicker: 3.2 m run-up to 0.9 m, in the left lane (x = -2.6) at z = 12; the lane is wider than it.
-            var ramp = new CqRampSpec { Name = "LoadingDockKicker", X = -2.6f, Z = 12f, Width = 2.4f, Rise = 3.2f, Height = .9f, Top = 0f, Launch = 1.15f, Hang = .55f };
+            // A multi-storey car park with its exit ramp; a loading-dock kicker in the left kerb lane of the Terrace.
+            var d = Wide("Cbd_CarPark", drop);
+            K.WideStreetSurface(d.Road, d);
+            float E = d.Edge, h = d.Half;
+            CarParkBuilding(d, new CqLot(-1, 0, 26, E, 18, d.Base(13)));
+            BrickHeritage(d, new CqLot(-1, 26, 40, E, 14, d.Base(33)), 3, true);
+            GlassTower(d, new CqLot(1, 0, 14, E, 16, d.Base(7)), 88, GlassBlue, FrameLight, 3);
+            SandstoneColonnade(d, new CqLot(1, 14, 24, E, 14, d.Base(19)), 2);
+            GlassTower(d, new CqLot(1, 24, 40, E, 16, d.Base(32)), 66, GlassSilver, FrameDark, 0);
+            // Kicker: 3.2 m run-up to 0.9 m, 3.2 m wide in the left kerb lane (x = -6, a 4 m lane) at z = 12.
+            var ramp = new CqRampSpec { Name = "LoadingDockKicker", X = -6f, Z = 12f, Width = 3.2f, Rise = 3.2f, Height = .9f, Top = 0f, Launch = 1.15f, Hang = .55f };
             d.Ramps.Add(ramp);
             var deck = new ComicMesh();
             K.RampMesh(deck, ramp, K.Hex("6B7078"), K.Hex("50555C"), true, 0f);
             d.SlopedFrontage.Add(deck, Vector3.zero, Quaternion.identity, Vector3.one);
             for (int s = -1; s <= 1; s += 2)
             {
-                for (float z = s < 0 ? 31 : 3; z < 40; z += 10) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 4.95f, d.Ground(z), z), 1f);
+                for (float z = s < 0 ? 31 : 3; z < 40; z += 10) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z), z), 1f);
                 DeepTowers(d, s, 0, 40, 10 + s);
             }
-            K.Lamp(d.Props, d.Collisions, 1, d.Ground(18f), 18f);
-            K.PropFromKit(d.Props, d.Collisions, "ParkingMeter", new Vector3(-4.5f, d.Ground(22f), 22f), 90f);
-            // Spawn rows like the street, but nothing on the kicker or in its landing zone in that lane.
-            d.Slot(0f, 30f); d.Slot(2.6f, 30f);
-            d.Slot(0f, 10f); d.Slot(2.6f, 10f);
+            K.Lamp(d.Props, d.Collisions, 1, d.Ground(18f), 18f, h);
+            K.PropFromKit(d.Props, d.Collisions, "ParkingMeter", new Vector3(-(h + .5f), d.Ground(22f), 22f), 90f);
+            // The four lane centres like the other Terrace chunks, but nothing in the kicker's lane (before it or where
+            // riders come down).
+            foreach (float z in new[] { 10f, 25f })
+                foreach (float x in new[] { -2f, 2f, 6f }) d.Slot(x, z);
             return d;
         }
 
@@ -718,7 +803,7 @@ namespace CityScooter.EditorTools.Districts
         internal static void Forecourt(CqChunkDraft d, int s, float z0, float z1, float depth)
         {
             var m = new ComicMesh();
-            float x0 = s * K.Edge, x1 = s * (K.Edge + depth);
+            float x0 = s * d.Edge, x1 = s * (d.Edge + depth);
             Color joint = Color.Lerp(K.R.ink, K.R.pavement, .5f);
             for (float z = z0; z < z1 - .01f; z += 4f)
             {
@@ -731,7 +816,7 @@ namespace CityScooter.EditorTools.Districts
             m.Surface = ComicSurface.Concrete;
             // a low step at the sidewalk edge, with gaps
             for (float z = z0 + 1f; z < z1 - 1f; z += 6f)
-                m.Box(new Vector3(s * (K.Edge + .3f), K.Kerb + .2f, Mathf.Min(z + 2f, z1 - 1f)), new Vector3(.45f, .4f, 4f), K.R.cream);
+                m.Box(new Vector3(s * (d.Edge + .3f), K.Kerb + .2f, Mathf.Min(z + 2f, z1 - 1f)), new Vector3(.45f, .4f, 4f), K.R.cream);
             m.Shear(d.Grade);
             d.Road.Add(m, Vector3.zero, Quaternion.identity, Vector3.one);
         }
@@ -770,7 +855,7 @@ namespace CityScooter.EditorTools.Districts
                 for (int layer = 0; layer < 2; layer++)
                 {
                     float h = 30f + (k * 13 + layer * 29) % 70;
-                    float x = s * (K.Edge + 22f + layer * 20f + (k % 3) * 2f), w = 14f;
+                    float x = s * (d.Edge + 22f + layer * 20f + (k % 3) * 2f), w = 14f;
                     Color c = Color.Lerp(glass[(k + layer) % glass.Length], new Color(.49f, .64f, .75f), .15f + layer * .2f);
                     float y = d.Ground(zc) - 2f;
                     m.Box(new Vector3(x, y + h * .5f, zc), new Vector3(w, h, len), c);
@@ -900,6 +985,9 @@ namespace CityScooter.EditorTools.Districts
     internal sealed class CqRampSpec
     {
         public string Name; public float X, Z, Width, Rise, Height, Top, Launch = 1f, Hang = .5f;
+        /// <summary>0 = a launch ramp (+Z); 180 = a "down ramp" describing a deck coming back down towards +Z: its pivot
+        /// is at the bottom end and it rises backwards (slow riders land on it and ride down).</summary>
+        public float Yaw;
         public float Lip => Z + Rise + Top;
     }
 
@@ -937,6 +1025,21 @@ namespace CityScooter.EditorTools.Districts
         public readonly List<CqGapSpec> Gaps = new List<CqGapSpec>();
 
         public CqChunkDraft(string id, float drop, float length = 40f) { Id = id; Drop = drop; Length = length; }
+        /// <summary>Road half width at the start (4 street, 8 for the 4-lane Terrace) and at the end (0 = same).</summary>
+        public float Half = CbdQuayKit.Half, EndHalf;
+        public Vector2 WidthChangeZ = new Vector2(8f, 32f);
+        public bool ChangesWidth => EndHalf > 0f && Mathf.Abs(EndHalf - Half) > .001f;
+        /// <summary>Same as RoadChunk.HalfWidthAt (smoothstep between WidthChangeZ.x and .y).</summary>
+        public float HalfAt(float z)
+        {
+            if (!ChangesWidth) return Half;
+            float t = Mathf.InverseLerp(WidthChangeZ.x, WidthChangeZ.y, z);
+            return Mathf.Lerp(Half, EndHalf, t * t * (3f - 2f * t));
+        }
+        /// <summary>Sidewalk outer edge at z.</summary>
+        public float EdgeAt(float z) => HalfAt(z) + CbdQuayKit.Side;
+        /// <summary>The building line: the outer sidewalk edge where the road is widest.</summary>
+        public float Edge => Mathf.Max(Half, EndHalf) + CbdQuayKit.Side;
         public float Grade => -Drop / Length;
         /// <summary>Road surface height at z.</summary>
         public float Y(float z) => -Grade * z;
@@ -949,7 +1052,7 @@ namespace CityScooter.EditorTools.Districts
         {
             for (float z0 = 0; z0 < Length - 1f; z0 += 40f)
                 foreach (float z in new[] { z0 + 10f, z0 + 25f })
-                    foreach (float x in new[] { -2.6f, 0f, 2.6f }) Slot(x, z);
+                    foreach (float x in Half >= 7.9f ? new[] { -6f, -2f, 2f, 6f } : new[] { -2.6f, 0f, 2.6f }) Slot(x, z);
         }
         /// <summary>An invisible wall where the building is (keeps people from being placed inside it).</summary>
         public void Wall(CqLot l, float height)
@@ -1115,6 +1218,73 @@ namespace CityScooter.EditorTools.Districts
             }
         }
 
+        /// <summary>The 4-lane Terrace surface, following d.HalfAt(z) (width transitions too): asphalt, kerbs, sidewalks,
+        /// white lane lines at x = +-4 where there are two lanes each way, and a painted median (two solid yellow lines with
+        /// yellow hatching, no raised kerb: the rider can change lanes); the street's dashed double yellow where it is
+        /// two lanes.</summary>
+        public static void WideStreetSurface(ComicMesh m, CqChunkDraft d)
+        {
+            float L = d.Length, h = Kerb, sw = Side;
+            Color joint = Color.Lerp(R.ink, R.pavement, .5f), white = new Color(.95f, .95f, .93f);
+            float step = d.ChangesWidth ? 2f : 4f;
+            int n = Mathf.RoundToInt(L / step);
+            for (int i = 0; i < n; i++)
+            {
+                float z0 = i * step, z1 = z0 + step, w0 = d.HalfAt(z0), w1 = d.HalfAt(z1);
+                m.Surface = ComicSurface.Asphalt;
+                Face(m, V(-w0, 0, z0), V(-w1, 0, z1), V(w1, 0, z1), V(w0, 0, z0), R.asphalt, Vector3.up, false);
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    float i0 = s * w0, i1 = s * w1, o0 = s * (w0 + sw), o1 = s * (w1 + sw);
+                    Vector3 inward = new Vector3(-s, 0, 0), outward = new Vector3(s, 0, 0);
+                    m.Surface = ComicSurface.Paving;
+                    Face(m, V(i0, h, z0), V(i1, h, z1), V(o1, h, z1), V(o0, h, z0), R.pavement, Vector3.up, false);
+                    Face(m, V(i0, -.05f, z0), V(i1, -.05f, z1), V(i1, h, z1), V(i0, h, z0), R.pavement, inward, false);
+                    Face(m, V(o0, -2f, z0), V(o1, -2f, z1), V(o1, h, z1), V(o0, h, z0), R.pavement, outward, false);
+                    m.Surface = ComicSurface.Plain;
+                    float c0 = s * (w0 + .24f), c1 = s * (w1 + .24f), top = h + .04f;
+                    Face(m, V(i0, top, z0), V(i1, top, z1), V(c1, top, z1), V(c0, top, z0), R.cream, Vector3.up, false);
+                    Face(m, V(i0, h, z0), V(i1, h, z1), V(i1, top, z1), V(i0, top, z0), R.cream, inward, false);
+                    Face(m, V(c0, h, z0), V(c1, h, z1), V(c1, top, z1), V(c0, top, z0), R.cream, outward, false);
+                    Flat(m, s * (w0 - .19f), s * (w0 - .11f), s * (w1 - .19f), s * (w1 - .11f), z0, z1, .0305f, R.cream);
+                    for (int k = 1; k < 4; k++)
+                        Flat(m, s * (w0 + k) - .0125f, s * (w0 + k) + .0125f, s * (w1 + k) - .0125f, s * (w1 + k) + .0125f, z0, z1, h + .025f, joint);
+                }
+            }
+            for (int z = 0; z < 40; z += 2)
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    float w = d.HalfAt(z);
+                    Flat(m, s * w, s * (w + sw), s * w, s * (w + sw), z - .0125f, z + .0125f, h + .025f, joint);
+                }
+            // centre: the double yellow opens into a 1.2 m painted median as the road widens
+            float Median(float z) => .12f + .48f * Mathf.InverseLerp(Half, 8f, d.HalfAt(z));
+            for (float z = 0; z < L - .01f; z += 1f)
+            {
+                float ma = Median(z), mb = Median(z + 1f);
+                bool wide = ma > .13f || mb > .13f;
+                for (int s = -1; s <= 1; s += 2)
+                    if (wide || z % 5f < 3f)
+                        Flat(m, s * ma - .05f, s * ma + .05f, s * mb - .05f, s * mb + .05f, z, z + 1f, .035f, R.yellow);
+                if (ma > .55f && mb > .55f && Mathf.RoundToInt(z) % 2 == 0)
+                    m.Box(V(0, .036f, z + .5f), V(.08f, .006f, 1.45f), R.yellow, Quaternion.Euler(0, 52f, 0));
+            }
+            // lane lines: 3 m white dashes every 8 m at x = +-4 wherever both lanes on that side are wide enough
+            for (int s = -1; s <= 1; s += 2)
+                for (int z = 0; z < 40; z += 8)
+                    if (Mathf.Min(d.HalfAt(z), d.HalfAt(z + 3)) >= 6.9f)
+                        Flat(m, s * 4f - .06f, s * 4f + .06f, s * 4f - .06f, s * 4f + .06f, z, z + 3f, .035f, white);
+            foreach (float ze in new[] { 0f, L })
+            {
+                Vector3 normal = ze <= 0f ? Vector3.back : Vector3.forward;
+                float w = d.HalfAt(ze);
+                m.Surface = ComicSurface.Asphalt;
+                Face(m, V(-w, -.8f, ze), V(w, -.8f, ze), V(w, 0, ze), V(-w, 0, ze), R.asphalt, normal, false);
+                m.Surface = ComicSurface.Paving;
+                for (int s = -1; s <= 1; s += 2) Face(m, V(s * w, -2f, ze), V(s * (w + sw), -2f, ze), V(s * (w + sw), h, ze), V(s * w, h, ze), R.pavement, normal, false);
+            }
+        }
+
         /// <summary>Flat water (no ink) with lighter ripple strokes; level relative to the road.</summary>
         public static void Water(ComicMesh m, float x0, float x1, float z0, float z1, float level, Color water, Color ripple, int seed)
         {
@@ -1184,8 +1354,8 @@ namespace CityScooter.EditorTools.Districts
             });
         }
 
-        public static void Lamp(ComicMesh props, List<DressingObstacle> collisions, int side, float y, float z) =>
-            PropFromKit(props, collisions, "StreetLamp", new Vector3(side * (Half + .55f), y, z), side < 0 ? 90f : -90f);
+        public static void Lamp(ComicMesh props, List<DressingObstacle> collisions, int side, float y, float z, float half = Half) =>
+            PropFromKit(props, collisions, "StreetLamp", new Vector3(side * (half + .55f), y, z), side < 0 ? 90f : -90f);
 
         public static void Thin(List<DressingObstacle> collisions, string id, Vector3 p, float height, float size = .4f) =>
             collisions?.Add(new DressingObstacle { id = id, position = p, rotation = Vector3.zero, centre = V(0, height * .5f, 0), size = V(size, height, size), canJumpOver = false });
@@ -1246,9 +1416,9 @@ namespace CityScooter.EditorTools.Districts
             collisions?.Add(new DressingObstacle { id = "CafeUmbrella", position = p, rotation = Vector3.zero, centre = V(0, .6f, 0), size = V(1.9f, 1.2f, .9f), canJumpOver = false });
         }
 
-        public static void TrafficLight(ComicMesh m, List<DressingObstacle> collisions, int side, float y, float z)
+        public static void TrafficLight(ComicMesh m, List<DressingObstacle> collisions, int side, float y, float z, float half = Half)
         {
-            Vector3 p = V(side * (Half + .45f), y, z);
+            Vector3 p = V(side * (half + .45f), y, z);
             m.Surface = ComicSurface.PaintedMetal;
             m.Cylinder(p + V(0, 1.8f, 0), .08f, 3.6f, R.ink, 6);
             m.Box(p + V(0, 3.2f, -.05f), V(.42f, 1.15f, .3f), Hex("2C3238"));
@@ -1331,8 +1501,8 @@ namespace CityScooter.EditorTools.Districts
             var sync = new ChildSync(root.transform);
             var chunk = PrefabBuildUtility.GetOrAdd<RoadChunk>(root);
             chunk.length = d.Length; chunk.endHeight = d.Drop;
-            chunk.halfWidth = Half; chunk.sidewalkWidth = Side; chunk.sidewalkHeight = Kerb; chunk.curbTransitionWidth = .3f;
-            chunk.endHalfWidth = 0f; chunk.widthChangeZ = new Vector2(8f, 32f);
+            chunk.halfWidth = d.Half; chunk.sidewalkWidth = Side; chunk.sidewalkHeight = Kerb; chunk.curbTransitionWidth = .3f;
+            chunk.endHalfWidth = d.ChangesWidth ? d.EndHalf : 0f; chunk.widthChangeZ = d.WidthChangeZ;
             chunk.roadType = d.Type; chunk.weight = 1f; chunk.minDifficulty = 0;
 
             var road = new ComicMesh();
@@ -1370,6 +1540,7 @@ namespace CityScooter.EditorTools.Districts
                 {
                     GameObject go = ramps.Plain(r.Name);
                     go.transform.localPosition = new Vector3(r.X, d.Y(r.Z), r.Z);
+                    go.transform.localRotation = Quaternion.Euler(0f, r.Yaw, 0f);
                     var ramp = PrefabBuildUtility.GetOrAdd<Ramp>(go);
                     ramp.width = r.Width; ramp.rise = r.Rise; ramp.height = r.Height; ramp.top = r.Top; ramp.launch = r.Launch; ramp.hangGravity = r.Hang;
                     ramp.lanes = Array.Empty<int>();
@@ -1482,13 +1653,16 @@ namespace CityScooter.EditorTools.Districts
         }
 
         public static HazardPattern Pattern(string folder, string name, float length, int minLevel, float weight, bool mirror, float meet,
+            params (GameObject prefab, float x, float z, float yaw)[] entries) => Pattern(folder, name, length, minLevel, weight, mirror, meet, Half, entries);
+
+        public static HazardPattern Pattern(string folder, string name, float length, int minLevel, float weight, bool mirror, float meet, float roadHalf,
             params (GameObject prefab, float x, float z, float yaw)[] entries)
         {
             string path = folder + "/" + name + ".asset";
             var p = LoadOrCreate<HazardPattern>(path);
             p.entries = entries.OrderBy(e => e.z).Select(e => new HazardPattern.Entry { prefab = e.prefab, x = e.x, z = e.z, yaw = e.yaw }).ToArray();
             p.length = length; p.minLevel = minLevel; p.weight = weight; p.allowMirror = mirror;
-            p.turnDirection = 0; p.turnAtZ = 0; p.turnStrength = .8f; p.turnSeconds = 4f; p.meetAtZ = meet; p.roadHalfWidth = Half;
+            p.turnDirection = 0; p.turnAtZ = 0; p.turnStrength = .8f; p.turnSeconds = 4f; p.meetAtZ = meet; p.roadHalfWidth = roadHalf;
             EditorUtility.SetDirty(p);
             return p;
         }
