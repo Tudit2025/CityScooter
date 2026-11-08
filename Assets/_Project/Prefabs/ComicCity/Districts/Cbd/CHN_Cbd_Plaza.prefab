@@ -961,100 +961,76 @@ MonoBehaviour:
   collisionLayouts:
   - obstacles:
     - id: CafeUmbrella
-      position: {x: -14.6, y: -0.19338365, z: 5}
+      position: {x: -14.6, y: -0.2720604, z: 6}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 0.6, z: 0}
       size: {x: 1.9, y: 1.2, z: 0.9}
       canJumpOver: 0
     - id: CafeUmbrella
-      position: {x: -14.6, y: -1.0588276, z: 16}
+      position: {x: -14.6, y: -1.2948579, z: 19}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 0.6, z: 0}
       size: {x: 1.9, y: 1.2, z: 0.9}
       canJumpOver: 0
     - id: CafeUmbrella
-      position: {x: -14.6, y: -1.9242716, z: 27}
+      position: {x: -14.6, y: -2.3176553, z: 32}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 0.6, z: 0}
+      size: {x: 1.9, y: 1.2, z: 0.9}
+      canJumpOver: 0
+    - id: PlaneTree
+      position: {x: -8.95, y: -0.03603019, z: 3}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
+      canJumpOver: 0
+    - id: PlaneTree
+      position: {x: -8.95, y: -1.1375043, z: 17}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
+      canJumpOver: 0
+    - id: PlaneTree
+      position: {x: -8.95, y: -2.2389786, z: 31}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
+      canJumpOver: 0
+    - id: CafeUmbrella
+      position: {x: 14.6, y: -0.2720604, z: 6}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 0.6, z: 0}
       size: {x: 1.9, y: 1.2, z: 0.9}
       canJumpOver: 0
     - id: CafeUmbrella
-      position: {x: -14.6, y: -2.7897158, z: 38}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 0.6, z: 0}
-      size: {x: 1.9, y: 1.2, z: 0.9}
-      canJumpOver: 0
-    - id: PlaneTree
-      position: {x: -8.95, y: 0.042646542, z: 2}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
-      canJumpOver: 0
-    - id: PlaneTree
-      position: {x: -8.95, y: -1.0037539, z: 15.3}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
-      canJumpOver: 0
-    - id: PlaneTree
-      position: {x: -8.95, y: -2.0501544, z: 28.6}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
-      canJumpOver: 0
-    - id: PlaneTree
-      position: {x: -8.95, y: -3.096555, z: 41.9}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
-      canJumpOver: 0
-    - id: CafeUmbrella
-      position: {x: 14.6, y: -0.19338365, z: 5}
+      position: {x: 14.6, y: -1.2948579, z: 19}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 0.6, z: 0}
       size: {x: 1.9, y: 1.2, z: 0.9}
       canJumpOver: 0
     - id: CafeUmbrella
-      position: {x: 14.6, y: -1.0588276, z: 16}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 0.6, z: 0}
-      size: {x: 1.9, y: 1.2, z: 0.9}
-      canJumpOver: 0
-    - id: CafeUmbrella
-      position: {x: 14.6, y: -1.9242716, z: 27}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 0.6, z: 0}
-      size: {x: 1.9, y: 1.2, z: 0.9}
-      canJumpOver: 0
-    - id: CafeUmbrella
-      position: {x: 14.6, y: -2.7897158, z: 38}
+      position: {x: 14.6, y: -2.3176553, z: 32}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 0.6, z: 0}
       size: {x: 1.9, y: 1.2, z: 0.9}
       canJumpOver: 0
     - id: PlaneTree
-      position: {x: 8.95, y: 0.042646542, z: 2}
+      position: {x: 8.95, y: -0.03603019, z: 3}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
-      position: {x: 8.95, y: -1.0037539, z: 15.3}
+      position: {x: 8.95, y: -1.1375043, z: 17}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
-      position: {x: 8.95, y: -2.0501544, z: 28.6}
+      position: {x: 8.95, y: -2.2389786, z: 31}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
-      canJumpOver: 0
-    - id: PlaneTree
-      position: {x: 8.95, y: -3.096555, z: 41.9}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.7, z: 0}
-      size: {x: 0.4, y: 3.4, z: 0.4}
+      centre: {x: 0, y: 1.5, z: 0}
+      size: {x: 0.4, y: 3, z: 0.4}
       canJumpOver: 0
     - id: StreetLamp
       position: {x: -8.55, y: -1.9242716, z: 27}

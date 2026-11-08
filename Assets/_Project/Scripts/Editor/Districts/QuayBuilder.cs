@@ -36,6 +36,9 @@ namespace CityScooter.EditorTools.Districts
         /// <summary>Riverside: flatter than the street (-1.6 m per 40 m instead of -3.15).</summary>
         public const float Drop = -1.6f;
         const float WaterLevel = -1.3f;
+        // How far out the river plane goes: further out, the palette's far blend paints the panorama onto the water
+        // in slabs; past it the panorama sky itself shows the river and the far shore.
+        const float RiverFar = 90f;
 
         // The bridge hump (Ramp platform) and the jetty jump over the inlet (Ramp + RoadGap). Numbers for gameplay:
         public const float BridgeStart = 6f, BridgeRise = 10f, BridgeHeight = 2.2f, BridgeTop = 8f, BridgeDown = 8f;
@@ -120,7 +123,35 @@ namespace CityScooter.EditorTools.Districts
             EditorUtility.SetDirty(d);
             AssetDatabase.SaveAssets();
             K.WriteReport("art-src/districts/quay/catalog.txt");
+            RenderAtlas(bollard, truck, umbrella, gull, jetty);
             Debug.Log("[Districts/Quay] built " + (ChunkIds.Length + 2) + " chunks: " + string.Join("; ", K.Report));
+        }
+
+        static void RenderAtlas(Obstacle bollard, Obstacle truck, Obstacle umbrella, GameObject gull, Ramp jetty)
+        {
+            ComicMesh Make(Action<ComicMesh> build) { var m = new ComicMesh(); build(m); return m; }
+            var bell = new CqChunkDraft("Atlas", 0f);
+            BellTowerLandmark(bell, Vector3.zero);
+            var spanda = new CqChunkDraft("Atlas", 0f);
+            SpandaLandmark(spanda, Vector3.zero);
+            var items = new List<(string, GameObject, ComicMesh)>
+            {
+                ("Palm", null, Make(m => K.Palm(m, null, Vector3.zero, 7f, 1))),
+                ("PalmShort", null, Make(m => K.Palm(m, null, Vector3.zero, 5.5f, 4))),
+                ("PlaneTree", null, Make(m => K.PlaneTree(m, null, Vector3.zero, 1f))),
+                ("UmbrellaTable", umbrella.gameObject, null),
+                ("Bollard", bollard.gameObject, null),
+                ("FoodTruck", truck.gameObject, null),
+                ("Seagull", gull, null),
+                ("Ferry", null, Make(m => Ferry(m, Vector3.zero, 0f))),
+                ("IslandKiosk", null, Make(m => IslandKiosk(m, Vector3.zero))),
+                ("Playground", null, Make(m => Playground(m, Vector3.zero))),
+                ("Railing", null, Make(m => Railing(m, 1, 0f, 6f, 0f))),
+                ("JettyRamp", jetty.gameObject, null),
+                ("BellTower", null, bell.Landmark),
+                ("Spanda", null, spanda.Landmark),
+            };
+            K.RenderAtlas("art-src/districts/quay/props-atlas.png", items);
         }
 
         public static void BuildBatch()
@@ -145,11 +176,11 @@ namespace CityScooter.EditorTools.Districts
             Promenade(d);
             for (int s = -1; s <= 1; s += 2)
             {
-                CbdBuilder.GardenEdge(d, s, 0, 14);
+                CbdBuilder.GardenEdge(d, s, 0, 14, s > 0 ? 14f : 50f); // the river starts 14 m out on the right
                 for (float z = 3; z < 14; z += 5.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .9f);
             }
             River(d, 14, 40);
-            K.Water(d.Road, K.Edge + 14f, 260f, 0, 14, WaterLevel, Water, Ripple, 11);
+            K.Water(d.Road, K.Edge + 14f, RiverFar, 0, 14, WaterLevel, Water, Ripple, 11);
             d.SlopedFrontage.Surface = ComicSurface.Paving;
             K.SideBox(d.SlopedFrontage, -1, 0, 14, -2.4f, K.Kerb - .02f, 14f, 60f, BeigeLight);
             Plaza(d, 14, 40, true);
@@ -165,7 +196,7 @@ namespace CityScooter.EditorTools.Districts
             var d = new CqChunkDraft("Quay_Exit", Drop);
             Promenade(d);
             River(d, 0, 26);
-            K.Water(d.Road, K.Edge + 14f, 260f, 26, 40, WaterLevel, Water, Ripple, 12);
+            K.Water(d.Road, K.Edge + 14f, RiverFar, 26, 40, WaterLevel, Water, Ripple, 12);
             d.SlopedFrontage.Surface = ComicSurface.Paving;
             K.SideBox(d.SlopedFrontage, -1, 26, 40, -2.4f, K.Kerb - .02f, 14f, 60f, BeigeLight);
             Plaza(d, 0, 26, true);
@@ -173,7 +204,7 @@ namespace CityScooter.EditorTools.Districts
             CbdBuilder.DeepTowers(d, -1, 0, 26, 22);
             for (int s = -1; s <= 1; s += 2)
             {
-                CbdBuilder.GardenEdge(d, s, 26, 40);
+                CbdBuilder.GardenEdge(d, s, 26, 40, s > 0 ? 14f : 50f);
                 for (float z = 28; z < 40; z += 5.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .9f);
             }
             d.StandardSlots();
@@ -237,7 +268,7 @@ namespace CityScooter.EditorTools.Districts
             var d = new CqChunkDraft("Quay_Bridge", Drop);
             float z0 = BridgeStart, z1 = z0 + BridgeRise, z2 = z1 + BridgeTop, z3 = z2 + BridgeDown;
             Promenade(d, z0, z3);
-            K.Water(d.Road, -60f, 260f, z0, z3, WaterLevel, Water, Ripple, 31);
+            K.Water(d.Road, -60f, RiverFar, z0, z3, WaterLevel, Water, Ripple, 31);
             // the promenade ends at quay walls either side of the inlet under the bridge; the river is on the right
             QuayWall(d.Road, -60f, K.Edge, z0, true);
             QuayWall(d.Road, -60f, K.Edge, z3, false);
@@ -265,7 +296,7 @@ namespace CityScooter.EditorTools.Districts
             var d = new CqChunkDraft("Quay_Inlet", Drop);
             float z0 = JettyStart, lip = z0 + JettyRise + JettyTop, far = lip + GapLength;
             Promenade(d, lip, far);
-            K.Water(d.Road, -22f, 260f, lip, far, WaterLevel, Water, Ripple, 41);
+            K.Water(d.Road, -22f, RiverFar, lip, far, WaterLevel, Water, Ripple, 41);
             QuayWall(d.Road, -60f, K.Edge, lip, true);
             QuayWall(d.Road, -60f, K.Edge, far, false);
             d.Road.Surface = ComicSurface.Concrete;
@@ -335,7 +366,7 @@ namespace CityScooter.EditorTools.Districts
         // The river on the right from the sidewalk edge, a white rail at the quay edge, the quay wall.
         static void River(CqChunkDraft d, float z0, float z1, bool rail = true)
         {
-            K.Water(d.Road, K.Edge, 260f, z0, z1, WaterLevel, Water, Ripple, Mathf.RoundToInt(z0 * 7 + z1));
+            K.Water(d.Road, K.Edge, RiverFar, z0, z1, WaterLevel, Water, Ripple, Mathf.RoundToInt(z0 * 7 + z1));
             ComicMesh m = d.Road;
             m.Surface = ComicSurface.Concrete;
             K.MinMaxBox(m, K.V(K.Edge - .02f, WaterLevel - 1f, z0), K.V(K.Edge + .25f, K.Kerb + .06f, z1), Limestone);
@@ -352,7 +383,7 @@ namespace CityScooter.EditorTools.Districts
             {
                 float e = Mathf.Min(z1, z + 4f);
                 K.MinMaxBox(m, K.V(s * x - .06f, y + 1.06f, z), K.V(s * x + .06f, y + 1.16f, e), RailGrey);
-                K.MinMaxBox(m, K.V(s * x - .01f, y + .15f, z), K.V(s * x + .01f, y + 1f, e), Color.Lerp(RailGrey, K.R.cream, .35f));
+                K.MinMaxBox(m, K.V(s * x - .03f, y + .15f, z), K.V(s * x + .03f, y + 1f, e), Color.Lerp(RailGrey, K.R.cream, .35f));
             }
         }
 
@@ -464,7 +495,8 @@ namespace CityScooter.EditorTools.Districts
                     float h2 = Hump(z + 2f, z0, z1, z2, z3);
                     m.Beam(K.V(x, h + 1.12f, z), K.V(x, h2 + 1.12f, z + 2f), .1f, RailGrey);
                     K.Face(m, K.V(x, h + .12f, z), K.V(x, h2 + .12f, z + 2f), K.V(x, h2 + 1.05f, z + 2f), K.V(x, h + 1.05f, z), Color.Lerp(RailGrey, K.R.cream, .45f), new Vector3(-s, 0, 0));
-                    K.Face(m, K.V(x + s * .01f, h + .12f, z), K.V(x + s * .01f, h2 + .12f, z + 2f), K.V(x + s * .01f, h2 + 1.05f, z + 2f), K.V(x + s * .01f, h + 1.05f, z), Color.Lerp(RailGrey, K.R.cream, .45f), new Vector3(s, 0, 0));
+                    K.Face(m, K.V(x + s * .06f, h + .12f, z), K.V(x + s * .06f, h2 + .12f, z + 2f), K.V(x + s * .06f, h2 + 1.05f, z + 2f), K.V(x + s * .06f, h + 1.05f, z), Color.Lerp(RailGrey, K.R.cream, .45f), new Vector3(s, 0, 0));
+                    K.Face(m, K.V(x, h + 1.05f, z), K.V(x, h2 + 1.05f, z + 2f), K.V(x + s * .06f, h2 + 1.05f, z + 2f), K.V(x + s * .06f, h + 1.05f, z), RailGrey, Vector3.up);
                 }
             }
             // two white arches in sequence, leaning out on opposite sides (the bridge's S), with hanger cables
@@ -573,52 +605,109 @@ namespace CityScooter.EditorTools.Districts
             K.SideBox(m, 1, z0, z1, WaterLevel - 1f, K.Kerb - .01f, x0 - K.Edge, x1 - K.Edge, Limestone);
             m.Surface = ComicSurface.Foliage;
             K.SideBox(m, 1, z0 + 2f, z1 - 2f, K.Kerb, K.Kerb + .08f, x0 - K.Edge + 1.5f, x1 - K.Edge - 1.5f, Lawn);
-            ComicMesh f = d.Frontage;
             float Y(float z) => d.Ground(z) + .08f;
-            // kiosk: white walls, red hipped tile roof with a little lantern
-            Vector3 k = K.V(24f, Y(26f), 26f);
-            f.Surface = ComicSurface.Plaster;
-            f.Box(k + K.V(0, 1.8f, 0), K.V(7f, 3.6f, 7f), BridgeWhite);
-            f.Surface = ComicSurface.Glass;
-            f.Box(k + K.V(-3.52f, 1.6f, 0), K.V(.05f, 2f, 5f), K.Hex("33505E"));
-            f.Box(k + K.V(0, 1.6f, -3.52f), K.V(5f, 2f, .05f), K.Hex("33505E"));
-            f.Surface = ComicSurface.PaintedMetal;
-            f.Cylinder(k + K.V(0, 5f, 0), 6.2f, 2.8f, RoofRed, 4, .25f, Quaternion.Euler(0, 45, 0));
-            f.Cylinder(k + K.V(0, 6.9f, 0), 1.3f, 1.2f, BridgeWhite, 4, 1f, Quaternion.Euler(0, 45, 0));
-            f.Cylinder(k + K.V(0, 7.9f, 0), 1.6f, .9f, RoofRed, 4, .1f, Quaternion.Euler(0, 45, 0));
-            // playground: yellow slide on a red tower, a blue climbing frame, a white shade sail
-            Vector3 pg = K.V(22f, Y(11f), 11f);
-            f.Box(pg + K.V(0, 1.2f, 0), K.V(1.6f, 2.4f, 1.6f), K.R.red);
-            f.Box(pg + K.V(0, 2.55f, 0), K.V(1.9f, .3f, 1.9f), K.R.yellow);
-            f.Beam(pg + K.V(0, 2.4f, -.9f), pg + K.V(0, .3f, -4.2f), .8f, K.R.yellow);
-            for (int i = 0; i < 4; i++) f.Beam(pg + K.V(3f + (i % 2) * 2f, 0, -1f + (i / 2) * 2f), pg + K.V(4f, 2.4f, 0), .14f, K.Hex("2E5E9E"));
-            f.Box(pg + K.V(4f, 2.45f, 0), K.V(.5f, .5f, .5f), K.Hex("2E5E9E"));
-            f.Surface = ComicSurface.Fabric;
-            K.TriFacing(f, pg + K.V(-2f, 4.2f, 3f), pg + K.V(6f, 3.6f, 2f), pg + K.V(2f, 4.6f, -4f), BridgeWhite, Vector3.up);
-            K.TriFacing(f, pg + K.V(-2f, 4.2f, 3f), pg + K.V(6f, 3.6f, 2f), pg + K.V(2f, 4.6f, -4f), BridgeWhite, Vector3.down);
-            foreach (Vector3 c in new[] { K.V(-2f, 0, 3f), K.V(6f, 0, 2f), K.V(2f, 0, -4f) }) f.Cylinder(pg + c + K.V(0, 2.2f, 0), .07f, 4.4f, K.R.ink, 6);
-            // trees on the island
-            for (float z = 7f; z < 34f; z += 9f) K.PlaneTree(d.Props, null, K.V(31f, Y(z), z), 1.1f);
+            IslandKiosk(d.Frontage, K.V(24f, Y(26f), 26f));
+            Playground(d.Frontage, K.V(22f, Y(11f), 11f));
+            for (float z = 7f; z < 34f; z += 9f) K.PlaneTree(d.Props, null, K.V(31f, Y(z), z), 1f);
         }
 
+        // The island kiosk: white walls on an ink plinth, framed windows, red hipped tile roof with ink eaves, lantern.
+        static void IslandKiosk(ComicMesh f, Vector3 k)
+        {
+            f.Surface = ComicSurface.PaintedMetal;
+            f.Box(k + K.V(0, .15f, 0), K.V(7.3f, .3f, 7.3f), K.R.ink);
+            f.Surface = ComicSurface.Plaster;
+            f.Box(k + K.V(0, 1.95f, 0), K.V(7f, 3.3f, 7f), BridgeWhite);
+            for (int x = -1; x <= 1; x += 2) for (int z = -1; z <= 1; z += 2) f.Box(k + K.V(x * 3.45f, 1.95f, z * 3.45f), K.V(.3f, 3.3f, .3f), K.R.cream);
+            foreach (Quaternion q in new[] { Quaternion.identity, Quaternion.Euler(0, 90, 0), Quaternion.Euler(0, 180, 0), Quaternion.Euler(0, 270, 0) })
+                for (int i = -1; i <= 1; i++)
+                {
+                    f.Surface = ComicSurface.PaintedMetal;
+                    f.Box(k + q * K.V(i * 2f, 1.9f, -3.5f), K.V(1.5f, 1.9f, .08f), K.R.ink, q);
+                    f.Surface = ComicSurface.Glass;
+                    f.Box(k + q * K.V(i * 2f, 1.9f, -3.53f), K.V(1.3f, 1.7f, .06f), K.Hex("33505E"), q);
+                }
+            f.Surface = ComicSurface.PaintedMetal;
+            f.Box(k + K.V(0, 3.68f, 0), K.V(8f, .16f, 8f), K.R.ink);
+            f.Cylinder(k + K.V(0, 5.1f, 0), 6.2f, 2.7f, RoofRed, 4, .25f, Quaternion.Euler(0, 45, 0));
+            f.Surface = ComicSurface.Plaster;
+            f.Cylinder(k + K.V(0, 6.95f, 0), 1.3f, 1.1f, BridgeWhite, 4, 1f, Quaternion.Euler(0, 45, 0));
+            f.Surface = ComicSurface.PaintedMetal;
+            f.Cylinder(k + K.V(0, 7.95f, 0), 1.65f, .9f, RoofRed, 4, .1f, Quaternion.Euler(0, 45, 0));
+            f.Cylinder(k + K.V(0, 8.55f, 0), .1f, .4f, K.R.ink, 8);
+        }
+
+        // Island playground: red tower with a blue roof, yellow slide with rails, blue climbing frame, a shade sail.
+        static void Playground(ComicMesh f, Vector3 pg)
+        {
+            Color blue = K.Hex("2E5E9E");
+            f.Surface = ComicSurface.Rubber;
+            f.Box(pg + K.V(1f, .04f, -.5f), K.V(9f, .08f, 8f), K.Hex("C9573C"));                      // soft-fall pad
+            f.Surface = ComicSurface.PaintedMetal;
+            for (int x = -1; x <= 1; x += 2) for (int z = -1; z <= 1; z += 2) f.Box(pg + K.V(x * .75f, 1.6f, z * .75f), K.V(.16f, 3.2f, .16f), K.R.red);
+            f.Box(pg + K.V(0, 1.5f, 0), K.V(1.8f, .14f, 1.8f), K.R.yellow);
+            for (int x = -1; x <= 1; x += 2) f.Box(pg + K.V(x * .75f, 2.05f, 0), K.V(.1f, .5f, 1.5f), K.R.red);
+            f.Box(pg + K.V(0, 3.25f, 0), K.V(2f, .12f, 2f), K.R.ink);
+            f.Cylinder(pg + K.V(0, 3.75f, 0), 1.35f, .9f, blue, 4, .08f, Quaternion.Euler(0, 45, 0));
+            f.Surface = ComicSurface.Plastic;
+            Vector3 a = pg + K.V(0, 1.55f, -.9f), b = pg + K.V(0, .3f, -4f);
+            f.Beam(a, b, .1f, K.R.yellow);
+            f.Box((a + b) * .5f, K.V(.9f, .1f, (b - a).magnitude), K.R.yellow, Quaternion.LookRotation(b - a));
+            for (int x = -1; x <= 1; x += 2) f.Beam(a + K.V(x * .45f, .15f, 0), b + K.V(x * .45f, .15f, 0), .1f, K.R.red);
+            f.Box(b + K.V(0, -.1f, -.5f), K.V(.9f, .1f, 1f), K.R.yellow);
+            f.Surface = ComicSurface.PaintedMetal;
+            for (int i = 0; i < 2; i++)
+            {
+                float x = 3.2f + i * 1.8f;
+                f.Beam(pg + K.V(x, 0, -1f), pg + K.V(x, 2.2f, 0), .14f, blue);
+                f.Beam(pg + K.V(x, 0, 1f), pg + K.V(x, 2.2f, 0), .14f, blue);
+            }
+            f.Box(pg + K.V(4.1f, 2.2f, 0), K.V(2f, .14f, .14f), blue);
+            for (int r = 1; r <= 3; r++) f.Box(pg + K.V(4.1f, r * .55f, -1f + r * .25f), K.V(1.95f, .1f, .1f), K.R.ink);
+            // shade sail: a thick triangular slab on three ink posts
+            Vector3 p0 = pg + K.V(-2.2f, 4.2f, 3f), p1 = pg + K.V(6.2f, 3.7f, 2f), p2 = pg + K.V(2.2f, 4.6f, -4.2f);
+            f.Surface = ComicSurface.Fabric;
+            Vector3 t = K.V(0, .07f, 0);
+            K.TriFacing(f, p0 + t, p1 + t, p2 + t, BridgeWhite, Vector3.up);
+            K.TriFacing(f, p0, p1, p2, Color.Lerp(BridgeWhite, K.R.ink, .2f), Vector3.down);
+            foreach ((Vector3 u, Vector3 v) in new[] { (p0, p1), (p1, p2), (p2, p0) })
+                K.Face(f, u, v, v + t, u + t, BridgeWhite, Vector3.Cross(v - u, Vector3.up).normalized * (Vector3.Dot(Vector3.Cross(v - u, Vector3.up), (u + v) * .5f - (p0 + p1 + p2) / 3f) > 0f ? 1f : -1f));
+            f.Surface = ComicSurface.PaintedMetal;
+            foreach (Vector3 c in new[] { p0, p1, p2 })
+            {
+                f.Cylinder(new Vector3(c.x, (pg.y + c.y) * .5f, c.z), .08f, c.y - pg.y, K.R.ink, 8);
+                f.Cylinder(new Vector3(c.x, pg.y + .08f, c.z), .2f, .16f, K.R.ink, 8);
+            }
+        }
+
+        // A river ferry (no brand): white hull with an ink rubbing strip and a green band, framed window band with ink
+        // pillars, wheelhouse, ink roof and deck rails.
         static void Ferry(ComicMesh m, Vector3 p, float yaw)
         {
             Quaternion q = Quaternion.Euler(0, yaw, 0);
-            void B(Vector3 c, Vector3 s, Color col) => m.Box(p + q * c, s, col, q);
-            m.Surface = ComicSurface.PaintedMetal;
-            B(K.V(0, .6f, 0), K.V(4.2f, 1.4f, 15f), BridgeWhite);
-            B(K.V(0, .2f, 0), K.V(4.25f, .5f, 15.05f), FerryGreen);
-            B(K.V(0, 1.95f, -.5f), K.V(3.6f, 1.5f, 10f), BridgeWhite);
-            m.Surface = ComicSurface.Glass;
-            B(K.V(0, 2.05f, -.5f), K.V(3.65f, .7f, 9.4f), K.Hex("26333D"));
-            m.Surface = ComicSurface.PaintedMetal;
-            B(K.V(0, 2.85f, -1.5f), K.V(3.2f, .3f, 6f), FerryGreen);
-            B(K.V(0, 3.2f, 2.5f), K.V(2f, .6f, 2f), BridgeWhite);
+            void B(Vector3 c, Vector3 size, Color col, ComicSurface surface) { m.Surface = surface; m.Box(p + q * c, size, col, q); }
+            B(K.V(0, .55f, 0), K.V(4.2f, 1.3f, 15f), BridgeWhite, ComicSurface.PaintedMetal);
+            B(K.V(0, .55f, 7.7f), K.V(3f, 1.1f, .6f), BridgeWhite, ComicSurface.PaintedMetal);              // bow
+            B(K.V(0, .1f, 0), K.V(4.26f, .3f, 15.06f), FerryGreen, ComicSurface.PaintedMetal);
+            B(K.V(0, 1.23f, 0), K.V(4.34f, .14f, 15.1f), K.R.ink, ComicSurface.Rubber);                      // rubbing strip
+            B(K.V(0, 2f, -.6f), K.V(3.6f, 1.4f, 10f), BridgeWhite, ComicSurface.PaintedMetal);
+            for (int sd = -1; sd <= 1; sd += 2)
+            {
+                B(K.V(sd * 1.81f, 2.05f, -.6f), K.V(.06f, .8f, 9.4f), K.R.ink, ComicSurface.PaintedMetal);
+                B(K.V(sd * 1.84f, 2.05f, -.6f), K.V(.04f, .66f, 9.2f), K.Hex("26333D"), ComicSurface.Glass);
+                for (float z = -5f; z <= 3.9f; z += 1.5f) B(K.V(sd * 1.86f, 2.05f, z), K.V(.05f, .7f, .12f), K.R.ink, ComicSurface.PaintedMetal);
+                for (float z = -7f; z <= 7f; z += 1f) B(K.V(sd * 2f, 1.6f, z), K.V(.07f, .6f, .07f), K.R.ink, ComicSurface.Metal);
+                B(K.V(sd * 2f, 1.92f, 0), K.V(.08f, .08f, 14.2f), K.R.ink, ComicSurface.Metal);
+            }
+            B(K.V(0, 2.78f, -.6f), K.V(3.8f, .16f, 10.3f), FerryGreen, ComicSurface.PaintedMetal);
+            B(K.V(0, 3.25f, 2.6f), K.V(2.2f, .8f, 2.2f), BridgeWhite, ComicSurface.PaintedMetal);              // wheelhouse
+            B(K.V(0, 3.3f, 3.72f), K.V(1.9f, .45f, .06f), K.Hex("26333D"), ComicSurface.Glass);
+            B(K.V(0, 3.7f, 2.6f), K.V(2.4f, .12f, 2.4f), K.R.ink, ComicSurface.PaintedMetal);
         }
 
         // ================================================================ far scenery, obstacles, animals
 
-        // The CBD skyline on the city side and the far shore across the river (follows the rider, no colliders).
+        // The CBD skyline on the city side (follows the rider, no colliders).
         static ComicMesh FarSkyline()
         {
             var m = new ComicMesh { Surface = ComicSurface.Glass };
@@ -632,49 +721,67 @@ namespace CityScooter.EditorTools.Districts
                 m.Box(new Vector3(x, h * .5f - 25f, z), new Vector3(w, h, w), c);
                 for (float y = -18f; y < h - 26f; y += 6f) m.Box(new Vector3(x, y, z), new Vector3(w + .1f, .5f, w + .1f), Color.Lerp(c, K.R.ink, .3f));
             }
-            // the far shore: a low green line with pale low-rise buildings
-            m.Surface = ComicSurface.Foliage;
-            for (float z = 0f; z < 300f; z += 30f)
-                m.Box(new Vector3(270f, -16f, z + 15f), new Vector3(30f, 22f, 30.2f), Color.Lerp(Lawn, new Color(.62f, .76f, .88f), .45f));
-            m.Surface = ComicSurface.Concrete;
-            for (int i = 0; i < 16; i++)
-            {
-                float z = i * 18f + (float)rng.NextDouble() * 8f, h = 4f + (float)rng.NextDouble() * 14f;
-                m.Box(new Vector3(262f + (float)rng.NextDouble() * 12f, -5f + h * .5f, z), new Vector3(8f, h, 10f), Color.Lerp(K.R.cream, new Color(.62f, .76f, .88f), .45f));
-            }
+            // (no far shore here: the panorama sky shows it; boxes over the water read as floating slabs)
             return m;
         }
 
+        // Like the kit's bollard: ink base, dark 8-sided post, cream reflective band, ink cap.
         static ComicMesh BollardMesh()
         {
             var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
-            m.Cylinder(new Vector3(0, .05f, 0), .26f, .1f, K.R.ink, 8);
-            m.Cylinder(new Vector3(0, .48f, 0), .18f, .86f, K.Hex("2A2D33"), 8);
-            m.Cylinder(new Vector3(0, .93f, 0), .2f, .1f, K.Hex("2A2D33"), 8, .6f);
-            m.Cylinder(new Vector3(0, .75f, 0), .185f, .08f, BridgeWhite, 8);
+            m.Cylinder(new Vector3(0, .08f, 0), .25f, .16f, K.R.ink, 8);
+            m.Cylinder(new Vector3(0, .52f, 0), .15f, .76f, K.Hex("3A3F46"), 8);
+            m.Cylinder(new Vector3(0, .78f, 0), .16f, .12f, K.R.cream, 8);
+            m.Cylinder(new Vector3(0, .95f, 0), .17f, .1f, K.R.ink, 8, .7f);
             return m;
         }
 
-        // A food truck (no brand): bright body, serving hatch with an awning, wheels. Front at +Z.
+        // A food truck (no brand): cab with a framed windscreen, box body, serving hatch with counter and a striped
+        // awning on ink struts, a plain menu board, ink bumpers and trims, wheels with hubs. Front at +Z.
         static ComicMesh FoodTruckMesh()
         {
             var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
-            Color body = K.Hex("F3B23A");
-            m.Box(new Vector3(0, 1.6f, -.4f), new Vector3(2f, 2.4f, 3.6f), body);
-            m.Box(new Vector3(0, 1.1f, 1.8f), new Vector3(1.95f, 1.5f, 1f), body);
-            m.Box(new Vector3(0, .45f, 0), new Vector3(2.04f, .3f, 4.5f), K.R.red);
+            Color body = K.Hex("F3B23A"), dark = K.Hex("26333D");
+            m.Box(new Vector3(0, 1.62f, -.45f), new Vector3(2f, 2.36f, 3.5f), body);
+            m.Box(new Vector3(0, 1.12f, 1.75f), new Vector3(1.96f, 1.36f, .9f), body);
+            m.Box(new Vector3(0, .6f, -.1f), new Vector3(2.04f, .28f, 4.5f), K.R.red);
+            m.Box(new Vector3(0, 2.84f, -.45f), new Vector3(2.06f, .1f, 3.56f), K.R.ink);
+            m.Box(new Vector3(0, 1.62f, 1.25f), new Vector3(2.04f, .1f, .1f), K.R.ink);
+            m.Box(new Vector3(0, 1.48f, 2.21f), new Vector3(1.8f, .62f, .06f), K.R.ink);
             m.Surface = ComicSurface.Glass;
-            m.Box(new Vector3(0, 1.55f, 2.31f), new Vector3(1.7f, .6f, .03f), K.Hex("26333D"));
-            m.Box(new Vector3(-1.01f, 1.9f, -.4f), new Vector3(.03f, 1f, 2.4f), K.Hex("26333D"));
-            m.Surface = ComicSurface.Fabric;
-            for (int i = 0; i < 6; i++) m.Box(new Vector3(-1.3f, 2.55f, -1.5f + i * .44f), new Vector3(.8f, .08f, .44f), i % 2 == 0 ? K.R.red : BridgeWhite, Quaternion.Euler(0, 0, -15));
+            m.Box(new Vector3(0, 1.48f, 2.25f), new Vector3(1.66f, .5f, .04f), dark);
+            for (int s = -1; s <= 1; s += 2) m.Box(new Vector3(s * 1f, 1.5f, 1.75f), new Vector3(.04f, .45f, .6f), dark);
+            // serving hatch on the kerb side (-X): ink frame, dark opening, cream counter, striped awning on struts
             m.Surface = ComicSurface.PaintedMetal;
-            m.Box(new Vector3(-1.08f, 1.32f, -.4f), new Vector3(.2f, .06f, 2.4f), BridgeWhite);           // counter
-            m.Box(new Vector3(0, 2.95f, -.4f), new Vector3(1.2f, .3f, 1.2f), K.R.cream);                  // roof vent
-            m.Surface = ComicSurface.Rubber;
+            m.Box(new Vector3(-1.02f, 1.85f, -.5f), new Vector3(.06f, 1.1f, 2.5f), K.R.ink);
+            m.Box(new Vector3(-1.04f, 1.85f, -.5f), new Vector3(.04f, .9f, 2.3f), K.Hex("1A2028"));
+            m.Surface = ComicSurface.Wood;
+            m.Box(new Vector3(-1.2f, 1.3f, -.5f), new Vector3(.36f, .08f, 2.4f), K.R.cream);
+            m.Surface = ComicSurface.Fabric;
+            for (int i = 0; i < 6; i++) m.Box(new Vector3(-1.38f, 2.55f, -1.75f + (i + .5f) * .42f), new Vector3(.8f, .08f, .42f), i % 2 == 0 ? K.R.red : BridgeWhite, Quaternion.Euler(0, 0, -16));
+            m.Surface = ComicSurface.PaintedMetal;
+            foreach (float z in new[] { -1.7f, .7f }) m.Beam(new Vector3(-1.02f, 2.15f, z), new Vector3(-1.72f, 2.42f, z), .06f, K.R.ink);
+            m.Box(new Vector3(1.03f, 1.9f, -.6f), new Vector3(.06f, .9f, 1.4f), K.R.ink);                    // menu board (plain)
+            m.Box(new Vector3(1.06f, 1.9f, -.6f), new Vector3(.04f, .78f, 1.28f), K.R.cream);
+            for (int i = 0; i < 3; i++) m.Box(new Vector3(1.09f, 2.1f - i * .22f, -.6f), new Vector3(.03f, .06f, .9f), K.R.ink);
+            m.Box(new Vector3(0, 3.05f, -.9f), new Vector3(.8f, .36f, .8f), K.R.cream);                      // roof vent
+            m.Box(new Vector3(0, 3.26f, -.9f), new Vector3(.9f, .08f, .9f), K.R.ink);
+            m.Box(new Vector3(0, .5f, 2.26f), new Vector3(2.04f, .26f, .14f), K.R.ink);
+            m.Box(new Vector3(0, .5f, -2.26f), new Vector3(2.04f, .26f, .14f), K.R.ink);
             for (int s = -1; s <= 1; s += 2)
-                foreach (float z in new[] { 1.5f, -1.6f })
-                    m.Cylinder(new Vector3(s * .95f, .38f, z), .38f, .26f, K.R.ink, 8, 1, Quaternion.Euler(0, 0, 90));
+            {
+                m.Box(new Vector3(s * .7f, .95f, 2.22f), new Vector3(.34f, .18f, .06f), K.R.cream);
+                m.Box(new Vector3(s * .8f, 1f, -2.22f), new Vector3(.24f, .3f, .06f), K.R.red);
+            }
+            m.Surface = ComicSurface.Rubber;
+            foreach (float z in new[] { 1.45f, -1.55f })
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    m.Surface = ComicSurface.Rubber;
+                    m.Cylinder(new Vector3(s * .95f, .38f, z), .38f, .28f, K.R.ink, 8, 1, Quaternion.Euler(0, 0, 90));
+                    m.Surface = ComicSurface.Metal;
+                    m.Cylinder(new Vector3(s * .98f, .38f, z), .17f, .28f, K.Hex("D1DBE5"), 8, 1, Quaternion.Euler(0, 0, 90));
+                }
             return m;
         }
 
@@ -685,21 +792,33 @@ namespace CityScooter.EditorTools.Districts
             return m;
         }
 
+        // Chunky silver gull: white body and head, thick grey wing slabs with ink tips, yellow beak, legs and feet.
+        static ComicMesh SeagullMesh()
+        {
+            var a = new ComicMesh { Surface = ComicSurface.Plastic };
+            Color white = BridgeWhite, grey = K.Hex("AEB4BA"), yellow = K.Hex("F3B23A");
+            a.Box(new Vector3(0, .34f, .02f), new Vector3(.3f, .26f, .52f), white);
+            a.Box(new Vector3(0, .3f, -.2f), new Vector3(.26f, .2f, .18f), white);                               // chest
+            a.Box(new Vector3(0, .52f, -.24f), new Vector3(.2f, .2f, .22f), white);                              // head
+            a.Box(new Vector3(0, .5f, -.4f), new Vector3(.07f, .07f, .14f), yellow);                              // beak
+            a.Box(new Vector3(0, .47f, -.45f), new Vector3(.06f, .05f, .05f), K.R.red);
+            foreach (int s in new[] { -1, 1 })
+            {
+                a.Box(new Vector3(s * .17f, .4f, .08f), new Vector3(.07f, .2f, .46f), grey, Quaternion.Euler(0, 0, s * -10f));   // folded wing
+                a.Box(new Vector3(s * .17f, .42f, .34f), new Vector3(.08f, .12f, .16f), K.R.ink, Quaternion.Euler(0, 0, s * -10f));
+                a.Box(new Vector3(s * .105f, .56f, -.3f), new Vector3(.03f, .05f, .05f), K.R.ink);                // eye
+                a.Box(new Vector3(s * .06f, .12f, 0), new Vector3(.06f, .22f, .06f), yellow);                    // leg
+                a.Box(new Vector3(s * .06f, .03f, -.04f), new Vector3(.1f, .06f, .14f), yellow);                 // foot
+            }
+            a.Box(new Vector3(0, .38f, .33f), new Vector3(.2f, .08f, .16f), white);                              // tail
+            a.Box(new Vector3(0, .38f, .43f), new Vector3(.18f, .08f, .06f), K.R.ink);
+            return a;
+        }
+
         // A silver gull (animal: kind Person, not punchable; jumpable, it is small). Facing -Z, feet at the pivot.
         static GameObject SaveSeagull(string path, float walk)
         {
-            var art = new ComicMesh { Surface = ComicSurface.Plain };
-            Color white = BridgeWhite, grey = K.Hex("AEB4BA"), beak = K.Hex("E8402E");
-            art.Box(new Vector3(0, .32f, 0), new Vector3(.26f, .24f, .5f), white);
-            art.Box(new Vector3(0, .38f, .14f), new Vector3(.3f, .1f, .36f), grey);                 // folded wings
-            art.Box(new Vector3(0, .36f, .3f), new Vector3(.16f, .08f, .2f), K.R.ink);               // tail tip
-            art.Box(new Vector3(0, .5f, -.2f), new Vector3(.17f, .17f, .18f), white);                // head
-            art.Box(new Vector3(0, .48f, -.33f), new Vector3(.05f, .05f, .12f), beak);
-            foreach (int s in new[] { -1, 1 })
-            {
-                art.Box(new Vector3(s * .05f, .1f, 0), new Vector3(.03f, .2f, .03f), beak);
-                art.Box(new Vector3(s * .06f, .53f, -.25f), new Vector3(.02f, .03f, .03f), K.R.ink);
-            }
+            var art = SeagullMesh();
             GameObject root = PrefabBuildUtility.OpenPrefab(path);
             var sync = new ChildSync(root.transform);
             GameObject go = sync.Plain("Art");
