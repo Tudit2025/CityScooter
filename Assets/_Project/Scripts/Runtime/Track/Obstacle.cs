@@ -33,6 +33,9 @@ namespace CityScooter.Track
         public bool punchable;
         [Tooltip("WA police (officers, police cars): punching one, or knocking an officer flying in cartoon mode, raises the wanted level (PoliceChase).")]
         public bool police;
+        [Tooltip("Peacocks, swans, magpies (kind Person): warned about and crashed into like people, but a punch only " +
+                 "shoos them and cartoon mode never throws them.")]
+        public bool animal;
         [Tooltip("Relative chance of being picked for a matching spawn slot.")]
         public float spawnWeight = 1f;
     }

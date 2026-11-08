@@ -188,7 +188,7 @@ namespace CityScooter.Gameplay
                 Obstacle obstacle = c.GetComponentInParent<Obstacle>();
                 if (obstacle == null) continue;
                 if (Airborne && obstacle.canJumpOver) continue;
-                if (obstacle.kind == ObstacleKind.Person && RiderActions.CanBounce)
+                if (obstacle.kind == ObstacleKind.Person && !obstacle.animal && RiderActions.CanBounce)
                 {
                     BouncedPerson?.Invoke(obstacle);
                     continue;

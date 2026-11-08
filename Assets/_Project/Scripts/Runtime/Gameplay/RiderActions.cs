@@ -281,9 +281,9 @@ namespace CityScooter.Gameplay
                 PoliceChase.Instance?.ReportAttack(target);
                 return false;
             }
-            if (target.kind == ObstacleKind.Person && !CartoonMode)
+            if (target.kind == ObstacleKind.Person && (!CartoonMode || target.animal))
             {
-                // Not in cartoon mode: the glove only makes people jump out of the way.
+                // Not in cartoon mode (and never for animals): the glove only makes them jump out of the way.
                 Pedestrian ped = target.GetComponent<Pedestrian>();
                 if (ped != null) ped.Startle(p.x);
                 if (_arm != null) _arm.Recoil();

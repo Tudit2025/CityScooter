@@ -87,7 +87,14 @@ namespace CityScooter.Gameplay
         public GameObject dustPopup;
         public GameObject screechPopup;
 
+        [Header("Districts along the UWA -> Perth CBD route (v0.3, optional)")]
+        [Tooltip("In route order (District.order). Empty: the whole ride uses this theme's own chunks as before.")]
+        public District[] districts;
+        [Tooltip("Generic ramps (root has Ramp) for districts without their own (District.ramps).")]
+        public Ramp[] ramps;
+
         public bool HasChunks => chunks != null && chunks.Length > 0;
+        public bool HasDistricts => districts != null && districts.Length > 0 && System.Array.TrueForAll(districts, d => d != null && d.HasChunks);
         public bool HasBoulevard => boulevardIn != null && boulevardOut != null && boulevardChunks != null
                                     && boulevardChunks.Length > 0 && System.Array.TrueForAll(boulevardChunks, c => c != null);
     }
