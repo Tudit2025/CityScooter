@@ -40,6 +40,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("mb_on_start", { x: 10, y: 10, inputs: { DO: chain(
     B("mb_show", { inputs: { VALUE: val(B("mb_version")) } }),
     B("variables_set", { fields: { VAR: { id: "v1" } }, inputs: { VALUE: n(0) } }),
+    B("math_change", { fields: { VAR: { id: "v1" } }, inputs: { DELTA: n(1) } }),
     B("mb_play", { fields: { TUNE: "POWER_UP" } })) } }),
   B("mb_forever", { x: 10, y: 200, inputs: { DO: chain(
     B("cs_steer", { inputs: { VALUE: val(B("math_constrain", { inputs: {
@@ -178,7 +179,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     'broadcasts.append("party")', 'if got == "party":', 'import radio', 'radio.config(group=1)', "radio.send(str('gift!'))", 'got_radio = radio.receive()', 'del broadcasts[:]',
     'held_since_b = -1', 'if held_b >= 1000 and held_done_b < 1000:', 'elif held_since_b >= 0:',
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
-    'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:']) {
+    'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:',
+    "count = (count if type(count) in (int, float) else 0) + 1"]) {
     check("all blocks make: " + want, allPy.includes(want));
   }
   const disabledOrphans = await ev(() => window.Blockly.getMainWorkspace().getAllBlocks(false).filter((b) => !b.isEnabled()).length);
