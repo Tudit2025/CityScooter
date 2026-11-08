@@ -83,79 +83,109 @@ namespace CityScooter.EditorTools.Districts
         // ------------------------------------------------------------------ road
 
         /// <summary>
-        /// The standard street cross-section, built flat (the chunk shears it to its slope). Holes (RoadGaps) leave the
-        /// surface out; their walls are art of the chunk. walk(side, z) gives the sidewalk colour, joints(side, z) whether it
-        /// is paving (joints) or a smooth path.
+        /// The street cross-section, built flat (the chunk shears it to its slope): road of half width c.HalfAt(z) (4 = the
+        /// standard street, 8 = a 4-lane divided road, changing smoothly inside entry / exit chunks), 4 m sidewalks at
+        /// 0.2 m, cream kerb cap. The 2-lane road gets the street's dashed double yellow; the wide road a painted median
+        /// (double yellow and white hatching, flush: the rider can cross it) and dashed white lane lines at x = +-4.
+        /// Holes (RoadGaps, only in constant-width chunks) leave the surface out; their walls are art of the chunk.
+        /// walk(side, z) gives the sidewalk colour, joints(side, z) whether it is paving (joints) or a smooth path.
         /// </summary>
         public static void Road(ChunkCtx c, Func<int, float, Color> walk, Func<int, float, bool> joints, Color? centreLine = null)
         {
             ComicMesh m = c.RoadFlat;
-            float L = c.L, h = Kerb;
-            Color joint = Color.Lerp(R.ink, R.pavement, .5f), yellow = centreLine ?? R.yellow;
+            float L = c.L, h = Kerb, sw = Walk;
+            Color joint = Color.Lerp(R.ink, R.pavement, .5f), yellow = centreLine ?? R.yellow, white = new Color(.95f, .95f, .93f);
+            bool holes = c.Gaps.Count > 0;
+            if (holes && c.ChangesWidth) throw new InvalidOperationException(c.Name + ": road gaps only in constant-width chunks.");
             const float step = 2f;
             for (float z0 = 0f; z0 < L - .001f; z0 += step)
             {
-                float z1 = z0 + step, zc = (z0 + z1) * .5f;
+                float z1 = z0 + step, zc = (z0 + z1) * .5f, w0 = c.HalfAt(z0), w1 = c.HalfAt(z1);
                 m.Surface = ComicSurface.Asphalt;
-                foreach (Vector2 s in c.Free(-Half, Half, z0, z1)) Face(m, V(s.x, 0, z0), V(s.x, 0, z1), V(s.y, 0, z1), V(s.y, 0, z0), R.asphalt, Vector3.up);
+                if (!holes) Face(m, V(-w0, 0, z0), V(-w1, 0, z1), V(w1, 0, z1), V(w0, 0, z0), R.asphalt, Vector3.up);
+                else foreach (Vector2 s in c.Free(-w0, w0, z0, z1)) Face(m, V(s.x, 0, z0), V(s.x, 0, z1), V(s.y, 0, z1), V(s.y, 0, z0), R.asphalt, Vector3.up);
                 for (int side = -1; side <= 1; side += 2)
                 {
                     Color pave = walk(side, zc);
                     bool paving = joints(side, zc);
-                    float lo = side < 0 ? -Edge : Half, hi = side < 0 ? -Half : Edge;
                     m.Surface = paving ? ComicSurface.Paving : ComicSurface.Asphalt;
-                    foreach (Vector2 s in c.Free(lo, hi, z0, z1)) Face(m, V(s.x, h, z0), V(s.x, h, z1), V(s.y, h, z1), V(s.y, h, z0), pave, Vector3.up);
+                    if (!holes) Face(m, V(side * w0, h, z0), V(side * w1, h, z1), V(side * (w1 + sw), h, z1), V(side * (w0 + sw), h, z0), pave, Vector3.up);
+                    else
+                    {
+                        float lo = side < 0 ? -(w0 + sw) : w0, hi = side < 0 ? -w0 : w0 + sw;
+                        foreach (Vector2 s in c.Free(lo, hi, z0, z1)) Face(m, V(s.x, h, z0), V(s.x, h, z1), V(s.y, h, z1), V(s.y, h, z0), pave, Vector3.up);
+                    }
                     Vector3 inward = V(-side, 0, 0), outward = V(side, 0, 0);
-                    float i0 = side * Half, o0 = side * Edge;
-                    if (!c.InHole(side * (Half + .1f), z0, z1))
+                    float i0 = side * w0, i1 = side * w1, o0 = side * (w0 + sw), o1 = side * (w1 + sw);
+                    if (!c.InHole(side * (w0 + .1f), z0, z1))
                     {
                         m.Surface = paving ? ComicSurface.Paving : ComicSurface.Asphalt;
-                        Face(m, V(i0, -.05f, z0), V(i0, -.05f, z1), V(i0, h, z1), V(i0, h, z0), pave, inward);
+                        Face(m, V(i0, -.05f, z0), V(i1, -.05f, z1), V(i1, h, z1), V(i0, h, z0), pave, inward);
                         m.Surface = ComicSurface.Plain;
-                        float cap = side * (Half + .24f), top = h + .04f;
-                        Face(m, V(i0, top, z0), V(i0, top, z1), V(cap, top, z1), V(cap, top, z0), R.cream, Vector3.up);
-                        Face(m, V(i0, h, z0), V(i0, h, z1), V(i0, top, z1), V(i0, top, z0), R.cream, inward);
-                        Face(m, V(cap, h, z0), V(cap, h, z1), V(cap, top, z1), V(cap, top, z0), R.cream, outward);
+                        float c0 = side * (w0 + .24f), c1 = side * (w1 + .24f), top = h + .04f;
+                        Face(m, V(i0, top, z0), V(i1, top, z1), V(c1, top, z1), V(c0, top, z0), R.cream, Vector3.up);
+                        Face(m, V(i0, h, z0), V(i1, h, z1), V(i1, top, z1), V(i0, top, z0), R.cream, inward);
+                        Face(m, V(c0, h, z0), V(c1, h, z1), V(c1, top, z1), V(c0, top, z0), R.cream, outward);
                     }
-                    if (!c.InHole(side * (Half - .15f), z0, z1))
-                        Flat(m, side * (Half - .19f), side * (Half - .11f), z0, z1, .0305f, R.cream);
+                    if (!c.InHole(side * (w0 - .15f), z0, z1))
+                        Strip(m, side * (w0 - .19f), side * (w0 - .11f), side * (w1 - .19f), side * (w1 - .11f), z0, z1, .0305f, R.cream);
                     if (!c.InHole(o0 - side * .1f, z0, z1))
                     {
                         m.Surface = ComicSurface.Concrete;
-                        Face(m, V(o0, -.6f, z0), V(o0, -.6f, z1), V(o0, h, z1), V(o0, h, z0), pave, outward);
+                        Face(m, V(o0, -.6f, z0), V(o1, -.6f, z1), V(o1, h, z1), V(o0, h, z0), pave, outward);
                     }
                     m.Surface = ComicSurface.Plain;
                     if (paving)
                     {
                         for (int k = 1; k < 4; k++)
-                        {
-                            float x = side * (Half + k);
-                            if (!c.InHole(x, z0, z1)) Flat(m, x - .0125f, x + .0125f, z0, z1, h + .025f, joint);
-                        }
-                        if (!c.InHole(side * (Half + 2f), z0 - .02f, z0 + .02f))
-                            Flat(m, side * (Half + .24f), side * Edge, z0 - .0125f, z0 + .0125f, h + .025f, joint);
+                            if (!c.InHole(side * (w0 + k), z0, z1))
+                                Strip(m, side * (w0 + k) - .0125f, side * (w0 + k) + .0125f, side * (w1 + k) - .0125f, side * (w1 + k) + .0125f, z0, z1, h + .025f, joint);
+                        if (!c.InHole(side * (w0 + 2f), z0 - .02f, z0 + .02f))
+                            Flat(m, side * (w0 + .24f), side * (w0 + sw), z0 - .0125f, z0 + .0125f, h + .025f, joint);
                     }
-                    else if (side < 0 && walk(side, zc) != R.pavement && Mathf.FloorToInt(z0 / 2f) % 2 == 0 && !c.InHole(-6f, z0, z1))
-                        Flat(m, -6.05f, -5.95f, z0 + .3f, z1 - .3f, h + .025f, new Color(.97f, .95f, .9f)); // shared-path centre dashes
+                    else if (side < 0 && walk(side, zc) != R.pavement && Mathf.FloorToInt(z0 / 2f) % 2 == 0 && !c.InHole(-(w0 + 2f), z0, z1))
+                        Strip(m, -(w0 + 2.05f), -(w0 + 1.95f), -(w1 + 2.05f), -(w1 + 1.95f), z0 + .3f, z1 - .3f, h + .025f, white); // shared-path centre dashes
                 }
             }
-            // The street's dashed double yellow centre line, 3 m dashes every 5 m.
+            // Centre: the street's dashed double yellow (3 m dashes every 5 m) where the road is 2 lanes; where it is wider,
+            // a solid double yellow that opens into a painted median with white hatching.
+            float Offset(float z) => Mathf.Lerp(.12f, .55f, Mathf.InverseLerp(4f, 8f, c.HalfAt(z)));
             for (float z = 0f; z < L - .001f; z += 5f)
-                if (!c.InHole(0f, z, z + 3f))
+                if (c.HalfAt(z) <= 4.05f && c.HalfAt(z + 3f) <= 4.05f && !c.InHole(0f, z, z + 3f))
                     for (int s = -1; s <= 1; s += 2)
                         for (float a = z; a < z + 3f - .001f; a += 1.5f) Flat(m, s * .12f - .05f, s * .12f + .05f, a, a + 1.5f, .035f, yellow);
+            for (float z = 0f; z < L - .001f; z += 1f)
+            {
+                if (c.HalfAt(z) <= 4.05f && c.HalfAt(z + 1f) <= 4.05f || c.InHole(0f, z, z + 1f)) continue;
+                float a = Offset(z), b = Offset(z + 1f);
+                for (int s = -1; s <= 1; s += 2) Strip(m, s * a - .05f, s * a + .05f, s * b - .05f, s * b + .05f, z, z + 1f, .035f, yellow);
+                if (a >= .5f && b >= .5f && Mathf.RoundToInt(z) % 2 == 0)
+                    Face(m, V(-.42f, .034f, z), V(-.42f, .034f, z + .3f), V(.42f, .034f, z + 1f), V(.42f, .034f, z + .7f), white, Vector3.up, false);
+            }
+            // Lane lines: 3 m white dashes every 8 m at x = +-4 wherever both lanes on that side are wide enough.
+            for (float z = 0f; z < L - .001f; z += 8f)
+                if (Mathf.Min(c.HalfAt(z), c.HalfAt(z + 3f)) >= 6.9f && !c.InHole(4f, z, z + 3f))
+                    for (int s = -1; s <= 1; s += 2)
+                        for (float a = z; a < z + 3f - .001f; a += 1.5f) Flat(m, s * Half - .06f, s * Half + .06f, a, a + 1.5f, .035f, white);
             // Closed slab ends (hidden by the neighbouring chunk).
             foreach (float ze in new[] { 0f, L })
             {
                 Vector3 normal = ze <= 0f ? Vector3.back : Vector3.forward;
-                float za = ze <= 0f ? 0f : L - .5f, zb = ze <= 0f ? .5f : L;
+                float za = ze <= 0f ? 0f : L - .5f, zb = ze <= 0f ? .5f : L, w = c.HalfAt(ze);
                 if (c.InHole(0f, za, zb)) continue;
                 m.Surface = ComicSurface.Asphalt;
-                Face(m, V(-Half, -.8f, ze), V(Half, -.8f, ze), V(Half, 0, ze), V(-Half, 0, ze), R.asphalt, normal);
+                Face(m, V(-w, -.8f, ze), V(w, -.8f, ze), V(w, 0, ze), V(-w, 0, ze), R.asphalt, normal);
                 m.Surface = ComicSurface.Paving;
                 for (int s = -1; s <= 1; s += 2)
-                    Face(m, V(s * Half, -.6f, ze), V(s * Edge, -.6f, ze), V(s * Edge, h, ze), V(s * Half, h, ze), R.pavement, normal);
+                    Face(m, V(s * w, -.6f, ze), V(s * (w + sw), -.6f, ze), V(s * (w + sw), h, ze), V(s * w, h, ze), R.pavement, normal);
             }
+        }
+
+        /// <summary>A flat quad at height y whose left / right edges move between z0 and z1 (paint on a widening road).</summary>
+        public static void Strip(ComicMesh m, float l0, float r0, float l1, float r1, float z0, float z1, float y, Color color)
+        {
+            m.Surface = ComicSurface.Plain;
+            Face(m, V(l0, y, z0), V(l1, y, z1), V(r1, y, z1), V(r0, y, z0), color, Vector3.up, false);
         }
 
         /// <summary>Flat ground from |x| = xa to xb on one side at height y, in 4 m spans (the GPU curl bends them).</summary>
@@ -595,6 +625,18 @@ namespace CityScooter.EditorTools.Districts
         public readonly List<GapSpec> Gaps = new List<GapSpec>();
         public readonly System.Random Rnd;
         public int Seed;
+        /// <summary>Road half width at the start / end and where it changes (like RoadChunk.endHalfWidth / widthChangeZ).</summary>
+        public float HalfStart = ParkRiverKit.Half, HalfEnd = ParkRiverKit.Half;
+        public Vector2 WidthZ = new Vector2(8f, 32f);
+        public bool ChangesWidth => Mathf.Abs(HalfEnd - HalfStart) > .001f;
+        public float HalfAt(float z)
+        {
+            if (!ChangesWidth) return HalfStart;
+            float t = Mathf.InverseLerp(WidthZ.x, WidthZ.y, z);
+            return Mathf.Lerp(HalfStart, HalfEnd, t * t * (3f - 2f * t));
+        }
+        /// <summary>Outer edge of the sidewalk (the rideable edge) at z.</summary>
+        public float EdgeAt(float z) => HalfAt(z) + ParkRiverKit.Walk;
 
         public ChunkCtx(string district, string id, string prefabFolder, string meshFolder, float endHeight, float length = 40f)
         {
@@ -617,7 +659,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         bool Overlaps(GapSpec g, float z0, float z1) => g.Z < z1 - .001f && g.Z + g.Length > z0 + .001f;
-        float GapHalf(GapSpec g) => g.Width > 0f ? g.Width * .5f : ParkRiverKit.Edge + .5f;
+        float GapHalf(GapSpec g) => g.Width > 0f ? g.Width * .5f : 50f;
 
         public bool InHole(float x, float z0, float z1) => Gaps.Any(g => Overlaps(g, z0, z1) && Mathf.Abs(x - g.X) < GapHalf(g));
 
@@ -641,6 +683,14 @@ namespace CityScooter.EditorTools.Districts
             return list.Where(s => s.y - s.x > .01f).ToList();
         }
 
+        /// <summary>Adds everything another context built (one side's dressing), moved by offset.</summary>
+        public void Absorb(ChunkCtx s, Vector3 offset)
+        {
+            void A(ComicMesh to, ComicMesh from) => to.Add(from, offset, Quaternion.identity, Vector3.one);
+            A(RoadFlat, s.RoadFlat); A(FrontFlat, s.FrontFlat); A(Front, s.Front); A(PropsFlat, s.PropsFlat); A(Props, s.Props);
+            A(DeepFlat, s.DeepFlat); A(Deep, s.Deep);
+        }
+
         static ComicMesh Merge(ComicMesh up, ComicMesh flat, float grade)
         {
             flat.Shear(grade);
@@ -657,7 +707,7 @@ namespace CityScooter.EditorTools.Districts
             var sync = new ChildSync(root.transform);
             var chunk = PrefabBuildUtility.GetOrAdd<RoadChunk>(root);
             chunk.length = L; chunk.endHeight = -Grade * L; chunk.roadType = RoadType.Street; chunk.weight = 1f; chunk.minDifficulty = 0;
-            chunk.halfWidth = ParkRiverKit.Half; chunk.endHalfWidth = 0f; chunk.widthChangeZ = new Vector2(8f, 32f);
+            chunk.halfWidth = HalfStart; chunk.endHalfWidth = ChangesWidth ? HalfEnd : 0f; chunk.widthChangeZ = WidthZ;
             chunk.sidewalkWidth = ParkRiverKit.Walk; chunk.sidewalkHeight = ParkRiverKit.Kerb; chunk.curbTransitionWidth = .3f;
 
             ComicMesh road = new ComicMesh(); RoadFlat.ClearCreaseInk(); road.Add(Merge(new ComicMesh(), RoadFlat, Grade), Vector3.zero, Quaternion.identity, Vector3.one);

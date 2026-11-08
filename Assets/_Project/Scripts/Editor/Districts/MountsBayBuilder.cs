@@ -31,6 +31,10 @@ namespace CityScooter.EditorTools.Districts
         public const float WaterY = -1.1f;
         // Inlet: a full-width river-wall ramp, then open water across the whole road.
         public const float InletRampZ = 12f, InletRise = 6f, InletHeight = 1.4f, InletGap = 5f;
+        /// <summary>Mounts Bay Rd is a 4-lane divided road: half width 8 (two lanes each way), sidewalks 4 m.</summary>
+        public const float WideHalf = 8f, Shift = 4f, WideEdge = 12f;
+        /// <summary>Jacob's Ladder: centre z of the staircase in its chunk and its width.</summary>
+        public const float LadderZ = 20f, LadderWidth = 2.6f;
 
         static readonly Color RedPath = new Color(.7f, .3f, .24f), Brick = new Color(.72f, .33f, .22f), BrickDark = new Color(.55f, .24f, .17f),
             Concrete = new Color(.8f, .78f, .73f), ConcreteDark = new Color(.55f, .54f, .52f), Truss = new Color(.33f, .3f, .32f);
@@ -55,7 +59,8 @@ namespace CityScooter.EditorTools.Districts
             SaveDistrict(AssetPath, d =>
             {
                 d.id = Id; d.displayName = "MOUNTS BAY RD"; d.order = 70; d.length = new Vector2(440f, 600f);
-                d.chunks = chunks.ToArray(); d.orderedChunks = true; d.entry = entry; d.exit = exit; d.allowBoulevard = false;
+                d.chunks = chunks.ToArray(); d.orderedChunks = true; d.entry = entry; d.exit = exit;
+                d.allowBoulevard = false; // the whole district is already a 4-lane road
                 var obstacles = new List<Obstacle> { bin.GetComponent<Obstacle>(), pelican.GetComponent<Obstacle>() };
                 foreach (string id in new[] { "Cones", "Crates" }) { Obstacle o = BaseObstacle(id); if (o != null) obstacles.Add(o); }
                 d.obstacles = obstacles.ToArray();
@@ -149,7 +154,7 @@ namespace CityScooter.EditorTools.Districts
         // ------------------------------------------------------------------ the escarpment side (right)
 
         /// <summary>White retaining wall at the footpath, a bush ledge, then the stepped limestone cliff (Kings Park above).</summary>
-        static void CliffSide(ChunkCtx c, float z0 = 0f, float z1 = 40f, float wall = 3f, float cliff = 24f, float cliffX = 12f)
+        static void CliffSide(ChunkCtx c, float z0 = 0f, float z1 = 40f, float wall = 3f, float cliff = 24f, float cliffX = 12f, float skip0 = 1e4f, float skip1 = -1e4f)
         {
             ComicMesh f = c.FrontFlat;
             Wall(f, Edge + .35f, .6f, wall, z0, z1, WhiteWall, new Color(.86f, .85f, .8f), -.6f, 8f);
@@ -161,10 +166,11 @@ namespace CityScooter.EditorTools.Districts
                 if (c.Rnd.NextDouble() < .5) Balga(c.Props, c.P(F(c.Rnd, 9.6f, cliffX - .6f), wall, z + F(c.Rnd, 0f, 4f)), F(c.Rnd, .8f, 1.1f), c.NextSeed());
                 else Shrub(c.Props, c.P(F(c.Rnd, 9.6f, cliffX - .6f), wall, z + F(c.Rnd, 0f, 4f)), F(c.Rnd, .8f, 1.2f), Color.Lerp(BanksiaLeaf, BushFloor, .3f));
             }
-            Cliff(c, z0, z1, cliffX, cliff);
+            Cliff(c, z0, z1, cliffX, cliff, skip0, skip1);
         }
 
-        static void Cliff(ChunkCtx c, float z0, float z1, float x0, float height)
+        /// <summary>Stepped limestone cliff from x0 up to height, bush on the ledges, Kings Park trees on top (none between skip0 and skip1).</summary>
+        static void Cliff(ChunkCtx c, float z0, float z1, float x0, float height, float skip0 = 1e4f, float skip1 = -1e4f)
         {
             ComicMesh f = c.FrontFlat;
             Color[] layers = { Limestone, new Color(.84f, .76f, .58f), LimestoneDark, new Color(.9f, .85f, .7f) };
@@ -188,59 +194,115 @@ namespace CityScooter.EditorTools.Districts
             // Kings Park bush along the top of the cliff.
             for (float z = z0 + 3f; z < z1; z += 8f)
             {
+                if (z + 8f > skip0 && z - 2f < skip1) continue;
                 Gum(c.Deep, c.P(F(c.Rnd, x0 + 16f, x0 + 28f), height + .5f, z), F(c.Rnd, 13f, 17f), c.NextSeed(), true);
                 c.Deep.Surface = ComicSurface.Foliage;
                 c.Deep.Ellipsoid(c.P(x0 + 14f, height + 1.5f, z + 4f), V(8f, 4f, 7f), Color.Lerp(GumLeaf, BanksiaLeaf, F(c.Rnd, 0f, 1f)));
             }
         }
 
-        // ------------------------------------------------------------------ chunks
+        // ------------------------------------------------------------------ chunks (a 4-lane divided road)
+
+        /// <summary>A 4-lane chunk: road half width 8 at both ends (two lanes each way, painted median).</summary>
+        static ChunkCtx Wide(string id, float endHeight)
+        {
+            ChunkCtx c = New(id, endHeight);
+            c.HalfStart = c.HalfEnd = WideHalf;
+            return c;
+        }
+
+        /// <summary>Builds one side's dressing as for the 2-lane street, then moves it out by 4 m to the wide road's kerb line.</summary>
+        static void Side(ChunkCtx c, int side, Action<ChunkCtx> build)
+        {
+            var s = new ChunkCtx(Name, c.Id + (side < 0 ? "L" : "R"), PrefabFolder, MeshFolder, -c.Grade * c.L, c.L);
+            build(s);
+            c.Absorb(s, V(side * Shift, 0f, 0f));
+        }
+
+        /// <summary>Four lane centres like the boulevard (x = -6, -2, 2, 6), rows at z 10 and 25.</summary>
+        static void WideSlots(ChunkCtx c)
+        {
+            foreach (float z in new[] { 10f, 25f }) foreach (float x in new[] { -6f, -2f, 2f, 6f }) c.Slots.Add(new Vector2(x, z));
+        }
+
+        static void Row(ChunkCtx c, float z, params float[] xs) { foreach (float x in xs) c.Slots.Add(new Vector2(x, z)); }
+
+        /// <summary>
+        /// Entry / exit: the wedge between the angled sidewalk edge and the wide road's line (x = 12) is lawn behind a low
+        /// limestone kerb wall that follows the edge, with clipped hedges (calm where the road is the 2-lane street).
+        /// </summary>
+        static void Wedge(ChunkCtx c)
+        {
+            for (int side = -1; side <= 1; side += 2)
+            {
+                for (float z = 0f; z < c.L - .001f; z += 2f)
+                {
+                    float e0 = c.EdgeAt(z), e1 = c.EdgeAt(z + 2f), outer = WideEdge + .3f;
+                    if (outer - Mathf.Min(e0, e1) > .05f)
+                        Face(c.RoadFlat, V(side * e0, .14f, z), V(side * e1, .14f, z + 2f), V(side * outer, .14f, z + 2f), V(side * outer, .14f, z), Lawn, Vector3.up, false);
+                    if (Mathf.Min(e0, e1) < WideEdge - .1f)
+                    {
+                        Vector3 a = V(side * (e0 + .3f), 0f, z), b = V(side * (e1 + .3f), 0f, z + 2f), d = b - a;
+                        c.FrontFlat.Surface = ComicSurface.Concrete;
+                        c.FrontFlat.Box((a + b) * .5f + V(0f, .1f, 0f), V(.5f, .9f, d.magnitude + .06f), Limestone, Quaternion.LookRotation(d));
+                    }
+                }
+                for (float z = 1f; z < c.L; z += 2.6f)
+                {
+                    float e = c.EdgeAt(z);
+                    if (WideEdge - e > 2.4f) Shrub(c.Props, c.P(side * (e + 1.5f), .14f, z), 1.15f, Color.Lerp(LeafGreen, Lawn, .3f));
+                }
+            }
+        }
 
         static RoadChunk Escarpment()
         {
-            ChunkCtx c = New("Escarpment", River);
+            ChunkCtx c = Wide("Escarpment", River);
             RiverRoad(c);
-            RiverSide(c);
-            CliffSide(c);
-            c.StandardSlots();
+            Side(c, -1, s => RiverSide(s));
+            Side(c, 1, s => CliffSide(s));
+            WideSlots(c);
             return c.Save();
         }
 
         /// <summary>Near the city end: palms along both sides, apartment towers against the escarpment.</summary>
         static RoadChunk Towers()
         {
-            ChunkCtx c = New("Towers", River);
+            ChunkCtx c = Wide("Towers", River);
             RiverRoad(c);
-            RiverSide(c, 0f, 40f, false, true);
-            Ground(c.RoadFlat, 1, Edge, 33f, .14f, Lawn, 0f, 40f);
-            Wall(c.FrontFlat, Edge + .3f, .5f, .45f, 0f, 40f, WhiteWall, LimestoneCap);
-            for (float z = 2f; z < 40f; z += 9f) Palm(c.Front, c.P(9.6f, .14f, z), F(c.Rnd, 9f, 11f), c.NextSeed());
-            string[] ids = { "Tower", "Hotel", "Tower" };
-            float[] lots = { 0f, 14f, 26f }, lens = { 14f, 12f, 14f };
-            for (int i = 0; i < ids.Length; i++)
+            Side(c, -1, s => RiverSide(s, 0f, 40f, false, true));
+            Side(c, 1, s =>
             {
-                ComicAssetSpec spec = R.buildings.First(s => s.id == ids[i]);
-                float zc = lots[i] + lens[i] * .5f, x = 14f + spec.depth * .5f;
-                Vector3 p = c.P(x, .14f, zc);
-                ComicMesh b = ComicKitGeometry.Building(spec, R);
-                c.Front.Add(b, p, Quaternion.Euler(0, -90f, 0), V(lens[i] / spec.width, i == 1 ? 1.4f : 1f, 1f));
-                c.Front.Surface = ComicSurface.Concrete;
-                c.Front.Box(p + V(0, -1.1f, 0), V(spec.depth, 2.2f, lens[i]), R.ink);
-            }
-            Cliff(c, 0f, 40f, 32f, 30f);
-            c.StandardSlots();
+                Ground(s.RoadFlat, 1, Edge, 33f, .14f, Lawn, 0f, 40f);
+                Wall(s.FrontFlat, Edge + .3f, .5f, .45f, 0f, 40f, WhiteWall, LimestoneCap);
+                for (float z = 2f; z < 40f; z += 9f) Palm(s.Front, s.P(9.6f, .14f, z), F(s.Rnd, 9f, 11f), s.NextSeed());
+                string[] ids = { "Tower", "Hotel", "Tower" };
+                float[] lots = { 0f, 14f, 26f }, lens = { 14f, 12f, 14f };
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    ComicAssetSpec spec = R.buildings.First(b => b.id == ids[i]);
+                    float zc = lots[i] + lens[i] * .5f, x = 14f + spec.depth * .5f;
+                    Vector3 p = s.P(x, .14f, zc);
+                    s.Front.Add(ComicKitGeometry.Building(spec, R), p, Quaternion.Euler(0, -90f, 0), V(lens[i] / spec.width, i == 1 ? 1.4f : 1f, 1f));
+                    s.Front.Surface = ComicSurface.Concrete;
+                    s.Front.Box(p + V(0, -1.1f, 0), V(spec.depth, 2.2f, lens[i]), R.ink);
+                }
+                Cliff(s, 0f, 40f, 32f, 30f);
+            });
+            WideSlots(c);
             return c.Save();
         }
 
         /// <summary>The Narrows Bridge freeway deck crossing high above the road on concrete piers (no colliders).</summary>
         static RoadChunk Narrows()
         {
-            ChunkCtx c = New("Narrows", River);
+            ChunkCtx c = Wide("Narrows", River);
+            const float zc = 21f, y = 9.4f;
             RiverRoad(c);
-            RiverSide(c);
-            CliffSide(c, 0f, 40f, 3f, 16f, 13f);
+            Side(c, -1, s => RiverSide(s));
+            // A low escarpment here: the deck passes over it (nothing pokes through the deck).
+            Side(c, 1, s => CliffSide(s, 0f, 40f, 3f, 7f, 13f, zc - 9f, zc + 9f));
             ComicMesh m = c.Front;
-            float zc = 21f, y = 9.4f;
             m.Surface = ComicSurface.Concrete;
             for (float x = -160f; x < 80f - .001f; x += 40f)
             {
@@ -253,69 +315,110 @@ namespace CityScooter.EditorTools.Districts
                 m.Box(p + V(0, 1.1f, 7.3f), V(40.05f, .9f, .4f), Concrete);
                 m.Box(p + V(0, .68f, 0f), V(40.05f, .06f, .2f), R.cream);
             }
-            // Piers: clear of the rideable width (|x| > 8.1); in the river on the left.
-            foreach (float x in new[] { -11.2f, 11.4f, -40f, 36f, -78f, -118f })
+            // Piers clear of the wide road (|x| > 12.1): on the cliff ledge on the right, in the river on the left. Each
+            // goes from its ground up into the pier cap, which sits right under the girders.
+            foreach (float x in new[] { -15.6f, 15.6f, -40f, -78f, -118f })
             {
-                float baseY = x < 0f ? WaterY : 3f;
-                float h = y - .65f - baseY;
+                float baseY = x < 0f ? WaterY - .3f : 3f, capBottom = y - 1.85f;
+                float h = capBottom - baseY + .05f;
                 Vector3 b = c.P(x, baseY + h * .5f, zc);
                 m.Box(b + V(0, 0, -4.5f), V(1.8f, h, 1.8f), Concrete);
                 m.Box(b + V(0, 0, 4.5f), V(1.8f, h, 1.8f), Concrete);
-                m.Box(c.P(x, y - 1.3f, zc), V(2.6f, 1.1f, 13f), ConcreteDark);
+                m.Box(c.P(x, y - 1.4f, zc), V(2.6f, .9f, 13f), ConcreteDark);
             }
             // Freeway traffic on the deck (driving across).
             Color[] cars = { R.red, R.yellow, new Color(.2f, .5f, .85f), Color.white };
             for (int i = 0; i < 4; i++)
                 m.Add(ComicKitGeometry.Car(R, cars[i]), c.P(-30f + i * 17f, y + .65f, zc + (i % 2 == 0 ? -3f : 3f)), Quaternion.Euler(0, i % 2 == 0 ? 90f : -90f, 0), Vector3.one);
-            c.StandardSlots();
+            WideSlots(c);
             return c.Save();
         }
 
-        /// <summary>Jacob's Ladder: the steep white staircase up the cliff, joggers climbing it.</summary>
+        /// <summary>
+        /// Jacob's Ladder: a long, straight concrete staircase climbing up and away from the road (perpendicular to it) from
+        /// an opening in the retaining wall to the top of the escarpment: four flights with landings, solid under every
+        /// step, set between stone side walls in a bushy slope, dark green handrails following the steps, climbers on it.
+        /// </summary>
         static RoadChunk JacobsLadder()
         {
-            ChunkCtx c = New("JacobsLadder", River);
+            ChunkCtx c = Wide("JacobsLadder", River);
             RiverRoad(c);
-            RiverSide(c);
-            const float x0 = 9.2f, x1 = 11.6f, zs = 6f, ze = 37f, top = 23f;
-            // White wall with a gap for the stairs; the cliff stands back behind them.
-            Wall(c.FrontFlat, Edge + .35f, .6f, .6f, 0f, zs, WhiteWall, new Color(.86f, .85f, .8f), -.6f, 8f);
-            Wall(c.FrontFlat, Edge + .35f, .6f, .6f, zs + 2f, 40f, WhiteWall, new Color(.86f, .85f, .8f), -.6f, 8f);
-            Ground(c.RoadFlat, 1, Edge, 13f, .16f, BushFloor, 0f, 40f);
-            Cliff(c, 0f, 40f, 13f, top + 1f);
+            Side(c, -1, s => RiverSide(s));
+            const float E = WideEdge, ledge = 3f, hillX = 17f, hillTop = 23.6f, hillEnd = 48f;
+            float za = LadderZ - LadderWidth * .5f, zb = LadderZ + LadderWidth * .5f, wz0 = za - 1.4f, wz1 = zb + 1.4f;
+            float HillY(float x) => x <= hillX ? ledge : Mathf.Lerp(ledge, hillTop, Mathf.Clamp01((x - hillX) / (hillEnd - hillX)));
+            Color wallCap = new Color(.86f, .85f, .8f), slope = Color.Lerp(BushFloor, Lawn, .25f);
+            // Retaining wall with the opening at the footpath, the ledge behind it.
+            Wall(c.FrontFlat, E + .35f, .6f, ledge, 0f, za, WhiteWall, wallCap, -.6f, 8f);
+            Wall(c.FrontFlat, E + .35f, .6f, ledge, zb, 40f, WhiteWall, wallCap, -.6f, 8f);
+            Ground(c.RoadFlat, 1, E + .65f, hillX + .5f, ledge, BushFloor, 0f, wz0);
+            Ground(c.RoadFlat, 1, E + .65f, hillX + .5f, ledge, BushFloor, wz1, 40f);
+            // Stepped cliff at the chunk ends, a bush slope in the middle that the stairs climb, the park on top.
+            Cliff(c, 0f, 8f, hillX, 24f);
+            Cliff(c, 32f, 40f, hillX, 24f);
+            Bank(c.RoadFlat, 1, hillX, ledge, hillEnd, hillTop, slope, 8f, wz0);
+            Bank(c.RoadFlat, 1, hillX, ledge, hillEnd, hillTop, slope, wz1, 32f);
+            Ground(c.RoadFlat, 1, hillEnd - .5f, 90f, hillTop, BushFloor, 0f, 40f);
+            for (int i = 0; i < 16; i++)
+            {
+                float x = F(c.Rnd, hillX + 1.5f, hillEnd - 1.5f), z = i % 2 == 0 ? F(c.Rnd, 9f, wz0 - 1f) : F(c.Rnd, wz1 + 1f, 31f);
+                Vector3 p = c.P(x, HillY(x) - .1f, z);
+                if (i % 4 == 0) Balga(c.Props, p, F(c.Rnd, .9f, 1.2f), c.NextSeed());
+                else if (i % 4 == 1) Banksia(c.Props, p, F(c.Rnd, .8f, 1.1f), c.NextSeed());
+                else Shrub(c.Props, p, F(c.Rnd, 1f, 1.6f), Color.Lerp(BanksiaLeaf, GumLeaf, F(c.Rnd, 0f, 1f)));
+            }
+            foreach (Vector2 g in new[] { new Vector2(30f, 11f), new Vector2(38f, 28.5f), new Vector2(51f, 15f), new Vector2(53f, 25.5f), new Vector2(58f, 20f) })
+                Gum(c.Deep, c.P(g.x, HillY(g.x), g.y), F(c.Rnd, 14f, 18f), c.NextSeed(), true);
+            Shrub(c.Props, c.P(hillEnd + .5f, hillTop, wz0 - .8f), 1.4f, GumLeafDark);
+            Shrub(c.Props, c.P(hillEnd + .5f, hillTop, wz1 + .8f), 1.4f, BanksiaLeaf);
+
             ComicMesh m = c.Front;
-            int steps = 40;
-            float run = (ze - zs) / steps, rise = top / steps;
-            m.Surface = ComicSurface.Concrete;
-            for (int i = 0; i < steps; i++)
-            {
-                float z = zs + (i + .5f) * run, yTop = (i + 1) * rise;
-                Vector3 p = c.P((x0 + x1) * .5f, .16f + yTop - .6f, z);
-                m.Box(p, V(x1 - x0, 1.2f, run + .01f), i % 10 == 9 ? LimestoneCap : WhiteWall);
-            }
-            // Handrails (dark green, like the real ones) and posts.
+            const int flights = 4, perFlight = 10;
+            const float run = .72f, rise = .58f, landing = 1.6f;
             Color rail = new Color(.18f, .35f, .25f);
-            m.Surface = ComicSurface.PaintedMetal;
-            foreach (float x in new[] { x0 + .08f, x1 - .08f })
+            float sx = E + .02f, sy = .2f;
+            var treads = new List<Vector2>();
+            // One tread (or landing) from x0 to x1 at height top: solid down into the ground, side walls up to the hill.
+            void Tread(float x0, float x1, float top)
             {
-                m.Beam(c.P(x, 1.15f, zs), c.P(x, top + 1.15f, ze), .08f, rail);
-                for (int i = 0; i <= steps; i += 5)
+                float xc = (x0 + x1) * .5f, len = x1 - x0 + .01f;
+                m.Surface = ComicSurface.Concrete;
+                m.Box(c.P(xc, (top - .8f) * .5f, LadderZ), V(len, top + .8f, LadderWidth), WhiteWall);
+                m.Box(c.P(xc, top - .03f, za + .06f), V(len, .06f, .12f), LimestoneDark); // nosing shadow line at the edges
+                float wallTop = Mathf.Max(top + 1f, HillY(x1) + .15f);
+                foreach (float wz in new[] { (wz0 + za) * .5f, (zb + wz1) * .5f })
+                    m.Box(c.P(xc, (wallTop - .8f) * .5f, wz), V(len, wallTop + .8f, za - wz0), Limestone);
+                treads.Add(new Vector2(xc, top));
+            }
+            for (int f = 0; f < flights; f++)
+            {
+                float fx = sx, fy = sy;
+                for (int i = 0; i < perFlight; i++) { sy += rise; Tread(sx, sx + run, sy); sx += run; }
+                // Handrails along the flight (on the inside of both side walls) with posts on the steps.
+                m.Surface = ComicSurface.PaintedMetal;
+                foreach (float rz in new[] { za + .1f, zb - .1f })
                 {
-                    float z = zs + i * run;
-                    m.Box(c.P(x, i * rise + .6f, z), V(.07f, 1.1f, .07f), rail);
+                    m.Beam(c.P(fx + run * .5f, fy + rise + .95f, rz), c.P(sx - run * .5f, sy + .95f, rz), .08f, rail);
+                    for (int k = 0; k < perFlight; k += 3)
+                        m.Box(c.P(fx + (k + .5f) * run, fy + (k + 1) * rise + .48f, rz), V(.07f, .96f, .07f), rail);
                 }
+                float lx = f < flights - 1 ? landing : hillEnd + 1f - sx;
+                Tread(sx, sx + lx, sy);
+                sx += lx;
             }
-            // Climbers (decor, out of reach).
+            // Climbers on the stairs (decor, out of reach), facing up the hill.
             Color[] tops = { new Color(1f, .42f, .62f), R.yellow, new Color(.3f, .7f, .9f) };
-            for (int i = 0; i < 3; i++)
+            int[] at = { 6, 19, 31 };
+            for (int i = 0; i < at.Length; i++)
             {
-                int k = 8 + i * 11;
-                Climber(c.Props, c.P(x0 + .7f + i % 2 * .9f, .16f + (k + 1) * rise, zs + (k + .5f) * run), tops[i]);
+                var climber = new ComicMesh();
+                Climber(climber, Vector3.zero, tops[i]);
+                Vector2 t = treads[Mathf.Min(at[i], treads.Count - 1)];
+                m.Add(climber, c.P(t.x, t.y, LadderZ + (i % 2 == 0 ? -.55f : .55f)), Quaternion.Euler(0, -90f, 0), Vector3.one);
             }
-            // On two white piers so it shows over the tall retaining wall of the chunk before.
-            NameBlock(c.Front, c.P(12.6f, 2.3f, 3.5f), "JACOBS LADDER", .11f, WhiteWall, new Color(.18f, .35f, .25f));
-            foreach (float px in new[] { 10.3f, 14.9f }) c.Front.Box(c.P(px, .9f, 3.5f), V(.6f, 2.2f, .5f), WhiteWall);
-            c.StandardSlots();
+            // Name board on the ledge beside the foot of the stairs, high enough to show over the tall wall before it.
+            NameBlock(c.Front, c.P(E + .65f + 2.95f, ledge + .2f, wz0 - .7f), "JACOBS LADDER", .09f, WhiteWall, rail);
+            WideSlots(c);
             return c.Save();
         }
 
@@ -332,40 +435,44 @@ namespace CityScooter.EditorTools.Districts
 
         static RoadChunk Inlet()
         {
-            ChunkCtx c = New("Inlet", River);
+            ChunkCtx c = Wide("Inlet", River);
+            const float E = WideEdge;
             float zr = InletRampZ, zl = zr + InletRise, zg = zl + InletGap;
-            c.Ramps.Add(new RampSpec { X = 0f, Z = zr, Width = 2f * Edge, Rise = InletRise, Height = InletHeight, Top = 0f, Launch = 1f, Hang = .5f });
+            c.Ramps.Add(new RampSpec { X = 0f, Z = zr, Width = 2f * E, Rise = InletRise, Height = InletHeight, Top = 0f, Launch = 1f, Hang = .5f });
             c.Gaps.Add(new GapSpec { X = 0f, Z = zl, Length = InletGap, Width = 0f, Word = "SPLASH", Water = true });
             RiverRoad(c);
-            RiverSide(c, 0f, zl);
-            RiverSide(c, zg, 40f);
-            RiverWater(c, zl, zg, -14f, 90f);         // the inlet: water across the road and out to the river
-            Ground(c.RoadFlat, 1, Edge, 14f, .14f, Lawn, 0f, zl);
-            Ground(c.RoadFlat, 1, Edge, 14f, .14f, Lawn, zg, 40f);
-            Wall(c.FrontFlat, Edge + .3f, .5f, .5f, 0f, zl, WhiteWall, LimestoneCap);
-            Wall(c.FrontFlat, Edge + .3f, .5f, .5f, zg, 40f, WhiteWall, LimestoneCap);
-            Cliff(c, 0f, 40f, 16f, 18f);
-            ComicMesh f = c.FrontFlat;
-            // Limestone sea walls on both banks of the inlet, a dark culvert under the cliff.
-            f.Surface = ComicSurface.Concrete;
-            f.Box(V(0f, (WaterY - 1.02f) * .5f, zl - .3f), V(2f * Edge + 4f, 1.02f - WaterY, .6f), LimestoneDark);
-            f.Box(V(0f, (WaterY - 1.02f) * .5f, zg + .3f), V(2f * Edge + 4f, 1.02f - WaterY, .6f), LimestoneDark);
-            f.Box(V(15f, 1.2f, (zl + zg) * .5f), V(2.5f, 4.6f, InletGap + 2f), Limestone);
-            f.Box(V(13.7f, .1f, (zl + zg) * .5f), V(.2f, 2.2f, InletGap - .6f), R.ink);
-            for (int i = 0; i < 8; i++)
+            Side(c, -1, s => { RiverSide(s, 0f, zl); RiverSide(s, zg, 40f); });
+            Side(c, 1, s =>
             {
-                float x = F(c.Rnd, -8f, 12f), z = i % 2 == 0 ? zl + .5f : zg - .5f;
+                Ground(s.RoadFlat, 1, Edge, 14f, .14f, Lawn, 0f, zl);
+                Ground(s.RoadFlat, 1, Edge, 14f, .14f, Lawn, zg, 40f);
+                Wall(s.FrontFlat, Edge + .3f, .5f, .5f, 0f, zl, WhiteWall, LimestoneCap);
+                Wall(s.FrontFlat, Edge + .3f, .5f, .5f, zg, 40f, WhiteWall, LimestoneCap);
+                Cliff(s, 0f, 40f, 16f, 18f);
+                s.FrontFlat.Surface = ComicSurface.Concrete;
+                s.FrontFlat.Box(V(15f, 1.2f, (zl + zg) * .5f), V(2.5f, 4.6f, InletGap + 2f), Limestone);   // culvert under the cliff
+                s.FrontFlat.Box(V(13.7f, .1f, (zl + zg) * .5f), V(.2f, 2.2f, InletGap - .6f), R.ink);
+            });
+            RiverWater(c, zl, zg, -(E + 6f), 90f);    // the inlet: from the culvert, across the whole road, out to the river
+            ComicMesh f = c.FrontFlat;
+            // Limestone sea walls on both banks of the inlet (flush with the road).
+            f.Surface = ComicSurface.Concrete;
+            f.Box(V(2f, (WaterY - 1.02f) * .5f, zl - .3f), V(2f * E + 8f, 1.02f - WaterY, .6f), LimestoneDark);
+            f.Box(V(2f, (WaterY - 1.02f) * .5f, zg + .3f), V(2f * E + 8f, 1.02f - WaterY, .6f), LimestoneDark);
+            for (int i = 0; i < 10; i++)
+            {
+                float x = F(c.Rnd, -E, E + 4f), z = i % 2 == 0 ? zl + .5f : zg - .5f;
                 f.Surface = ComicSurface.Foliage;
                 f.Box(V(x, WaterY + .5f, z), V(.08f, 1.2f, .08f), new Color(.45f, .6f, .25f), Quaternion.Euler(F(c.Rnd, -10f, 10f), 0, F(c.Rnd, -10f, 10f)));
             }
-            // The river-wall ramp: limestone blocks across the road and both paths, chevrons at the lip.
-            RampBody(f, 0f, 2f * Edge, zr, InletRise, InletHeight, 0f, Limestone, LimestoneDark, R.yellow, ComicSurface.Concrete);
+            // The river-wall ramp: limestone blocks across the whole road and both paths, chevrons, yellow-black lip.
+            RampBody(f, 0f, 2f * E, zr, InletRise, InletHeight, 0f, Limestone, LimestoneDark, R.yellow, ComicSurface.Concrete);
             f.Surface = ComicSurface.Plain;
-            for (float x = -7f; x <= 7f; x += 3.5f)
+            for (float x = -10.5f; x <= 10.5f; x += 3.5f)
                 for (int k = 0; k < 2; k++)
                 {
-                    float z = zr + 1.4f + k * 1.6f, y = InletHeight * (z - zr) / InletRise + .02f;
-                    f.Tri(V(x - .8f, y, z), V(x, y + .08f, z + .9f), V(x + .8f, y, z), R.yellow);
+                    float z = zr + 1.4f + k * 1.6f, yy = InletHeight * (z - zr) / InletRise + .02f;
+                    f.Tri(V(x - .8f, yy, z), V(x, yy + .08f, z + .9f), V(x + .8f, yy, z), R.yellow);
                 }
             // No spawn slots: nothing on the run-up, the jump or the landing.
             return c.Save();
@@ -374,101 +481,111 @@ namespace CityScooter.EditorTools.Districts
         /// <summary>The red-brick Old Swan Brewery on the river bank and the steel footbridge over the road.</summary>
         static RoadChunk Brewery()
         {
-            ChunkCtx c = New("Brewery", River);
+            ChunkCtx c = Wide("Brewery", River);
             RiverRoad(c);
-            Ground(c.RoadFlat, -1, Edge, 11f, .12f, Lawn, 0f, 40f);
-            Ground(c.RoadFlat, -1, 11f, 34f, .3f, R.pavement, 0f, 40f, ComicSurface.Paving);
-            RiverWater(c, 0f, 40f, 33.5f, 90f);
-            for (float z = 2f; z < 40f; z += 3f) Boulder(c.Props, c.P(-F(c.Rnd, 33f, 34.5f), -.6f, z), 1f, c.Rnd);
-            ComicMesh m = c.Front;
-            // Main hall, wings, the tall tower, arched windows (ink), cream trim.
-            Vector3 b = c.P(-22f, .3f, 18f);
-            m.Surface = ComicSurface.Brick;
-            m.Box(b + V(0, 5f, 0), V(14f, 10f, 26f), Brick);
-            m.Box(b + V(0, 10.6f, 0), V(14.4f, 1.2f, 26.4f), BrickDark);
-            m.Box(b + V(2f, 7f, 15.5f), V(10f, 14f, 5f), Brick);
-            m.Box(b + V(1f, 9f, -15f), V(8f, 18f, 6f), Brick);
-            m.Box(b + V(1f, 18.6f, -15f), V(8.6f, 1.2f, 6.6f), BrickDark);
-            m.Box(b + V(1f, 20f, -15f), V(5f, 2.2f, 4f), R.cream);
-            m.Surface = ComicSurface.Plain;
-            for (int level = 0; level < 3; level++)
-                for (int i = 0; i < 6; i++)
-                {
-                    float z = b.z - 10f + i * 4f, y = b.y + 1.6f + level * 3f;
-                    Face(m, V(b.x + 7.02f, y, z - .7f), V(b.x + 7.02f, y, z + .7f), V(b.x + 7.02f, y + 1.9f, z + .7f), V(b.x + 7.02f, y + 1.9f, z - .7f), R.ink, Vector3.right, false);
-                    Face(m, V(b.x + 7.04f, y + 1.9f, z - .8f), V(b.x + 7.04f, y + 1.9f, z + .8f), V(b.x + 7.04f, y + 2.15f, z + .8f), V(b.x + 7.04f, y + 2.15f, z - .8f), R.cream, Vector3.right, false);
-                }
-            for (int level = 0; level < 5; level++)
+            Side(c, -1, s =>
             {
-                float y = b.y + 2f + level * 3.2f, z = b.z - 15f;
-                Face(m, V(b.x + 5.02f, y, z - .8f), V(b.x + 5.02f, y, z + .8f), V(b.x + 5.02f, y + 2f, z + .8f), V(b.x + 5.02f, y + 2f, z - .8f), R.ink, Vector3.right, false);
-            }
-            for (float z = 6f; z < 40f; z += 14f) Palm(c.Front, c.P(-12f, .3f, z), F(c.Rnd, 8f, 10f), c.NextSeed());
-            CliffSide(c, 0f, 40f, 3f, 22f, 12f);
-            // Footbridge: a dark steel truss from the brewery side up to the cliff, high over the road.
-            const float zb = 33f, yb = 7.6f, xa = -14f, xb = 12.5f;
-            m.Surface = ComicSurface.PaintedMetal;
+                Ground(s.RoadFlat, -1, Edge, 11f, .12f, Lawn, 0f, 40f);
+                Ground(s.RoadFlat, -1, 11f, 34f, .3f, R.pavement, 0f, 40f, ComicSurface.Paving);
+                RiverWater(s, 0f, 40f, 33.5f, 90f);
+                for (float z = 2f; z < 40f; z += 3f) Boulder(s.Props, s.P(-F(s.Rnd, 33f, 34.5f), -.6f, z), 1f, s.Rnd);
+                ComicMesh m = s.Front;
+                Vector3 b = s.P(-22f, .3f, 18f);
+                m.Surface = ComicSurface.Brick;
+                m.Box(b + V(0, 5f, 0), V(14f, 10f, 26f), Brick);
+                m.Box(b + V(0, 10.6f, 0), V(14.4f, 1.2f, 26.4f), BrickDark);
+                m.Box(b + V(2f, 7f, 15.5f), V(10f, 14f, 5f), Brick);
+                m.Box(b + V(1f, 9f, -15f), V(8f, 18f, 6f), Brick);
+                m.Box(b + V(1f, 18.6f, -15f), V(8.6f, 1.2f, 6.6f), BrickDark);
+                m.Box(b + V(1f, 20f, -15f), V(5f, 2.2f, 4f), R.cream);
+                m.Surface = ComicSurface.Plain;
+                for (int level = 0; level < 3; level++)
+                    for (int i = 0; i < 6; i++)
+                    {
+                        float z = b.z - 10f + i * 4f, yy = b.y + 1.6f + level * 3f;
+                        Face(m, V(b.x + 7.02f, yy, z - .7f), V(b.x + 7.02f, yy, z + .7f), V(b.x + 7.02f, yy + 1.9f, z + .7f), V(b.x + 7.02f, yy + 1.9f, z - .7f), R.ink, Vector3.right, false);
+                        Face(m, V(b.x + 7.04f, yy + 1.9f, z - .8f), V(b.x + 7.04f, yy + 1.9f, z + .8f), V(b.x + 7.04f, yy + 2.15f, z + .8f), V(b.x + 7.04f, yy + 2.15f, z - .8f), R.cream, Vector3.right, false);
+                    }
+                for (int level = 0; level < 5; level++)
+                {
+                    float yy = b.y + 2f + level * 3.2f, z = b.z - 15f;
+                    Face(m, V(b.x + 5.02f, yy, z - .8f), V(b.x + 5.02f, yy, z + .8f), V(b.x + 5.02f, yy + 2f, z + .8f), V(b.x + 5.02f, yy + 2f, z - .8f), R.ink, Vector3.right, false);
+                }
+                for (float z = 6f; z < 40f; z += 14f) Palm(s.Front, s.P(-12f, .3f, z), F(s.Rnd, 8f, 10f), s.NextSeed());
+            });
+            Side(c, 1, s => CliffSide(s, 0f, 40f, 3f, 22f, 12f));
+            // Footbridge: a dark steel truss from the brewery wing (x = -19) over the wide road into the cliff face.
+            ComicMesh fm = c.Front;
+            const float zb = 33f, yb = 7.6f, xa = -19.1f, xb = 20.6f;
+            fm.Surface = ComicSurface.PaintedMetal;
             foreach (float dz in new[] { -1.3f, 1.3f })
             {
-                m.Beam(c.P(xa, yb, zb + dz), c.P(xb, yb, zb + dz), .25f, Truss);
-                m.Beam(c.P(xa, yb + 2.2f, zb + dz), c.P(xb, yb + 2.2f, zb + dz), .25f, Truss);
-                for (int i = 0; i < 10; i++)
+                fm.Beam(c.P(xa, yb, zb + dz), c.P(xb, yb, zb + dz), .25f, Truss);
+                fm.Beam(c.P(xa, yb + 2.2f, zb + dz), c.P(xb, yb + 2.2f, zb + dz), .25f, Truss);
+                for (int i = 0; i < 14; i++)
                 {
-                    float x0 = Mathf.Lerp(xa, xb, i / 10f), x1 = Mathf.Lerp(xa, xb, (i + 1) / 10f);
-                    m.Beam(c.P(x0, yb, zb + dz), c.P(x1, yb + 2.2f, zb + dz), .14f, Truss);
-                    m.Box(c.P(x0, yb + 1.1f, zb + dz), V(.14f, 2.2f, .14f), Truss);
+                    float x0 = Mathf.Lerp(xa, xb, i / 14f), x1 = Mathf.Lerp(xa, xb, (i + 1) / 14f);
+                    fm.Beam(c.P(x0, yb, zb + dz), c.P(x1, yb + 2.2f, zb + dz), .14f, Truss);
+                    fm.Box(c.P(x0, yb + 1.1f, zb + dz), V(.14f, 2.2f, .14f), Truss);
                 }
             }
-            m.Box(c.P((xa + xb) * .5f, yb - .1f, zb), V(xb - xa, .25f, 2.8f), ConcreteDark);
-            foreach (float x in new[] { -10.5f, 9.4f })
+            fm.Box(c.P((xa + xb) * .5f, yb - .1f, zb), V(xb - xa, .25f, 2.8f), ConcreteDark);
+            // Piers on the brewery forecourt and on the cliff ledge, up to the underside of the deck.
+            foreach (float x in new[] { -16.6f, 14.2f })
             {
                 float baseY = x > 0f ? 3f : .3f;
-                m.Box(c.P(x, (yb + baseY) * .5f, zb), V(.7f, yb - baseY, .7f), Truss);
+                fm.Box(c.P(x, (yb - .2f + baseY) * .5f, zb), V(.7f, yb - .2f - baseY, .7f), Truss);
             }
-            c.StandardSlots();
+            WideSlots(c);
             return c.Save();
         }
 
         static RoadChunk Entry()
         {
             ChunkCtx c = New("Entry", Blend);
+            c.HalfStart = Half; c.HalfEnd = WideHalf;     // widens from the street to the 4-lane road (z 8 to 32)
             RiverRoad(c, 8f, 40f);
-            // Calm at z = 0: low walls and hedges on both sides; the river opens up after.
-            for (int side = -1; side <= 1; side += 2)
+            Side(c, -1, s =>
             {
-                Wall(c.FrontFlat, side * (Edge + .3f), .5f, .45f, 0f, 14f, Limestone, LimestoneCap);
-                for (float z = 1f; z < 12f; z += 2.6f) Shrub(c.Props, c.P(side * 10f, .14f, z), 1.2f, Color.Lerp(LeafGreen, Lawn, .3f));
-            }
-            Ground(c.RoadFlat, -1, Edge, 40f, .12f, Lawn, 0f, 12f);
-            RiverSide(c, 12f, 40f, true, true);
-            RiverWater(c, 0f, 12f, 40f, 90f);
-            Ground(c.RoadFlat, 1, Edge, 22f, .14f, Lawn, 0f, 14f);
-            RoundTree(c.Front, c.P(-16f, .12f, 5f), 8f, Color.Lerp(Lawn, LeafGreen, .5f), 3);
-            RoundTree(c.Front, c.P(14f, .14f, 6f), 8.5f, Color.Lerp(Lawn, LeafGreen, .5f), 4);
-            CliffSide(c, 14f, 40f, 3f, 20f, 12f);
-            Cliff(c, 0f, 14f, 20f, 16f);
-            NameBlock(c.Front, c.P(13.4f, .14f, 12f), "MOUNTS BAY RD", .12f, WhiteWall, Water);
-            c.StandardSlots();
+                Ground(s.RoadFlat, -1, Edge, 40f, .12f, Lawn, 0f, 12f);
+                RiverSide(s, 12f, 40f, true, true);
+                RiverWater(s, 0f, 12f, 40f, 90f);
+                RoundTree(s.Front, s.P(-16f, .12f, 5f), 8f, Color.Lerp(Lawn, LeafGreen, .5f), 3);
+            });
+            Side(c, 1, s =>
+            {
+                Ground(s.RoadFlat, 1, Edge, 22f, .14f, Lawn, 0f, 14f);
+                RoundTree(s.Front, s.P(14f, .14f, 6f), 8.5f, Color.Lerp(Lawn, LeafGreen, .5f), 4);
+                CliffSide(s, 14f, 40f, 3f, 20f, 12f);
+                Cliff(s, 0f, 14f, 20f, 16f);
+                NameBlock(s.Front, s.P(13.4f, .14f, 12f), "MOUNTS BAY RD", .12f, WhiteWall, Water);
+            });
+            Wedge(c);
+            Row(c, 5f, -2.6f, 0f, 2.6f); Row(c, 25f, -2f, 2f);
             return c.Save();
         }
 
         static RoadChunk Exit()
         {
             ChunkCtx c = New("Exit", Blend);
+            c.HalfStart = WideHalf; c.HalfEnd = Half;     // narrows back to the street (z 8 to 32)
             RiverRoad(c, 0f, 32f);
-            RiverSide(c, 0f, 26f);
-            Ground(c.RoadFlat, -1, Edge, 40f, .12f, Lawn, 26f, 40f);
-            RiverWater(c, 26f, 40f, 40f, 90f);
-            CliffSide(c, 0f, 26f, 3f, 18f, 12f);
-            Ground(c.RoadFlat, 1, Edge, 40f, .14f, Lawn, 26f, 40f);
-            Cliff(c, 26f, 40f, 24f, 14f);
-            for (int side = -1; side <= 1; side += 2)
+            Side(c, -1, s =>
             {
-                Wall(c.FrontFlat, side * (Edge + .3f), .5f, .45f, 26f, 40f, Limestone, LimestoneCap);
-                for (float z = 28f; z < 40f; z += 2.6f) Shrub(c.Props, c.P(side * 10f, .14f, z), 1.2f, Color.Lerp(LeafGreen, Lawn, .3f));
-                RoundTree(c.Front, c.P(side * 15f, .14f, 33f), 9f, Color.Lerp(Lawn, LeafGreen, .5f), 50 + side);
-            }
-            c.StandardSlots();
+                RiverSide(s, 0f, 26f);
+                Ground(s.RoadFlat, -1, Edge, 40f, .12f, Lawn, 26f, 40f);
+                RiverWater(s, 26f, 40f, 40f, 90f);
+                RoundTree(s.Front, s.P(-15f, .14f, 33f), 9f, Color.Lerp(Lawn, LeafGreen, .5f), 49);
+            });
+            Side(c, 1, s =>
+            {
+                CliffSide(s, 0f, 26f, 3f, 18f, 12f);
+                Ground(s.RoadFlat, 1, Edge, 40f, .14f, Lawn, 26f, 40f);
+                Cliff(s, 26f, 40f, 24f, 14f);
+                RoundTree(s.Front, s.P(15f, .14f, 33f), 9f, Color.Lerp(Lawn, LeafGreen, .5f), 51);
+            });
+            Wedge(c);
+            Row(c, 15f, -2f, 2f); Row(c, 35f, -2.6f, 0f, 2.6f);
             return c.Save();
         }
 

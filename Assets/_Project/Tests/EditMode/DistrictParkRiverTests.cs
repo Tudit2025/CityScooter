@@ -58,22 +58,42 @@ namespace CityScooter.Tests
             }
         }
 
+        static bool StdWidth(float w) => Mathf.Abs(w - 4f) < 1e-4f || Mathf.Abs(w - 8f) < 1e-4f;
+
         [Test]
-        public void EveryChunkStartsAndEndsWithTheStandardCrossSection()
+        public void EveryChunkKeepsTheCrossSection_AndTheDistrictStartsAndEndsAsTheStreet()
         {
             foreach (District d in Districts())
+            {
                 foreach (RoadChunk c in AllChunks(d))
                 {
                     Assert.NotNull(c, d.name);
                     string n = d.name + "/" + c.name;
                     Assert.AreEqual(0f, Mathf.Repeat(c.length, 10f), 1e-4f, n + ": length a multiple of 10");
-                    Assert.AreEqual(4f, c.halfWidth, 1e-4f, n); Assert.AreEqual(4f, c.HalfWidthAt(0f), 1e-4f, n); Assert.AreEqual(4f, c.HalfWidthAt(c.length), 1e-4f, n);
-                    Assert.IsTrue(c.endHalfWidth == 0f || Mathf.Abs(c.endHalfWidth - 4f) < 1e-4f, n + " endHalfWidth");
+                    // Ends: the street (half width 4) or, inside a district, the 4-lane road (8); same kerb and sidewalks.
+                    Assert.IsTrue(StdWidth(c.HalfWidthAt(0f)) && StdWidth(c.HalfWidthAt(c.length)), n + " end widths " + c.HalfWidthAt(0f) + " / " + c.HalfWidthAt(c.length));
+                    Assert.IsTrue(c.endHalfWidth == 0f || StdWidth(c.endHalfWidth), n + " endHalfWidth");
                     Assert.AreEqual(4f, c.sidewalkWidth, 1e-4f, n); Assert.AreEqual(.2f, c.sidewalkHeight, 1e-4f, n); Assert.AreEqual(.3f, c.curbTransitionWidth, 1e-4f, n);
+                    for (float z = 0f; z < c.length; z += .5f)
+                        Assert.Less(Mathf.Abs(c.HalfWidthAt(z + .5f) - c.HalfWidthAt(z)), .15f, n + ": width changes smoothly at z " + z);
                     float perForty = c.endHeight * 40f / c.length;
                     Assert.That(perForty, Is.InRange(-8f, 0f), n + ": slope per 40 m");
                     Assert.AreEqual(Vector3.zero, c.transform.localPosition, n); Assert.AreEqual(Vector3.one, c.transform.localScale, n);
                 }
+                // The district meets any other district with the standard street at both ends; inside, every seam matches.
+                Assert.AreEqual(4f, d.entry.HalfWidthAt(0f), 1e-4f, d.name + ": entry starts as the street");
+                Assert.AreEqual(4f, d.exit.HalfWidthAt(d.exit.length), 1e-4f, d.name + ": exit ends as the street");
+                float inner = d.entry.HalfWidthAt(d.entry.length);
+                foreach (RoadChunk c in d.chunks)
+                {
+                    Assert.AreEqual(inner, c.HalfWidthAt(0f), 1e-4f, c.name + " start meets the district's road");
+                    Assert.AreEqual(inner, c.HalfWidthAt(c.length), 1e-4f, c.name + " end meets the district's road");
+                }
+                Assert.AreEqual(inner, d.exit.HalfWidthAt(0f), 1e-4f, d.name + ": exit starts like the district's road");
+            }
+            District mb = Districts().First(d => d.id == "mountsbay");
+            Assert.AreEqual(8f, mb.chunks[0].halfWidth, 1e-4f, "Mounts Bay Rd is a 4-lane divided road");
+            Assert.IsFalse(mb.allowBoulevard);
         }
 
         [Test]
@@ -121,7 +141,7 @@ namespace CityScooter.Tests
                         {
                             Vector3 p = s.transform.localPosition;
                             Assert.AreEqual(c.HeightAt(p.z), p.y, 1e-3f, c.name + "/" + s.name + " on the road surface");
-                            Assert.LessOrEqual(Mathf.Abs(p.x), 3f, c.name + "/" + s.name + " in a lane");
+                            Assert.LessOrEqual(Mathf.Abs(p.x), c.HalfWidthAt(p.z) - 1f + 1e-3f, c.name + "/" + s.name + " in a lane, well inside the kerbs");
                             foreach (Ramp r in ramps)
                             {
                                 Vector3 rp = r.transform.localPosition;
@@ -141,7 +161,7 @@ namespace CityScooter.Tests
 
         static void CheckRampNumbers(Ramp r, string n)
         {
-            Assert.That(r.width, Is.InRange(1.5f, 16.01f), n + " width");
+            Assert.That(r.width, Is.InRange(1.5f, 24.01f), n + " width");
             Assert.That(r.rise, Is.InRange(2f, 14f), n + " rise");
             Assert.That(r.height, Is.InRange(.5f, 3.5f), n + " height");
             Assert.That(r.height / r.rise, Is.InRange(.1f, .45f), n + " slope");
@@ -172,7 +192,7 @@ namespace CityScooter.Tests
                         CheckRampNumbers(r, n);
                         Assert.AreEqual(c.HeightAt(p.z), p.y, 1e-3f, n + " pivot on the road");
                         Assert.LessOrEqual(p.z + r.Length, c.length, n + " inside the chunk");
-                        Assert.LessOrEqual(Mathf.Abs(p.x) + r.width * .5f, c.RideableHalfWidth + .01f, n + " on the rideable width");
+                        Assert.LessOrEqual(Mathf.Abs(p.x) + r.width * .5f, c.RideableHalfWidthAt(p.z) + .01f, n + " on the rideable width");
                     }
                     foreach (RoadGap g in c.GetComponentsInChildren<RoadGap>(true))
                     {
@@ -184,7 +204,7 @@ namespace CityScooter.Tests
                         Assert.That(g.length, Is.InRange(3f, 8f), n + " clearable length");
                         Assert.IsFalse(string.IsNullOrEmpty(g.word), n);
                         bool roadWide = g.width <= 0f;
-                        float gx0 = roadWide ? -c.RideableHalfWidth : p.x - g.width * .5f, gx1 = roadWide ? c.RideableHalfWidth : p.x + g.width * .5f;
+                        float gx0 = roadWide ? -c.RideableHalfWidthAt(p.z) : p.x - g.width * .5f, gx1 = roadWide ? c.RideableHalfWidthAt(p.z) : p.x + g.width * .5f;
                         bool covered = ramps.Any(r =>
                         {
                             Vector3 rp = r.transform.localPosition;
