@@ -45,6 +45,7 @@ namespace CityScooter.Tests
             _tuning.giftChance = 0f;
             _tuning.boulevardSections = false;
             _tuning.rampChance = 0f; // tests place their own ramps
+            _tuning.districts = false; // the classic street (districts have their own tests: DistrictTests, DistrictSkyTests)
             _tuning.startSpeed = _tuning.maxSpeed = 15f;
             _game.tuning = _game.rider.tuning = _game.track.tuning = _tuning;
             var turns = _game.GetComponent<FakeTurnDirector>();
