@@ -1,0 +1,33 @@
+UWA（id uwa，order 10）参考来源与取用内容
+=============================================
+参考图只存在仓库外 D:\CityScooter-refs\uwa\，不进仓库、不进游戏。生成代码：Assets/_Project/Scripts/Editor/Districts/CrawleyBuilder.cs
+
+视频（YouTube 预览帧 storyboard sb0 + 封面大图）
+- Perth UWA Campus Walk 2026 - Winthrop Hall, Tropical Grove & Resident Peacocks (4K)
+  https://www.youtube.com/watch?v=YIswSbhA_6s   封面 https://i.ytimg.com/vi/YIswSbhA_6s/maxresdefault.jpg
+  取用：Winthrop Hall 正立面（长条大厅 + 一排高窄圆拱窗；前面两层圆拱外廊，下层大拱、上层小拱约两倍数量）；
+        钟楼在立面一端，方形高塔、四角壁柱、顶部钟楼层两层拱洞（下层 2 个高拱、上层 4 个小拱）、蓝色钟面；
+        外廊内部的回廊（石柱 + 圆拱的连续拱廊）；长条倒影池（石质矮边，平行于立面）；草坪四周的意大利柏树（深绿柱形）；
+        黑色细杆圆盘顶的校园路灯；砂岩地面 + 砖红色镶边；红棕色木长椅。
+- UWA Winthrop Hall market (Perth Upmarket)
+  https://www.youtube.com/watch?v=LigEg2-vkgY   封面 https://i.ytimg.com/vi/LigEg2-vkgY/maxresdefault.jpg
+  取用：从草坪看钟楼与大厅的比例（塔高约为大厅檐口高的 3 倍）；红瓦坡屋顶的颜色；成排柏树。
+
+颜色（sRGB，近似取自封面与预览帧，再做漫画化提亮）
+- 石灰岩/砂岩墙 #E6C893，阴面壁柱 #D2AE76，檐口和线脚 #F3E0B4，勒脚 #C39A63
+- 赤陶红瓦 #CB5A30，屋脊 #A4442A
+- 拱洞阴影 #5E4733，窗玻璃深色 #3A4A5E，钟面蓝 #2B4D8F，指针金 #DDB64A
+- 校园铺地 #DDCDAA，砖红镶边 #A8523E
+- 草坪 #6FAE48 / #5C9A3C，柏树 #2F5B3B
+- 蓝花楹（11 月盛开，故意提高饱和度）#7C5CCB / #9878E2 / #B7A0F0，落花地毯 #A88DE4
+- 孔雀：身体宝蓝 #1E4FB4，颈 #1C78B8，尾羽绿 #2E7C48，眼斑金 #DDB64A + 蓝 #27407A
+
+比例
+- 大厅 34 m 长、15 m 檐高、坡屋顶升 4.2 m；外廊 8 m 高、4 m 深、下层 10 个拱、上层 20 个拱。
+- 钟楼 7 m 见方、44 m 高（夸张一点，远处就能看到），钟面直径约 3.5 m（含外圈），在 26.5 m 高处。
+- 倒影池 8 m 宽、30 m 长，位于路和大厅之间的草坪上。
+- 两层校园楼 8.5–9 m 高，底层连续圆拱外廊（每 3.1 m 一个开间）。
+
+说明
+- 只做风格化剪影，没有校徽、文字或商标。A 字牌只用蓝底金色箭头。
+- 孔雀是 UWA 校园里真实常见的"住客"；做了两种：拖着长尾走路的、开屏的。

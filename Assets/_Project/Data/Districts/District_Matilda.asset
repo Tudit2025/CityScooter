@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Matilda
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: matilda
+  displayName: MATILDA BAY
+  order: 20
+  length: {x: 420, y: 560}
+  chunks:
+  - {fileID: 7858367929100482224, guid: 6546d7e27e514d749ac0024259bbf029, type: 3}
+  - {fileID: 1439610717275357467, guid: d9b935e72b6922641a24c24ccfb48c52, type: 3}
+  - {fileID: 8426682896897226775, guid: f6a05dc2ae4193f48be93af4dd627197, type: 3}
+  - {fileID: 7498181635970017545, guid: 6966c6adcf92059498a1231b5215f395, type: 3}
+  - {fileID: 1898546133595137822, guid: ffbcc9b52ba8e7748a400657b96d10b5, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 5599251163891042828, guid: 5bdcacf9269e2384193339c520f6750a, type: 3}
+  exit: {fileID: 4640102215645967524, guid: b1c8211cde56a4345a008f08523e2ec5, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 4306807510796191568, guid: 1e528c1d119f57245b4e93589d2d330e, type: 3}
+  - {fileID: 4681554011939784950, guid: 8ee74b2f2e088d84195fa79cc997b67f, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards: []
+  pedestrians:
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 8436716989706877074, guid: ca222d417e2556b468bd9338f8d65e09, type: 3}
+  - {fileID: 1419567604234724842, guid: 1b0ec19654fe84d4ea6df66d46d9af33, type: 3}
+  - {fileID: 1419567604234724842, guid: 1b0ec19654fe84d4ea6df66d46d9af33, type: 3}
+  ramps:
+  - {fileID: 8436401413337125912, guid: 1b3ebc6d9de6c7a42b450e904fbdaea4, type: 3}
+  rampFrequency: 1.2
+  blendMeters: 150
+  fogColor: {r: 0.72, g: 0.84, b: 0.94, a: 1}
+  skyTint: {r: 0.94, g: 0.98, b: 1, a: 1}
+  ambientSky: {r: 0.62, g: 0.8, b: 0.98, a: 1}
+  ambientEquator: {r: 0.82, g: 0.87, b: 0.88, a: 1}
+  ambientGround: {r: 0.53, g: 0.57, b: 0.5, a: 1}
+  sunColor: {r: 1, g: 0.97, b: 0.92, a: 1}
+  sunIntensity: 1.5
+  farScenery: {fileID: 416617628157040032, guid: 47f2aa858f9db8343a8211284ff872e3, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
