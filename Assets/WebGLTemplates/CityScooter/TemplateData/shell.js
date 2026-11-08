@@ -219,6 +219,7 @@
     const key = lower.slice(0, colon).trim();
     const arg = s.slice(colon + 1).trim();
     switch (key) {
+      case "zone": return { kind: "gameword" }; // ---- Districts (v0.3): the game sends zone:<id>; from a board it does nothing
       case "st":
         if (NUMBER.test(arg)) {
           const v = parseFloat(arg);
@@ -269,6 +270,15 @@
   };
   const looksLikeError = (line) => /Traceback|Error\b|^\s+File "/.test(line);
 
+  // ---- Districts (v0.3): the monitor names the part of Perth a zone:<id> message means (route order).
+  const ZONE_NAMES = { uwa: "UWA", matilda: "Matilda Bay", kingspark: "Kings Park", westperth: "West Perth",
+    cbd: "Perth CBD", quay: "Elizabeth Quay", mountsbay: "Mounts Bay Road" };
+  const zoneHint = (line) => {
+    const m = /^zone:([a-z]+)$/.exec(line);
+    return m ? "entering " + (ZONE_NAMES[m[1]] || m[1]) : "";
+  };
+  // ---- end Districts (v0.3)
+
   // ------------------------------------------------------------------ devices
   function getDevice(id, kind) {
     let d = shell.devices.get(id);
@@ -317,6 +327,9 @@
         break;
       case "boost":
         d.boostUntil = t + 300;
+        break;
+      case "gameword": // ---- Districts (v0.3)
+        logLine("print", d.id, line, "zone: is a message FROM the game (you rode into a new part of Perth). Use \"when entering\" to react to it.");
         break;
       case "say":
         break; // the game repeats it to every board; the monitor shows that as a game line
@@ -1308,7 +1321,7 @@
         if (d.kind === "usb") { if (writeBoard(d, line)) sent = true; }
         else if (d.kind === "sim") { simPost({ kind: "serial_input", data: line + "\n" }); sent = true; }
       }
-      if (sent) logLine("game", "game", line, "");
+      if (sent) logLine("game", "game", line, zoneHint(line));
     },
   };
 })();

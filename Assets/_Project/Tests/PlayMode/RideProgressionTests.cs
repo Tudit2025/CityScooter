@@ -29,6 +29,7 @@ namespace CityScooter.Tests
             tuning=Object.Instantiate(game.tuning);game.tuning=game.rider.tuning=game.track.tuning=tuning;
             tuning.obstacleChanceStart=tuning.obstacleChanceMax=tuning.giftChance=0;
             tuning.safeStartDistance=100000;
+            tuning.districts=false;game.EnterReady(); // v0.3: the comic street as before districts
         }
         [UnityTearDown]
         public IEnumerator Cleanup()

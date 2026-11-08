@@ -37,6 +37,7 @@ namespace CityScooter.Gameplay
             public RoadChunk Chunk;
             public float StartZ;
             public readonly List<Placed> Spawned = new List<Placed>();
+            public District District; // ---- Districts (v0.3): the district this chunk belongs to (null when districts are off)
         }
 
         // Hazard patterns: static entries wait until the chunk under them exists; moving ones until the rider is near.
@@ -130,7 +131,21 @@ namespace CityScooter.Gameplay
             _wideFrom = _wideUntil = _nextSectionZ = float.MinValue;
             _sectionStreetIndex = int.MinValue;
             BoulevardSections = 0;
-            if (buildLeadIn && theme != null && theme.orderedChunks && theme.HasChunks)
+            ResetDistricts(startZ); // ---- Districts (v0.3)
+            if (_route != null)
+            {
+                // ---- Districts (v0.3): the chunk behind the start comes from the start district.
+                RoadChunk[] own = _route[_dIndex].chunks;
+                RoadChunk previous = buildLeadIn ? own[own.Length - 1] : null;
+                if (previous != null)
+                {
+                    _forcedChunk = previous;
+                    _nextZ -= Mathf.Max(1f, previous.length);
+                    _nextY = -previous.endHeight;
+                    _chunkCounter = -1;
+                }
+            }
+            else if (buildLeadIn && theme != null && theme.orderedChunks && theme.HasChunks)
             {
                 RoadChunk previous = theme.chunks[theme.chunks.Length - 1];
                 if (previous != null)
@@ -140,7 +155,7 @@ namespace CityScooter.Gameplay
                     _chunkCounter = -1;
                 }
             }
-            _streetIndex = _chunkCounter;
+            _streetIndex = _route != null ? 0 : _chunkCounter;
             BuildAhead(startZ);
             SyncCollisionTransforms();
         }
@@ -149,6 +164,7 @@ namespace CityScooter.Gameplay
         {
             if (rider == null) return;
             float z = rider.position.z;
+            TrimDistrictSpans(z); // ---- Districts (v0.3)
             BuildAhead(z);
             while (_active.Count > 1 && _active[0].StartZ + _active[0].Chunk.length < z - keepBehind) Recycle(0);
             UpdateHazards(z, Time.deltaTime);
@@ -217,6 +233,7 @@ namespace CityScooter.Gameplay
         void SpawnChunk()
         {
             RoadChunk planned = NextSectionChunk();
+            if (planned == null && _route != null) planned = NextDistrictChunk(); // ---- Districts (v0.3): lead-in, entry, exit
             object key = planned != null ? planned.gameObject : PickChunk();
             if (planned == null) _streetIndex++; // boulevard chunks do not advance the street rhythm
             GameObject go = Get(key, () => CreateChunk(key));
@@ -225,8 +242,9 @@ namespace CityScooter.Gameplay
             go.transform.SetPositionAndRotation(new Vector3(0f, _nextY, _nextZ), Quaternion.identity);
             go.GetComponent<StreetDressing>()?.ApplyLayout(_runSeed, _chunkCounter);
             _collisionTransformsDirty=true;
-            var active = new Active { Key = key, Chunk = chunk, StartZ = _nextZ };
+            var active = new Active { Key = key, Chunk = chunk, StartZ = _nextZ, District = _route != null ? _route[_dIndex] : null };
             _active.Add(active);
+            PlaceGateway(active); // ---- Districts (v0.3)
             Populate(active);
             PlacePending(active);
             PlaceStreetLife(active);
@@ -238,38 +256,41 @@ namespace CityScooter.Gameplay
 
         object PickChunk()
         {
-            if (theme == null || !theme.HasChunks)
+            if (_route == null && (theme == null || !theme.HasChunks))
             {
                 int variant = _chunkCounter % 3 == 2 ? 2 : _chunkCounter % 2;
                 return "placeholder-chunk-" + variant;
             }
+            // ---- Districts (v0.3): the current district's own chunks, else the theme's
+            RoadChunk[] chunks = _route != null ? _route[_dIndex].chunks : theme.chunks;
+            bool ordered = _route != null ? _route[_dIndex].orderedChunks : theme.orderedChunks;
             int level = T.DifficultyLevel(_nextZ - _runStartZ);
-            if (theme.orderedChunks)
+            if (ordered)
             {
-                for (int i = 0; i < theme.chunks.Length; i++)
+                for (int i = 0; i < chunks.Length; i++)
                 {
-                    RoadChunk candidate = theme.chunks[((_streetIndex + i) % theme.chunks.Length + theme.chunks.Length) % theme.chunks.Length];
+                    RoadChunk candidate = chunks[((_streetIndex + i) % chunks.Length + chunks.Length) % chunks.Length];
                     if (candidate != null && candidate.minDifficulty <= level) return candidate.gameObject;
                 }
-                return FirstChunk();
+                return FirstChunk(chunks);
             }
             float total = 0f;
-            foreach (RoadChunk c in theme.chunks)
+            foreach (RoadChunk c in chunks)
                 if (c != null && c.minDifficulty <= level && (object)c.gameObject != _lastChunkKey) total += Mathf.Max(0f, c.weight);
-            if (total <= 0f) return FirstChunk();
+            if (total <= 0f) return FirstChunk(chunks);
             double pick = _rng.NextDouble() * total;
-            foreach (RoadChunk c in theme.chunks)
+            foreach (RoadChunk c in chunks)
             {
                 if (c == null || c.minDifficulty > level || (object)c.gameObject == _lastChunkKey) continue;
                 pick -= Mathf.Max(0f, c.weight);
                 if (pick <= 0) return c.gameObject;
             }
-            return FirstChunk();
+            return FirstChunk(chunks);
         }
 
-        object FirstChunk()
+        static object FirstChunk(RoadChunk[] chunks)
         {
-            foreach (RoadChunk c in theme.chunks)
+            foreach (RoadChunk c in chunks)
                 if (c != null) return c.gameObject;
             return "placeholder-chunk-0";
         }
@@ -285,15 +306,27 @@ namespace CityScooter.Gameplay
         void TryPlanSection()
         {
             if (theme == null || !theme.HasChunks || !theme.HasBoulevard || !T.boulevardSections) return;
+            // ---- Districts (v0.3): only in districts that allow it, and the whole section stays inside the district.
+            int cycle = theme.chunks.Length;
+            float room = float.MaxValue;
+            if (_route != null && !DistrictSectionRoom(out cycle, out room)) return;
             // Only where the ordered street cycle starts again, so its near / open rhythm stays whole; never two
             // sections back to back (after the Out chunk the street index is still on the same boundary).
-            if (_streetIndex <= 0 || _streetIndex % theme.chunks.Length != 0 || _streetIndex == _sectionStreetIndex) return;
+            if (_streetIndex <= 0 || _streetIndex % cycle != 0 || _streetIndex == _sectionStreetIndex) return;
             if (_nextZ - _runStartZ < T.boulevardMinDistance || _nextZ < _nextSectionZ) return;
             // A hazard pattern authored for the street still runs into this stretch: try again next cycle.
             if (_reservedUntil >= _nextZ) return;
             if (_sectionRng.NextDouble() >= T.boulevardChance) return;
-            _sectionStreetIndex = _streetIndex;
             int min = Mathf.Max(1, T.boulevardChunks.x), count = _sectionRng.Next(min, Mathf.Max(min, T.boulevardChunks.y) + 1);
+            if (room < float.MaxValue) // ---- Districts (v0.3): fewer wide chunks so that In, wide and Out fit before the district ends
+            {
+                float wideLength = 1f;
+                foreach (RoadChunk c in theme.boulevardChunks) wideLength = Mathf.Max(wideLength, c.length);
+                int fit = Mathf.FloorToInt((room - Mathf.Max(1f, theme.boulevardIn.length) - Mathf.Max(1f, theme.boulevardOut.length)) / wideLength);
+                if (fit < min) return;
+                count = Mathf.Min(count, fit);
+            }
+            _sectionStreetIndex = _streetIndex;
             int first = _sectionRng.Next(theme.boulevardChunks.Length);
             _section.Enqueue(theme.boulevardIn);
             float z = _nextZ + Mathf.Max(1f, theme.boulevardIn.length);
@@ -326,6 +359,7 @@ namespace CityScooter.Gameplay
             float d01 = T.Difficulty01(chunkDistance);
             int level = T.DifficultyLevel(chunkDistance);
             float obstacleChance = Mathf.Lerp(T.obstacleChanceStart, T.obstacleChanceMax, d01);
+            _filling = a.District; // ---- Districts (v0.3): obstacles, gifts and patterns from this chunk's district
             TryScheduleHazard(a, level, d01);
 
             _rows.Clear();
@@ -376,9 +410,10 @@ namespace CityScooter.Gameplay
 
         object ObstacleKey()
         {
-            if (theme != null && theme.obstacles != null && theme.obstacles.Length > 0)
+            Obstacle[] obstacles = Own(_filling != null ? _filling.obstacles : null, theme != null ? theme.obstacles : null); // ---- Districts (v0.3)
+            if (obstacles != null && obstacles.Length > 0)
             {
-                Obstacle o = PickWeighted(theme.obstacles);
+                Obstacle o = PickWeighted(obstacles);
                 if (o != null) return o.gameObject;
             }
             return _rng.NextDouble() < 0.7 ? "placeholder-obstacle-0" : "placeholder-obstacle-1";
@@ -386,9 +421,10 @@ namespace CityScooter.Gameplay
 
         object JumpObstacleKey()
         {
-            if (theme != null && theme.jumpObstacles != null && theme.jumpObstacles.Length > 0)
+            Obstacle[] jumps = Own(_filling != null ? _filling.jumpObstacles : null, theme != null ? theme.jumpObstacles : null); // ---- Districts (v0.3)
+            if (jumps != null && jumps.Length > 0)
             {
-                Obstacle o = PickWeighted(theme.jumpObstacles);
+                Obstacle o = PickWeighted(jumps);
                 if (o != null) return o.gameObject;
             }
             return "placeholder-railing";
@@ -396,9 +432,10 @@ namespace CityScooter.Gameplay
 
         object GiftKey()
         {
-            if (theme != null && theme.gifts != null && theme.gifts.Length > 0)
+            Gift[] gifts = Own(_filling != null ? _filling.gifts : null, theme != null ? theme.gifts : null); // ---- Districts (v0.3)
+            if (gifts != null && gifts.Length > 0)
             {
-                Gift g = theme.gifts[_rng.Next(theme.gifts.Length)];
+                Gift g = gifts[_rng.Next(gifts.Length)];
                 if (g != null) return g.gameObject;
             }
             return "placeholder-gift";
@@ -436,8 +473,9 @@ namespace CityScooter.Gameplay
         void PlaceStreetLife(Active a)
         {
             RoadChunk c = a.Chunk;
+            GameObject[] people = Own(a.District != null ? a.District.pedestrians : null, theme != null ? theme.pedestrians : null); // ---- Districts (v0.3)
             // Not on boulevard transitions: the sidewalk moves sideways under people walking along it.
-            if (theme == null || theme.pedestrians == null || theme.pedestrians.Length == 0 || c.sidewalkWidth <= 1f || c.ChangesWidth) return;
+            if (theme == null || people == null || people.Length == 0 || c.sidewalkWidth <= 1f || c.ChangesWidth) return;
             int count = _rng.Next(Mathf.RoundToInt(T.sidewalkPeople.x), Mathf.RoundToInt(T.sidewalkPeople.y) + 1);
             count = Mathf.Min(count, T.maxPeople - Pedestrian.Active.Count);
             if (count <= 0) return;
@@ -452,11 +490,12 @@ namespace CityScooter.Gameplay
                 Vector3 world = c.transform.TransformPoint(local);
                 // Not inside a bench, a bin, a bus shelter or another person.
                 if (Physics.OverlapBoxNonAlloc(world + Vector3.up * 0.95f, new Vector3(0.5f, 0.8f, 0.6f), _overlap, Quaternion.identity, Physics.AllLayers, QueryTriggerInteraction.Ignore) > 0) continue;
-                GameObject prefab = theme.pedestrians[_rng.Next(theme.pedestrians.Length)];
+                GameObject prefab = people[_rng.Next(people.Length)];
                 if (prefab == null) continue;
                 Place(a, prefab, local, 0f, true);
                 GameObject go = a.Spawned[a.Spawned.Count - 1].Instance;
                 float walk = _rng.NextDouble() < T.sidewalkPeopleWalking ? (_rng.NextDouble() < 0.5 ? -1f : 1f) * Mathf.Lerp(0.7f, 1.5f, (float)_rng.NextDouble()) : 0f;
+                walk = AnimalPace(prefab, walk); // ---- Districts (v0.3)
                 go.GetComponent<Pedestrian>()?.Configure(walk);
                 Physics.SyncTransforms();
                 i++;
@@ -472,7 +511,8 @@ namespace CityScooter.Gameplay
             // when the whole pattern fits inside its full-width part.
             if (a.Chunk.ChangesWidth) return;
             bool wide = OnBoulevard(a.StartZ);
-            HazardPattern[] list = wide && theme.boulevardHazards != null && theme.boulevardHazards.Length > 0 ? theme.boulevardHazards : theme.hazards;
+            HazardPattern[] list = wide && theme.boulevardHazards != null && theme.boulevardHazards.Length > 0 ? theme.boulevardHazards
+                : Own(a.District != null ? a.District.hazards : null, theme.hazards); // ---- Districts (v0.3)
             if (list == null || list.Length == 0) return;
             if (a.StartZ < _nextHazardZ) return;
             if (_rng.NextDouble() >= Mathf.Lerp(T.hazardChanceStart, T.hazardChanceMax, d01))
@@ -481,7 +521,9 @@ namespace CityScooter.Gameplay
                 return;
             }
             float start = a.StartZ + 5f;
-            HazardPattern p = PickPattern(list, level, a.Chunk.halfWidth, wide ? _wideUntil - 6f - start : float.MaxValue);
+            float room = wide ? _wideUntil - 6f - start : float.MaxValue;
+            if (!DistrictPatternRoom(a, start, ref room)) return; // ---- Districts (v0.3): not across a district boundary
+            HazardPattern p = PickPattern(list, level, a.Chunk.halfWidth, room);
             if (p == null) return;
             SchedulePattern(p, start, p.allowMirror && _rng.NextDouble() < 0.5, Mathf.Max(0f, a.Chunk.halfWidth - p.roadHalfWidth));
         }
@@ -555,6 +597,7 @@ namespace CityScooter.Gameplay
                     Placed s = a.Spawned[i];
                     float z = s.Instance != null ? s.Instance.transform.position.z : float.MinValue;
                     if (z < startZ - 6f || z > startZ + p.length + 6f) continue;
+                    if (a.District != null && a.District.gateway != null && ReferenceEquals(s.Key, a.District.gateway)) continue; // ---- Districts (v0.3): the gateway stays
                     Release(s.Key, s.Instance);
                     a.Spawned.RemoveAt(i);
                 }
@@ -744,6 +787,215 @@ namespace CityScooter.Gameplay
             if (!_pool.TryGetValue(key, out Stack<GameObject> stack)) _pool[key] = stack = new Stack<GameObject>();
             stack.Push(go);
         }
+
+        // ---------------- ---- Districts (v0.3): the UWA -> Perth CBD route, districts in District.order, looping.
+        // A ride starts inside the start district (tuning.startDistrict); each district lasts District.length metres,
+        // then its exit chunk, the next district's entry chunk (with its gateway) and that district's own chunks.
+        // One district alone has no boundaries: its street goes on like the theme's own street did.
+
+        /// <summary>One district's stretch of road: from where it starts (StartZ, the boundary) to the next one (EndZ).</summary>
+        public struct DistrictSpan
+        {
+            public District District;
+            /// <summary>0 for the start district, then +1 at each boundary (a district that comes round again is a new span).</summary>
+            public int Serial;
+            public float StartZ, EndZ;
+        }
+
+        enum DistrictPhase { Entry, Body, Leaving }
+
+        District[] _route;
+        int _dIndex;
+        float _dEnd;
+        DistrictPhase _dPhase;
+        bool _gatewayDue;
+        RoadChunk _forcedChunk;
+        District _filling;
+        System.Random _districtRng = new System.Random(1), _districtTurnRng = new System.Random(2);
+        readonly List<DistrictSpan> _spans = new List<DistrictSpan>();
+
+        /// <summary>Start district id chosen on the start screen (keys 1-7); null = GameTuning.startDistrict.</summary>
+        [System.NonSerialized] public string startDistrictOverride;
+
+        /// <summary>True when this ride goes through the theme's districts (theme.HasDistricts and GameTuning.districts).</summary>
+        public bool DistrictsOn => _route != null;
+        /// <summary>The districts in route order (null when districts are off).</summary>
+        public IReadOnlyList<District> Route => _route;
+        /// <summary>The district this ride started in (null when districts are off).</summary>
+        public District StartDistrict { get; private set; }
+        /// <summary>Spans planned so far, in order; the last one is still open (EndZ = +infinity).</summary>
+        public IReadOnlyList<DistrictSpan> DistrictSpans => _spans;
+        /// <summary>Boundaries planned since the last reset (tests).</summary>
+        public int DistrictBoundaries { get; private set; }
+        /// <summary>A boundary was planned: (district before, district after, world z of the boundary).</summary>
+        public event System.Action<District, District, float> DistrictBoundaryPlanned;
+
+        /// <summary>The district under the rider (null when districts are off).</summary>
+        public District CurrentDistrict => DistrictAt(rider != null ? rider.position.z : _runStartZ);
+        /// <summary>The district at world z: planned spans, so also beyond the built track (null when districts are off).</summary>
+        public District DistrictAt(float z) => TryGetDistrictSpan(z, out DistrictSpan s) ? s.District : null;
+        /// <summary>The district of the BUILT chunk under world z (ramp and prop placement); null when off or not built.</summary>
+        public District DistrictForChunkAt(float z)
+        {
+            Active a = ActiveAt(z);
+            return a != null ? a.District : null;
+        }
+        /// <summary>World z of the next boundary ahead of the rider; +infinity when none is planned yet.</summary>
+        public float NextBoundaryZ => NextBoundaryAfter(rider != null ? rider.position.z : _runStartZ);
+        public float NextBoundaryAfter(float z)
+        {
+            for (int i = 0; i < _spans.Count; i++) if (_spans[i].StartZ > z) return _spans[i].StartZ;
+            return float.PositiveInfinity;
+        }
+
+        public bool TryGetDistrictSpan(float z, out DistrictSpan span)
+        {
+            span = default;
+            if (_spans.Count == 0) return false;
+            for (int i = _spans.Count - 1; i >= 0; i--)
+                if (z >= _spans[i].StartZ) { span = _spans[i]; return true; }
+            span = _spans[0];
+            return true;
+        }
+
+        static T[] Own<T>(T[] own, T[] fallback) => own != null && own.Length > 0 ? own : fallback;
+
+        // Animals on the sidewalks (peacocks, swans: Obstacle.animal) keep their prefab's own slow pace; people stroll
+        // at 0.7-1.5 m/s as before.
+        static float AnimalPace(GameObject prefab, float walk)
+        {
+            if (walk == 0f || prefab == null) return walk;
+            Obstacle o = prefab.GetComponentInChildren<Obstacle>(true);
+            if (o == null || !o.animal) return walk;
+            Pedestrian own = prefab.GetComponent<Pedestrian>();
+            return own != null ? Mathf.Sign(walk) * Mathf.Abs(own.walkSpeed) : walk;
+        }
+
+        void ResetDistricts(float startZ)
+        {
+            _spans.Clear();
+            _forcedChunk = null;
+            _filling = null;
+            _gatewayDue = false;
+            DistrictBoundaries = 0;
+            StartDistrict = null;
+            _route = theme != null && theme.HasDistricts && T.districts ? DistrictRoute.Sort(theme.districts) : null;
+            if (_route == null || _route.Length == 0) { _route = null; return; }
+            _districtRng = new System.Random(_runSeed ^ 0x2c1b3c6d);
+            _districtTurnRng = new System.Random(_runSeed ^ 0x7f4a7c15);
+            int start = DistrictRoute.IndexOf(_route, !string.IsNullOrEmpty(startDistrictOverride) ? startDistrictOverride : T.startDistrict);
+            if (start < 0) start = 0;
+            StartDistrict = _route[start];
+            _spans.Add(new DistrictSpan { District = StartDistrict, Serial = 0, StartZ = float.MinValue, EndZ = float.PositiveInfinity });
+            BeginDistrict(start, startZ);
+            _dPhase = DistrictPhase.Body; // a ride starts inside its district, not at the gateway
+            _gatewayDue = false;
+        }
+
+        void BeginDistrict(int index, float z)
+        {
+            _dIndex = index;
+            District d = _route[index];
+            float min = Mathf.Max(40f, Mathf.Min(d.length.x, d.length.y)), max = Mathf.Max(min, Mathf.Max(d.length.x, d.length.y));
+            _dEnd = z + Mathf.Lerp(min, max, (float)_districtRng.NextDouble());
+            _dPhase = DistrictPhase.Entry;
+            _streetIndex = 0; // the district's own chunk order starts from its first chunk
+            _sectionStreetIndex = int.MinValue;
+            _gatewayDue = true;
+        }
+
+        static float ExitLength(District d) => d.exit != null ? Mathf.Max(1f, d.exit.length) : 0f;
+
+        // Lead-in, entry and exit chunks; null = one of the district's own chunks (PickChunk).
+        RoadChunk NextDistrictChunk()
+        {
+            if (_forcedChunk != null)
+            {
+                RoadChunk lead = _forcedChunk;
+                _forcedChunk = null;
+                return lead;
+            }
+            for (int guard = 0; guard < 4; guard++)
+            {
+                District d = _route[_dIndex];
+                switch (_dPhase)
+                {
+                    case DistrictPhase.Leaving:
+                        BeginDistrict((_dIndex + 1) % _route.Length, _nextZ);
+                        continue;
+                    case DistrictPhase.Entry:
+                        _dPhase = DistrictPhase.Body;
+                        if (d.entry != null) return d.entry;
+                        continue;
+                    default:
+                        if (_route.Length < 2) return null; // one district: no boundaries
+                        float exit = ExitLength(d);
+                        if (_nextZ + exit < _dEnd) return null;
+                        PlanBoundary(_nextZ + exit);
+                        _dPhase = DistrictPhase.Leaving;
+                        if (d.exit != null) return d.exit;
+                        continue;
+                }
+            }
+            return null;
+        }
+
+        void PlanBoundary(float z)
+        {
+            int next = (_dIndex + 1) % _route.Length;
+            DistrictSpan last = _spans[_spans.Count - 1];
+            last.EndZ = z;
+            _spans[_spans.Count - 1] = last;
+            _spans.Add(new DistrictSpan { District = _route[next], Serial = last.Serial + 1, StartZ = z, EndZ = float.PositiveInfinity });
+            DistrictBoundaries++;
+            // The new district appears round a corner: a fake turn starts a little before the boundary.
+            FakeTurnDirector turns = FakeTurnDirector.Instance;
+            if (T.fakeTurns && turns != null)
+            {
+                Vector2 lead = T.districtTurnLead;
+                float before = Mathf.Lerp(Mathf.Min(lead.x, lead.y), Mathf.Max(lead.x, lead.y), (float)_districtTurnRng.NextDouble());
+                int direction = Mathf.Abs(turns.Heading) > 10f * Mathf.Deg2Rad ? (turns.Heading > 0f ? -1 : 1) : (_districtTurnRng.NextDouble() < 0.5 ? -1 : 1);
+                turns.RequestTurn(z - before, direction, 0.75f, Mathf.Max(T.turnMinLength, before + 80f));
+            }
+            DistrictBoundaryPlanned?.Invoke(_route[_dIndex], _route[next], z);
+        }
+
+        // The new district's gateway across the road where it starts (decoration, recycled with its chunk).
+        void PlaceGateway(Active a)
+        {
+            if (!_gatewayDue || a.District == null) return;
+            _gatewayDue = false;
+            if (a.District.gateway == null) return;
+            Place(a, a.District.gateway, new Vector3(0f, a.Chunk.HeightAt(0.5f), 0.5f));
+        }
+
+        // Boulevards only in districts that allow them, whole sections before the district's exit.
+        bool DistrictSectionRoom(out int cycle, out float room)
+        {
+            District d = _route[_dIndex];
+            cycle = Mathf.Max(1, d.chunks.Length);
+            room = float.MaxValue;
+            if (_dPhase != DistrictPhase.Body || !d.allowBoulevard) return false;
+            if (_route.Length > 1) room = _dEnd - ExitLength(d) - _nextZ;
+            return true;
+        }
+
+        // Hazard patterns stay inside their district's own chunks: never on entry / exit chunks or across a boundary.
+        bool DistrictPatternRoom(Active a, float start, ref float room)
+        {
+            if (_route == null || _route.Length < 2 || a.District == null) return true;
+            District d = a.District;
+            if ((d.entry != null && ReferenceEquals(a.Key, d.entry.gameObject)) || (d.exit != null && ReferenceEquals(a.Key, d.exit.gameObject))) return false;
+            if (d != _route[_dIndex] || _dPhase == DistrictPhase.Leaving) return false;
+            room = Mathf.Min(room, _dEnd - ExitLength(d) - start);
+            return room > 0f;
+        }
+
+        void TrimDistrictSpans(float riderZ)
+        {
+            while (_spans.Count > 2 && _spans[0].EndZ < riderZ - 600f) _spans.RemoveAt(0);
+        }
+        // ---- end Districts (v0.3)
 
         void Shuffle(List<SpawnSlot> list)
         {

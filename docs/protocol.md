@@ -49,6 +49,7 @@ USB 串口波特率 115200。v0 只用于 USB 直连和模拟器；无线（radi
 | `arrested` | **v1 警察** 被抓（ARRESTED）：被追时停下来了（刹到很慢、或者发了 `sur`），或者警车在旁边贴着你 1.5 秒，或者被直升机的网罩住（"NETTED!"）。这一局结束，紧跟在 `crash` 后面发 |
 | `busted` | **v1 警察** BUSTED：被警车撞了，或者被直升机上的狙击手打中（漫画式摔下车，没有血）。这一局结束，紧跟在 `crash` 后面发 |
 | `lost` | **v1 警察** 甩掉警察了（LOST THEM!）：星级掉到 0。加分只算打警察挣来的星（每颗 100），`do:stars` 这类程序给的星不加分 |
+| `zone:uwa` … | **v0.3 场景** 你在哪个场景（沿 UWA → 珀斯市中心的真实骑行线）：一局开始时在 `go` 后面发一次出发的场景，之后每骑进下一个场景发一次（几百米一次，很少）。id 按路线顺序：`uwa`（UWA）、`matilda`（Matilda Bay）、`kingspark`（Kings Park）、`westperth`（West Perth）、`cbd`（Perth CBD）、`quay`（Elizabeth Quay）、`mountsbay`（Mounts Bay Road），走完再回到 `uwa`。只有小写字母。屏幕上同时显示 `ENTERING KINGS PARK` |
 
 键盘对应：`F` 出拳，`R` 按铃，`E` 加速，`T` 卡通模式开/关。被追时按住 `S` 刹车就是靠边停车。
 
@@ -64,6 +65,12 @@ USB 串口波特率 115200。v0 只用于 USB 直连和模拟器；无线（radi
 - 卡通模式：每撞飞一个人花 1 个礼物；没有礼物时撞人就是撞车。
 - 加速：冷却 6 秒。
 - 最好的写法是收到 `warn:` 再出手，而不是放进 forever 里一直发。（`B` 在所有提示里都是板子上的刹车键，所以按铃不用 B）。
+
+**场景消息（v0.3）：**
+- `zone:` 只有游戏发，板子发了游戏不理（网页的串口监视器会提示"这是游戏发的消息"）。`say:zone:uwa` 也不行（带冒号）。
+- 主题里只有一个场景时没有交界，只在开局发一次。
+- 积木"when entering [Kings Park]"，或者"when the game says"里的 `zone:kingspark`，生成的都是一个 `elif msg == "zone:kingspark":` 分支，V1 也放得下。
+- 开局画面显示出发场景（"Start: UWA"）。键盘开着时按数字键 1～7 换出发场景（老师演示用）；键盘关掉时（只用 micro:bit）不提数字键，按了也没用。默认出发场景在 `GameTuning.startDistrict`。
 
 ### 学生代码必须先攒到换行再处理
 
@@ -106,4 +113,4 @@ except ImportError:
 
 ## 以后再加（不在 v1）
 
-护盾 `sh`、加速 `bo`、油门 `th:0..100`、遥测 `pl:名字:数值`（画到游戏里的曲线面板）、路段事件 `zone:tunnel`、无线 radio 版（组号、频段、玩家编号）。
+护盾 `sh`、加速 `bo`、油门 `th:0..100`、遥测 `pl:名字:数值`（画到游戏里的曲线面板）、无线 radio 版（组号、频段、玩家编号）。

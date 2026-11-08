@@ -109,6 +109,10 @@ namespace CityScooter.Gameplay
             var triggers = GetComponent<ProgramTriggers>();
             if (triggers == null && rider != null) triggers = gameObject.AddComponent<ProgramTriggers>();
             if (triggers != null) { if (triggers.rider == null) triggers.rider = rider; if (triggers.track == null) triggers.track = track; }
+            // ---- Districts (v0.3): look blending, zone:<id>, captions, far scenery, ambience, start keys; no scene changes.
+            var districts = GetComponent<DistrictDirector>();
+            if (districts == null && rider != null && track != null) districts = gameObject.AddComponent<DistrictDirector>();
+            if (districts != null) { if (districts.rider == null) districts.rider = rider; if (districts.track == null) districts.track = track; if (districts.hud == null) districts.hud = hud; }
             EnterReady();
             Camera cam = Camera.main;
             if (cam != null && rider != null)

@@ -34,9 +34,11 @@ namespace CityScooter.Tests
             Assert.IsTrue(_game.track.theme.HasBoulevard, "Theme_ComicDownhill has boulevard chunks (BoulevardBuilder)");
             _tuning = Object.Instantiate(_game.tuning);
             _tuning.fakeTurns = false;
+            _tuning.districts = false; // v0.3: the comic street as before districts (from UWA, boulevards come only in West Perth)
             _game.tuning = _game.rider.tuning = _game.track.tuning = _tuning;
             var turns = _game.GetComponent<FakeTurnDirector>();
             if (turns != null) turns.tuning = _tuning;
+            _game.EnterReady();
         }
 
         [UnityTearDown]

@@ -22,6 +22,7 @@ namespace CityScooter.Tests
             main=SceneManager.GetSceneByName("Main");SceneManager.SetActiveScene(main);
             yield return null;
             var game=GameController.Instance;
+            if(game!=null)ClassicStreet.Use(game); // v0.3: the comic street as before districts
             Assert.IsNotNull(game);
             Assert.IsTrue(game.track.theme.orderedChunks);
             Assert.IsTrue(game.track.buildLeadIn);
@@ -47,6 +48,7 @@ namespace CityScooter.Tests
             main=SceneManager.GetSceneByName("Main");SceneManager.SetActiveScene(main);
             yield return null;
             var game=GameController.Instance;
+            if(game!=null)ClassicStreet.Use(game); // v0.3: the comic street as before districts
             var sky=Object.FindAnyObjectByType<ComicCityBackdrop>();
             Assert.IsNotNull(sky);Assert.IsNotNull(sky.recipe);
             Assert.Greater(sky.recipe.cityBendStrength,0);

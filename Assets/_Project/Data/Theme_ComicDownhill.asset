@@ -107,3 +107,6 @@ MonoBehaviour:
   bangPopup: {fileID: 5766073859980331930, guid: cf060ac9731864649afd2f6043353a91, type: 3}
   dustPopup: {fileID: 2704699411109644269, guid: f503f754b9bf4bc4b878e01d07bac9e2, type: 3}
   screechPopup: {fileID: 6138536283774010665, guid: 4b9992d6b8d317e4a95cdb963ef214f3, type: 3}
+  districts:
+  - {fileID: 11400000, guid: 64fffa1dba6f9304394dbd288cd37e6a, type: 2}
+  ramps: []

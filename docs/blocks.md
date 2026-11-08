@@ -53,6 +53,11 @@
   - "当通缉星级变化时"帽子积木和"通缉星级 (0-5)"数值积木，生成 `wanted_level = int(msg[7:])`，写法和 `spd:`/`game_speed` 一样；
   - "警车距离 (0-9)"数值积木，生成 `police_distance = int(msg[4:])`，开始是 9（很远）。
   - 用到这些积木时才生成 `wanted_level`、`police_distance` 两个全局变量，第一课的程序不变。
+- 场景（v0.3，UWA → 珀斯市中心）：
+  - "当游戏说"里加了 7 个 `zone:`：`zone:uwa`、`zone:matilda`、`zone:kingspark`、`zone:westperth`、`zone:cbd`、`zone:quay`、`zone:mountsbay`（下拉里写着 "entering Kings Park" 这样的说明）；
+  - 新的帽子积木"当进入 [Kings Park] 时"（`cs_on_zone`，下拉是场景名，按路线顺序），和"当游戏说 zone:kingspark"放进同一个分支，只多一个 `elif msg == "zone:kingspark":`，不加全局变量，V1 的内存也够；
+  - 开局时在 `go` 后面收到出发场景，之后每进一个新场景收到一次。例子：进 Kings Park 显示一棵树，进 Elizabeth Quay 放一段音乐。
+  - 串口监视器里游戏发的 `zone:` 后面会标出场景名（"entering Kings Park"）；板子自己打印 `zone:...` 时提示这是游戏发的消息。
 
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 
@@ -137,12 +142,13 @@ USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不�
    - 用 CPython 做语法检查；
    - 在模拟器里运行：倾斜转向、A 跳、报 `hi:v2`；
    - 用上全部积木的程序：在 V2 上和模拟 V1 的情况下都运行，并收发 crash/gift/go/spd，要求没有任何 Python 报错；
+   - 场景（v0.3）：全部积木的程序里有"当进入 Kings Park 时"和"当游戏说 zone:quay"，收到 `zone:uwa`、`zone:kingspark` 时只有 Kings Park 那段运行一次；
    - 引脚 0 加声音时会出警告；
    - 积木和 Python 的切换规则；
    - 分隔条能拖动；
    - 刷新后积木、视图和模式都能恢复；
    - 页面不向外网发任何请求。
-2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板。
+2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板；监视器里 `zone:` 的说明（v0.3）。
 3. **真实网页包测试**：用真的 Unity 网页包，USB 和模拟器两条路都能开一局，游戏消息能发回设备。
 4. **发送测试**（`send.test.js`）：页面的 Web Serial 接到用 CPython 模拟的 MicroPython 板子（`fake_repl_board.py`，原始 REPL 的每条命令都真的执行）：
    - 积木代码原样写进板子，板子重启后跑的是新程序；

@@ -20,6 +20,12 @@
     ["inc:C (net or sniper aiming AT you: move!)", "inc:C"], ["inc:L (net or sniper on your left)", "inc:L"], ["inc:R (net or sniper on your right)", "inc:R"],
     ["arrested", "arrested"], ["busted", "busted"], ["lost (you lost the police!)", "lost"]];
 
+  // ---- Districts (v0.3): zone:<id> at the start of a ride and when you ride into the next district (route order).
+  const DISTRICTS = [["UWA", "uwa"], ["Matilda Bay", "matilda"], ["Kings Park", "kingspark"], ["West Perth", "westperth"],
+    ["Perth CBD", "cbd"], ["Elizabeth Quay", "quay"], ["Mounts Bay Road", "mountsbay"]];
+  for (const [name, id] of DISTRICTS) MESSAGE_OPTIONS.push(["zone:" + id + " (entering " + name + ")", "zone:" + id]);
+  // ---- end Districts (v0.3)
+
   // Words of your own that the game repeats to every board ("say:party" -> "party").
   const sayWord = (w) => String(w || "").replace(/[^A-Za-z0-9_!?-]/g, "").slice(0, 16) || "party";
 
@@ -74,6 +80,12 @@
       tooltip: "How many police stars you have: 0 to 5. Punching police adds a star; losing the police takes them away." },
     { type: "cs_cop", message0: "police distance (0-9)", output: "Number", style: "game_blocks",
       tooltip: "How far behind the police car is while it chases you: 0 is right next to you, 9 is far away (or no police car)." },
+    // ---- Districts (v0.3)
+    { type: "cs_on_zone", message0: "when entering %1 %2 %3",
+      args0: [{ type: "field_dropdown", name: "ZONE", options: DISTRICTS.map(([name, id]) => [name, id]) },
+        { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "game_blocks",
+      tooltip: "Runs when your ride starts in this part of Perth, and each time you ride into it (UWA, Matilda Bay, Kings Park, West Perth, Perth CBD, Elizabeth Quay, Mounts Bay Road). The game sends zone:<name>, e.g. zone:kingspark." },
   ];
 
   const GENERATORS = {
@@ -95,6 +107,8 @@
     cs_wanted: () => { MB.setFlag("usesWanted"); return ["wanted_level", Order.ATOMIC]; },
     cs_on_wanted: (b) => { MB.setFlag("usesWanted"); MB.addSection("msg:wanted", MB.statements(b, "DO")); return ""; },
     cs_cop: () => { MB.setFlag("usesCop"); return ["police_distance", Order.ATOMIC]; },
+    // ---- Districts (v0.3): the same branch as "when the game says zone:<id>" (compact: one elif per district used)
+    cs_on_zone: (b) => { MB.addSection("msg:zone:" + b.getFieldValue("ZONE"), MB.statements(b, "DO")); return ""; },
   };
 
   const MESSAGES_HELPER = [
@@ -123,7 +137,8 @@
     blocks: BLOCKS,
     generators: GENERATORS,
     reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance",
-    isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted",
+    isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted"
+      || type === "cs_on_zone", // ---- Districts (v0.3)
     // wanted_level / police_distance only when a block uses them, so Lesson 1 programs look the same as before.
     globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
       ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null].filter(Boolean),
@@ -165,6 +180,7 @@
         blk("cs_on_message", { fields: { MSG: "chase:1" } }), blk("cs_on_message", { fields: { MSG: "inc:C" } }),
         blk("cs_on_wanted"), blk("cs_wanted"), blk("cs_cop"), blk("cs_surrender"),
         blk("cs_do"), blk("cs_stars", { inputs: { N: num(1) } }), blk("cs_say"), blk("cs_on_word"),
+        blk("cs_on_zone", { fields: { ZONE: "kingspark" } }), // ---- Districts (v0.3)
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

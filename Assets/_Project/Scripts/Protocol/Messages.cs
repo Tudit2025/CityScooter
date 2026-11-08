@@ -70,6 +70,19 @@ namespace CityScooter.Protocol
         public const string WarnHole = "warn:hole";
         public const string TurnPrefix = "turn:";
         public static string Turn(int direction) => TurnPrefix + (direction < 0 ? -1 : direction > 0 ? 1 : 0);
+        // ---- Districts (v0.3): "zone:uwa" at the start of a ride and when the rider enters the next district
+        public const string ZonePrefix = "zone:";
+        /// <summary>District ids on the UWA -> Perth CBD route, in route order (blocks and docs list the same).</summary>
+        public static readonly string[] ZoneIds = { "uwa", "matilda", "kingspark", "westperth", "cbd", "quay", "mountsbay" };
+        /// <summary>"zone:&lt;id&gt;": lower case letters only, at most 16 (anything else is dropped from the id).</summary>
+        public static string Zone(string districtId)
+        {
+            var sb = new System.Text.StringBuilder(ZonePrefix);
+            foreach (char c in (districtId ?? "").ToLowerInvariant())
+                if (c >= 'a' && c <= 'z' && sb.Length < ZonePrefix.Length + 16) sb.Append(c);
+            return sb.ToString();
+        }
+        // ---- end Districts (v0.3)
         public const string SpeedPrefix = "spd:";
         public const int MaxSpeedLevel = 9;
 

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_WestPerth
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: westperth
+  displayName: WEST PERTH
+  order: 40
+  length: {x: 600, y: 800}
+  chunks:
+  - {fileID: 7381382107061198399, guid: cf4d439be31b83243b7cb266f8e1e89b, type: 3}
+  - {fileID: 8768094228567720254, guid: e631ec6b4984f914b86c79c68388f3e1, type: 3}
+  - {fileID: 3366124513408452093, guid: b592e0e91457ce34eb30c1dcbf60cad6, type: 3}
+  - {fileID: 2996215296501985466, guid: 02829d6261c1381499e2dcb0669104ca, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 0}
+  exit: {fileID: 0}
+  allowBoulevard: 1
+  obstacles: []
+  jumpObstacles: []
+  gifts: []
+  hazards: []
+  pedestrians: []
+  ramps: []
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.6, g: 0.74, b: 0.83, a: 1}
+  skyTint: {r: 1, g: 1, b: 1, a: 1}
+  ambientSky: {r: 0.6627451, g: 0.79607844, b: 0.91764706, a: 1}
+  ambientEquator: {r: 0.8666667, g: 0.8352941, b: 0.7647059, a: 1}
+  ambientGround: {r: 0.6117647, g: 0.54509807, b: 0.44705883, a: 1}
+  sunColor: {r: 1, g: 0.94509804, b: 0.8627451, a: 1}
+  sunIntensity: 1
+  farScenery: {fileID: 0}
+  gateway: {fileID: 3192059492781217786, guid: 4d6441e4fdbe0d945a12200f891a7107, type: 3}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35

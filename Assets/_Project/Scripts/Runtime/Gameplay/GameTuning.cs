@@ -183,6 +183,16 @@ namespace CityScooter.Gameplay
         public float sniperFollowSpeed = 4f;
         public float sniperInterval = 5f;
 
+        // ---- Districts (v0.3)
+        [Header("Districts along the UWA -> Perth CBD route (v0.3; the districts are in TrackTheme)")]
+        [Tooltip("Ride through the theme's districts in route order (UWA, Matilda Bay, Kings Park, ...). Off: the theme's own street as before.")]
+        public bool districts = true;
+        [Tooltip("Id of the district a ride starts in (e.g. uwa, westperth). Not found: the first district on the route.")]
+        public string startDistrict = "uwa";
+        [Tooltip("With fake turns on, a turn starts this many metres (min, max) before each district boundary, so the new district appears round a corner.")]
+        public Vector2 districtTurnLead = new Vector2(40f, 80f);
+        // ---- end Districts (v0.3)
+
         [Header("Score / flow")]
         public float pointsPerMetre = 1f;
         [Tooltip("Seconds after a crash before a press can start the next run.")]
