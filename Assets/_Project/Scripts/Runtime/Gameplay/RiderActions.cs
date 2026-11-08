@@ -90,16 +90,16 @@ namespace CityScooter.Gameplay
         void Subscribe()
         {
             if (_subscribed == rider) return;
-            if (_subscribed != null) { _subscribed.HitObstacle -= OnHit; _subscribed.BouncedPerson -= OnBounced; }
+            if (_subscribed != null) { _subscribed.HitObstacle -= OnHit; _subscribed.BouncedPerson -= OnBounced; UnsubscribeAir(_subscribed); }
             _subscribed = rider;
-            if (rider != null) { rider.HitObstacle += OnHit; rider.BouncedPerson += OnBounced; }
+            if (rider != null) { rider.HitObstacle += OnHit; rider.BouncedPerson += OnBounced; SubscribeAir(rider); }
         }
 
         void OnDisable()
         {
             Pedestrian.Startled -= OnStartled;
             GameEvents.RunStarted -= OnRunStarted;
-            if (_subscribed != null) { _subscribed.HitObstacle -= OnHit; _subscribed.BouncedPerson -= OnBounced; }
+            if (_subscribed != null) { _subscribed.HitObstacle -= OnHit; _subscribed.BouncedPerson -= OnBounced; UnsubscribeAir(_subscribed); }
             _subscribed = null;
             if (Time.timeScale < 1f) Time.timeScale = 1f; // never leave a hit-stop behind
         }
@@ -114,6 +114,7 @@ namespace CityScooter.Gameplay
             _punchOpen = false;
             Charges = MaxCharges;
             Punches = Hits = Misses = IgnoredPunches = IgnoredBells = Bells = Bounced = 0;
+            ClearAirState();
             ClearCrash();
         }
 
@@ -144,6 +145,9 @@ namespace CityScooter.Gameplay
                 Cue("SCO_Jump");
                 ShakeCamera(0.15f);
             }
+            for (int i = 0; i < input.Trick; i++) Trick(); // v0.3 ramps: "trick" / Q
+            UpdateTrick(Time.deltaTime);
+            UpdateGapFall();
             Warn();
             FakeTurnDirector turns = FakeTurnDirector.Instance;
             int dir = turns != null ? turns.Direction : 0;
@@ -454,12 +458,190 @@ namespace CityScooter.Gameplay
             return hit != null && hit.kind == ObstacleKind.Person ? "SORRY!" : "CRASH!";
         }
 
-        /// <summary>Punch accuracy for the end-of-ride screen (null when no punches were thrown).</summary>
+        /// <summary>Punch accuracy and tricks for the end-of-ride screen (null when no punches were thrown and no tricks done).</summary>
         public string EndNote()
         {
-            if (Punches == 0) return null;
+            string tricks = Tricks > 0 ? "Tricks " + Tricks + (SketchyLandings > 0 ? " (" + SketchyLandings + " sketchy)" : "") : null;
+            if (Punches == 0) return tricks;
             int pct = Mathf.RoundToInt(100f * Hits / Mathf.Max(1, Punches));
-            return "Punches " + Punches + "  ·  hits " + Hits + " (" + pct + "%)" + (IgnoredPunches > 0 ? "  ·  too tired " + IgnoredPunches + "x" : "");
+            string punches = "Punches " + Punches + "  ·  hits " + Hits + " (" + pct + "%)" + (IgnoredPunches > 0 ? "  ·  too tired " + IgnoredPunches + "x" : "");
+            return tricks == null ? punches : punches + "  ·  " + tricks;
+        }
+
+        // ---------------------------------------------------------------- ramps and air (v0.3)
+
+        enum TrickKind { None, Spin, Flip }
+
+        /// <summary>Tricks finished this ride, tricks ignored (on the ground, too many, dizzy), landings mid-trick.</summary>
+        public int Tricks { get; private set; }
+        public int IgnoredTricks { get; private set; }
+        public int SketchyLandings { get; private set; }
+        /// <summary>Tricks finished in the current (or last) flight.</summary>
+        public int FlightTricks { get; private set; }
+        /// <summary>A trick is turning the rider right now.</summary>
+        public bool Tricking => _trick != TrickKind.None;
+        /// <summary>Sent "trick" too often: no tricks for a moment (GameTuning trickSpam*).</summary>
+        public bool Dizzy => Time.time < _dizzyUntil;
+
+        TrickKind _trick;
+        float _trickT, _dizzyUntil, _gapEndAt = -1f;
+        bool _trickQueued;
+        int _flightTrickIndex;
+        string _gapWord;
+        readonly Queue<float> _trickRequests = new Queue<float>();
+        RiderController _airSubscribed;
+
+        void SubscribeAir(RiderController r)
+        {
+            if (_airSubscribed == r) return;
+            UnsubscribeAir(_airSubscribed);
+            _airSubscribed = r;
+            if (r == null) return;
+            r.TookOff += OnTookOff;
+            r.Landed += OnLanded;
+            r.FellIntoGap += OnFellIntoGap;
+        }
+
+        void UnsubscribeAir(RiderController r)
+        {
+            if (r == null) return;
+            r.TookOff -= OnTookOff;
+            r.Landed -= OnLanded;
+            r.FellIntoGap -= OnFellIntoGap;
+            if (_airSubscribed == r) _airSubscribed = null;
+        }
+
+        void ClearAirState()
+        {
+            Tricks = IgnoredTricks = SketchyLandings = FlightTricks = 0;
+            _trick = TrickKind.None;
+            _trickQueued = false;
+            _flightTrickIndex = 0;
+            _dizzyUntil = 0f;
+            _gapEndAt = -1f;
+            _trickRequests.Clear();
+            if (rider != null) rider.TrickPose = Quaternion.identity;
+        }
+
+        /// <summary>
+        /// "trick" / Q: in a ramp flight, a spin (then a flip, then a spin ...) of trickSeconds; one more may wait its
+        /// turn. On the ground (or in a small hop) it does nothing. Sending it too often makes the rider dizzy for a
+        /// while (no tricks), like the bell. True if a trick started or was lined up.
+        /// </summary>
+        public bool Trick()
+        {
+            if (rider == null) return false;
+            float now = Time.time;
+            while (_trickRequests.Count > 0 && now - _trickRequests.Peek() > Tune.trickSpamWindow) _trickRequests.Dequeue();
+            _trickRequests.Enqueue(now);
+            if (_trickRequests.Count > Tune.trickSpamCount && !Dizzy)
+            {
+                _dizzyUntil = now + Tune.trickDizzySeconds;
+                Popup(theme != null ? theme.ignorePopup : null, rider.transform.position + new Vector3(1.3f, 2.4f, 0f), rider.transform);
+            }
+            if (Dizzy || !rider.Running || !rider.BigAir || rider.Falling) { IgnoredTricks++; return false; }
+            if (_trick == TrickKind.None) { StartTrick(); return true; }
+            if (!_trickQueued) { _trickQueued = true; return true; }
+            IgnoredTricks++;
+            return false;
+        }
+
+        void StartTrick()
+        {
+            _trick = (_flightTrickIndex++ & 1) == 0 ? TrickKind.Spin : TrickKind.Flip;
+            _trickT = 0f;
+            Cue("UI_Click");
+        }
+
+        void UpdateTrick(float dt)
+        {
+            if (rider == null) return;
+            if (_trick == TrickKind.None) { rider.TrickPose = Quaternion.identity; return; }
+            _trickT += dt / Mathf.Max(0.1f, Tune.trickSeconds);
+            if (_trickT < 1f)
+            {
+                float e = _trickT * _trickT * (3f - 2f * _trickT);
+                rider.TrickPose = _trick == TrickKind.Spin ? Quaternion.Euler(0f, 360f * e, 0f) : Quaternion.Euler(-360f * e, 0f, 0f);
+                return;
+            }
+            // Done: points and the comic word, then the next one if it was lined up.
+            TrickKind done = _trick;
+            _trick = TrickKind.None;
+            rider.TrickPose = Quaternion.identity;
+            Tricks++;
+            FlightTricks++;
+            GameController.Instance?.AddPoints(Tune.trickPoints);
+            Vector3 p = rider.transform.position;
+            Popup(theme != null ? (done == TrickKind.Spin ? theme.spinPopup : theme.flipPopup) : null, p + new Vector3(-1.4f, 2.6f, 0.5f), rider.transform);
+            if (_trickQueued && rider.BigAir) { _trickQueued = false; StartTrick(); }
+            else _trickQueued = false;
+        }
+
+        void OnTookOff(bool bigAir)
+        {
+            FlightTricks = 0;
+            _flightTrickIndex = 0;
+            _trick = TrickKind.None;
+            _trickQueued = false;
+        }
+
+        void OnLanded(bool bigAir)
+        {
+            if (!bigAir || rider == null) return;
+            Vector3 p = rider.transform.position;
+            bool sketchy = _trick != TrickKind.None;
+            if (sketchy)
+            {
+                // Landed mid-trick: no crash, but wobbly and no points for that one.
+                _trick = TrickKind.None;
+                rider.TrickPose = Quaternion.identity;
+                SketchyLandings++;
+                Popup(theme != null ? theme.sketchyPopup : null, p + new Vector3(1.5f, 2.4f, 1f), rider.transform);
+                rider.Bump(0.85f);
+                ShakeCamera(0.35f);
+            }
+            else
+            {
+                if (FlightTricks >= 2)
+                {
+                    int bonus = Tune.trickComboPointsPerTrick * FlightTricks;
+                    GameController.Instance?.AddPoints(bonus);
+                    GameController.Instance?.hud?.Flash("COMBO x" + FlightTricks + "!", "+" + bonus + " points", 1.6f);
+                }
+                if (FlightTricks > 0) Popup(theme != null ? theme.landedPopup : null, p + new Vector3(1.5f, 2.4f, 1f), rider.transform);
+                ShakeCamera(0.18f);
+            }
+            _trickQueued = false;
+            GameEvents.RaiseLanded(FlightTricks > 0);
+        }
+
+        // Rode into a road gap: SPLASH! (water) or WHOOPS! (a drop); the ride ends a moment later with that word.
+        void OnFellIntoGap(RoadGap gap)
+        {
+            if (rider == null) return;
+            _trick = TrickKind.None;
+            _trickQueued = false;
+            rider.TrickPose = Quaternion.identity;
+            string word = gap != null && !string.IsNullOrEmpty(gap.word) ? gap.word.Trim().ToUpperInvariant() : "SPLASH";
+            _gapWord = word.EndsWith("!") ? word : word + "!";
+            bool water = gap == null || gap.water;
+            bool splash = word.StartsWith("SPLASH") || (water && !word.StartsWith("WHOOPS"));
+            GameObject popup = theme == null ? null : splash ? theme.splashPopup : theme.whoopsPopup;
+            Vector3 p = rider.transform.position;
+            Popup(popup, p + new Vector3(0f, 2.6f, 1.2f));
+            if (water) Popup(theme != null ? theme.splashEffect : null, p + new Vector3(0f, -0.4f, 1.2f));
+            Cue("SCO_Land_02", p);
+            ShakeCamera(0.4f);
+            _gapEndAt = Time.time + Tune.gapFallSeconds;
+        }
+
+        void UpdateGapFall()
+        {
+            if (_gapEndAt < 0f || Time.time < _gapEndAt) return;
+            _gapEndAt = -1f;
+            GameController game = GameController.Instance;
+            if (game != null) game.EndRun(_gapWord ?? "SPLASH!", true);
+            else if (rider != null) rider.Stop();
         }
 
         // ---------------------------------------------------------------- crash show

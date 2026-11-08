@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace CityScooter.Track
@@ -39,6 +40,62 @@ namespace CityScooter.Track
             if (Mathf.Abs(localX) > width * 0.5f || localZ < 0f || localZ > Length) return 0f;
             return localZ >= rise ? height : height * localZ / rise;
         }
+
+        // ---- Ramps and air (v0.3, system B): runtime registry and world-space queries. Every enabled ramp (placed by the
+        // generator, or a child of a road chunk) is in Active; pooled chunks are deactivated when recycled, so their
+        // ramps leave the list by themselves.
+
+        static readonly List<Ramp> ActiveList = new List<Ramp>();
+        /// <summary>Ramps in the world right now (enabled ones).</summary>
+        public static IReadOnlyList<Ramp> Active => ActiveList;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => ActiveList.Clear();
+
+        void OnEnable() { if (!ActiveList.Contains(this)) ActiveList.Add(this); }
+        void OnDisable() => ActiveList.Remove(this);
+
+        /// <summary>The ramp's slope (height / rise): take-off speed upwards = speed x Slope x launch.</summary>
+        public float Slope => height / Mathf.Max(0.1f, rise);
+
+        /// <summary>
+        /// Height of this ramp's surface above the road under a world point (metres, world up), 0 off the ramp.
+        /// <paramref name="roadY"/> is the road surface height there. Works for ramps pitched with the downhill road.
+        /// <paramref name="localZ"/> is how far along the ramp the point is (0 = start of the run-up, Length = lip).
+        /// </summary>
+        public float WorldHeightAt(float worldX, float worldZ, float roadY, out float localZ)
+        {
+            Vector3 local = transform.InverseTransformPoint(new Vector3(worldX, roadY, worldZ));
+            localZ = local.z;
+            float h = HeightAt(local.x, local.z);
+            return h <= 0f ? 0f : h * transform.lossyScale.y * Mathf.Max(0.5f, transform.up.y);
+        }
+
+        /// <summary>The highest ramp surface above the road at a world point (0 = none), and that ramp.</summary>
+        public static float HighestAt(float worldX, float worldZ, float roadY, out Ramp ramp, out float localZ)
+        {
+            ramp = null;
+            localZ = 0f;
+            float best = 0f;
+            for (int i = 0; i < ActiveList.Count; i++)
+            {
+                Ramp r = ActiveList[i];
+                if (r == null) continue;
+                // Cheap reject: ramps are at most a few tens of metres long (either way: a ramp turned round is a deck
+                // coming back down, see the class summary).
+                float dz = worldZ - r.transform.position.z;
+                if (Mathf.Abs(dz) > r.Length * r.transform.lossyScale.z + 1f) continue;
+                float h = r.WorldHeightAt(worldX, worldZ, roadY, out float lz);
+                if (h > best) { best = h; ramp = r; localZ = lz; }
+            }
+            return best;
+        }
+
+        // A Ramp turned round (yaw 180, pivot at the BOTTOM end) describes a deck coming back down, e.g. a bridge hump:
+        // the rider lands on it or rides down it; it has no lip (RiderController only launches off ramps facing +Z).
+
+        /// <summary>World z of the lip (the end of the ramp).</summary>
+        public float LipZ => transform.TransformPoint(new Vector3(0f, height, Length)).z;
 
         void OnDrawGizmos()
         {

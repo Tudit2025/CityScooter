@@ -297,6 +297,21 @@ namespace CityScooter.Gameplay
                 if (label != _device.text) _device.text = label;
             }
             UpdatePolice(g);
+            UpdateTrickHint(); // ---- Ramps and air (v0.3)
+        }
+
+        // ---- Ramps and air (v0.3): "Q trick" at the end of the hint, only while the keyboard is on (the board's
+        // "trick" message always works). Whatever the hint says otherwise is left alone.
+        const string TrickHint = "  \u00B7  Q trick";
+        void UpdateTrickHint()
+        {
+            if (_hint == null) return;
+            DeviceHub hub = DeviceHub.Instance;
+            bool keys = hub == null || hub.KeyboardEnabled;
+            string text = _hint.text ?? "";
+            bool has = text.EndsWith(TrickHint, System.StringComparison.Ordinal);
+            if (keys && !has && text.Length > 0) _hint.text = text + TrickHint;
+            else if (!keys && has) _hint.text = text.Substring(0, text.Length - TrickHint.Length);
         }
 
         int _shownScore = int.MinValue;

@@ -215,6 +215,7 @@
     if (lower === "toon") return { kind: "toon", value: 1 };
     if (lower === "bo") return { kind: "boost" };
     if (lower === "sur") return { kind: "surrender" };
+    if (lower === "trick") return { kind: "trick" }; // v0.3 ramps
     const colon = lower.indexOf(":");
     if (colon <= 0) return { kind: "unknown" };
     const key = lower.slice(0, colon).trim();
@@ -233,11 +234,12 @@
       case "pu": return { kind: "punch" };
       case "bl": return { kind: "bell" };
       case "bo": return { kind: "boost" };
-      case "do": return /^(chase|heli|calm|car|slowcar|roadworks|police|crossing|manhole|stars\s*:\s*[0-5]|turn\s*:\s*(l|r|left|right|-1|1))$/i.test(arg)
+      case "do": return /^(chase|heli|calm|car|slowcar|roadworks|police|crossing|manhole|ramp|stars\s*:\s*[0-5]|turn\s*:\s*(l|r|left|right|-1|1))$/i.test(arg)
         ? { kind: "trigger", value: arg.toLowerCase() } : { kind: "malformed" };
-      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo|jp|br|pu|bl|bo|toon|say|do|sur)$/i.test(arg)
+      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo|jp|br|pu|bl|bo|toon|say|do|sur|trick)$/i.test(arg)
         ? { kind: "say", value: arg } : { kind: "malformed" };
       case "sur": return { kind: "surrender" };
+      case "trick": return { kind: "trick" }; // v0.3 ramps: "trick:1" is forgiven like "jp:1"
       case "toon": {
         const v = arg.toLowerCase();
         if (v === "1" || v === "on" || v === "true") return { kind: "toon", value: 1 };
@@ -327,6 +329,9 @@
       case "surrender":
         d.surUntil = t + 600;
         break;
+      case "trick": // v0.3 ramps
+        d.trickUntil = t + 600;
+        break;
       case "hello":
         if (d.ver !== c.value) {
           d.ver = c.value;
@@ -338,7 +343,7 @@
       case "malformed":
         logLine("warn", d.id, line, /^\s*toon/i.test(line) ? "toon: needs 1 (on) or 0 (off), e.g. toon:1"
           : /^\s*say/i.test(line) ? "say: one word of your own (letters, digits, _ - ! ?, up to 16), not a game word like crash"
-          : /^\s*do/i.test(line) ? "do: one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole"
+          : /^\s*do/i.test(line) ? "do: one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole, ramp"
           : "st: needs a number, e.g. st:-35");
         break;
       default: {
@@ -470,6 +475,7 @@
       r.querySelector(".cs-toon").classList.toggle("cs-on", !!d.toon);
       r.querySelector(".cs-bo").classList.toggle("cs-on", t < (d.boostUntil || 0));
       r.querySelector(".cs-sur").classList.toggle("cs-on", t < (d.surUntil || 0));
+      r.querySelector(".cs-trick").classList.toggle("cs-on", t < (d.trickUntil || 0)); // v0.3 ramps
       const max = Math.max(1, ...d.jpBuckets);
       const bars = r.querySelectorAll(".cs-jpbars i");
       d.jpBuckets.forEach((n, i) => { bars[i].style.height = Math.round((n / max) * 100) + "%"; bars[i].title = n + " jp"; });
@@ -484,7 +490,7 @@
       <span class="cs-steer-val"></span><span class="cs-strate cs-muted"></span>
       <span class="cs-jp" title="jp messages in the last second"><span class="cs-jp-big">0</span><span class="cs-muted">jp in 1 s</span></span>
       <span class="cs-jpbars" title="jp per second, last 10 seconds">${"<i></i>".repeat(10)}</span>
-      <span class="cs-acts"><span class="cs-brake cs-br">BRAKE</span><span class="cs-brake cs-pu" title="pu: punch">PUNCH</span><span class="cs-brake cs-bl" title="bl: bell">BELL</span><span class="cs-brake cs-bo" title="bo: boost">BOOST</span><span class="cs-brake cs-toon" title="toon:1 / toon:0: cartoon mode">TOON</span><span class="cs-brake cs-sur" title="sur: surrender to the police (pull over)">SUR</span></span>`;
+      <span class="cs-acts"><span class="cs-brake cs-br">BRAKE</span><span class="cs-brake cs-pu" title="pu: punch">PUNCH</span><span class="cs-brake cs-bl" title="bl: bell">BELL</span><span class="cs-brake cs-bo" title="bo: boost">BOOST</span><span class="cs-brake cs-toon" title="toon:1 / toon:0: cartoon mode">TOON</span><span class="cs-brake cs-sur" title="sur: surrender to the police (pull over)">SUR</span><span class="cs-brake cs-trick" title="trick: a spin or flip while flying off a ramp">TRICK</span></span>`;
     box.appendChild(r);
     return r;
   }

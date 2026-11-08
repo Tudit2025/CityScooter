@@ -21,11 +21,20 @@ namespace CityScooter.Gameplay
         public float baseFov = 60f;
         public float fovPerMetrePerSecond = 0.5f;
         public float maxFov = 74f;
+        [Header("Ramps and air (v0.3)")]
+        [Tooltip("On ramps and ramp flights the camera rises by this share of the rider's height above the road (normal jumps: not at all).")]
+        [Range(0f, 1f)] public float airFollow = 0.55f;
+        [Tooltip("...and aims this share of that rise higher, so the flying rider stays in the picture.")]
+        [Range(0f, 1f)] public float airLookFollow = 0.5f;
+        [Tooltip("How quickly the camera rises with a flight, and settles after landing (per second).")]
+        public float airRiseResponse = 2.5f;
+        public float airSettleResponse = 3.5f;
 
         Camera _cam;
         RiderController _rider;
         Quaternion _base = Quaternion.identity; // rotation before the fake-turn bank, so the bank never feeds back
         float _shake;
+        float _lift; // v0.3: smoothed rise with ramp flights
 
         /// <summary>Crash jolt: 0..1, fades out in about half a second.</summary>
         public void Shake(float strength) => _shake = Mathf.Max(_shake, Mathf.Clamp01(strength));
@@ -35,6 +44,7 @@ namespace CityScooter.Gameplay
         public void SnapToTarget()
         {
             if (target == null) return;
+            _lift = LiftTarget();
             transform.position = Desired();
             _base = DesiredRotation(transform.position);
             transform.rotation = WithTurn(_base);
@@ -52,7 +62,7 @@ namespace CityScooter.Gameplay
         Vector3 Desired()
         {
             Vector3 p = target.position;
-            return new Vector3((directionalFollow?0:p.x*followX)+offset.x, Ground(p.z) + offset.y, p.z + offset.z);
+            return new Vector3((directionalFollow?0:p.x*followX)+offset.x, Ground(p.z) + offset.y + _lift, p.z + offset.z);
         }
 
         float Ground(float z)
@@ -64,24 +74,32 @@ namespace CityScooter.Gameplay
         Vector3 LookPoint()
         {
             Vector3 p = target.position;
-            return new Vector3(p.x * followX, Ground(p.z + lookAhead) + lookHeight, p.z + lookAhead);
+            return new Vector3(p.x * followX, Ground(p.z + lookAhead) + lookHeight + _lift * airLookFollow, p.z + lookAhead);
         }
 
         Quaternion DesiredRotation(Vector3 position)
         {
             if(!directionalFollow)return Quaternion.LookRotation(LookPoint()-position,Vector3.up);
             Vector3 p=target.position;
-            Vector3 centre=new Vector3(offset.x,Ground(p.z+lookAhead)+lookHeight,p.z+lookAhead);
+            Vector3 centre=new Vector3(offset.x,Ground(p.z+lookAhead)+lookHeight+_lift*airLookFollow,p.z+lookAhead);
             Quaternion pitch=Quaternion.LookRotation(centre-position,Vector3.up);
             float yaw=Mathf.Clamp(Mathf.Atan2(p.x-offset.x,Mathf.Max(1,lookAhead-offset.z))*Mathf.Rad2Deg,-maxYaw,maxYaw);
             return Quaternion.AngleAxis(yaw,Vector3.up)*pitch;
         }
+
+        float LiftTarget() => _rider != null ? _rider.CameraLift * airFollow : 0f;
+
+        /// <summary>How much the camera is raised for a ramp flight right now (tests).</summary>
+        public float AirLift => _lift;
 
         void LateUpdate()
         {
             if (target == null) return;
             if (_rider == null) _rider = target.GetComponent<RiderController>();
             float k = 1f - Mathf.Exp(-smoothing * Time.deltaTime);
+            // Ramps and air (v0.3): rise part of the way with a flight, smoothly, and settle after landing.
+            float lift = LiftTarget();
+            _lift = Mathf.Lerp(_lift, lift, 1f - Mathf.Exp(-(lift > _lift ? airRiseResponse : airSettleResponse) * Time.deltaTime));
             Vector3 desired = Desired();
             // Forward follow is exact (no lag at high speed); sideways and height are smoothed.
             Vector3 pos = Vector3.Lerp(transform.position, desired, k);

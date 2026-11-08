@@ -121,6 +121,9 @@ namespace CityScooter.Gameplay
                     if (police == null) return false;
                     police.SetWanted(0);
                     return true;
+                case Messages.DoRamp: // ---- Ramps and air (v0.3): a ramp in the rider's lane, out of sight ahead
+                    if (track == null) return false;
+                    return track.TryPlaceRampAhead(Mathf.Clamp(Mathf.Max(100f, rider.Speed * 4f), 60f, Mathf.Max(60f, track.buildAhead - 100f)));
                 case Messages.DoTurn:
                     FakeTurnDirector turns = FakeTurnDirector.Instance;
                     if (turns == null || value == 0) return false;
@@ -149,6 +152,7 @@ namespace CityScooter.Gameplay
                 case Messages.DoRoadworks: return "ROADWORKS ahead";
                 case Messages.DoPolice: return "police stop ahead";
                 case Messages.DoCrossing: return "people crossing ahead";
+                case Messages.DoRamp: return "RAMP ahead!"; // ---- Ramps and air (v0.3)
                 default: return "open manhole ahead";
             }
         }

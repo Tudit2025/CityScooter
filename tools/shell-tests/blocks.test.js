@@ -101,6 +101,10 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("cs_on_message", { x: 1300, y: 260, fields: { MSG: "busted" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("got busted") } })) } }),
   B("cs_on_wanted", { x: 1300, y: 360, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("text_join", { extraState: { itemCount: 2 },
     inputs: { ADD0: t("wanted "), ADD1: val(B("cs_wanted")) } })) } })) } }),
+  // ramps and air (v0.3): a trick when the game says air:1; after a landed trick, ask for another ramp
+  B("cs_on_message", { x: 2500, y: 10, fields: { MSG: "air:1" }, inputs: { DO: chain(B("cs_trick"), B("mb_print", { inputs: { VALUE: t("in the air") } })) } }),
+  B("cs_on_message", { x: 2500, y: 140, fields: { MSG: "land:trick" }, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: t("trick landed") } }),
+    B("cs_do", { fields: { EVENT: "ramp" } })) } }),
   B("cs_on_speed", { x: 500, y: 540, inputs: { DO: chain(B("mb_clear"),
     B("controls_for", { fields: { VAR: { id: "v2" } }, inputs: { FROM: n(0), TO: n(4), BY: n(1), DO: chain(B("mb_plot", { inputs: {
       X: val(B("variables_get", { fields: { VAR: { id: "v2" } } })), Y: n(4), B: val(B("cs_speed")) } })) } }),
@@ -180,6 +184,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     'held_since_b = -1', 'if held_b >= 1000 and held_done_b < 1000:', 'elif held_since_b >= 0:',
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
     'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:',
+    'msg == "air:1"', 'print("trick")', 'msg == "land:trick"', 'print("do:ramp")',
     "count = (count if type(count) in (int, float) else 0) + 1"]) {
     check("all blocks make: " + want, allPy.includes(want));
   }
@@ -212,6 +217,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     for (const m of ["chase:1", "wanted:3", "cop:9", "inc:C"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     const surBefore = await ev((n) => window.__fakeUnity.lines.slice(n).filter((l) => l === "sim|sur").length, before);
     for (const m of ["cop:1", "busted", "chase:0"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
+    // ramps and air (v0.3)
+    for (const m of ["air:1", "air:0", "land:trick"]) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); }
     await sleep(800);
     const lines = await ev((n) => window.__fakeUnity.lines.slice(n), before);
     const log = await ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].map((r) => r.className + " :: " + r.textContent));
@@ -220,6 +227,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": no surrender while the police car is far", surBefore === 0, surBefore);
     check(label + ": cop:1 makes it surrender (sur)", lines.includes("sim|sur"), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
     check(label + ": busted handler ran", log.some((x) => x.includes("got busted")));
+    check(label + ": air:1 makes it do a trick (trick)", lines.includes("sim|trick") && log.some((x) => x.includes("in the air")), lines.filter((l) => !/st:/.test(l)).slice(-6).join(" "));
+    check(label + ": land:trick asks for another ramp (do:ramp)", lines.includes("sim|do:ramp") && log.some((x) => x.includes("trick landed")));
     check(label + ": no Python error", !log.some((x) => /cs-l-error/.test(x)), log.filter((x) => /cs-l-error/.test(x)).slice(0, 4).join(" | "));
     check(label + ": steers", lines.some((l) => /^sim\|st:-?\d+$/.test(l)));
     check(label + ": crash and gift handlers ran", log.some((x) => x.includes("got crash")) && log.some((x) => x.includes("got gift")),

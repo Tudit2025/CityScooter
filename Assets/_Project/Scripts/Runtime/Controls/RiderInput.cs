@@ -20,6 +20,8 @@ namespace CityScooter.Controls
         public bool Boost;
         /// <summary>v1 police: true on the frame a board sent "sur" (pull over now).</summary>
         public bool Surrender;
+        /// <summary>v0.3 ramps: tricks requested this frame ("trick" lines from boards, Q on the keyboard).</summary>
+        public int Trick;
         /// <summary>A micro:bit / simulator is steering right now (for the HUD).</summary>
         public bool DeviceSteering;
     }
@@ -64,6 +66,7 @@ namespace CityScooter.Controls
             input.Bell = (keyboard && KeyboardControls.BellPressed()) | (hub != null && hub.Mixer.ConsumeBell());
             input.Boost = (keyboard && KeyboardControls.BoostPressed()) | (hub != null && hub.Mixer.ConsumeBoost());
             input.Surrender = hub != null && hub.Mixer.ConsumeSurrender(); // keyboard players hold S to pull over
+            input.Trick = (keyboard && KeyboardControls.TrickPressed() ? 1 : 0) + (hub != null ? hub.Mixer.ConsumeTricks() : 0); // v0.3 ramps
 
             _last = input;
             return input;

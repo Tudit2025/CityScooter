@@ -141,6 +141,7 @@ namespace CityScooter.Gameplay
                 }
             }
             _streetIndex = _chunkCounter;
+            ResetRamps(startZ); // ---- Ramps and air (v0.3)
             BuildAhead(startZ);
             SyncCollisionTransforms();
         }
@@ -234,6 +235,7 @@ namespace CityScooter.Gameplay
             _nextY += chunk.endHeight;
             _chunkCounter++;
             _lastChunkKey = key;
+            TryPlaceRamp(); // ---- Ramps and air (v0.3): once its landing zone is built
         }
 
         object PickChunk()
@@ -475,6 +477,7 @@ namespace CityScooter.Gameplay
             HazardPattern[] list = wide && theme.boulevardHazards != null && theme.boulevardHazards.Length > 0 ? theme.boulevardHazards : theme.hazards;
             if (list == null || list.Length == 0) return;
             if (a.StartZ < _nextHazardZ) return;
+            if (a.StartZ - 1f < _rampZone.y + T.rampMinGap * 0.5f) return; // ---- Ramps and air (v0.3): not in a ramp's landing zone
             if (_rng.NextDouble() >= Mathf.Lerp(T.hazardChanceStart, T.hazardChanceMax, d01))
             {
                 _nextHazardZ = a.StartZ + Mathf.Max(1f, a.Chunk.length);
@@ -507,6 +510,7 @@ namespace CityScooter.Gameplay
             {
                 float end = start + p.length;
                 if (start > riderZ + buildAhead + 150f) return false; // too far to count as "now"
+                if (RampZoneOverlap(start - 6f, end + 6f, out float afterRamp)) { start = afterRamp + 8f; continue; } // ---- Ramps and air (v0.3)
                 bool moved = false;
                 // Built chunks can be checked; chunks laid later never start a boulevard section inside a reserved pattern.
                 for (float z = start - 6f; z <= end + 6f && z < _nextZ; z += 5f)
@@ -743,6 +747,264 @@ namespace CityScooter.Gameplay
             go.transform.SetParent(_poolRoot, false);
             if (!_pool.TryGetValue(key, out Stack<GameObject> stack)) _pool[key] = stack = new Stack<GameObject>();
             stack.Push(go);
+        }
+
+        // ---------------- Ramps and air (v0.3, system B): ramps on the road, a cleared landing zone, gifts in the air
+        // A ramp is placed once the road under its whole flight is built (the run-up, the predicted landing at the
+        // expected speed, plus rampLandingMargin): never on a boulevard transition, never in a hazard pattern, at
+        // least rampMinGap from other ramps and road gaps. Random obstacles on the ramp and anywhere on the road in the
+        // landing zone are taken away; gifts hang along the predicted flight, high enough that only a flying rider
+        // reaches them. The generator never places road gaps (only authored chunks have them).
+
+        /// <summary>Ramp prefabs (root has Ramp) the generator may place on the road here.
+        /// TODO(lead, districts): return the current district's District.ramps when it has any, else theme.ramps.</summary>
+        Ramp[] RampChoices() => theme != null ? theme.ramps : null;
+
+        /// <summary>How many ramps here: 1 normal, 0 none, 2 twice as many (divides rampSpacing).
+        /// TODO(lead, districts): return the current district's District.rampFrequency.</summary>
+        float RampFrequency() => 1f;
+
+        const float RampLaneX = 2.6f;
+        System.Random _rampRng = new System.Random(3);
+        float _nextRampZ;
+        Vector2 _rampZone = new Vector2(float.MinValue, float.MinValue);
+        readonly List<Vector2> _rampZones = new List<Vector2>();
+
+        /// <summary>Ramps placed by the generator (and do:ramp) since the last reset (tests).</summary>
+        public int RampsPlaced { get; private set; }
+        /// <summary>World z from the start of each placed ramp's run-up to the end of its landing zone (tests).</summary>
+        public IReadOnlyList<Vector2> RampZones => _rampZones;
+        /// <summary>A ramp was placed: the ramp and its zone (start of the run-up, end of the landing zone).</summary>
+        public event System.Action<Ramp, Vector2> RampPlaced;
+
+        // Every hazard pattern's reserved stretch (the generator itself only remembers the latest one).
+        readonly List<Vector2> _patternZones = new List<Vector2>();
+        bool _rampsHooked;
+
+        void ResetRamps(float startZ)
+        {
+            if (!_rampsHooked)
+            {
+                _rampsHooked = true;
+                PatternScheduled += (p, s) =>
+                {
+                    _patternZones.Add(new Vector2(s - 6f, s + p.length + 6f));
+                    if (_patternZones.Count > 24) _patternZones.RemoveAt(0);
+                };
+            }
+            _patternZones.Clear();
+            _rampRng = new System.Random(_runSeed ^ 0x2545f491); // own stream: the street content stays as it was
+            _nextRampZ = startZ + T.rampFirstDistance;
+            _rampZone = new Vector2(float.MinValue, float.MinValue);
+            _rampZones.Clear();
+            RampsPlaced = 0;
+        }
+
+        void TryPlaceRamp()
+        {
+            Ramp[] choices = RampChoices();
+            float freq = RampFrequency();
+            if (choices == null || choices.Length == 0 || freq <= 0f || _active.Count == 0 || T.rampChance <= 0f) return;
+            Ramp prefab = choices[_rampRng.Next(choices.Length)];
+            if (prefab == null) return;
+            // Close to the far end of the built road (out of sight), after the previous ramp's spacing.
+            float start = Mathf.Max(_nextRampZ, _active[0].StartZ + 4f, _nextZ - 140f);
+            float speed = ExpectedRampSpeed(start);
+            for (int tries = 0; tries < 12; tries++)
+            {
+                float end = RampZoneEnd(prefab, start, speed);
+                if (end > _nextZ - 1f) return; // the landing is not built yet: try again with the next chunk
+                if (!RampZoneFree(start - 6f, end, out float after)) { start = Mathf.Max(start + 10f, after + 4f); continue; }
+                if (_rampRng.NextDouble() >= T.rampChance) { _nextRampZ = start + 40f; return; }
+                PlaceRamp(prefab, start, LaneFor(prefab, start, _rampRng.Next(3) - 1), speed, end);
+                _nextRampZ = end + Mathf.Lerp(T.rampSpacing.x, Mathf.Max(T.rampSpacing.x, T.rampSpacing.y), (float)_rampRng.NextDouble()) / freq;
+                return;
+            }
+            _nextRampZ = start; // nothing fitted: look further on next time
+        }
+
+        /// <summary>
+        /// Programs ("do:ramp"): a ramp at least <paramref name="ahead"/> metres in front of the rider, in the lane
+        /// nearest the rider, with its landing zone cleared. False when there is no room in the built road right now.
+        /// </summary>
+        public bool TryPlaceRampAhead(float ahead)
+        {
+            Ramp[] choices = RampChoices();
+            if (choices == null || choices.Length == 0) choices = theme != null ? theme.ramps : null;
+            if (choices == null || choices.Length == 0 || rider == null) return false;
+            Ramp prefab = choices[_rampRng.Next(choices.Length)];
+            if (prefab == null) return false;
+            float start = rider.position.z + ahead;
+            float speed = ExpectedRampSpeed(start);
+            int lane = Mathf.Clamp(Mathf.RoundToInt(rider.position.x / RampLaneX), -1, 1);
+            for (int tries = 0; tries < 10; tries++)
+            {
+                float end = RampZoneEnd(prefab, start, speed);
+                if (end > _nextZ - 1f) return false;
+                if (!RampZoneFree(start - 6f, end, out float after)) { start = Mathf.Max(start + 10f, after + 4f); continue; }
+                PlaceRamp(prefab, start, LaneFor(prefab, start, lane), speed, end);
+                Physics.SyncTransforms();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Places a ramp prefab at world z (tests, scripted moments): run-up from <paramref name="startZ"/>, in the
+        /// lane at <paramref name="x"/>, landing zone cleared for the rider's expected speed. Null when off the built road.</summary>
+        public Ramp PlaceRampAt(Ramp prefab, float startZ, float x)
+        {
+            if (prefab == null || ActiveAt(startZ) == null || startZ < _active[0].StartZ) return null;
+            float speed = ExpectedRampSpeed(startZ);
+            Ramp r = PlaceRamp(prefab, startZ, x, speed, Mathf.Min(_nextZ, RampZoneEnd(prefab, startZ, speed)));
+            Physics.SyncTransforms();
+            return r;
+        }
+
+        float ExpectedRampSpeed(float z)
+        {
+            if (_riderController == null && rider != null) _riderController = rider.GetComponent<RiderController>();
+            float now = _riderController != null ? _riderController.Speed : 0f;
+            float run = _riderController != null ? _riderController.RunTime : 0f;
+            float target = Mathf.Lerp(T.startSpeed, T.MaxSpeedAt(run), T.Difficulty01(z - _runStartZ));
+            return Mathf.Max(T.startSpeed, now, target);
+        }
+
+        // The predicted flight off this ramp at this speed (what RiderController does): seconds in the air.
+        float RampFlight(Ramp r, float speed, out float vy, out float g)
+        {
+            g = T.gravity * Mathf.Clamp(r.hangGravity * T.rampHangGravity, 0.1f, 2f);
+            vy = Mathf.Min(speed * r.Slope * r.launch * T.rampLaunch, T.rampMaxLaunchVelocity);
+            return (vy + Mathf.Sqrt(vy * vy + 2f * g * r.height)) / g;
+        }
+
+        float RampZoneEnd(Ramp r, float start, float speed) => start + r.Length + speed * RampFlight(r, speed, out _, out _) + T.rampLandingMargin;
+
+        float LaneFor(Ramp r, float start, int lane)
+        {
+            if (r.lanes != null && r.lanes.Length > 0 && System.Array.IndexOf(r.lanes, lane) < 0) lane = r.lanes[_rampRng.Next(r.lanes.Length)];
+            float x = Mathf.Clamp(lane, -1, 1) * RampLaneX, room = Mathf.Max(0f, HalfWidthAt(start) - r.width * 0.5f - 0.1f);
+            return Mathf.Clamp(x, -room, room);
+        }
+
+        // Free for a ramp: no width change, no hazard pattern, no other ramp or road gap nearby. after = where to try next.
+        bool RampZoneFree(float from, float to, out float after)
+        {
+            after = from;
+            // Never on a boulevard transition, and never on a district chunk with its own (authored) ramp or gap.
+            foreach (Active c in _active)
+                if (c.StartZ < to && c.StartZ + c.Chunk.length > from && (c.Chunk.ChangesWidth || HasAuthoredAir(c.Key)))
+                { after = c.StartZ + c.Chunk.length; return false; }
+            if (from < _reservedUntil + T.rampMinGap * 0.5f && to > _reservedFrom - T.rampMinGap * 0.5f) { after = _reservedUntil + T.rampMinGap * 0.5f; return false; }
+            foreach (Vector2 p in _patternZones)
+                if (from < p.y + T.rampMinGap * 0.5f && to > p.x - T.rampMinGap * 0.5f) after = Mathf.Max(after, p.y + T.rampMinGap * 0.5f);
+            foreach (PatternItem it in _patternItems)
+            {
+                float z = it.Instance != null ? it.Instance.transform.position.z : float.MinValue;
+                if (z > from - 8f && z < to + 8f) { after = Mathf.Max(after, z + 8f); }
+            }
+            foreach (PendingEntry e in _pending) if (e.Z > from - 8f && e.Z < to + 8f) after = Mathf.Max(after, e.Z + 8f);
+            foreach (PendingEntry e in _pendingMovers) if (e.MeetZ > from - 8f && e.MeetZ < to + 8f) after = Mathf.Max(after, e.MeetZ + 8f);
+            if (after > from) return false;
+            if (RampZoneOverlap(from - T.rampMinGap, to + T.rampMinGap, out float zoneEnd)) { after = zoneEnd + T.rampMinGap; return false; }
+            for (int i = 0; i < Ramp.Active.Count; i++)
+            {
+                Ramp r = Ramp.Active[i];
+                if (r == null) continue;
+                float r0 = Mathf.Min(r.transform.position.z, r.LipZ), r1 = Mathf.Max(r.transform.position.z, r.LipZ) + 40f; // about a flight beyond
+                if (r1 + T.rampMinGap > from && r0 - T.rampMinGap < to) { after = r1 + T.rampMinGap; return false; }
+            }
+            for (int i = 0; i < RoadGap.Active.Count; i++)
+            {
+                RoadGap g = RoadGap.Active[i];
+                if (g == null) continue;
+                float g0 = g.transform.position.z, g1 = g.EndZ;
+                if (g1 + T.rampMinGap > from && g0 - T.rampMinGap < to) { after = g1 + T.rampMinGap; return false; }
+            }
+            return true;
+        }
+
+        readonly Dictionary<object, bool> _authoredAir = new Dictionary<object, bool>();
+
+        // The chunk prefab itself contains a Ramp or RoadGap (e.g. CHN_Matilda_Inlet), not counting ramps the generator
+        // put on an instance of it.
+        bool HasAuthoredAir(object chunkKey)
+        {
+            if (!(chunkKey is GameObject prefab) || prefab == null) return false;
+            if (!_authoredAir.TryGetValue(chunkKey, out bool has))
+                _authoredAir[chunkKey] = has = prefab.GetComponentInChildren<Ramp>(true) != null || prefab.GetComponentInChildren<RoadGap>(true) != null;
+            return has;
+        }
+
+        // Does [from, to] overlap a generated ramp's zone? zoneEnd = the end of the last one it overlaps.
+        bool RampZoneOverlap(float from, float to, out float zoneEnd)
+        {
+            zoneEnd = float.MinValue;
+            foreach (Vector2 zone in _rampZones)
+                if (from < zone.y && to > zone.x) zoneEnd = Mathf.Max(zoneEnd, zone.y);
+            return zoneEnd > float.MinValue;
+        }
+
+        Ramp PlaceRamp(Ramp prefab, float start, float x, float speed, float end)
+        {
+            Active a = ActiveAt(start);
+            if (a == null) return null;
+            float lip = start + prefab.Length;
+            // Nothing on the ramp or just before it in its lane, and no obstacles anywhere on the road where it lands.
+            foreach (Active c in _active)
+                for (int i = c.Spawned.Count - 1; i >= 0; i--)
+                {
+                    GameObject go = c.Spawned[i].Instance;
+                    if (go == null || go.GetComponent<Ramp>() != null) continue;
+                    Vector3 p = go.transform.position;
+                    if (p.z < start - 6f || p.z > end) continue;
+                    bool onRamp = p.z <= lip + 1.5f && Mathf.Abs(p.x - x) < prefab.width * 0.5f + 1.2f;
+                    bool landing = p.z > lip && Mathf.Abs(p.x) <= HalfWidthAt(p.z) + 0.5f && go.GetComponent<Obstacle>() != null;
+                    if (!onRamp && !landing) continue;
+                    Release(c.Spawned[i].Key, go);
+                    c.Spawned.RemoveAt(i);
+                }
+            float local = start - a.StartZ;
+            Place(a, prefab.gameObject, new Vector3(x, a.Chunk.HeightAt(local) + a.Chunk.SidewalkOffsetAt(x, local), local), 0f, true);
+            Ramp placed = a.Spawned[a.Spawned.Count - 1].Instance.GetComponent<Ramp>();
+            PlaceAirGifts(prefab, lip, x, speed);
+            var zone = new Vector2(start - 6f, end);
+            _rampZone = zone;
+            _rampZones.Add(zone);
+            if (_rampZones.Count > 16) _rampZones.RemoveAt(0);
+            RampsPlaced++;
+            _collisionTransformsDirty = true;
+            RampPlaced?.Invoke(placed, zone);
+            return placed;
+        }
+
+        // Gifts along the predicted flight, only where the rider's feet are 2.5 m or more above the road (a normal jump
+        // reaches about 1.1 m): collectable only by flying.
+        void PlaceAirGifts(Ramp r, float lip, float x, float speed)
+        {
+            int n = T.rampAirGifts;
+            if (n <= 0) return;
+            float total = RampFlight(r, speed, out float vy, out float g);
+            for (int k = 1; k <= n; k++)
+            {
+                float t = total * k / (n + 1f);
+                float feet = r.height + vy * t - 0.5f * g * t * t;
+                if (feet < 2.5f) continue;
+                float z = lip + speed * t;
+                Active c = ActiveAt(z);
+                if (c == null || z >= _nextZ) continue;
+                float local = z - c.StartZ;
+                Place(c, RampGiftKey(), new Vector3(x, c.Chunk.HeightAt(local) + c.Chunk.SidewalkOffsetAt(x, local) + feet + 0.35f, local));
+            }
+        }
+
+        object RampGiftKey()
+        {
+            if (theme != null && theme.gifts != null && theme.gifts.Length > 0)
+            {
+                Gift g = theme.gifts[_rampRng.Next(theme.gifts.Length)];
+                if (g != null) return g.gameObject;
+            }
+            return "placeholder-gift";
         }
 
         void Shuffle(List<SpawnSlot> list)

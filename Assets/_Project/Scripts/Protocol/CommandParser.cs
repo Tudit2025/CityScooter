@@ -20,6 +20,7 @@ namespace CityScooter.Protocol
             {
                 case Messages.DoChase: case Messages.DoHeli: case Messages.DoCalm: case Messages.DoCar: case Messages.DoSlowCar:
                 case Messages.DoRoadworks: case Messages.DoPolice: case Messages.DoCrossing: case Messages.DoManhole:
+                case Messages.DoRamp: // ---- Ramps and air (v0.3)
                     return param.Length == 0 ? new Command(CommandKind.Trigger, 0f, name) : new Command(CommandKind.Malformed, 0f, raw);
                 case Messages.DoStars:
                     return int.TryParse(param, NumberStyles.Integer, CultureInfo.InvariantCulture, out int stars) && stars >= 0 && stars <= 5
@@ -49,6 +50,7 @@ namespace CityScooter.Protocol
             if (lower == Messages.Toon) return new Command(CommandKind.Toon, 1f);
             if (lower == Messages.Boost) return new Command(CommandKind.Boost);
             if (lower == Messages.Surrender) return new Command(CommandKind.Surrender);
+            if (lower == Messages.Trick) return new Command(CommandKind.Trick); // ---- Ramps and air (v0.3)
 
             int colon = lower.IndexOf(':');
             if (colon <= 0) return new Command(CommandKind.Unknown, 0f, s);
@@ -86,6 +88,8 @@ namespace CityScooter.Protocol
                     return Messages.IsSayWord(arg) ? new Command(CommandKind.Say, 0f, arg) : new Command(CommandKind.Malformed, 0f, s);
                 case Messages.Surrender:
                     return new Command(CommandKind.Surrender);
+                case Messages.Trick: // ---- Ramps and air (v0.3): "trick:1" is forgiven like "jp:1"
+                    return new Command(CommandKind.Trick);
                 case Messages.Toon:
                     switch (arg.ToLowerInvariant())
                     {

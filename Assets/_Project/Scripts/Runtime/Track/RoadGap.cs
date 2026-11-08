@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace CityScooter.Track
@@ -24,6 +25,40 @@ namespace CityScooter.Track
 
         public bool Contains(float localX, float localZ) =>
             localZ >= 0f && localZ <= length && (width <= 0f || Mathf.Abs(localX) <= width * 0.5f);
+
+        // ---- Ramps and air (v0.3, system B): runtime registry. Enabled gaps (chunk children, pattern entries) are in
+        // Active; recycled chunks are deactivated, so their gaps leave the list by themselves.
+
+        static readonly List<RoadGap> ActiveList = new List<RoadGap>();
+        /// <summary>Gaps in the world right now (enabled ones).</summary>
+        public static IReadOnlyList<RoadGap> Active => ActiveList;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => ActiveList.Clear();
+
+        void OnEnable() { if (!ActiveList.Contains(this)) ActiveList.Add(this); }
+        void OnDisable() => ActiveList.Remove(this);
+
+        /// <summary>World z where the gap ends (the far edge).</summary>
+        public float EndZ => transform.TransformPoint(new Vector3(0f, 0f, length)).z;
+
+        /// <summary>True when a world point (on the road surface at <paramref name="roadY"/>) is over this gap.</summary>
+        public bool ContainsWorld(float worldX, float worldZ, float roadY)
+        {
+            Vector3 local = transform.InverseTransformPoint(new Vector3(worldX, roadY, worldZ));
+            return Contains(local.x, local.z);
+        }
+
+        /// <summary>The gap under a world point, or null.</summary>
+        public static RoadGap At(float worldX, float worldZ, float roadY)
+        {
+            for (int i = 0; i < ActiveList.Count; i++)
+            {
+                RoadGap g = ActiveList[i];
+                if (g != null && g.ContainsWorld(worldX, worldZ, roadY)) return g;
+            }
+            return null;
+        }
 
         void OnDrawGizmos()
         {

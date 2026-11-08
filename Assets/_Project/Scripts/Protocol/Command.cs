@@ -26,6 +26,8 @@ namespace CityScooter.Protocol
         Trigger,
         /// <summary>v1 police: "sur" surrender, pull over now (ignored unless the police are chasing).</summary>
         Surrender,
+        /// <summary>v0.3 ramps: "trick" do a spin or flip while flying off a ramp.</summary>
+        Trick,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

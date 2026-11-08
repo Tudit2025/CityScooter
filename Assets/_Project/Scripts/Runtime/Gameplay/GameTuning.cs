@@ -37,6 +37,44 @@ namespace CityScooter.Gameplay
         [Tooltip("Jumps are ignored this long after a run starts (the start press must not also jump).")]
         public float jumpLockAtStart = 0.3f;
 
+        // ---- Ramps and air (v0.3, system B)
+        [Header("Ramps and air (v0.3): flying off ramps, road gaps, tricks")]
+        [Tooltip("Multiplies every ramp's own launch (take-off speed upwards = speed x slope x launch x this).")]
+        [Min(0f)] public float rampLaunch = 1.6f;
+        [Tooltip("Multiplies every ramp's own hangGravity while flying from it (lower = longer in the air).")]
+        [Range(0.2f, 2f)] public float rampHangGravity = 0.8f;
+        [Tooltip("Upwards take-off speed is never more than this (m/s), so a boosted rider does not fly out of sight.")]
+        public float rampMaxLaunchVelocity = 8f;
+        [Tooltip("Steering in the air (ramp flights) as a fraction of normal steering.")]
+        [Range(0f, 1f)] public float airSteerFactor = 0.6f;
+        [Tooltip("air:1 / air:0 / land: go to the boards for every ramp flight, and for other flights (jumps) only when they " +
+                 "will last at least this long. A normal jump lasts 2 x jumpVelocity / gravity = 0.65 s: no messages.")]
+        public float airMessageMinSeconds = 0.8f;
+        [Tooltip("Riding into a road gap: seconds of falling (SPLASH!) before the ride ends.")]
+        public float gapFallSeconds = 0.9f;
+        [Tooltip("The generator's ramps: none in the first metres of a run.")]
+        public float rampFirstDistance = 220f;
+        [Tooltip("Metres from one generated ramp to the next (random between x and y), divided by the district's ramp frequency.")]
+        public Vector2 rampSpacing = new Vector2(260f, 420f);
+        [Tooltip("Chance that a ramp is placed when one is due (otherwise the next chunk tries again).")]
+        [Range(0f, 1f)] public float rampChance = 0.6f;
+        [Tooltip("Nothing else on the road this many metres beyond the predicted landing point.")]
+        public float rampLandingMargin = 10f;
+        [Tooltip("At least this many metres between two ramps (and between a ramp and a hazard pattern).")]
+        public float rampMinGap = 30f;
+        [Tooltip("Gifts hanging in the air along the predicted flight (only a flying rider reaches them).")]
+        [Range(0, 8)] public int rampAirGifts = 5;
+        [Tooltip("Seconds one trick (spin or flip) takes.")]
+        public float trickSeconds = 0.6f;
+        public int trickPoints = 50;
+        [Tooltip("Landing with 2 or more tricks done in one flight: this many points per trick on top.")]
+        public int trickComboPointsPerTrick = 25;
+        [Tooltip("More than this many trick requests within trickSpamWindow seconds (also on the ground) and the rider is " +
+                 "dizzy: no tricks for trickDizzySeconds. Sending \"trick\" in a fast loop must not pay off.")]
+        public int trickSpamCount = 6;
+        public float trickSpamWindow = 3f;
+        public float trickDizzySeconds = 3f;
+
         [Header("Track content")]
         [Tooltip("No obstacles in the first metres of a run.")]
         public float safeStartDistance = 50f;

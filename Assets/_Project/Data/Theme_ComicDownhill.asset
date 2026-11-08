@@ -107,3 +107,14 @@ MonoBehaviour:
   bangPopup: {fileID: 5766073859980331930, guid: cf060ac9731864649afd2f6043353a91, type: 3}
   dustPopup: {fileID: 2704699411109644269, guid: f503f754b9bf4bc4b878e01d07bac9e2, type: 3}
   screechPopup: {fileID: 6138536283774010665, guid: 4b9992d6b8d317e4a95cdb963ef214f3, type: 3}
+  districts: []
+  ramps:
+  - {fileID: 6008180276453059417, guid: da5a276b28583f546b8236833ae9c102, type: 3}
+  - {fileID: 1138295221086410786, guid: 1155d2a9ad4829143a5273b528387d70, type: 3}
+  splashPopup: {fileID: 46101884649922230, guid: e40664ab8463ef845b0820463acfadf7, type: 3}
+  whoopsPopup: {fileID: 5559390717434251432, guid: caad168f753266b47a9822351f091759, type: 3}
+  splashEffect: {fileID: 7535851662614339777, guid: 0d414864914297f43b9610bb7f2a0400, type: 3}
+  spinPopup: {fileID: 6691533474343783619, guid: a36b0ead877a56b4281e843cdf409c29, type: 3}
+  flipPopup: {fileID: 1954577622652501614, guid: d47f60c765edf09469d5d3dc0c670d2d, type: 3}
+  sketchyPopup: {fileID: 1784854471600439315, guid: 8b200d14e8de9fe4097a69009448d143, type: 3}
+  landedPopup: {fileID: 784793885680580540, guid: 6b68d6fd37f0b1640b2ab7792d3db22c, type: 3}

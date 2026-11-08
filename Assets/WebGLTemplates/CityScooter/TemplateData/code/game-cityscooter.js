@@ -1,6 +1,6 @@
 /* CityScooter block pack for MicrobitBlocks (Claude, 2026-11-07). Protocol: docs/protocol.md.
  * Blocks send st:/jp/br (v1: pu/bl, police: sur) and react to the game's crash/gift/go/spd:N (v1: ko/warn:/turn:;
- * police 11/8: wanted:N, chase:, cop:N, heli:, inc:, arrested, busted, lost). The generated message reader is the same
+ * police 11/8: wanted:N, chase:, cop:N, heli:, inc:, arrested, busted, lost; v0.3 ramps: trick, do:ramp, air:, land:). The generated message reader is the same
  * buffered messages() as microbit/starter.py (uart.readline() can return half a line).
  * A pack for another game copies this file's shape: blocks, generators, isHat, globals, helpers, loopTail,
  * toolbox, starter. */
@@ -18,7 +18,10 @@
     ["chase:1 (the police are after you)", "chase:1"], ["chase:0 (police chase over)", "chase:0"],
     ["heli:1 (police helicopter!)", "heli:1"], ["heli:0 (helicopter gone)", "heli:0"],
     ["inc:C (net or sniper aiming AT you: move!)", "inc:C"], ["inc:L (net or sniper on your left)", "inc:L"], ["inc:R (net or sniper on your right)", "inc:R"],
-    ["arrested", "arrested"], ["busted", "busted"], ["lost (you lost the police!)", "lost"]];
+    ["arrested", "arrested"], ["busted", "busted"], ["lost (you lost the police!)", "lost"],
+    // Ramps and air (v0.3): flying off ramps, tricks
+    ["air:1 (you took off from a ramp!)", "air:1"], ["air:0 (back on the ground)", "air:0"],
+    ["land:ok (landed)", "land:ok"], ["land:trick (landed after a trick!)", "land:trick"]];
 
   // Words of your own that the game repeats to every board ("say:party" -> "party").
   const sayWord = (w) => String(w || "").replace(/[^A-Za-z0-9_!?-]/g, "").slice(0, 16) || "party";
@@ -43,7 +46,8 @@
     { type: "cs_do", message0: "make the game start %1",
       args0: [{ type: "field_dropdown", name: "EVENT", options: [["a police chase", "chase"], ["the police helicopter (3 stars)", "heli"],
         ["calm: the police give up", "calm"], ["a turn to the left", "turn:L"], ["a turn to the right", "turn:R"], ["an oncoming car", "car"],
-        ["a slow car ahead", "slowcar"], ["roadworks", "roadworks"], ["a police stop", "police"], ["people crossing", "crossing"], ["an open manhole", "manhole"]] }],
+        ["a slow car ahead", "slowcar"], ["roadworks", "roadworks"], ["a police stop", "police"], ["people crossing", "crossing"], ["an open manhole", "manhole"],
+        ["a ramp ahead", "ramp"]] }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "Your program makes one of the game's own events happen: e.g. count punches (\"ko\") in a variable and start a police chase after 3. One per second per micro:bit; only during a ride. Python: print(\"do:chase\")" },
     { type: "cs_stars", message0: "set the wanted stars to %1", args0: [{ type: "input_value", name: "N", check: "Number" }],
@@ -74,6 +78,9 @@
       tooltip: "How many police stars you have: 0 to 5. Punching police adds a star; losing the police takes them away." },
     { type: "cs_cop", message0: "police distance (0-9)", output: "Number", style: "game_blocks",
       tooltip: "How far behind the police car is while it chases you: 0 is right next to you, 9 is far away (or no police car)." },
+    // Ramps and air (v0.3)
+    { type: "cs_trick", message0: "do a trick", previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "While you fly off a ramp (the game says air:1): a spin, then a flip, 50 points each, more for 2 in one flight. Land in the middle of one and it is SKETCHY (no points). On the ground it does nothing; sending it in a fast loop makes you dizzy. Python: print(\"trick\")" },
   ];
 
   const GENERATORS = {
@@ -95,6 +102,7 @@
     cs_wanted: () => { MB.setFlag("usesWanted"); return ["wanted_level", Order.ATOMIC]; },
     cs_on_wanted: (b) => { MB.setFlag("usesWanted"); MB.addSection("msg:wanted", MB.statements(b, "DO")); return ""; },
     cs_cop: () => { MB.setFlag("usesCop"); return ["police_distance", Order.ATOMIC]; },
+    cs_trick: () => 'print("trick")\n',
   };
 
   const MESSAGES_HELPER = [
@@ -165,6 +173,7 @@
         blk("cs_on_message", { fields: { MSG: "chase:1" } }), blk("cs_on_message", { fields: { MSG: "inc:C" } }),
         blk("cs_on_wanted"), blk("cs_wanted"), blk("cs_cop"), blk("cs_surrender"),
         blk("cs_do"), blk("cs_stars", { inputs: { N: num(1) } }), blk("cs_say"), blk("cs_on_word"),
+        blk("cs_on_message", { fields: { MSG: "air:1" } }), blk("cs_trick"), // ramps and air (v0.3)
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

@@ -68,6 +68,14 @@ namespace CityScooter.Game
         public static void RaiseBusted() => Busted?.Invoke();
         public static void RaiseLostPolice() => LostPolice?.Invoke();
 
+        // ---- Ramps and air (v0.3, RiderController / RiderActions)
+        /// <summary>Took off on a ramp flight (true, "air:1") / back down or the ride ended in the air (false, "air:0").</summary>
+        public static event Action<bool> AirChanged;
+        /// <summary>Landed safely after a ramp flight: true with at least one finished trick ("land:trick"), else "land:ok".</summary>
+        public static event Action<bool> Landed;
+        public static void RaiseAirChanged(bool on) => AirChanged?.Invoke(on);
+        public static void RaiseLanded(bool trick) => Landed?.Invoke(trick);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
@@ -91,6 +99,8 @@ namespace CityScooter.Game
             Arrested = null;
             Busted = null;
             LostPolice = null;
+            AirChanged = null; // ---- Ramps and air (v0.3)
+            Landed = null;
         }
     }
 }
