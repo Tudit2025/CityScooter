@@ -115,7 +115,8 @@ function installFakeSerial() {
 
   // Simulator mode with labcheck: ▶, then A starts a ride; the game's go reaches the simulator (echo:go)
   await page.click('.cs-modes button[data-mode="sim"]');
-  check("sim: Unity keyboard off", (await ev(() => window.__toUnity.slice(-6).join(" "))).includes("SetKeyboardEnabled(0)"));
+  // The latest keyboard state Unity got is off (the lesson page never turns it on, so switching modes sends nothing new).
+  check("sim: Unity keyboard off", await ev(() => { const k = window.__toUnity.filter((c) => c.startsWith("SetKeyboardEnabled")); return k.length > 0 && k[k.length - 1].includes("(0)"); }));
   await page.waitForFunction(() => window.MicrobitBlocks, { timeout: 20000 });
   await ev((code) => { document.querySelector('.cs-tabs button[data-view="python"]').click(); const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, LABCHECK);
   await page.waitForFunction(() => document.getElementById("cs-sim").src.includes("usermbit"), { timeout: 5000 });
