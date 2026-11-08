@@ -67,6 +67,15 @@ namespace CityScooter.Tests
             if (d.pedestrians != null && d.pedestrians.Length > 0) _copy.pedestrians = d.pedestrians;
             _copy.hazards = new HazardPattern[0];
             _copy.districts = new District[0];
+            // Main starts in the route's first district: switch the district director off and hide what it placed (its far
+            // scenery), so the review shows only this district.
+            foreach (DistrictDirector dd in Object.FindObjectsByType<DistrictDirector>(FindObjectsSortMode.None))
+            {
+                dd.enabled = false;
+                foreach (Transform child in dd.transform)
+                    if (_original.districts != null && System.Array.Exists(_original.districts, o => o != null && o.farScenery != null && child.name.StartsWith(o.farScenery.name)))
+                        child.gameObject.SetActive(false);
+            }
             _game.track.theme = _copy;
             RenderSettings.fogColor = d.fogColor;
             RenderSettings.ambientSkyColor = d.ambientSky;

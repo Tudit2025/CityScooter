@@ -314,26 +314,48 @@ namespace CityScooter.EditorTools.Districts
             Plant(m, p + V(F(r, -.15f, .15f) * h, h * .78f, F(r, -.12f, .12f) * h), h * .4f, Color.Lerp(leaf, R.ink, .1f), Color.Lerp(leaf, R.yellow, .3f));
         }
 
-        /// <summary>Grass tree (balga): black 8-sided trunk, a spiky skirt of thin closed boxes, a flower spear.</summary>
+        /// <summary>
+        /// Grass tree (balga): navy ink root ring, black 8-sided trunk, and at the TOP a dense skirt of long thin closed leaf
+        /// boxes: an outer ring drooping steeply (dry straw), an inner ring drooping less (olive), a green tuft angled up,
+        /// and a thick brown flower spear with a navy tip above it.
+        /// </summary>
         public static void Balga(ComicMesh m, Vector3 p, float s, int seed)
         {
             var r = Rng(seed);
-            float trunk = s * F(r, .7f, 1.3f);
+            float trunk = s * F(r, 1.1f, 1.6f), tr = .22f * s;
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, .08f, 0), tr * 1.45f, .16f, R.ink, 8, .9f);
             m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + V(0, trunk * .5f, 0), .22f * s, trunk, BalgaTrunk, 8, .88f);
-            Vector3 top = p + V(0, trunk, 0);
-            m.Surface = ComicSurface.Foliage;
-            float[] ups = { 1.6f, .5f, -.35f, -1.1f };
-            for (int i = 0; i < 16; i++)
+            m.Cylinder(p + V(0, trunk * .5f, 0), tr, trunk, BalgaTrunk, 8, .9f);
+            Vector3 crown = p + V(0, trunk, 0);
+            float thick = Mathf.Max(.065f, .07f * s), deep = Mathf.Max(.055f, .055f * s);
+            // (leaves, degrees below (-) / above (+) horizontal, length, start height, colour a, colour b)
+            var rings = new (int n, float pitch, float len, float rise, Color a, Color b)[]
             {
-                float a = (i * 22.5f + (i % 4) * 11f + F(r, -6f, 6f)) * Mathf.Deg2Rad, up = ups[i % 4];
-                Vector3 dir = new Vector3(Mathf.Cos(a), up, Mathf.Sin(a)).normalized;
-                m.Box(top + dir * .42f * s, V(.09f * s, .07f * s, .85f * s), i % 2 == 0 ? BalgaGrass : BalgaGrassDark, Quaternion.LookRotation(dir));
+                (12, -64f, 1.05f * s, -.04f * s, new Color(.74f, .66f, .36f), new Color(.6f, .57f, .3f)),    // outer skirt: dry straw / olive
+                (10, -48f, .9f * s, .06f * s, new Color(.52f, .56f, .27f), new Color(.45f, .5f, .23f)),      // inner skirt: olive
+                (9, 48f, .78f * s, .14f * s, new Color(.45f, .66f, .25f), new Color(.38f, .58f, .22f)),     // green tuft, up and out
+            };
+            m.Surface = ComicSurface.Foliage;
+            float spin = F(r, 0f, 360f);
+            for (int k = 0; k < rings.Length; k++)
+            {
+                var ring = rings[k];
+                for (int i = 0; i < ring.n; i++)
+                {
+                    float yaw = spin + (i + k * .5f) * 360f / ring.n + F(r, -6f, 6f), pitch = ring.pitch + F(r, -5f, 5f);
+                    Quaternion q = Quaternion.Euler(0f, yaw, 0f) * Quaternion.Euler(-pitch, 0f, 0f);
+                    Vector3 dir = q * Vector3.forward;
+                    Vector3 start = crown + V(0, ring.rise, 0) + Quaternion.Euler(0f, yaw, 0f) * V(0, 0, tr * .55f);
+                    m.Box(start + dir * ring.len * .5f, V(thick, deep, ring.len), i % 2 == 0 ? ring.a : ring.b, q);
+                }
             }
-            m.Ellipsoid(top + V(0, .05f * s, 0), V(.5f * s, .35f * s, .5f * s), BalgaGrassDark);
+            // Flower spear: thick brown stalk, the cream-brown flowering part, a navy tip.
             m.Surface = ComicSurface.Wood;
-            Rod(m, top, top + V(0, 1.75f * s, 0), .06f * s, Spear);
-            m.Cylinder(top + V(0, 1.38f * s, 0), .1f * s, .72f * s, SpearFlower, 8, .8f);
+            Rod(m, crown + V(0, .1f * s, 0), crown + V(0, 1.85f * s, 0), .085f * s, Spear);
+            m.Cylinder(crown + V(0, 1.45f * s, 0), .14f * s, .75f * s, SpearFlower, 8, .85f);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(crown + V(0, 1.95f * s, 0), .09f * s, .22f * s, R.ink, 8, .35f);
         }
 
         /// <summary>Red-and-green kangaroo paw (WA's floral emblem): leaf blob, red 8-sided stems, green claw flowers.</summary>

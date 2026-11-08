@@ -168,7 +168,7 @@ namespace CityScooter.EditorTools.Districts
             // Right: botanic garden beds behind a limestone edge, the DNA Tower above the bush.
             ParkGround(c, 1, 0f, 40f, 30f);
             LimestoneEdge(c, 1, 0f, 40f, .4f);
-            for (float z = 3f; z < 38f; z += 12f) DaisyBed(c.DeepFlat, 9.2f, 13.5f, z, z + 8f, .14f, c.Rnd, 14);
+            for (float z = 3f; z < 38f; z += 12f) DaisyBed(c.DeepFlat, 9.2f, 13.5f, z, z + 8f, .14f, c.Rnd, 11);
             for (float z = 6f; z < 38f; z += 7f) KangarooPaw(c.Props, c.P(F(c.Rnd, 14.5f, 16.5f), .14f, z), F(c.Rnd, 1.1f, 1.4f), c.NextSeed());
             Balga(c.Props, c.P(18.5f, .12f, 9f), 1.3f, 7); Balga(c.Props, c.P(20f, .12f, 31f), 1.1f, 8);
             Banksia(c.Props, c.P(17.5f, .12f, 21f), 1.2f, 9);
@@ -536,8 +536,7 @@ namespace CityScooter.EditorTools.Districts
                 m.Ellipsoid(V(-F(r, 80f, 120f), 2f, z), V(F(r, 40f, 60f), 22f, 34f), GumLeafDark);
             }
             m.Surface = ComicSurface.Concrete;
-            for (int i = 0; i < 6; i++)
-                m.Box(V(F(r, 280f, 340f), -34f + 6f, F(r, 40f, 180f)), V(10f, 12f + i % 3 * 6f, 10f), Color.Lerp(R.cream, R.glass, .3f));
+            // No far-shore blocks: the GPU city curl lifts them over the hillside (they floated); the sky panorama shows the city.
             m.Shear(-Standard / 40f); // follows the downhill ahead of the rider like the chunks do
             return SavePrefab(PrefabFolder + "/PRP_KingsPark_FarView.prefab", MeshFolder, m, false, false, root =>
             {
