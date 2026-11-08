@@ -36,9 +36,8 @@ namespace CityScooter.EditorTools.Districts
         /// <summary>Riverside: flatter than the street (-1.6 m per 40 m instead of -3.15).</summary>
         public const float Drop = -1.6f;
         const float WaterLevel = -1.3f;
-        // How far out the river plane goes: further out, the palette's far blend paints the panorama onto the water
-        // in slabs; past it the panorama sky itself shows the river and the far shore.
-        const float RiverFar = 90f;
+        // How far out the river plane goes (the panorama sky shows the far shore beyond it).
+        const float RiverFar = 260f;
 
         // The bridge hump (Ramp platform) and the jetty jump over the inlet (Ramp + RoadGap). Numbers for gameplay:
         public const float BridgeStart = 6f, BridgeRise = 10f, BridgeHeight = 2.2f, BridgeTop = 8f, BridgeDown = 8f;
@@ -117,9 +116,8 @@ namespace CityScooter.EditorTools.Districts
             d.sunColor = new Color(1f, .97f, .88f);
             d.sunIntensity = 1.45f;
             d.farScenery = far;
-            d.gateway = null;
-            d.ambience = null;
-            d.ambienceVolume = .35f;
+            // gateway (DistrictSetup's GW_ sign), ambience and the sky fields (skyYaw, skySize, skyHeight) belong to the
+            // district system: never written here, existing values are kept.
             EditorUtility.SetDirty(d);
             AssetDatabase.SaveAssets();
             K.WriteReport("art-src/districts/quay/catalog.txt");
