@@ -122,9 +122,8 @@ namespace CityScooter.EditorTools.Districts
             d.sunColor = new Color(1f, .96f, .90f);
             d.sunIntensity = 1.25f;
             d.farScenery = far;
-            d.gateway = null;
-            d.ambience = null;
-            d.ambienceVolume = .35f;
+            // gateway (DistrictSetup's GW_ sign), ambience and the sky fields (skyYaw, skySize, skyHeight) belong to the
+            // district system: never written here, existing values are kept.
             EditorUtility.SetDirty(d);
             AssetDatabase.SaveAssets();
             K.WriteReport("art-src/districts/cbd/catalog.txt");
