@@ -1,0 +1,28 @@
+KINGS PARK (district id kingspark, order 30) - reference sources and what was taken
+Reference images stay outside the repo (D:\CityScooter-refs\kingspark\<video id>\: thumb.jpg, sb.mhtml, sheets/).
+Nothing from them is in the game: the art is generated geometry (KingsParkBuilder.cs, ParkRiverKit.cs), vertex colours only.
+
+Videos (YouTube storyboards via yt-dlp -f sb0, cover images from i.ytimg.com):
+- q317YxcPncQ  "Perth Kings Park Walk 2026 - Botanic Garden Flowers to Lotterywest Federation Walkway (4K)"
+  https://www.youtube.com/watch?v=q317YxcPncQ
+  Took: Federation Walkway look - dark steel-mesh deck (#4A4A5E -> DeckMesh .34/.33/.42), light grey steel edge beams and
+  posts, frameless glass balustrades (pale teal #B8E6E6) with a round steel handrail on top, the slight arch of the bridge,
+  treetops all round it, river visible below to the left.
+- qugqw3DTBhE  "Kings Park, Perth | End-of-Winter Wildflowers 4K Walking Tour"
+  https://www.youtube.com/watch?v=qugqw3DTBhE
+  Took: pink everlasting (paper daisy) beds with yellow centres (#F58CB3 / #FFD140), olive-grey eucalyptus canopy,
+  deep blue sky, limestone-edged garden beds.
+
+General knowledge of the place (no image copied):
+- Fraser Avenue: double row of tall lemon-scented gums (Corymbia citriodora) - smooth cream-white trunks (#F0EBDE) with
+  pinkish-grey patches (#CCBDBA), high forks, sparse olive canopy (#75914F / #546F40 / #99AB5E), 16-22 m tall,
+  trees about 10 m apart, inner row ~10.5 m from the road centre, outer row ~16 m.
+- Low limestone walls and kerbs (#E3D4A8, caps #F2E8CC); dry bush floor (#A39461); lawn verges (#78A34D).
+- Native plants: grass trees / balga (black trunk, grass skirt, flower spear), banksia (orange cones), red-and-green
+  kangaroo paw (WA floral emblem: red woolly stems, green claw flowers).
+- DNA Tower: white double-helix lookout staircase, about 15 m; drawn as a stylised white spiral.
+- Lookout over the Swan River and the CBD (the comic sky panorama already shows the skyline from Kings Park).
+- State War Memorial / Flame of Remembrance: deliberately NOT modelled (no obstacle, no ramp).
+
+Proportions used: road 8 m + 4 m paved paths (contract), limestone wall 0.5 m high at x = +-8.3 m, walkway deck 3.2 m wide,
+3 m high, 10 m climb + 14 m flat, then a 6 m gully (WHOOPS).
