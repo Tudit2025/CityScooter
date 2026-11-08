@@ -52,6 +52,8 @@ namespace CityScooter.Devices
             GameEvents.Arrested += OnArrested;
             GameEvents.Busted += OnBusted;
             GameEvents.LostPolice += OnLost;
+            GameEvents.AirChanged += OnAir; // ---- Ramps and air (v0.3)
+            GameEvents.Landed += OnLanded;
         }
 
         void OnDisable()
@@ -74,6 +76,8 @@ namespace CityScooter.Devices
             GameEvents.Arrested -= OnArrested;
             GameEvents.Busted -= OnBusted;
             GameEvents.LostPolice -= OnLost;
+            GameEvents.AirChanged -= OnAir; // ---- Ramps and air (v0.3)
+            GameEvents.Landed -= OnLanded;
         }
 
         void OnRunStarted()
@@ -165,6 +169,11 @@ namespace CityScooter.Devices
         void OnBusted() => _hub.Send(Messages.Busted);
 
         void OnLost() => _hub.Send(Messages.Lost);
+
+        // ---- Ramps and air (v0.3): rare (one flight every few seconds at most), sent right away.
+        void OnAir(bool on) => _hub.Send(Messages.Air(on));
+
+        void OnLanded(bool trick) => _hub.Send(trick ? Messages.LandTrick : Messages.LandOk);
 
         void SendIncoming()
         {

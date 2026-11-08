@@ -106,6 +106,7 @@ function installFakeSerial() {
   await push(p, "Traceback (most recent call last):\n  File \"main.py\", line 4, in <module>\nNameError: name 'stear' isn't defined\n");
   await push(p, "st:abc\necho:crash\n");
   await push(p, "sur\n");
+  await push(p, "trick\n"); // v0.3 ramps
   // The stats row redraws every 200 ms and the lamp stays on for 600 ms: wait for it rather than sampling once.
   const surLamp = await page.waitForFunction(() => { const r = document.querySelector(".cs-stat .cs-sur"); return !!r && r.classList.contains("cs-on"); },
     { timeout: 550, polling: 50 }).then(() => true, () => false);
@@ -113,6 +114,8 @@ function installFakeSerial() {
   const L = await lines();
   check("sur (surrender) reaches Unity", L.includes("usb1|sur"));
   check("sur lights the SUR lamp", surLamp);
+  check("trick reaches Unity (v0.3 ramps)", L.includes("usb1|trick"));
+  check("trick lights the TRICK lamp", await ev(() => !!document.querySelector(".cs-stat .cs-trick")));
   check("st split across chunks reaches Unity whole", L.includes("usb1|st:-35"), JSON.stringify(L.slice(0, 8)));
   check("jp lines reach Unity", L.filter((x) => x === "usb1|jp").length === 3);
   check("status usb1 v2 connected", (await ev(() => window.__fakeUnity.status.usb1)) === "usb1|usb|1|v2");

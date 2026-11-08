@@ -43,6 +43,21 @@
 - 高度不超过 1.1 m 的街边摆件标记为可跳过；较高摆件、候车亭和停放车辆不可跳过。碰撞沿用 Obstacle 撞车规则。建筑边界由骑行范围限制。
 - 新生成或重新摆放的碰撞会在查询前同步到物理场景；骑手继续使用跨越本帧移动的扫掠体积，覆盖高速运动。
 
+## 跳台、滞空、缺口和特技（v0.3，系统 B）
+
+代码：`RiderController`（地面、飞行、缺口）、`RiderActions`（特技、SPLASH!）、`TrackGenerator` 的 "Ramps and air" 区域（放置）、`FollowCamera`（镜头抬高）、`Ramp` / `RoadGap`（数据契约，加了运行时登记表 `Ramp.Active` / `RoadGap.Active`，启用时自动登记，路段回收时自动退出）。数值都在 `GameTuning` 的 "Ramps and air"。
+
+- **地面** = 路面（含人行道）+ 骑手脚下最高的跳台 `Ramp.HeightAt`（在跳台自己的局部坐标里算，跳台跟着下坡路面倾斜也没问题）。从正面骑上去平滑升高；从侧面撞进去不会被抬上去，也不算撞车。
+- **起飞**：过了台边（或者地面突然比骑手掉得快），竖直速度 = 速度 × 坡度（height/rise）× `Ramp.launch` × `rampLaunch`（1.6），最多 `rampMaxLaunchVelocity`（8 m/s）；空中重力 = 重力 × `Ramp.hangGravity` × `rampHangGravity`（0.8）。标准小跳台（rise 5、height 1.4、默认 launch 1、hangGravity 0.5）在 15 m/s 时飞约 1.87 秒、28 m，最高离路面约 4.2 m；9 m/s 时约 1.3 秒、11 m；22 m/s 时约 2.2 秒、47 m。在跳台顶上按跳也会按跳台的滞空重力飘。普通跳（空格 / `jp`）不变。
+- **空中**：转向是平时的 60%（`airSteerFactor`）。障碍物：能跳过的照旧；其它障碍只要整帧脚都在它碰撞盒顶上方就飞过去（按 `Collider.bounds`），落在车顶上就是撞车。空中礼物照常拿。
+- **镜头**：在跳台上和跳台飞行中，镜头按骑手离路面高度的 55% 抬高、瞄准点抬 50%，抬起 2.5/s、落回 3.5/s 平滑；普通跳不动。落地轻微震一下，SKETCHY! 落地震得重一点。
+- **缺口** `RoadGap`：在地上进入缺口（或者落在缺口里）就往下掉，`gapFallSeconds`（0.9 秒）后 `GameController.EndRun("SPLASH!")`，结算标题就是缺口的 `word` 加感叹号；水面缺口加一朵水花。飞过去没事。生成器从不放缺口，只有美术做的路段里才有。
+- **特技**：只在"大飞行"里有效（从跳台起飞，或预计飞 0.8 秒以上）。转体 / 后空翻轮流，各 0.6 秒（`trickSeconds`），每个 50 分（`trickPoints`），一次飞行 2 个以上安全落地每个再加 25 分（`trickComboPointsPerTrick`，HUD 显示 COMBO）；落地时还在转：SKETCHY!，不算撞车、这一个不加分、稍微减速。防狂发：3 秒内 6 条以上就头晕 3 秒（`trickSpam*`，和按铃一样的思路）。结算页显示特技数。
+- **生成器放置**：第一个跳台在 `rampFirstDistance`（220 m）之后，之后每隔 `rampSpacing`（260～420 m）÷ 场景频率，到期时 `rampChance`（0.6）的概率真的放。放置时机是"整段飞行都已经铺好路"的时候：从助跑到按预计速度算出的落地点再加 `rampLandingMargin`（10 m）。不放在大马路的过渡路段上、不和路段事件（路政、警察拦路等）重叠、离别的跳台和缺口至少 `rampMinGap`（30 m）；跳台上和落地区整条路上的随机障碍会清掉；之后的路段事件也会让开跳台的落地区（程序发的 `do:car` 这类事件也会排到跳台后面）。车道按 `Ramp.lanes`（-1/0/1 → x = -2.6/0/2.6）。空中礼物 `rampAirGifts`（5 个）沿预计轨迹摆，只摆在脚离路面 2.5 m 以上的位置（普通跳只能到 1.1 m）。
+- **路段里自带的跳台和缺口**（例如 `CHN_Uwa_PondJump`、`CHN_Matilda_Inlet`）：作为路段的子物体，路段生成或从对象池取出时自动登记，回收时自动退出，不用另外注册。`Ramp` 根节点可以不跟路面一起倾斜（放在路面上、不旋转），高度按骑手所在点的路面往上算；缺口在自己的局部坐标里判断，可以偏在一边（UWA 的池塘只盖住右车道和人行道，左车道照常骑）。测试按 4 个路段的数值复刻过（Matilda 入水口、UWA 池塘、Kings Park 高架步道、Mounts Bay 入水口）：9 m/s 起步速度都能飞过（Matilda 的 6 m 入水口还剩 5 m 左右），Mounts Bay 刹到 4 m/s 会掉进水里（设计如此）。生成器自己的跳台不会放在自带跳台或缺口的路段上（按路段预制体判断），离这些跳台、缺口也至少 30 m。
+- **场景接口**：`TrackGenerator.RampChoices()`（现在返回 `theme.ramps`）和 `RampFrequency()`（现在返回 1）。合并场景系统时要改成当前场景的 `District.ramps`（空就用 `theme.ramps`）和 `District.rampFrequency`，代码里有 TODO。
+- **通用跳台**：`RampKitBuilder`（菜单 CityScooter/Comic City/4 - Build ramps，批处理 `CityScooter.EditorTools.RampKitBuilder.BuildBatch`，在 HazardKitBuilder、BoulevardBuilder 之后跑）生成 `Prefabs/ComicCity/Ramps/RMP_Kicker`（木板加钢架小跳台，宽 3 m）、`RMP_Platform`（宽 3.4 m、高 2 m、7 m 助跑、6 m 平台，launch 0.8）和弹出字 SPLASH!、WHOOPS!、SPIN!、FLIP!、SKETCHY!、LANDED!、水花，写进主题的 `ramps` 和 "Ramps and air" 字段。预览图在 `art-src/ramps/`（`RampAirTests.Screenshots_RampFlight_FromTheChaseCamera`）。
+
 ## 验证
 
 Unity 6000.3.28f1：**25/25 PlayMode、39/39 EditMode 通过**。

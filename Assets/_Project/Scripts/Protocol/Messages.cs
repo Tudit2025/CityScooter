@@ -43,6 +43,7 @@ namespace CityScooter.Protocol
                 case "arrested": case "busted": case "lost": case "echo":
                 // board commands too: a relayed "sur" or "jp" must not look like a command to an echoing program
                 case Jump: case Brake: case Punch: case Bell: case Boost: case Toon: case Say: case Do: case "sur":
+                case Trick: // ---- Ramps and air (v0.3)
                     return true;
             }
             return w.IndexOf(':') >= 0;
@@ -107,6 +108,22 @@ namespace CityScooter.Protocol
         public const string Arrested = "arrested";
         public const string Busted = "busted";
         public const string Lost = "lost";
+
+        // ---- Ramps and air (v0.3): ramps you fly off, tricks in the air
+        // micro:bit -> game
+        /// <summary>Do a trick (spin, then flip, ...) while flying off a ramp; on the ground it does nothing.</summary>
+        public const string Trick = "trick";
+        /// <summary>"do:ramp": a program puts a ramp on the road ahead.</summary>
+        public const string DoRamp = "ramp";
+        // game -> micro:bit
+        /// <summary>Took off from a ramp (or any flight that will last airMessageMinSeconds or more).</summary>
+        public const string AirOn = "air:1";
+        /// <summary>Back on the ground (always after air:1; also when the ride ends in the air).</summary>
+        public const string AirOff = "air:0";
+        public static string Air(bool on) => on ? AirOn : AirOff;
+        /// <summary>Landed safely, right after air:0 (land:trick when at least one trick was finished in that flight).</summary>
+        public const string LandOk = "land:ok";
+        public const string LandTrick = "land:trick";
 
         static int Clamp(int v, int min, int max) => v < min ? min : v > max ? max : v;
     }

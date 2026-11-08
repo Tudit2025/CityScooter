@@ -58,6 +58,13 @@ namespace CityScooter.Controls
             return k != null && k.eKey.wasPressedThisFrame;
         }
 
+        /// <summary>v0.3 ramps: trick in the air, Q.</summary>
+        public static bool TrickPressed()
+        {
+            Keyboard k = Keyboard.current;
+            return k != null && k.qKey.wasPressedThisFrame;
+        }
+
         /// <summary>v1 cartoon mode toggle: T.</summary>
         public static bool ToonTogglePressed()
         {

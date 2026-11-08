@@ -21,6 +21,7 @@ namespace CityScooter.Protocol
         int _pendingBells;
         int _pendingBoosts;
         int _pendingSurrenders;
+        int _pendingTricks; // ---- Ramps and air (v0.3)
 
         /// <summary>v1 cartoon mode: the last "toon:" any device sent (off until a program turns it on).</summary>
         public bool Toon { get; private set; }
@@ -56,6 +57,9 @@ namespace CityScooter.Protocol
                     break;
                 case CommandKind.Toon:
                     Toon = command.Value > 0.5f;
+                    break;
+                case CommandKind.Trick: // ---- Ramps and air (v0.3)
+                    _pendingTricks++;
                     break;
             }
         }
@@ -110,8 +114,20 @@ namespace CityScooter.Protocol
             return true;
         }
 
+        // ---- Ramps and air (v0.3)
+        /// <summary>How many "trick" arrived since the last ConsumeTrick (the game's spam rule counts them).</summary>
+        public int PendingTricks => _pendingTricks;
+        /// <summary>Number of "trick" lines since the last call (0 = none); clears them.</summary>
+        public int ConsumeTricks()
+        {
+            int n = _pendingTricks;
+            _pendingTricks = 0;
+            return n;
+        }
+
         public void Reset()
         {
+            _pendingTricks = 0;
             Toon = false;
             _pendingPunches = 0;
             _pendingBells = 0;

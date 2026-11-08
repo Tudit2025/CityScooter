@@ -93,6 +93,19 @@ namespace CityScooter.Gameplay
         [Tooltip("Generic ramps (root has Ramp) for districts without their own (District.ramps).")]
         public Ramp[] ramps;
 
+        // ---- Ramps and air (v0.3, system B): written by RampKitBuilder (CityScooter/Comic City/4 - Build ramps)
+        [Header("Ramps and air (v0.3, optional; RampKitBuilder)")]
+        [Tooltip("Fell into a road gap with water (SPLASH!) or a drop (WHOOPS!).")]
+        public GameObject splashPopup;
+        public GameObject whoopsPopup;
+        [Tooltip("Water thrown up where the rider falls into a water gap.")]
+        public GameObject splashEffect;
+        [Tooltip("Tricks in the air: SPIN!, FLIP!; landing mid-trick: SKETCHY!; a clean landing after tricks: LANDED!")]
+        public GameObject spinPopup;
+        public GameObject flipPopup;
+        public GameObject sketchyPopup;
+        public GameObject landedPopup;
+
         public bool HasChunks => chunks != null && chunks.Length > 0;
         public bool HasDistricts => districts != null && districts.Length > 0 && System.Array.TrueForAll(districts, d => d != null && d.HasChunks);
         public bool HasBoulevard => boulevardIn != null && boulevardOut != null && boulevardChunks != null
