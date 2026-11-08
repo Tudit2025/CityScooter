@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_KingsPark
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: kingspark
+  displayName: KINGS PARK
+  order: 30
+  length: {x: 440, y: 600}
+  chunks:
+  - {fileID: 3144797091505651701, guid: 3d519dc9d817a7845840b26acfbf269c, type: 3}
+  - {fileID: 5540572031975684192, guid: 61ca9ae0d7c50d047a337ab031de4396, type: 3}
+  - {fileID: 608250775198207990, guid: 58b4c4bfccb2e1f41ab4984b36926166, type: 3}
+  - {fileID: 2391970085927450700, guid: de01170db98d39144ac438b74a952f6e, type: 3}
+  - {fileID: 5007047053964891205, guid: 0c8aaa8b2247a624796d5d0e545965b4, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 1615795056137004474, guid: 3687691cd606f134b9263e04aecac580, type: 3}
+  exit: {fileID: 3102447399186126247, guid: 6f1b4703622bb9d4f8521e59b318f9c7, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 62830235547981449, guid: 635f255a146316a42b3dca8eb4c9975c, type: 3}
+  - {fileID: 8324170129745324042, guid: 07b37b4d87d9b544d802a890a8bd4c62, type: 3}
+  - {fileID: 534185336433319250, guid: ce5c61c811b2ff446b2a46bab0ce5f5e, type: 3}
+  - {fileID: 3252785564823809802, guid: eef0a39a68ecfdb43a6831f7c8928987, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards: []
+  pedestrians:
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 2826230802829448736, guid: 07b37b4d87d9b544d802a890a8bd4c62, type: 3}
+  ramps:
+  - {fileID: 6269248828286283071, guid: d0875b193bd05704eab6ec2a35313e93, type: 3}
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.7, g: 0.79, b: 0.72, a: 1}
+  skyTint: {r: 1, g: 0.98, b: 0.93, a: 1}
+  ambientSky: {r: 0.64, g: 0.78, b: 0.8, a: 1}
+  ambientEquator: {r: 0.76, g: 0.8, b: 0.64, a: 1}
+  ambientGround: {r: 0.52, g: 0.5, b: 0.36, a: 1}
+  sunColor: {r: 1, g: 0.94, b: 0.8, a: 1}
+  sunIntensity: 1.4
+  farScenery: {fileID: 8226085152938728945, guid: ccdeaace185c93b4e9bfadd212cae6c3, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35

@@ -1,0 +1,26 @@
+MOUNTS BAY RD (district id mountsbay, order 70) - reference sources and what was taken
+Reference images stay outside the repo (D:\CityScooter-refs\mountsbay\<video id>\: thumb.jpg, sb.mhtml, sheets/).
+Nothing from them is in the game: the art is generated geometry (MountsBayBuilder.cs, ParkRiverKit.cs), vertex colours only.
+
+Videos (YouTube storyboards via yt-dlp -f sb0):
+- WTtoAMZY4y0  "Cycle into Perth's CBD - bike path to Elizabeth Quay area from Mounts Bay Road"
+  https://www.youtube.com/watch?v=WTtoAMZY4y0
+  Took: red-asphalt shared path (#B34D3D) with a white dashed centre line, tall smooth white/grey concrete retaining
+  walls (#F0EBDB), dry bush and grass trees on pale limestone slopes, lawns with the CBD skyline beyond, tall dark lamp posts.
+- COe3VzBYowg  "Mounts Bay Cruise Perth Cycling"
+  https://www.youtube.com/watch?v=COe3VzBYowg
+  Took: the red-brick Old Swan Brewery (#B8543A, darker #8C3D2B) with its steel truss footbridge over the road (dark steel
+  #544D52), palms along the river, low riverside walls, lamp posts with long arms.
+
+General knowledge of the place (no image copied):
+- Riding from the city back west: Kings Park escarpment on the right (stepped pale limestone #E3D4A8 / #D6C294 / #C2AD80,
+  bush on the ledges, gums on top), Swan River on the left (water #3379B3, light #619FD1, sparkles #C7E6F5), rock revetment
+  (#A8A191), yachts, the South Perth shore far across.
+- Near the city end: palm-lined frontage and apartment towers; the Narrows Bridge / freeway deck crossing high over the
+  road on concrete piers (#CCC7BA, undersides #8C8A85); Jacob's Ladder - the long steep staircase up the cliff with dark
+  green handrails and people climbing it.
+- A small inlet crossing (game invention): full-width limestone river-wall ramp, 5 m of water (SPLASH).
+- Australian pelican: white, black wings, huge pale pink bill. Perth wheelie bin: dark green body, yellow recycling lid.
+
+Proportions used: road 8 m + 4 m paths (contract), retaining wall 3 m high at x = +8.35 m, cliff up to 16-30 m from x = 12 m,
+water 1.1 m below the road, Narrows deck 9.4 m above the road, 15 m wide, piers outside |x| > 10 m.

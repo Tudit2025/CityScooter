@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_MountsBay
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: mountsbay
+  displayName: MOUNTS BAY RD
+  order: 70
+  length: {x: 440, y: 600}
+  chunks:
+  - {fileID: 3685712501179541834, guid: f9bdc372433651740bd5e9846c9dad42, type: 3}
+  - {fileID: 4244265612784024717, guid: cf534b7de3de0b64b8c97806c482b40f, type: 3}
+  - {fileID: 8291660396056472449, guid: 7f70ec005c762bb40b9fb3d87c187a17, type: 3}
+  - {fileID: 1735120790969551523, guid: 5146d8e317df0904d96a4598f5193811, type: 3}
+  - {fileID: 3542620521935819720, guid: 5012dbee952f24a489ca932caf7a4554, type: 3}
+  - {fileID: 6395104026389325587, guid: 72781e7df4567a04b852771494a29231, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 6636098571506985364, guid: a83e18f395d86c649b0c1f0ca2d925b2, type: 3}
+  exit: {fileID: 2519096296305217751, guid: 66974742c4f8ede48a346dbaa4186e6f, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 1691304062800508218, guid: e6717f2da419e6846bd30db27b148c9a, type: 3}
+  - {fileID: 3168766899500678915, guid: 206dfeb7925d60649bab8ad6dee7f72b, type: 3}
+  - {fileID: 534185336433319250, guid: ce5c61c811b2ff446b2a46bab0ce5f5e, type: 3}
+  - {fileID: 530483984839865605, guid: b01751fc203ce684c8d98b1c90370f49, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards: []
+  pedestrians:
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 5304581062665531620, guid: b8d44693b833d8e4fa04803501bacf9e, type: 3}
+  - {fileID: 5304581062665531620, guid: b8d44693b833d8e4fa04803501bacf9e, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 9078458409639061214, guid: 206dfeb7925d60649bab8ad6dee7f72b, type: 3}
+  ramps:
+  - {fileID: 5654402987905394202, guid: f536a24e69acd674b912f67c5bcd5faa, type: 3}
+  rampFrequency: 1.2
+  blendMeters: 150
+  fogColor: {r: 0.62, g: 0.77, b: 0.88, a: 1}
+  skyTint: {r: 0.95, g: 0.98, b: 1, a: 1}
+  ambientSky: {r: 0.62, g: 0.8, b: 0.95, a: 1}
+  ambientEquator: {r: 0.78, g: 0.85, b: 0.88, a: 1}
+  ambientGround: {r: 0.55, g: 0.57, b: 0.56, a: 1}
+  sunColor: {r: 1, g: 0.97, b: 0.92, a: 1}
+  sunIntensity: 1.4
+  farScenery: {fileID: 967322672613499864, guid: edb1b7d12405012499d6b9ff18c0f661, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
