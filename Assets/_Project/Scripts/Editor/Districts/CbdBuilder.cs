@@ -130,18 +130,18 @@ namespace CityScooter.EditorTools.Districts
 
         // ================================================================ chunks
 
-        static ChunkDraft Entry(float drop)
+        static CqChunkDraft Entry(float drop)
         {
             // Calm at z = 0 (any district can come before): Stirling Gardens-style trees, hedges and low sandstone walls,
             // then the first heritage front and towers from z = 16.
-            var d = new ChunkDraft("Cbd_Entry", drop);
+            var d = new CqChunkDraft("Cbd_Entry", drop);
             StreetRoad(d, false);
             for (int s = -1; s <= 1; s += 2)
             {
                 GardenEdge(d, s, 0, 16);
-                Lot heritage = new Lot(s, 16, 28, K.Edge, 14, d.Base(22));
+                CqLot heritage = new CqLot(s, 16, 28, K.Edge, 14, d.Base(22));
                 if (s < 0) SandstoneColonnade(d, heritage, 3); else BrickHeritage(d, heritage, 3, true);
-                GlassTower(d, new Lot(s, 28, 40, K.Edge, 16, d.Base(34)), s < 0 ? 64 : 82, s < 0 ? GlassTeal : GlassBlue, FrameLight, s < 0 ? 0 : 3);
+                GlassTower(d, new CqLot(s, 28, 40, K.Edge, 16, d.Base(34)), s < 0 ? 64 : 82, s < 0 ? GlassTeal : GlassBlue, FrameLight, s < 0 ? 0 : 3);
                 for (float z = 3; z < 16; z += 6.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .95f);
                 K.Lamp(d.Props, d.Collisions, s, d.Ground(22f), 22f);
                 DeepTowers(d, s, 16, 40, 1);
@@ -151,15 +151,15 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft Exit(float drop)
+        static CqChunkDraft Exit(float drop)
         {
             // Towers first, then calm towards z = 40: the Esplanade end with trees and low limestone walls.
-            var d = new ChunkDraft("Cbd_Exit", drop);
+            var d = new CqChunkDraft("Cbd_Exit", drop);
             StreetRoad(d, true);
             for (int s = -1; s <= 1; s += 2)
             {
-                GlassTower(d, new Lot(s, 0, 14, K.Edge, 16, d.Base(7)), s < 0 ? 96 : 70, s < 0 ? GlassBlue : GlassSilver, FrameLight, s < 0 ? 1 : 0);
-                Lot heritage = new Lot(s, 14, 24, K.Edge, 14, d.Base(19));
+                GlassTower(d, new CqLot(s, 0, 14, K.Edge, 16, d.Base(7)), s < 0 ? 96 : 70, s < 0 ? GlassBlue : GlassSilver, FrameLight, s < 0 ? 1 : 0);
+                CqLot heritage = new CqLot(s, 14, 24, K.Edge, 14, d.Base(19));
                 if (s < 0) BrickHeritage(d, heritage, 2, false); else SandstoneColonnade(d, heritage, 2);
                 GardenEdge(d, s, 24, 40);
                 for (float z = 27; z < 40; z += 6.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .95f);
@@ -171,18 +171,18 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft Terrace(float drop)
+        static CqChunkDraft Terrace(float drop)
         {
-            var d = new ChunkDraft("Cbd_Terrace", drop);
+            var d = new CqChunkDraft("Cbd_Terrace", drop);
             StreetRoad(d, false);
             // Left: teal tower, sandstone bank, blue tower. Right: brick, tall tower with a crown, concrete ribbon tower.
-            GlassTower(d, new Lot(-1, 0, 16, K.Edge, 16, d.Base(8)), 92, GlassTeal, FrameLight, 1);
-            SandstoneColonnade(d, new Lot(-1, 16, 24, K.Edge, 14, d.Base(20)), 3);
-            GlassTower(d, new Lot(-1, 24, 40, K.Edge, 16, d.Base(32)), 70, GlassBlue, FrameDark, 2);
-            BrickHeritage(d, new Lot(1, 0, 8, K.Edge, 14, d.Base(4)), 3, true);
-            GlassTower(d, new Lot(1, 8, 22, K.Edge, 16, d.Base(15)), 118, GlassNavy, FrameLight, 3);
-            ConcreteTower(d, new Lot(1, 22, 34, K.Edge, 16, d.Base(28)), 54);
-            BrickHeritage(d, new Lot(1, 34, 40, K.Edge, 14, d.Base(37)), 2, false);
+            GlassTower(d, new CqLot(-1, 0, 16, K.Edge, 16, d.Base(8)), 92, GlassTeal, FrameLight, 1);
+            SandstoneColonnade(d, new CqLot(-1, 16, 24, K.Edge, 14, d.Base(20)), 3);
+            GlassTower(d, new CqLot(-1, 24, 40, K.Edge, 16, d.Base(32)), 70, GlassBlue, FrameDark, 2);
+            BrickHeritage(d, new CqLot(1, 0, 8, K.Edge, 14, d.Base(4)), 3, true);
+            GlassTower(d, new CqLot(1, 8, 22, K.Edge, 16, d.Base(15)), 118, GlassNavy, FrameLight, 3);
+            ConcreteTower(d, new CqLot(1, 22, 34, K.Edge, 16, d.Base(28)), 54);
+            BrickHeritage(d, new CqLot(1, 34, 40, K.Edge, 14, d.Base(37)), 2, false);
             for (int s = -1; s <= 1; s += 2)
             {
                 for (float z = s < 0 ? 6 : 1; z < 40; z += 14) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 4.95f, d.Ground(z), z), .9f);
@@ -196,20 +196,20 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft TownHall(float drop)
+        static CqChunkDraft TownHall(float drop)
         {
-            var d = new ChunkDraft("Cbd_TownHall", drop);
+            var d = new CqChunkDraft("Cbd_TownHall", drop);
             StreetRoad(d, true);
             // Left: a small paved forecourt (4 m) before the red-brick town hall with its clock tower, then sandstone.
             const float set = 4f;
             Forecourt(d, -1, 0, 26, set);
-            TownHallBuilding(d, new Lot(-1, 2, 26, K.Edge + set, 16, d.Base(14)));
-            BrickHeritage(d, new Lot(-1, 0, 2, K.Edge + set, 14, d.Base(1)), 2, false);
-            SandstoneColonnade(d, new Lot(-1, 26, 40, K.Edge, 14, d.Base(33)), 3);
+            TownHallBuilding(d, new CqLot(-1, 2, 26, K.Edge + set, 16, d.Base(14)));
+            BrickHeritage(d, new CqLot(-1, 0, 2, K.Edge + set, 14, d.Base(1)), 2, false);
+            SandstoneColonnade(d, new CqLot(-1, 26, 40, K.Edge, 14, d.Base(33)), 3);
             // Right: green glass tower, blue tower, heritage corner.
-            GlassTower(d, new Lot(1, 0, 16, K.Edge, 16, d.Base(8)), 104, GlassGreen, FrameLight, 0);
-            GlassTower(d, new Lot(1, 16, 30, K.Edge, 16, d.Base(23)), 78, GlassPale, FrameDark, 2);
-            SandstoneColonnade(d, new Lot(1, 30, 40, K.Edge, 14, d.Base(35)), 2);
+            GlassTower(d, new CqLot(1, 0, 16, K.Edge, 16, d.Base(8)), 104, GlassGreen, FrameLight, 0);
+            GlassTower(d, new CqLot(1, 16, 30, K.Edge, 16, d.Base(23)), 78, GlassPale, FrameDark, 2);
+            SandstoneColonnade(d, new CqLot(1, 30, 40, K.Edge, 14, d.Base(35)), 2);
             K.PlaneTree(d.Props, d.Collisions, new Vector3(-10.2f, d.Ground(24.5f), 24.5f), 1f);
             K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(-7.3f, d.Ground(14f), 14f), 90f);
             for (float z = 4; z < 40; z += 12) K.PlaneTree(d.Props, d.Collisions, new Vector3(4.95f, d.Ground(z), z), 1f);
@@ -223,10 +223,10 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft Mall(float drop, bool arcade)
+        static CqChunkDraft Mall(float drop, bool arcade)
         {
             // Hay Street Mall: no cars, grey pavers wall to wall, low granite kerbs, shopfronts under dark awnings.
-            var d = new ChunkDraft(arcade ? "Cbd_MallArcade" : "Cbd_MallShops", drop) { Type = RoadType.PedestrianMall };
+            var d = new CqChunkDraft(arcade ? "Cbd_MallArcade" : "Cbd_MallShops", drop) { Type = RoadType.PedestrianMall };
             MallRoad(d);
             int k = arcade ? 0 : 3;
             for (int s = -1; s <= 1; s += 2)
@@ -234,7 +234,7 @@ namespace CityScooter.EditorTools.Districts
                 float[] cuts = s < 0 ? new[] { 0f, 8f, 16f, 24f, 32f, 40f } : new[] { 0f, 10f, 18f, 28f, 40f };
                 for (int i = 0; i + 1 < cuts.Length; i++)
                 {
-                    var lot = new Lot(s, cuts[i], cuts[i + 1], K.Edge, 14, d.Base((cuts[i] + cuts[i + 1]) * .5f));
+                    var lot = new CqLot(s, cuts[i], cuts[i + 1], K.Edge, 14, d.Base((cuts[i] + cuts[i + 1]) * .5f));
                     if (arcade && s < 0 && i == 2) LondonCourt(d, lot);
                     else MallShop(d, lot, MallWalls[(k + i * 2 + (s > 0 ? 1 : 0)) % MallWalls.Length], 2 + (k + i + (s > 0 ? 1 : 0)) % 3, (k + i) % 2 == 0);
                     k++;
@@ -254,10 +254,10 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft Plaza(float drop)
+        static CqChunkDraft Plaza(float drop)
         {
             // Open: the tallest towers stand back behind forecourts with cafe tables, so their whole height shows.
-            var d = new ChunkDraft("Cbd_Plaza", drop);
+            var d = new CqChunkDraft("Cbd_Plaza", drop);
             StreetRoad(d, false);
             const float set = 6f;
             for (int s = -1; s <= 1; s += 2)
@@ -265,15 +265,15 @@ namespace CityScooter.EditorTools.Districts
                 Forecourt(d, s, 0, 40, set);
                 if (s < 0)
                 {
-                    GlassTower(d, new Lot(-1, 0, 8, K.Edge + set, 16, d.Base(4)), 40, GlassSilver, FrameLight, 0);
-                    CentralTower(d, new Lot(-1, 8, 30, K.Edge + set, 22, d.Base(19)));
-                    GlassTower(d, new Lot(-1, 30, 40, K.Edge + set, 16, d.Base(35)), 58, GlassBlue, FrameDark, 0);
+                    GlassTower(d, new CqLot(-1, 0, 8, K.Edge + set, 16, d.Base(4)), 40, GlassSilver, FrameLight, 0);
+                    CentralTower(d, new CqLot(-1, 8, 30, K.Edge + set, 22, d.Base(19)));
+                    GlassTower(d, new CqLot(-1, 30, 40, K.Edge + set, 16, d.Base(35)), 58, GlassBlue, FrameDark, 0);
                 }
                 else
                 {
-                    BracedTower(d, new Lot(1, 0, 18, K.Edge + set, 18, d.Base(9)), 128);
-                    GlassTower(d, new Lot(1, 18, 30, K.Edge + set, 16, d.Base(24)), 86, GlassTeal, FrameLight, 1);
-                    ConcreteTower(d, new Lot(1, 30, 40, K.Edge + set, 16, d.Base(35)), 44);
+                    BracedTower(d, new CqLot(1, 0, 18, K.Edge + set, 18, d.Base(9)), 128);
+                    GlassTower(d, new CqLot(1, 18, 30, K.Edge + set, 16, d.Base(24)), 86, GlassTeal, FrameLight, 1);
+                    ConcreteTower(d, new CqLot(1, 30, 40, K.Edge + set, 16, d.Base(35)), 44);
                 }
                 for (float z = 5; z < 40; z += 11) K.CafeUmbrella(d.Props, d.Collisions, new Vector3(s * (K.Edge + 2.6f), d.Ground(z), z), s < 0 ? K.Hex("F4F2EA") : K.Hex("2F6B66"));
                 for (float z = 0; z < 40; z += 13.3f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 4.95f, d.Ground(z + 2), z + 2), 1f);
@@ -285,18 +285,18 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft CarPark(float drop)
+        static CqChunkDraft CarPark(float drop)
         {
             // A multi-storey car park with its exit ramp; a loading-dock kicker in the left lane of the road.
-            var d = new ChunkDraft("Cbd_CarPark", drop);
+            var d = new CqChunkDraft("Cbd_CarPark", drop);
             StreetRoad(d, false);
-            CarParkBuilding(d, new Lot(-1, 0, 26, K.Edge, 18, d.Base(13)));
-            BrickHeritage(d, new Lot(-1, 26, 40, K.Edge, 14, d.Base(33)), 3, true);
-            GlassTower(d, new Lot(1, 0, 14, K.Edge, 16, d.Base(7)), 88, GlassBlue, FrameLight, 3);
-            SandstoneColonnade(d, new Lot(1, 14, 24, K.Edge, 14, d.Base(19)), 2);
-            GlassTower(d, new Lot(1, 24, 40, K.Edge, 16, d.Base(32)), 66, GlassSilver, FrameDark, 0);
+            CarParkBuilding(d, new CqLot(-1, 0, 26, K.Edge, 18, d.Base(13)));
+            BrickHeritage(d, new CqLot(-1, 26, 40, K.Edge, 14, d.Base(33)), 3, true);
+            GlassTower(d, new CqLot(1, 0, 14, K.Edge, 16, d.Base(7)), 88, GlassBlue, FrameLight, 3);
+            SandstoneColonnade(d, new CqLot(1, 14, 24, K.Edge, 14, d.Base(19)), 2);
+            GlassTower(d, new CqLot(1, 24, 40, K.Edge, 16, d.Base(32)), 66, GlassSilver, FrameDark, 0);
             // Kicker: 3.2 m run-up to 0.9 m, in the left lane (x = -2.6) at z = 12; the lane is wider than it.
-            var ramp = new RampSpec { Name = "LoadingDockKicker", X = -2.6f, Z = 12f, Width = 2.4f, Rise = 3.2f, Height = .9f, Top = 0f, Launch = 1.15f, Hang = .55f };
+            var ramp = new CqRampSpec { Name = "LoadingDockKicker", X = -2.6f, Z = 12f, Width = 2.4f, Rise = 3.2f, Height = .9f, Top = 0f, Launch = 1.15f, Hang = .55f };
             d.Ramps.Add(ramp);
             var deck = new ComicMesh();
             K.RampMesh(deck, ramp, K.Hex("6B7078"), K.Hex("50555C"), true, 0f);
@@ -316,7 +316,7 @@ namespace CityScooter.EditorTools.Districts
 
         // ================================================================ road surfaces
 
-        static void StreetRoad(ChunkDraft d, bool crossing)
+        static void StreetRoad(CqChunkDraft d, bool crossing)
         {
             ComicMesh m = d.Road;
             K.StreetSurface(m, d.Length, K.R.asphalt, K.R.pavement, K.R.cream, true);
@@ -324,7 +324,7 @@ namespace CityScooter.EditorTools.Districts
                 for (int x = -3; x <= 3; x++) K.Flat(m, x - .27f, x + .27f, x - .27f, x + .27f, 1.2f, 4.6f, .036f, K.R.cream);
         }
 
-        static void MallRoad(ChunkDraft d)
+        static void MallRoad(CqChunkDraft d)
         {
             ComicMesh m = d.Road;
             K.StreetSurface(m, d.Length, MallPaver, MallPaverLight, Granite, false);
@@ -340,7 +340,7 @@ namespace CityScooter.EditorTools.Districts
 
         // ================================================================ buildings
 
-        static void Foundation(ChunkDraft d, Lot l)
+        static void Foundation(CqChunkDraft d, CqLot l)
         {
             d.Frontage.Surface = ComicSurface.Concrete;
             K.LBox(d.Frontage, l, 0, l.W, -2.6f, 0f, .02f, -l.Depth, K.R.ink);
@@ -349,7 +349,7 @@ namespace CityScooter.EditorTools.Districts
 
         // Glass tower: lobby podium, up to three setback tiers with floor bands and fins, a crown.
         // crown 0 flat parapet + plant room, 1 mast, 2 stepped crown, 3 open crown frame.
-        internal static void GlassTower(ChunkDraft d, Lot l, float h, Color glass, Color frame, int crown)
+        internal static void GlassTower(CqChunkDraft d, CqLot l, float h, Color glass, Color frame, int crown)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -423,7 +423,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Cream concrete tower with dark ribbon windows wrapping round (the 1970s/80s Terrace offices).
-        internal static void ConcreteTower(ChunkDraft d, Lot l, float h)
+        internal static void ConcreteTower(CqChunkDraft d, CqLot l, float h)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -441,7 +441,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // The tallest: a Central Park-style tower, pale silver glass with dark frames, stepped top and an antenna.
-        static void CentralTower(ChunkDraft d, Lot l)
+        static void CentralTower(CqChunkDraft d, CqLot l)
         {
             GlassTower(d, l, 150f, GlassSilver, FrameDark, 2);
             ComicMesh m = d.Frontage;
@@ -452,7 +452,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Brookfield-style: dark glass with big white diagonal braces on the road face.
-        static void BracedTower(ChunkDraft d, Lot l, float h)
+        static void BracedTower(CqChunkDraft d, CqLot l, float h)
         {
             GlassTower(d, l, h, GlassNavy, FrameDark, 0);
             ComicMesh m = d.Frontage;
@@ -468,7 +468,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Two to four storeys of red brick with cream string courses, arched windows and a parapet.
-        static void BrickHeritage(ChunkDraft d, Lot l, int floors, bool gable)
+        static void BrickHeritage(CqChunkDraft d, CqLot l, int floors, bool gable)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -504,7 +504,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Sandstone with a ground-floor colonnade, a heavy cornice and a slate mansard (Old Treasury / GPO family).
-        static void SandstoneColonnade(ChunkDraft d, Lot l, int floors)
+        static void SandstoneColonnade(CqChunkDraft d, CqLot l, int floors)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -539,7 +539,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Red-brick town hall with white trim and a clock tower (stylised Perth Town Hall).
-        static void TownHallBuilding(ChunkDraft d, Lot l)
+        static void TownHallBuilding(CqChunkDraft d, CqLot l)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -593,7 +593,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // London Court-style mock-Tudor arcade entrance: white render, dark timber framing, a gable and an arch.
-        static void LondonCourt(ChunkDraft d, Lot l)
+        static void LondonCourt(CqChunkDraft d, CqLot l)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -642,7 +642,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Hay Street Mall shopfront: pale heritage facade, dark awning over the sidewalk, plain coloured sign band.
-        static void MallShop(ChunkDraft d, Lot l, Color wall, int floors, bool pediment)
+        static void MallShop(CqChunkDraft d, CqLot l, Color wall, int floors, bool pediment)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -679,7 +679,7 @@ namespace CityScooter.EditorTools.Districts
             else K.LBox(m, l, W * .35f, W * .65f, h + 1.3f, h + 2f, .12f, -.4f, K.R.cream);
         }
 
-        static void CarParkBuilding(ChunkDraft d, Lot l)
+        static void CarParkBuilding(CqChunkDraft d, CqLot l)
         {
             ComicMesh m = d.Frontage;
             Foundation(d, l);
@@ -715,7 +715,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Paved forecourt between the sidewalk and a set-back building line (sheared with the road).
-        internal static void Forecourt(ChunkDraft d, int s, float z0, float z1, float depth)
+        internal static void Forecourt(CqChunkDraft d, int s, float z0, float z1, float depth)
         {
             var m = new ComicMesh();
             float x0 = s * K.Edge, x1 = s * (K.Edge + depth);
@@ -737,7 +737,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Calm end of an entry/exit chunk: low sandstone wall, hedge and lawn (sheared with the sidewalk), park trees behind.
-        internal static void GardenEdge(ChunkDraft d, int s, float z0, float z1)
+        internal static void GardenEdge(CqChunkDraft d, int s, float z0, float z1)
         {
             ComicMesh m = d.SlopedFrontage;
             float k = K.Kerb;
@@ -750,7 +750,7 @@ namespace CityScooter.EditorTools.Districts
             d.Walls.Add(new Bounds(new Vector3(s * (K.Edge + 7f), d.Y((z0 + z1) * .5f) + 1f, (z0 + z1) * .5f), new Vector3(13.5f, 4f, z1 - z0)));
         }
 
-        static void DeepParkTrees(ChunkDraft d, int s, float z0, float z1)
+        static void DeepParkTrees(CqChunkDraft d, int s, float z0, float z1)
         {
             for (float z = z0 + 3f; z < z1; z += 6f)
                 for (int row = 0; row < 3; row++)
@@ -758,7 +758,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Second and third rows of towers (no outline, no shadows), like the street chunks' deep city.
-        internal static void DeepTowers(ChunkDraft d, int s, float z0, float z1, int seed)
+        internal static void DeepTowers(CqChunkDraft d, int s, float z0, float z1, int seed)
         {
             ComicMesh m = d.Deep;
             m.Surface = ComicSurface.Glass;
@@ -897,22 +897,22 @@ namespace CityScooter.EditorTools.Districts
 
     // ==================================================================== shared kit (CBD and Quay)
 
-    internal sealed class RampSpec
+    internal sealed class CqRampSpec
     {
         public string Name; public float X, Z, Width, Rise, Height, Top, Launch = 1f, Hang = .5f;
         public float Lip => Z + Rise + Top;
     }
 
-    internal sealed class GapSpec
+    internal sealed class CqGapSpec
     {
         public string Name; public float Z, Length, Width; public string Word = "SPLASH"; public bool Water = true;
     }
 
     /// <summary>A building lot along one side of a chunk: facade plane at |x| = Line facing the road, from Z0 to Z1.</summary>
-    internal struct Lot
+    internal struct CqLot
     {
         public int S; public float Z0, Z1, Line, Depth, Base;
-        public Lot(int side, float z0, float z1, float line, float depth, float baseY) { S = side; Z0 = z0; Z1 = z1; Line = line; Depth = depth; Base = baseY; }
+        public CqLot(int side, float z0, float z1, float line, float depth, float baseY) { S = side; Z0 = z0; Z1 = z1; Line = line; Depth = depth; Base = baseY; }
         public float W => Z1 - Z0;
         public float Zc => (Z0 + Z1) * .5f;
         /// <summary>along: metres from Z0; up: metres above the base; outward: metres from the facade towards the road.</summary>
@@ -920,7 +920,7 @@ namespace CityScooter.EditorTools.Districts
     }
 
     /// <summary>One chunk being assembled: meshes, colliders, slots, ramps and gaps, written by CbdQuayKit.WriteChunk.</summary>
-    internal sealed class ChunkDraft
+    internal sealed class CqChunkDraft
     {
         public readonly string Id;
         public readonly float Length, Drop;
@@ -933,10 +933,10 @@ namespace CityScooter.EditorTools.Districts
         public readonly List<DressingObstacle> Collisions = new List<DressingObstacle>();
         public readonly List<Bounds> Walls = new List<Bounds>(), KeepOut = new List<Bounds>();
         public readonly List<Vector2> Slots = new List<Vector2>(), GiftSlots = new List<Vector2>();
-        public readonly List<RampSpec> Ramps = new List<RampSpec>();
-        public readonly List<GapSpec> Gaps = new List<GapSpec>();
+        public readonly List<CqRampSpec> Ramps = new List<CqRampSpec>();
+        public readonly List<CqGapSpec> Gaps = new List<CqGapSpec>();
 
-        public ChunkDraft(string id, float drop, float length = 40f) { Id = id; Drop = drop; Length = length; }
+        public CqChunkDraft(string id, float drop, float length = 40f) { Id = id; Drop = drop; Length = length; }
         public float Grade => -Drop / Length;
         /// <summary>Road surface height at z.</summary>
         public float Y(float z) => -Grade * z;
@@ -952,7 +952,7 @@ namespace CityScooter.EditorTools.Districts
                     foreach (float x in new[] { -2.6f, 0f, 2.6f }) Slot(x, z);
         }
         /// <summary>An invisible wall where the building is (keeps people from being placed inside it).</summary>
-        public void Wall(Lot l, float height)
+        public void Wall(CqLot l, float height)
         {
             Vector3 a = l.P(0, -1f, 0), b = l.P(l.W, height, -l.Depth);
             var bounds = new Bounds((a + b) * .5f, new Vector3(Mathf.Abs(a.x - b.x), Mathf.Abs(a.y - b.y), Mathf.Abs(a.z - b.z)));
@@ -1019,15 +1019,15 @@ namespace CityScooter.EditorTools.Districts
         }
 
         /// <summary>Box in lot space: along a0..a1, up u0..u1, outward o0..o1 (towards the road from the facade).</summary>
-        public static void LBox(ComicMesh m, Lot l, float a0, float a1, float u0, float u1, float o0, float o1, Color c) =>
+        public static void LBox(ComicMesh m, CqLot l, float a0, float a1, float u0, float u1, float o0, float o1, Color c) =>
             MinMaxBox(m, l.P(a0, u0, o0), l.P(a1, u1, o1), c);
 
         /// <summary>A quad on the facade plane (outward o), facing the road.</summary>
-        public static void LQuad(ComicMesh m, Lot l, float a0, float a1, float u0, float u1, float o, Color c, bool ink = true) =>
+        public static void LQuad(ComicMesh m, CqLot l, float a0, float a1, float u0, float u1, float o, Color c, bool ink = true) =>
             Face(m, l.P(a0, u0, o), l.P(a1, u0, o), l.P(a1, u1, o), l.P(a0, u1, o), c, new Vector3(-l.S, 0, 0), ink);
 
         /// <summary>A roof slope rising from the front (outward oFront, height u0) to the ridge (oRidge, u1) and back down to oBack.</summary>
-        public static void LSlope(ComicMesh m, Lot l, float a0, float a1, float u0, float u1, float oFront, float oRidge, float oBack, Color c)
+        public static void LSlope(ComicMesh m, CqLot l, float a0, float a1, float u0, float u1, float oFront, float oRidge, float oBack, Color c)
         {
             Vector3 f0 = l.P(a0, u0, oFront), f1 = l.P(a1, u0, oFront), r0 = l.P(a0, u1, oRidge), r1 = l.P(a1, u1, oRidge), b0 = l.P(a0, u0, oBack), b1 = l.P(a1, u0, oBack);
             Vector3 toRoad = new Vector3(-l.S, 0, 0);
@@ -1038,7 +1038,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         /// <summary>A triangular gable on the facade plane, with depth: base a0..a1 at u0, apex at the middle, u1.</summary>
-        public static void LGable(ComicMesh m, Lot l, float a0, float a1, float u0, float u1, float oFront, float oBack, Color c)
+        public static void LGable(ComicMesh m, CqLot l, float a0, float a1, float u0, float u1, float oFront, float oBack, Color c)
         {
             float ac = (a0 + a1) * .5f;
             Vector3 f0 = l.P(a0, u0, oFront), f1 = l.P(a1, u0, oFront), fa = l.P(ac, u1, oFront);
@@ -1137,7 +1137,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         /// <summary>The ramp deck, in flat road space: slope, top, sides and lip face down to lipBottom.</summary>
-        public static void RampMesh(ComicMesh m, RampSpec r, Color top, Color side, bool stripes, float lipBottom)
+        public static void RampMesh(ComicMesh m, CqRampSpec r, Color top, Color side, bool stripes, float lipBottom)
         {
             float x0 = r.X - r.Width * .5f, x1 = r.X + r.Width * .5f, z0 = r.Z, z1 = r.Z + r.Rise, z2 = r.Lip, h = r.Height;
             m.Surface = ComicSurface.Concrete;
@@ -1325,7 +1325,7 @@ namespace CityScooter.EditorTools.Districts
             sync.Finish();
         }
 
-        public static void WriteChunk(ChunkDraft d, string path)
+        public static void WriteChunk(CqChunkDraft d, string path)
         {
             GameObject root = PrefabBuildUtility.OpenPrefab(path);
             var sync = new ChildSync(root.transform);
@@ -1366,7 +1366,7 @@ namespace CityScooter.EditorTools.Districts
             if (d.Ramps.Count > 0)
             {
                 var ramps = new ChildSync(sync.Plain("Ramps").transform);
-                foreach (RampSpec r in d.Ramps)
+                foreach (CqRampSpec r in d.Ramps)
                 {
                     GameObject go = ramps.Plain(r.Name);
                     go.transform.localPosition = new Vector3(r.X, d.Y(r.Z), r.Z);
@@ -1379,7 +1379,7 @@ namespace CityScooter.EditorTools.Districts
             if (d.Gaps.Count > 0)
             {
                 var gaps = new ChildSync(sync.Plain("Gaps").transform);
-                foreach (GapSpec g in d.Gaps)
+                foreach (CqGapSpec g in d.Gaps)
                 {
                     GameObject go = gaps.Plain(g.Name);
                     go.transform.localPosition = new Vector3(0f, d.Y(g.Z), g.Z);
@@ -1457,7 +1457,7 @@ namespace CityScooter.EditorTools.Districts
         /// <summary>A ramp prefab for District.ramps: Ramp + art matching its numbers (no colliders).</summary>
         public static Ramp SaveRamp(string path, string meshId, float width, float rise, float height, float top, float launch, float hang, Color deck, Color side, bool stripes)
         {
-            var spec = new RampSpec { X = 0, Z = 0, Width = width, Rise = rise, Height = height, Top = top, Launch = launch, Hang = hang };
+            var spec = new CqRampSpec { X = 0, Z = 0, Width = width, Rise = rise, Height = height, Top = top, Launch = launch, Hang = hang };
             var art = new ComicMesh();
             RampMesh(art, spec, deck, side, stripes, 0f);
             GameObject root = PrefabBuildUtility.OpenPrefab(path);

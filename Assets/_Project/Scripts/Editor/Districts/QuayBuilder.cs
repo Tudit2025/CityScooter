@@ -138,10 +138,10 @@ namespace CityScooter.EditorTools.Districts
 
         // ================================================================ chunks
 
-        static ChunkDraft Entry()
+        static CqChunkDraft Entry()
         {
             // Calm at z = 0 (low walls, hedges, trees), then the river opens up on the right and the plaza on the left.
-            var d = new ChunkDraft("Quay_Entry", Drop);
+            var d = new CqChunkDraft("Quay_Entry", Drop);
             Promenade(d);
             for (int s = -1; s <= 1; s += 2)
             {
@@ -153,23 +153,23 @@ namespace CityScooter.EditorTools.Districts
             d.SlopedFrontage.Surface = ComicSurface.Paving;
             K.SideBox(d.SlopedFrontage, -1, 0, 14, -2.4f, K.Kerb - .02f, 14f, 60f, BeigeLight);
             Plaza(d, 14, 40, true);
-            Pavilion(d, new Lot(-1, 22, 40, K.Edge + 10, 12, d.Base(31)), K.Hex("F2EEE4"));
+            Pavilion(d, new CqLot(-1, 22, 40, K.Edge + 10, 12, d.Base(31)), K.Hex("F2EEE4"));
             CbdBuilder.DeepTowers(d, -1, 14, 40, 21);
             d.StandardSlots();
             return d;
         }
 
-        static ChunkDraft Exit()
+        static CqChunkDraft Exit()
         {
             // The river and plaza first, then calm towards z = 40: low walls, hedges, trees.
-            var d = new ChunkDraft("Quay_Exit", Drop);
+            var d = new CqChunkDraft("Quay_Exit", Drop);
             Promenade(d);
             River(d, 0, 26);
             K.Water(d.Road, K.Edge + 14f, 260f, 26, 40, WaterLevel, Water, Ripple, 12);
             d.SlopedFrontage.Surface = ComicSurface.Paving;
             K.SideBox(d.SlopedFrontage, -1, 26, 40, -2.4f, K.Kerb - .02f, 14f, 60f, BeigeLight);
             Plaza(d, 0, 26, true);
-            Pavilion(d, new Lot(-1, 0, 16, K.Edge + 10, 12, d.Base(8)), K.Hex("E9E2D2"));
+            Pavilion(d, new CqLot(-1, 0, 16, K.Edge + 10, 12, d.Base(8)), K.Hex("E9E2D2"));
             CbdBuilder.DeepTowers(d, -1, 0, 26, 22);
             for (int s = -1; s <= 1; s += 2)
             {
@@ -180,23 +180,23 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft Promenade()
+        static CqChunkDraft Promenade()
         {
-            var d = new ChunkDraft("Quay_Promenade", Drop);
+            var d = new CqChunkDraft("Quay_Promenade", Drop);
             Promenade(d);
             River(d, 0, 40);
             Plaza(d, 0, 40, false);
-            Pavilion(d, new Lot(-1, 4, 20, K.Edge + 10, 12, d.Base(12)), K.Hex("F2EEE4"));
-            CbdBuilder.GlassTower(d, new Lot(-1, 22, 38, K.Edge + 12, 16, d.Base(30)), 96, GlassGrey, FrameLight, 0);
+            Pavilion(d, new CqLot(-1, 4, 20, K.Edge + 10, 12, d.Base(12)), K.Hex("F2EEE4"));
+            CbdBuilder.GlassTower(d, new CqLot(-1, 22, 38, K.Edge + 12, 16, d.Base(30)), 96, GlassGrey, FrameLight, 0);
             CbdBuilder.DeepTowers(d, -1, 0, 40, 23);
             Ferry(d.Props, new Vector3(24f, d.Y(24f) + WaterLevel, 24f), 12f);
             d.StandardSlots();
             return d;
         }
 
-        static ChunkDraft BellTower()
+        static CqChunkDraft BellTower()
         {
-            var d = new ChunkDraft("Quay_BellTower", Drop);
+            var d = new CqChunkDraft("Quay_BellTower", Drop);
             Promenade(d);
             River(d, 0, 40);
             // the ferry jetty: a timber pier out from the quay with a ferry alongside
@@ -208,33 +208,33 @@ namespace CityScooter.EditorTools.Districts
             Ferry(d.Props, new Vector3(K.Edge + 11.2f, d.Y(16f) + WaterLevel, 16f), 0f);
             BellTowerLandmark(d, new Vector3(34f, d.Y(26f), 26f));
             Plaza(d, 0, 40, false);
-            Pavilion(d, new Lot(-1, 0, 14, K.Edge + 10, 12, d.Base(7)), K.Hex("E9E2D2"));
-            CbdBuilder.GlassTower(d, new Lot(-1, 16, 34, K.Edge + 12, 18, d.Base(25)), 132, GlassBlue, FrameLight, 1);
+            Pavilion(d, new CqLot(-1, 0, 14, K.Edge + 10, 12, d.Base(7)), K.Hex("E9E2D2"));
+            CbdBuilder.GlassTower(d, new CqLot(-1, 16, 34, K.Edge + 12, 18, d.Base(25)), 132, GlassBlue, FrameLight, 1);
             CbdBuilder.DeepTowers(d, -1, 0, 40, 24);
             d.StandardSlots();
             return d;
         }
 
-        static ChunkDraft Spanda()
+        static CqChunkDraft Spanda()
         {
-            var d = new ChunkDraft("Quay_Spanda", Drop);
+            var d = new CqChunkDraft("Quay_Spanda", Drop);
             Promenade(d);
             River(d, 0, 40);
             Island(d);
             Plaza(d, 0, 40, false);
             SpandaLandmark(d, new Vector3(-(K.Edge + 11f), d.Ground(22f), 22f));
-            Pavilion(d, new Lot(-1, 30, 40, K.Edge + 10, 12, d.Base(35)), K.Hex("F2EEE4"));
-            CbdBuilder.GlassTower(d, new Lot(-1, 2, 16, K.Edge + 14, 16, d.Base(9)), 84, GlassPale, FrameLight, 3);
+            Pavilion(d, new CqLot(-1, 30, 40, K.Edge + 10, 12, d.Base(35)), K.Hex("F2EEE4"));
+            CbdBuilder.GlassTower(d, new CqLot(-1, 2, 16, K.Edge + 14, 16, d.Base(9)), 84, GlassPale, FrameLight, 3);
             CbdBuilder.DeepTowers(d, -1, 0, 40, 25);
             d.StandardSlots();
             return d;
         }
 
-        static ChunkDraft Bridge()
+        static CqChunkDraft Bridge()
         {
             // The road goes up and over the white double-arched bridge: a Ramp platform (rise + crown); off the crown the
             // rider flies over the descending half. Water on both sides and under the deck; no ground beside the deck.
-            var d = new ChunkDraft("Quay_Bridge", Drop);
+            var d = new CqChunkDraft("Quay_Bridge", Drop);
             float z0 = BridgeStart, z1 = z0 + BridgeRise, z2 = z1 + BridgeTop, z3 = z2 + BridgeDown;
             Promenade(d, z0, z3);
             K.Water(d.Road, -60f, 260f, z0, z3, WaterLevel, Water, Ripple, 31);
@@ -245,7 +245,7 @@ namespace CityScooter.EditorTools.Districts
             River(d, z3, 40);
             LeftPromenadeLand(d, 0, z0);
             LeftPromenadeLand(d, z3, 40);
-            d.Ramps.Add(new RampSpec { Name = "BridgeHump", X = 0f, Z = z0, Width = 2f * K.Edge, Rise = BridgeRise, Height = BridgeHeight, Top = BridgeTop, Launch = 1f, Hang = .5f });
+            d.Ramps.Add(new CqRampSpec { Name = "BridgeHump", X = 0f, Z = z0, Width = 2f * K.Edge, Rise = BridgeRise, Height = BridgeHeight, Top = BridgeTop, Launch = 1f, Hang = .5f });
             BridgeDeck(d, z0, z1, z2, z3);
             d.KeepOut.Add(KeepOutBox(d, -1, z0, z3)); d.KeepOut.Add(KeepOutBox(d, 1, z0, z3));
             // No obstacles on the hump or where riders land; a row of gifts after it, a gap in the middle for a lane.
@@ -255,11 +255,11 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
-        static ChunkDraft Inlet()
+        static CqChunkDraft Inlet()
         {
             // A timber jetty ramp right up to the quay edge, then 6 m of open water across the whole promenade (SPLASH!),
             // then the promenade again. The ramp covers the full rideable width, so the gap can always be cleared.
-            var d = new ChunkDraft("Quay_Inlet", Drop);
+            var d = new CqChunkDraft("Quay_Inlet", Drop);
             float z0 = JettyStart, lip = z0 + JettyRise + JettyTop, far = lip + GapLength;
             Promenade(d, lip, far);
             K.Water(d.Road, -22f, 260f, lip, far, WaterLevel, Water, Ripple, 41);
@@ -273,9 +273,9 @@ namespace CityScooter.EditorTools.Districts
             River(d, far, 40);
             LeftPromenadeLand(d, 0, lip);
             LeftPromenadeLand(d, far, 40);
-            var ramp = new RampSpec { Name = "JettyRamp", X = 0f, Z = z0, Width = 2f * K.Edge, Rise = JettyRise, Height = JettyHeight, Top = JettyTop, Launch = 1f, Hang = .5f };
+            var ramp = new CqRampSpec { Name = "JettyRamp", X = 0f, Z = z0, Width = 2f * K.Edge, Rise = JettyRise, Height = JettyHeight, Top = JettyTop, Launch = 1f, Hang = .5f };
             d.Ramps.Add(ramp);
-            d.Gaps.Add(new GapSpec { Name = "InletWater", Z = lip, Length = GapLength, Width = 0f, Word = "SPLASH", Water = true });
+            d.Gaps.Add(new CqGapSpec { Name = "InletWater", Z = lip, Length = GapLength, Width = 0f, Word = "SPLASH", Water = true });
             var deck = new ComicMesh();
             K.RampMesh(deck, ramp, Deck, Color.Lerp(Deck, K.R.ink, .3f), true, WaterLevel - .3f);
             // boards and a white rail post at each side so the jetty reads as timber
@@ -308,7 +308,7 @@ namespace CityScooter.EditorTools.Districts
         // ================================================================ ground, water, edges
 
         // The promenade: light paving wall to wall (road and sidewalks), white limestone kerbs, dark curving bands.
-        static void Promenade(ChunkDraft d, float skipFrom = -1f, float skipTo = -1f)
+        static void Promenade(CqChunkDraft d, float skipFrom = -1f, float skipTo = -1f)
         {
             ComicMesh m = d.Road;
             K.StreetSurface(m, d.Length, Beige, BeigeLight, Limestone, false, skipFrom, skipTo);
@@ -330,7 +330,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // The river on the right from the sidewalk edge, a white rail at the quay edge, the quay wall.
-        static void River(ChunkDraft d, float z0, float z1, bool rail = true)
+        static void River(CqChunkDraft d, float z0, float z1, bool rail = true)
         {
             K.Water(d.Road, K.Edge, 260f, z0, z1, WaterLevel, Water, Ripple, Mathf.RoundToInt(z0 * 7 + z1));
             ComicMesh m = d.Road;
@@ -365,7 +365,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Land on the city side where the bridge and the inlet chunks have promenade (beyond the left sidewalk).
-        static void LeftPromenadeLand(ChunkDraft d, float z0, float z1)
+        static void LeftPromenadeLand(CqChunkDraft d, float z0, float z1)
         {
             ComicMesh m = d.SlopedFrontage;
             m.Surface = ComicSurface.Paving;
@@ -374,7 +374,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // The plaza beyond the left sidewalk: palms, white umbrellas, curved white seating walls.
-        static void Plaza(ChunkDraft d, float z0, float z1, bool short_)
+        static void Plaza(CqChunkDraft d, float z0, float z1, bool short_)
         {
             ComicMesh m = d.SlopedFrontage;
             m.Surface = ComicSurface.Paving;
@@ -390,7 +390,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Low waterfront pavilion: white render, timber screens, glass ground floor, a thin overhanging roof.
-        static void Pavilion(ChunkDraft d, Lot l, Color wall)
+        static void Pavilion(CqChunkDraft d, CqLot l, Color wall)
         {
             ComicMesh m = d.Frontage;
             m.Surface = ComicSurface.Concrete;
@@ -408,7 +408,7 @@ namespace CityScooter.EditorTools.Districts
             d.Wall(l, 8f);
         }
 
-        static Bounds KeepOutBox(ChunkDraft d, int s, float z0, float z1)
+        static Bounds KeepOutBox(CqChunkDraft d, int s, float z0, float z1)
         {
             float yTop = d.Y(z0) + 5f, yBottom = d.Y(z1) - 2f;
             return new Bounds(new Vector3(s * (K.Half + K.Side * .5f + .3f), (yTop + yBottom) * .5f, (z0 + z1) * .5f), new Vector3(K.Side + .6f, yTop - yBottom, z1 - z0));
@@ -424,7 +424,7 @@ namespace CityScooter.EditorTools.Districts
             return BridgeHeight * (1f - (z - z2) / (z3 - z2));
         }
 
-        static void BridgeDeck(ChunkDraft d, float z0, float z1, float z2, float z3)
+        static void BridgeDeck(CqChunkDraft d, float z0, float z1, float z2, float z3)
         {
             ComicMesh m = d.SlopedFrontage;
             float w = K.Edge;
@@ -510,7 +510,7 @@ namespace CityScooter.EditorTools.Districts
         // ================================================================ landmarks (decoration: no colliders)
 
         // The Bell Tower: a tall glass spire with two copper sails wrapped round its base, on a round lawn by the water.
-        static void BellTowerLandmark(ChunkDraft d, Vector3 p)
+        static void BellTowerLandmark(CqChunkDraft d, Vector3 p)
         {
             ComicMesh m = d.Landmark;
             float y0 = d.Y(p.z);
@@ -540,7 +540,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Spanda: nested white ellipse rings sharing their lowest point, about 29 m tall.
-        static void SpandaLandmark(ChunkDraft d, Vector3 p)
+        static void SpandaLandmark(CqChunkDraft d, Vector3 p)
         {
             ComicMesh m = d.Landmark;
             Quaternion q = Quaternion.Euler(0, -28f, 0); // rings turned towards riders coming down the promenade
@@ -562,7 +562,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // The island: a paved and grassed island across the water with the red-roofed kiosk and a playground.
-        static void Island(ChunkDraft d)
+        static void Island(CqChunkDraft d)
         {
             ComicMesh m = d.SlopedFrontage;
             float x0 = 14f, x1 = 34f, z0 = 4f, z1 = 36f;
