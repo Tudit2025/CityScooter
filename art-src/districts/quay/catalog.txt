@@ -1,0 +1,10 @@
+OBS_Quay_Bollard 256 tris
+OBS_Quay_FoodTruck 568 tris
+OBS_Quay_UmbrellaTable 272 tris
+CHN_Quay_Entry 8564 tris, 6 renderers
+CHN_Quay_Promenade 9902 tris, 6 renderers
+CHN_Quay_BellTower 12582 tris, 8 renderers
+CHN_Quay_Bridge 7240 tris, 6 renderers
+CHN_Quay_Spanda 13910 tris, 8 renderers
+CHN_Quay_Inlet 7784 tris, 6 renderers
+CHN_Quay_Exit 9620 tris, 6 renderers

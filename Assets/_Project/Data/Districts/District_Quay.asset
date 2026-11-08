@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Quay
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: quay
+  displayName: ELIZABETH QUAY
+  order: 60
+  length: {x: 360, y: 480}
+  chunks:
+  - {fileID: 7387802331642444207, guid: 0749568449d3aef4081094714f905fa2, type: 3}
+  - {fileID: 3894560108953556224, guid: 8812aeea931c8534ba24f1627bbce60b, type: 3}
+  - {fileID: 1484634811885297306, guid: 92340fdcd1ecfae40a2a81d0fc00f38e, type: 3}
+  - {fileID: 7428310291731635622, guid: 30cffa7471bedea47b26b47e0458038b, type: 3}
+  - {fileID: 598938590951250313, guid: 89d3a1e7e37f4e64d980a872a4908aab, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 2532823284950493666, guid: 81acad3fa951f7743b77ce47e7eafd69, type: 3}
+  exit: {fileID: 3496732339897025959, guid: 0b55c30d6ddb5b84aa1ffe8f8ddf5854, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 5599745962951721414, guid: c9c3191a1d5dad844bf35b0c6f1f9175, type: 3}
+  - {fileID: 2706241937901351774, guid: 55251d0a78cc4ae46a217f68c4721ec0, type: 3}
+  - {fileID: 4682461043500409491, guid: c265d990c75b9e746965587801b3cd23, type: 3}
+  - {fileID: 530483984839865605, guid: b01751fc203ce684c8d98b1c90370f49, type: 3}
+  - {fileID: 3252785564823809802, guid: eef0a39a68ecfdb43a6831f7c8928987, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: b44e8e9120f2ba547afe612562572111, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: c099a8e524b92af4fb2b44fabe727de1, type: 2}
+  - {fileID: 11400000, guid: 0650c88fd722b164fa3c83adccacaa3d, type: 2}
+  - {fileID: 11400000, guid: 026839087d87cde4794d8b272d390263, type: 2}
+  pedestrians:
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 8436716989706877074, guid: ca222d417e2556b468bd9338f8d65e09, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 5981662945198332521, guid: 669eb17e5d6afad49abd02c601855a23, type: 3}
+  - {fileID: 5981662945198332521, guid: 669eb17e5d6afad49abd02c601855a23, type: 3}
+  - {fileID: 2461983243796514149, guid: 3a4088d6614d3e04c978d79c6507239e, type: 3}
+  ramps:
+  - {fileID: 8058045251948112138, guid: 487450334dc8ef547bfc7d7d93e07c97, type: 3}
+  rampFrequency: 1.5
+  blendMeters: 150
+  fogColor: {r: 0.7, g: 0.84, b: 0.94, a: 1}
+  skyTint: {r: 0.97, g: 1, b: 1, a: 1}
+  ambientSky: {r: 0.68, g: 0.84, b: 0.98, a: 1}
+  ambientEquator: {r: 0.86, g: 0.88, b: 0.86, a: 1}
+  ambientGround: {r: 0.62, g: 0.6, b: 0.54, a: 1}
+  sunColor: {r: 1, g: 0.97, b: 0.88, a: 1}
+  sunIntensity: 1.45
+  farScenery: {fileID: 4445086154559869049, guid: abd73868734fb3c488766f596db705b6, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
