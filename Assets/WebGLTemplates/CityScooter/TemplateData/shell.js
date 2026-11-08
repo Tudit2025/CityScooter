@@ -46,6 +46,7 @@
     outbox: [],              // "id|line" waiting for the next frame
     devices: new Map(),      // id -> device
     keyboardEnabled: true,
+    keyboardAllowed: true,   // boot option keyboard: false = micro:bit only (lessons): no Keyboard mode, no keys reach the game
     starterUrl: "TemplateData/starter.py",
     starterText: null,
     codeBase: "TemplateData/",                  // where code/ lives
@@ -505,7 +506,8 @@
   }
 
   function setMode(mode, user) {
-    if (!["keyboard", "usb", "sim"].includes(mode)) mode = "keyboard";
+    if (!["keyboard", "usb", "sim"].includes(mode)) mode = shell.keyboardAllowed ? "keyboard" : "usb";
+    if (mode === "keyboard" && !shell.keyboardAllowed) mode = "usb"; // e.g. remembered from before the keyboard was turned off
     const prev = shell.mode;
     shell.mode = mode;
     document.body.dataset.mode = mode;
@@ -513,7 +515,8 @@
     document.querySelectorAll(".cs-pane").forEach((p) => { p.hidden = p.dataset.pane !== mode; });
     if (user) storeSet(KEY_MODE, mode);
 
-    const kb = mode !== "sim"; // in the simulator the arrow keys tilt the virtual micro:bit instead
+    // In the simulator the arrow keys tilt the virtual micro:bit instead; micro:bit-only pages never pass keys to the game.
+    const kb = shell.keyboardAllowed && mode !== "sim";
     if (kb !== shell.keyboardEnabled || prev === mode) {
       shell.keyboardEnabled = kb;
       callUnity("SetKeyboardEnabled", kb ? "1" : "0");
@@ -1272,14 +1275,20 @@
       if (options && options.codeBase) shell.codeBase = options.codeBase;
       if (options && options.vendorBase) shell.vendorBase = options.vendorBase;
       if (options && options.codePacks) shell.codePacks = options.codePacks;
+      if (options && options.keyboard === false) { shell.keyboardAllowed = false; shell.keyboardEnabled = false; }
       initChrome(canvas);
+      if (!shell.keyboardAllowed) {
+        // micro:bit only: no Keyboard mode to choose (Unity also gets SetKeyboardEnabled("0") in every mode).
+        document.querySelectorAll('.cs-modes button[data-mode="keyboard"], .cs-pane[data-pane="keyboard"]').forEach((e) => e.remove());
+        document.body.dataset.keyboard = "off";
+      }
       initEditor();
       initSerial();
       setInterval(renderStats, 200);
       setInterval(checkSilent, 500);
       setInterval(simTiltTick, 40);
       if (!("serial" in navigator)) usbMsg("This browser cannot talk to USB devices. Please use Chrome or Edge.", "cs-bad");
-      setMode(storeGet(KEY_MODE) || "keyboard", false);
+      setMode(storeGet(KEY_MODE) || (shell.keyboardAllowed ? "keyboard" : "usb"), false);
       requestAnimationFrame(pump);
 
       createUnityInstance(canvas, config, (p) => {

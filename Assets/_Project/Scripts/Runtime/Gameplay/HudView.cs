@@ -58,7 +58,7 @@ namespace CityScooter.Gameplay
             _say = MakeText(root, "Say", new Vector2(0.5f, 0f), new Vector2(0f, 150f), 44, TextAnchor.LowerCenter, FontStyle.Bold);
             _say.color = new Color(1f, 0.85f, 0.2f);
             Game.GameEvents.BoardSaid += OnBoardSaid;
-            _hint.text = "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake  ·  F punch  ·  R bell  ·  E boost  ·  T cartoon";
+            ShowHint();
 
             _speedSegments = new Image[10];
             for (int i = 0; i < _speedSegments.Length; i++)
@@ -196,25 +196,55 @@ namespace CityScooter.Gameplay
             return text;
         }
 
+        // ---- Keyboard off (micro:bit only, e.g. in lessons): the web shell sends SetKeyboardEnabled("0"); then no text
+        // mentions keys. The flag can arrive after a screen is shown, so screens are redrawn when it changes.
+        static bool KeysAllowed { get { DeviceHub hub = DeviceHub.Instance; return hub == null || hub.KeyboardEnabled; } }
+        bool _shownKeys;
+        enum CentreScreen { None, Ready, Crashed }
+        CentreScreen _screen;
+        int _crashScore, _crashBest;
+        string _crashTitle, _crashNote;
+
+        void ShowHint()
+        {
+            _shownKeys = KeysAllowed;
+            if (_hint == null) return;
+            _hint.text = _shownKeys
+                ? "Tilt your micro:bit or press Left / Right to steer  ·  A or Space to jump  ·  B or S to brake  ·  F punch  ·  R bell  ·  E boost  ·  T cartoon"
+                : "Tilt your micro:bit to steer  ·  A to jump  ·  B to brake  ·  punch, bell, boost: program them on your micro:bit!";
+        }
+
+        void RedrawForKeys()
+        {
+            if (KeysAllowed == _shownKeys) return;
+            ShowHint();
+            if (_screen == CentreScreen.Ready) ShowReady();
+            else if (_screen == CentreScreen.Crashed) ShowCrashed(_crashScore, _crashBest, _crashTitle, _crashNote);
+        }
+
         public void ShowReady()
         {
+            _screen = CentreScreen.Ready;
             if (_centre == null) return;
-            _centre.text = "CITY SCOOTER\n<size=34>Press A on your micro:bit or Space to start</size>";
+            _centre.text = "CITY SCOOTER\n<size=34>" + (KeysAllowed ? "Press A on your micro:bit or Space to start" : "Press A on your micro:bit to start") + "</size>";
             _centre.supportRichText = true;
         }
 
         public void ShowRunning()
         {
+            _screen = CentreScreen.None;
             if (_centre != null) _centre.text = string.Empty;
         }
 
         public void ShowCrashed(int score, int best, string title = "CRASH!", string note = null)
         {
+            _screen = CentreScreen.Crashed;
+            _crashScore = score; _crashBest = best; _crashTitle = title; _crashNote = note;
             if (_centre == null) return;
             _centre.supportRichText = true;
             _centre.text = title + "\n<size=36>Score " + score + "    Best " + best + "</size>"
                 + (string.IsNullOrEmpty(note) ? "" : "\n<size=26>" + note + "</size>")
-                + "\n<size=30>Press A or Space to ride again</size>";
+                + "\n<size=30>" + (KeysAllowed ? "Press A or Space to ride again" : "Press A on your micro:bit to ride again") + "</size>";
         }
 
         void OnDestroy() => Game.GameEvents.BoardSaid -= OnBoardSaid;
@@ -232,6 +262,7 @@ namespace CityScooter.Gameplay
 
         void Update()
         {
+            RedrawForKeys();
             if (_say != null && _say.text.Length > 0 && Time.unscaledTime > _sayUntil) _say.text = "";
             GameController g = game != null ? game : GameController.Instance;
             if (g == null || g.rider == null) return;

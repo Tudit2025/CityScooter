@@ -34,7 +34,11 @@
       companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
       productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
       productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
-    }, { starterUrl: "TemplateData/starter.py" });
+    }, {
+      starterUrl: "TemplateData/starter.py",
+      // false = micro:bit only (lessons): students cannot drive with the keyboard. true = Keyboard mode is back.
+      keyboard: false,
+    });
   </script>
 </body>
 </html>

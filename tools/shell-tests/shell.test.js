@@ -233,6 +233,27 @@ function installFakeSerial() {
   await page2.keyboard.press("Escape");
   check("Escape closes help", await page2.evaluate(() => document.getElementById("cs-help").hidden));
 
+  // micro:bit-only page (keyboard: false, as deployed for lessons): no Keyboard mode, Unity never gets keys,
+  // a remembered "keyboard" mode becomes USB.
+  const page3 = await browser.newPage();
+  await page3.setViewport({ width: 1366, height: 768 });
+  page3.on("pageerror", (e) => errors.push("page3 pageerror: " + e.message));
+  await page3.evaluateOnNewDocument(installFakeSerial);
+  await page3.evaluateOnNewDocument(() => { try { localStorage.setItem("cityscooter.mode", "keyboard"); } catch (e) {} });
+  await page3.goto(URL + "?keyboard=0", { waitUntil: "load" });
+  await page3.waitForFunction(() => window.__fakeUnity && window.__fakeUnity.calls.some((c) => c.includes("SetKeyboardEnabled")), { timeout: 5000 });
+  const calls3 = () => page3.evaluate(() => window.__fakeUnity.calls.filter((c) => c.includes("SetKeyboardEnabled")));
+  check("no keyboard: no Keyboard mode button", (await page3.evaluate(() => document.querySelectorAll('.cs-modes button[data-mode="keyboard"]').length)) === 0);
+  check("no keyboard: no keyboard pane", (await page3.evaluate(() => document.querySelectorAll('.cs-pane[data-pane="keyboard"]').length)) === 0);
+  check("no keyboard: remembered keyboard mode becomes USB", (await page3.evaluate(() => document.body.dataset.mode)) === "usb");
+  check("no keyboard: Unity keys off", (await calls3()).every((c) => c.includes('SetKeyboardEnabled("0")')), (await calls3()).join(" "));
+  await page3.click('.cs-modes button[data-mode="sim"]');
+  await sleep(300);
+  await page3.click('.cs-modes button[data-mode="usb"]');
+  await sleep(300);
+  check("no keyboard: still off after switching modes", (await calls3()).every((c) => c.includes('SetKeyboardEnabled("0")')), (await calls3()).join(" "));
+  await page3.screenshot({ path: path.join(OUT, "shell_no_keyboard.png") });
+
   check("no page errors", errors.length === 0, errors.slice(0, 5).join(" | "));
   console.log(failures ? failures + " FAILED" : "ALL PASSED");
   await browser.close();

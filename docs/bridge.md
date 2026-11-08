@@ -30,6 +30,15 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 | `CityScooterShell.onUnityReady(protocolVersion)` | DeviceBridge 就绪，可以开始 SendMessage。当前协议版本是 `"0"` |
 | `CityScooterShell.sendToDevices(target, line)` | 把游戏消息（`go`、`crash`、`gift`、`spd:N`）发给设备；`target` 是设备 ID 或 `"*"`（全部）。外壳负责加 `\n`，USB 设备写串口，`sim` 设备发 `serial_input` |
 
+**课堂版只用 micro:bit**（2026-11-09 起）：`index.html` 调用 `CityScooterShell.boot(..., { keyboard: false })`。
+- 页面上没有 Keyboard 模式按钮，也没有键位表。
+- 不管在哪个模式，Unity 都只收到 `SetKeyboardEnabled("0")`，所以方向键、空格、F/R/E/T 都不起作用。
+- 游戏里的提示文字也不再提任何按键，只说用 micro:bit。
+- 以前选过 Keyboard 模式的浏览器会自动切到 micro:bit (USB)。
+- 模拟器模式保留：学生还是要给虚拟 micro:bit 写程序。
+- 要恢复键盘，把 `index.html` 里的 `keyboard: false` 改成 `true`，再重新打包。
+- 开发页 `tools/shell-dev/?keyboard=0` 可以预览课堂版。
+
 键盘焦点：Unity 设置了 `WebGLInput.captureAllKeyboardInput = false`，只有画布获得焦点时 Unity 才收键盘，这样外壳里的输入框可以正常打字。外壳要在点击画布时调用 `canvas.focus()`。
 
 ## Web Serial 约定

@@ -99,6 +99,12 @@ function installFakeSerial() {
   await sleep(300);
   await ev(() => window.__serial.ports[0].push("hi:v2\n"));
   for (let i = 0; i < 10; i++) { await ev(() => window.__serial.ports[0].push("st:0\n")); await sleep(50); }
+  // Lesson page (index.html boots with keyboard: false): no Keyboard mode, and Space on the game does not start a ride.
+  check("micro:bit only: no Keyboard mode button", (await ev(() => document.querySelectorAll('.cs-modes button[data-mode="keyboard"]').length)) === 0);
+  check("micro:bit only: Unity keyboard off", (await ev(() => window.__toUnity.filter((c) => c.startsWith("SetKeyboardEnabled")).every((c) => c.includes("(0)")))));
+  await ev(() => document.getElementById("unity-canvas").focus());
+  await page.keyboard.press("Space"); await sleep(1200);
+  check("micro:bit only: Space does not start a ride", !/(^|\n)go\n/.test(await ev(() => window.__serial.ports[0].written)));
   await ev(() => window.__serial.ports[0].push("jp\n"));
   for (let i = 0; i < 40; i++) { await ev((v) => window.__serial.ports[0].push("st:" + v + "\n"), i < 20 ? 40 : -40); await sleep(50); }
   const written = await ev(() => window.__serial.ports[0].written);
