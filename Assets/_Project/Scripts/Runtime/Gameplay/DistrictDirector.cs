@@ -252,8 +252,10 @@ namespace CityScooter.Gameplay
         float _skySize = 1f, _skyHeight, _skyline = 1f;
         float _writtenScale = float.NaN, _writtenElevation = float.NaN;
 
-        /// <summary>District.skyline = 0 sinks the panorama this far (degrees): the tallest tower is well below the horizon.</summary>
-        public const float SkylineSinkDegrees = 30f;
+        /// <summary>District.skyline = 0 puts this row of the panorama on the horizon (0 = bottom, 1 = top): in
+        /// Perth_Comic_Panorama.png the tallest tower ends at about 0.61, then there is pale sky with clouds. Sinking further
+        /// would bring the deep blue of the top edge down to the horizon.</summary>
+        public const float HiddenSkylineRow = 0.64f;
 
         /// <summary>Sky now (tests): yaw in degrees, size multiplier, height in degrees.</summary>
         public Vector3 SkyView { get; private set; } = new Vector3(0f, 1f, 0f);
@@ -277,7 +279,7 @@ namespace CityScooter.Gameplay
             if (_skyInstance.HasProperty(SkyMappingId))
             {
                 Vector4 mapping = _skyMappingBase;
-                mapping.y = SkyElevation(mapping.y, size, heightDegrees, _skyline);
+                mapping.y = SkyElevation(mapping.y, VerticalSpan(_skyMappingBase, _skyScaleBase), size, heightDegrees, _skyline);
                 _skyInstance.SetVector(SkyMappingId, mapping);
             }
             if (_skyInstance.HasProperty(SkyScaleId)) _skyInstance.SetFloat(SkyScaleId, _skyScaleBase * size);
@@ -304,10 +306,18 @@ namespace CityScooter.Gameplay
         /// <summary>
         /// The panorama elevation for a district: size scales the skyline about the horizon (elevation 0), not about the
         /// panorama's middle row (_ComicSkyMapping.y, 12 degrees up), so a smaller city still stands on the horizon.
-        /// Then height moves it, and skyline below 1 sinks it below the horizon (SkylineSinkDegrees at 0).
+        /// Then height moves it. skyline below 1 sinks it: at 0 the row HiddenSkylineRow (just above the tallest tower) is
+        /// on the horizon, whatever the size. verticalSpan: radians the whole panorama spans at size 1 (VerticalSpan).
         /// </summary>
-        public static float SkyElevation(float elevation, float size, float heightDegrees, float skyline) =>
-            elevation * size + (heightDegrees - (1f - Mathf.Clamp01(skyline)) * SkylineSinkDegrees) * Mathf.Deg2Rad;
+        public static float SkyElevation(float elevation, float verticalSpan, float size, float heightDegrees, float skyline)
+        {
+            float shown = elevation * size + heightDegrees * Mathf.Deg2Rad;
+            float hidden = -(HiddenSkylineRow - 0.5f) * verticalSpan * size;
+            return Mathf.Lerp(hidden, shown, Mathf.Clamp01(skyline));
+        }
+
+        /// <summary>Radians the panorama spans top to bottom (ComicPanorama.hlsl: PI * mapping.z * apparent scale).</summary>
+        public static float VerticalSpan(Vector4 mapping, float scale) => Mathf.PI * Mathf.Max(.1f, mapping.z) * Mathf.Max(.1f, scale);
 
         void ApplySkySizeAndHeight()
         {
@@ -323,7 +333,10 @@ namespace CityScooter.Gameplay
             Vector4 mapping = Shader.GetGlobalVector(SkyMappingId);
             if (mapping.w > 0.5f && !Mathf.Approximately(mapping.y, _writtenElevation))
             {
-                mapping.y = SkyElevation(mapping.y, _skySize, _skyHeight, _skyline);
+                mapping.y = SkyElevation(mapping.y, VerticalSpan(mapping, scale > 0f ? scale : 1f), _skySize, _skyHeight, _skyline);
+                // Far facades fade into the panorama pixel behind them (ComicVertex). With the city sunk that pixel is sky
+                // and the far ground would turn into blue patches: let them fade into the distance fog instead.
+                if (_skyline < 0.5f) mapping.w = 0f;
                 _writtenElevation = mapping.y;
                 Shader.SetGlobalVector(SkyMappingId, mapping);
             }

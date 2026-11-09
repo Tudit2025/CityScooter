@@ -185,11 +185,11 @@ namespace CityScooter.EditorTools
             for (int i = -3; i <= 3; i++) m.Box(new Vector3(i * 2.4f, top - .8f, 0f), new Vector3(.12f, 1.3f, .12f), steel);
 
             const float px = .16f;
-            float textWidth = Mathf.Max(1, text.Length * 4 - 1) * px;
+            float textWidth = Mathf.Max(1, TextColumns(text)) * px;
             float boardW = Mathf.Min(postX * 2f - 1f, textWidth + 1.2f), boardH = 5f * px + .9f, cy = top - .8f;
             m.Box(new Vector3(0f, cy, -.3f), new Vector3(boardW + .24f, boardH + .24f, .08f), _r.ink);
             m.Box(new Vector3(0f, cy, -.36f), new Vector3(boardW, boardH, .08f), _r.yellow);
-            Text(m, text, 0f, cy, -.41f, Mathf.Min(px, (boardW - .6f) / Mathf.Max(1, text.Length * 4 - 1)), _r.ink);
+            Text(m, text, 0f, cy, -.41f, Mathf.Min(px, (boardW - .6f) / Mathf.Max(1, TextColumns(text))), _r.ink);
 
             var root = new GameObject(id);
             try
@@ -232,14 +232,14 @@ namespace CityScooter.EditorTools
         }
 
         // ---- pixel font: 3x5 glyphs (copied from HazardKitBuilder, plus F J Q V X and digits for district names),
-        // quads facing -Z (towards the rider), no crease ink.
+        // quads facing -Z (towards the rider), no crease ink. W and M are 5 wide: a 3-wide W read as H ("HARNBRO").
         public static readonly Dictionary<char, string> Glyphs = new Dictionary<char, string>
         {
             ['A'] = "010101111101101", ['C'] = "011100100100011", ['D'] = "110101101101110", ['E'] = "111100110100111",
             ['H'] = "101101111101101", ['I'] = "111010010010111", ['K'] = "101101110101101", ['L'] = "100100100100111",
             ['O'] = "010101101101010", ['P'] = "110101110100100", ['R'] = "110101110101101", ['S'] = "011100010001110",
-            ['T'] = "111010010010010", ['U'] = "101101101101111", ['W'] = "101101101111101",
-            ['B'] = "110101110101110", ['G'] = "011100101101011", ['N'] = "110101101101101", ['Y'] = "101101010010010", ['!'] = "010010010000010", ['.'] = "000000000000010", ['Z'] = "111001010100111", ['M'] = "101111111101101",
+            ['T'] = "111010010010010", ['U'] = "101101101101111", ['W'] = "1000110001101011010101010",
+            ['B'] = "110101110101110", ['G'] = "011100101101011", ['N'] = "110101101101101", ['Y'] = "101101010010010", ['!'] = "010010010000010", ['.'] = "000000000000010", ['Z'] = "111001010100111", ['M'] = "1000111011101011000110001",
             ['F'] = "111100110100100", ['J'] = "001001001101010", ['Q'] = "010101101110011", ['V'] = "101101101101010", ['X'] = "101101010101101",
             ['0'] = "111101101101111", ['1'] = "010110010010111", ['2'] = "110001010100111", ['3'] = "110001010001110", ['4'] = "101101111001001",
             ['5'] = "111100110001110", ['6'] = "011100111101111", ['7'] = "111001010010010", ['8'] = "111101111101111", ['9'] = "111101111001110",
@@ -253,19 +253,33 @@ namespace CityScooter.EditorTools
             return true;
         }
 
+        /// <summary>Glyph width in pixels: 5 rows, so 3 or 5 columns (a space is 3).</summary>
+        static int GlyphWidth(char c) => Glyphs.TryGetValue(c, out string g) ? g.Length / 5 : 3;
+
+        /// <summary>Pixel columns the text takes: glyph widths plus one empty column between glyphs.</summary>
+        public static int TextColumns(string text)
+        {
+            int columns = 0;
+            foreach (char c in text ?? "") columns += GlyphWidth(c) + 1;
+            return Mathf.Max(0, columns - 1);
+        }
+
         static void Text(ComicMesh m, string text, float cx, float cy, float z, float px, Color c)
         {
-            float width = (text.Length * 4 - 1) * px, x0 = cx - width / 2, y0 = cy + 2.5f * px;
+            float width = TextColumns(text) * px, x0 = cx - width / 2, y0 = cy + 2.5f * px;
+            int left = 0;
             for (int i = 0; i < text.Length; i++)
             {
-                if (!Glyphs.TryGetValue(text[i], out string g)) continue;
-                for (int row = 0; row < 5; row++)
-                    for (int col = 0; col < 3; col++)
-                    {
-                        if (g[row * 3 + col] != '1') continue;
-                        float x = x0 + (i * 4 + col) * px, y = y0 - (row + 1) * px;
-                        m.Quad(new Vector3(x + px, y, z), new Vector3(x, y, z), new Vector3(x, y + px, z), new Vector3(x + px, y + px, z), c, false);
-                    }
+                int w = GlyphWidth(text[i]);
+                if (Glyphs.TryGetValue(text[i], out string g))
+                    for (int row = 0; row < 5; row++)
+                        for (int col = 0; col < w; col++)
+                        {
+                            if (g[row * w + col] != '1') continue;
+                            float x = x0 + (left + col) * px, y = y0 - (row + 1) * px;
+                            m.Quad(new Vector3(x + px, y, z), new Vector3(x, y, z), new Vector3(x, y + px, z), new Vector3(x + px, y + px, z), c, false);
+                        }
+                left += w + 1;
             }
         }
     }

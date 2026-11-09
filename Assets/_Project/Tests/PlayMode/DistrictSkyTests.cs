@@ -128,20 +128,27 @@ namespace CityScooter.Tests
             Assert.AreEqual(0f, director.SkylineShown, 0.001f);
             Camera.main.Render(); // the panorama globals are adjusted just before a camera renders
             Assert.AreEqual(scale * 0.8f, Shader.GetGlobalFloat("_ComicSkyScale"), 0.001f, "size scales the apparent size");
-            float expected = mapping.y * 0.8f + (-2f - DistrictDirector.SkylineSinkDegrees) * Mathf.Deg2Rad;
-            Assert.AreEqual(expected, Shader.GetGlobalVector("_ComicSkyMapping").y, 0.001f, "scaled about the horizon, moved, then sunk (globals: far facades)");
+            float expected = DistrictDirector.SkyElevation(mapping.y, DistrictDirector.VerticalSpan(mapping, scale), 0.8f, -2f, 0f);
+            Vector4 global = Shader.GetGlobalVector("_ComicSkyMapping");
+            Assert.AreEqual(expected, global.y, 0.001f, "sunk (globals: far facades)");
+            Assert.AreEqual(0f, global.w, 0.001f, "with the city sunk, far facades fade into the fog, not into the (sky) panorama pixel");
             // The sky material has its own values (they win over globals): the district copy of it carries the change.
             Material sky = RenderSettings.skybox;
             Assert.AreNotSame(authored, sky, "a runtime copy of the sky material");
             StringAssert.Contains("(district)", sky.name);
-            Assert.AreEqual(matMapping.y * 0.8f + (-2f - DistrictDirector.SkylineSinkDegrees) * Mathf.Deg2Rad, sky.GetVector("_ComicSkyMapping").y, 0.001f, "the sky itself");
+            Vector4 skyMapping = sky.GetVector("_ComicSkyMapping");
+            Assert.AreEqual(DistrictDirector.SkyElevation(matMapping.y, DistrictDirector.VerticalSpan(matMapping, matScale), 0.8f, -2f, 0f), skyMapping.y, 0.001f, "the sky itself");
+            Assert.AreEqual(1f, skyMapping.w, 0.001f, "the sky stays on");
+            // skyline 0: the row just above the tallest tower is on the horizon (ComicPanorama.hlsl's v at elevation 0).
+            float vHorizon = 0.5f + (0f - skyMapping.y) / (Mathf.PI * Mathf.Max(.1f, skyMapping.z) * sky.GetFloat("_ComicSkyScale"));
+            Assert.AreEqual(DistrictDirector.HiddenSkylineRow, vHorizon, 0.001f);
             Assert.AreEqual(matScale * 0.8f, sky.GetFloat("_ComicSkyScale"), 0.001f);
             Assert.AreEqual(matMapping.x, sky.GetVector("_ComicSkyMapping").x, 0.0001f, "yaw stays with _ComicTurn");
 
             // The horizon row of the panorama stays on the horizon when only the size changes.
             float m = mapping.y, k = 0.72f, span = Mathf.PI * Mathf.Max(.1f, mapping.z);
             float vBefore = 0.5f + (0f - m) / (span * scale);
-            float vAfter = 0.5f + (0f - DistrictDirector.SkyElevation(m, k, 0f, 1f)) / (span * scale * k);
+            float vAfter = 0.5f + (0f - DistrictDirector.SkyElevation(m, DistrictDirector.VerticalSpan(mapping, scale), k, 0f, 1f)) / (span * scale * k);
             Assert.AreEqual(vBefore, vAfter, 0.0001f);
             director.Restore();
             Assert.IsFalse(RenderSettings.skybox != null && RenderSettings.skybox.name.Contains("(district)"), "restore puts the scene's sky material back");
