@@ -306,9 +306,15 @@ function installFakeSerial() {
   await page.keyboard.press("Tab");
   check("Tab inserts 4 spaces", (await ev(() => document.getElementById("cs-code").value)) === "x = 1\n    ");
   await ev(() => { const t = document.getElementById("cs-code"); t.value = 'from microbit import *\nwhile True:\n    print("st:42")\n    sleep(50)\n'; t.dispatchEvent(new Event("input")); });
+  const callsBeforeRun = (await calls()).length;
   await page.click("#cs-run");
   const reflashed = await page.waitForFunction(() => window.__fakeUnity.lines.slice(-5).includes("sim|st:42"), { timeout: 8000 }).then(() => true, () => false);
   check("Run re-flashes edited code after the first ▶", reflashed);
+  // Like a re-flashed USB board: the game hears the old program go (it forgets the events that program set up for
+  // every ride), then the new one arrive.
+  const restart = (await calls()).slice(callsBeforeRun).filter((c) => c.includes("OnDeviceStatus") && c.includes("sim|"));
+  check("Run tells the game the old program has gone, then that the new one runs",
+    restart.length === 2 && restart[0].includes("sim|sim|0") && restart[1].includes("sim|sim|1"), restart);
   await sleep(700);
 
   // leave sim mode

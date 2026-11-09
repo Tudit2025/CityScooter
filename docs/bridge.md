@@ -18,7 +18,7 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 | 方法 | 参数 | 说明 |
 |---|---|---|
 | `OnDeviceLines` | `"usb1\|st:-35\nusb1\|jp\nsim\|hello"` | 一条或多条消息，用 `\n` 分隔，每条是 `设备ID\|原始行`。外壳负责分行，只能发完整的行；建议每帧（requestAnimationFrame）合并发一次 |
-| `OnDeviceStatus` | `"usb1\|usb\|1\|v2"` | `设备ID\|类型\|1 表示连上，0 表示断开\|版本`，版本可以留空 |
+| `OnDeviceStatus` | `"usb1\|usb\|1\|v2"` | `设备ID\|类型\|1 表示连上，0 表示断开\|版本`，版本可以留空。板子没断开但换了新程序（外壳的 Send、模拟器的 Run my code）时，外壳先发一次 0 再发 1，游戏据此忘掉旧程序设定的开局事件（`do:`，见 protocol.md） |
 | `SetKeyboardEnabled` | `"1"` 或 `"0"` | 模拟器模式下键盘用来操作模拟器，这时要关掉 Unity 自己的键盘转向，否则同一次按键会转两次 |
 
 在收到 `onUnityReady` 之前不要调用 SendMessage，先把消息缓存起来。

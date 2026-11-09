@@ -333,6 +333,13 @@
     callUnity("OnDeviceStatus", [d.id, d.kind, isActive(d) ? "1" : "0", d.ver || ""].join("|"));
   }
 
+  // A new program is about to run on this board (Send, or Run in the simulator) while it stays connected: tell the game
+  // the old program has gone, like a re-plugged board, so the events it set up for the start of every ride
+  // ("on start" -> do:...) go with it. The caller sends the "connected" status again straight after.
+  function sendGone(d) {
+    if (isActive(d)) callUnity("OnDeviceStatus", [d.id, d.kind, "0", d.ver || ""].join("|"));
+  }
+
   function onDeviceLine(d, line) {
     const t = now();
     d.lastLineAt = t;
@@ -1045,6 +1052,8 @@
     let wrote = false;
     try {
       await repl.enter();
+      sendGone(d); // the old program has stopped: the game forgets what it set up for every ride
+      sendStatus(d);
       await repl.exec("f=open('main.py','wb')\nw=f.write");
       wrote = true;
       for (let i = 0; i < bytes.length; i += SEND_PIECE) {
@@ -1166,6 +1175,7 @@
     const d = simDevice();
     if (!d.ver) d.ver = "v2";
     d.race = ""; // a new program: note its race: again
+    sendGone(d); // the old program has gone (the new one is connected again just below)
     d.connected = true;
     d.connectedAt = now();
     sendStatus(d);

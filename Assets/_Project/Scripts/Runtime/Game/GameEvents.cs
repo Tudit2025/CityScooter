@@ -112,6 +112,7 @@ namespace CityScooter.Game
             LostPolice = null;
             AirChanged = null; // ---- Ramps and air (v0.3)
             Landed = null;
+            DeviceLeft = null;
         }
 
         // ---- Radio race (v0.4, RaceDirector)
@@ -125,5 +126,10 @@ namespace CityScooter.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetRaceStatics() { RaceRequested = null; RadioHeard = null; }
         // ---- end Radio race (v0.4)
+
+        /// <summary>A board went away (unplugged, re-flashed, or the simulator runs a new program): (device id).
+        /// Whatever its old program set up for every ride is forgotten.</summary>
+        public static event Action<string> DeviceLeft;
+        public static void RaiseDeviceLeft(string deviceId) => DeviceLeft?.Invoke(deviceId);
     }
 }

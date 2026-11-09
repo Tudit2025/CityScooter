@@ -10,9 +10,11 @@ namespace CityScooter.Gameplay
     /// Students' programs trigger the game's own events with "do:..." (protocol v1): start a police chase, set the
     /// wanted stars, call the helicopter, order a turn, send traffic or roadworks. Example rule a student can build:
     /// count "ko" with a variable and after 3 punches send "do:chase". At most one trigger a second per board during a
-    /// ride; triggers sent between rides (start screen, crash screen) wait and happen just after the next ride starts.
-    /// Hazards are placed out of sight ahead (never on a boulevard transition), and the usual messages (chase:1,
-    /// wanted:N, warn:car, turn:1 ...) follow as for any other event.
+    /// ride. Triggers sent between rides (in "on start", on the start screen, on the crash screen) happen just after
+    /// the next ride starts, and again at the start of every ride after that: a program's "on start" runs once, but it
+    /// sets up every ride. They stop when the program sends that kind again (the last one counts) or the board goes
+    /// away (unplugged, re-flashed, the simulator runs new code). Hazards are placed out of sight ahead (never on a
+    /// boulevard transition), and the usual messages (chase:1, wanted:N, warn:car, turn:1 ...) follow as for any other event.
     /// </summary>
     public sealed class ProgramTriggers : MonoBehaviour
     {
@@ -25,12 +27,15 @@ namespace CityScooter.Gameplay
         /// <summary>For tests: triggers carried out, and ones dropped (too fast, nowhere to put it).</summary>
         public int Done { get; private set; }
         public int Dropped { get; private set; }
-        /// <summary>Triggers waiting for the next ride.</summary>
+        /// <summary>Triggers sent since the last ride started, waiting for the next ride.</summary>
         public int Queued => _queue.Count;
+        /// <summary>Triggers that happen at the start of every ride (sent between earlier rides).</summary>
+        public int Opening => _opening.Count;
 
         struct Pending { public string Device, Name; public int Value; }
         const int MaxQueued = 6;
         readonly List<Pending> _queue = new List<Pending>();
+        readonly List<Pending> _opening = new List<Pending>();
         readonly Dictionary<string, float> _next = new Dictionary<string, float>();
         float _runQueueAt = -1f;
 
@@ -44,8 +49,19 @@ namespace CityScooter.Gameplay
             [Messages.DoPolice] = "HZ_PoliceStop", [Messages.DoCrossing] = "HZ_Crossing", [Messages.DoManhole] = "HZ_Manhole",
         };
 
-        void OnEnable() { GameEvents.TriggerRequested += OnTrigger; GameEvents.RunStarted += OnRunStarted; }
-        void OnDisable() { GameEvents.TriggerRequested -= OnTrigger; GameEvents.RunStarted -= OnRunStarted; }
+        void OnEnable()
+        {
+            GameEvents.TriggerRequested += OnTrigger;
+            GameEvents.RunStarted += OnRunStarted;
+            GameEvents.DeviceLeft += OnDeviceLeft;
+        }
+
+        void OnDisable()
+        {
+            GameEvents.TriggerRequested -= OnTrigger;
+            GameEvents.RunStarted -= OnRunStarted;
+            GameEvents.DeviceLeft -= OnDeviceLeft;
+        }
 
         void OnTrigger(string deviceId, string name, int value)
         {
@@ -54,6 +70,7 @@ namespace CityScooter.Gameplay
                 // ---- Radio race (v0.4): everyone gets the same road, so programs cannot change it in race mode.
                 Dropped++;
                 _queue.Clear();
+                _opening.Clear();
                 Caption(deviceId ?? "?", Label(name, value) + ": not in race mode");
                 return;
             }
@@ -61,12 +78,12 @@ namespace CityScooter.Gameplay
             if (rider == null) { Dropped++; return; }
             if (!rider.Running)
             {
-                // Between rides: keep it for the start of the next ride. One of each kind is enough, so a program
-                // that sends it in a loop does not pile them up.
+                // Between rides: keep it for the start of the next ride, and of every ride after that. One of each
+                // kind is enough, so a program that sends it in a loop does not pile them up.
                 _queue.RemoveAll(q => q.Name == name);
                 if (_queue.Count >= MaxQueued) _queue.RemoveAt(0);
                 _queue.Add(new Pending { Device = key, Name = name, Value = value });
-                Caption(key, Label(name, value) + " (next ride)");
+                Caption(key, Label(name, value) + " (every ride)");
                 return;
             }
             if (_next.TryGetValue(key, out float next) && Time.time < next) { Dropped++; return; }
@@ -76,17 +93,38 @@ namespace CityScooter.Gameplay
         void OnRunStarted()
         {
             _next.Clear();
-            if (RaceDirector.On) _queue.Clear(); // ---- Radio race (v0.4): events kept from before race mode do not happen in a race
-            _runQueueAt = _queue.Count > 0 ? Time.time + queuedDelay : -1f;
+            if (RaceDirector.On)
+            {
+                // ---- Radio race (v0.4): events kept from before race mode do not happen in a race
+                _queue.Clear();
+                _opening.Clear();
+                _runQueueAt = -1f;
+                return;
+            }
+            // What was sent since the last ride joins the rides' opening: same kind -> the newest one counts.
+            foreach (Pending q in _queue)
+            {
+                _opening.RemoveAll(o => o.Name == q.Name);
+                if (_opening.Count >= MaxQueued) _opening.RemoveAt(0);
+                _opening.Add(q);
+            }
+            _queue.Clear();
+            _runQueueAt = _opening.Count > 0 ? Time.time + queuedDelay : -1f;
+        }
+
+        // Unplugged, re-flashed, or the simulator runs new code: the old program's set-up goes with it.
+        void OnDeviceLeft(string deviceId)
+        {
+            string key = deviceId ?? "?";
+            _queue.RemoveAll(q => q.Device == key);
+            _opening.RemoveAll(o => o.Device == key);
         }
 
         void Update()
         {
             if (_runQueueAt < 0f || Time.time < _runQueueAt || rider == null || !rider.Running) return;
             _runQueueAt = -1f;
-            var pending = new List<Pending>(_queue);
-            _queue.Clear();
-            foreach (Pending p in pending) Run(p.Device, p.Name, p.Value);
+            foreach (Pending p in _opening.ToArray()) Run(p.Device, p.Name, p.Value);
         }
 
         bool Run(string device, string name, int value)
