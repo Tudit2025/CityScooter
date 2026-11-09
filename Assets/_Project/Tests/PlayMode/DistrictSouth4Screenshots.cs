@@ -152,6 +152,8 @@ namespace CityScooter.Tests
                 R("08-jetty-and-gap.png", "Jetty", 0f, 1f),
                 R("09-village-green.png", "VillageGreen", 1f, -2f),
                 R("10-exit.png", "Exit", 0f, 6f),
+                R("11-apartments-shops.png", "Pines", -5f, 4f, -32f, 6f),
+                R("12-cafe-facades.png", "Cafes", -5f, 6f, -32f, 6f),
                 W("01-entry.png", "Entry", 0f, 4f),
                 W("02-station.png", "Station", -1.5f, 0f),
                 W("03-beach-road.png", "BeachRoad", 1.5f, 0f),
@@ -161,6 +163,8 @@ namespace CityScooter.Tests
                 W("07-horizon-left.png", "DunePath", -2f, 20f, -50f, 3f),
                 W("08-creek-kicker.png", "Creek", 0f, -3f),
                 W("09-exit.png", "Exit", 0f, 6f),
+                W("10-station-hall.png", "Station", -4f, 6f, -40f, 5f),
+                W("11-surf-club-close.png", "SurfClub", 5f, 0f, 40f, 4f),
             });
         }
 
