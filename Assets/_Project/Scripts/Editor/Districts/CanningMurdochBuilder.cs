@@ -267,6 +267,8 @@ namespace CityScooter.EditorTools.Districts
                 D.Collisions.Add(new DressingObstacle { id = id, position = V(x, D.Ground(z), z), rotation = Vector3.zero, centre = V(0, size.y * .5f, 0), size = size, canJumpOver = jump });
             public CqChunkDraft Done()
             {
+                K.Report.Add(D.Id + " parts (base tris): road " + Road.TriangleCount + ", front " + Front.TriangleCount + " + " + D.Frontage.TriangleCount +
+                    ", props " + Props.TriangleCount + ", deep " + Deep.TriangleCount + ", land " + Land.TriangleCount);
                 foreach ((ComicMesh to, ComicMesh from) in new[] { (D.Props, Props), (D.Deep, Deep), (D.Landmark, Land) })
                 {
                     if (from.TriangleCount == 0) continue;
@@ -450,8 +452,8 @@ namespace CityScooter.EditorTools.Districts
                     K.MinMaxBox(f, V(-FenceX - .03f, y, z), V(-FenceX + .03f, y + .06f, e), FenceInk);
                 // the chain mesh: thin diagonal wires (ink), reads as mesh from the path
                 f.Surface = ComicSurface.Metal;
-                for (float a = z; a < e - .01f; a += 1f)
-                    f.Beam(V(-FenceX, .38f, a), V(-FenceX, 2.04f, Mathf.Min(e, a + 1f)), .025f, Color.Lerp(FenceInk, MastGrey, .4f));
+                for (float a = z; a < e - .01f; a += 2f)
+                    f.Beam(V(-FenceX, .38f, a), V(-FenceX, 2.04f, Mathf.Min(e, a + 2f)), .025f, Color.Lerp(FenceInk, MastGrey, .4f));
             }
         }
 
@@ -808,7 +810,7 @@ namespace CityScooter.EditorTools.Districts
                 c.Props.Add(Jacaranda(c.Seed(), t.z), V(t.x, .14f, t.y), Quaternion.Euler(0, c.F(0f, 360f), 0), Vector3.one);
                 Petals(c, t.x, t.y, 3.4f, 14);
             }
-            foreach (Vector3 t in new[] { V(20f, 12f, 1.1f), V(19f, 27f, 1f), V(24f, 38f, 1.15f) })
+            foreach (Vector3 t in new[] { V(20f, 13f, 1.1f), V(21f, 30f, 1.05f) })
             {
                 c.Deep.Add(Jacaranda(c.Seed(), t.z), V(t.x, .14f, t.y), Quaternion.Euler(0, c.F(0f, 360f), 0), Vector3.one);
                 Petals(c, t.x, t.y, 3f, 8);
@@ -1164,67 +1166,159 @@ namespace CityScooter.EditorTools.Districts
             PathSurface(c, PathRed, VergeWarm);
             Freeway(c, 0, 40, farVerge: 150f);
             Bush(c, 0, 40, false);
-            Hospital(c.Land, -(CwB1 + 28f), 0f);
+            Hospital(c.Front, -(CwB1 + 28f), 0f);
             c.D.StandardSlots();
             return c.Done();
         }
 
+        // ---- buildings: the CBD bar (podium, setbacks, recessed glazing between slab edges, frames, parapets, roof plant)
+
+        static readonly Color FshSlab = H("F6F5F0"), FshCore = H("DCE0E5"), FshGlass = H("223646"), FshCoping = H("8E979F"), FshPlant = H("A7AFB7"),
+            FshLink = H("6FA9C8"), HelipadDeck = H("3E444C");
+
+        /// <summary>A block whose road faces (+X, and -Z when front) are dark glazing set back behind white slab edges
+        /// at every floor, with solid white end piers, a grey coping and a parapet. x1 is the +X face.</summary>
+        static void GlazedBlock(ComicMesh m, float x0, float x1, float z0, float z1, float y0, float y1, float fh, Color slab, Color glass, bool front)
+        {
+            m.Surface = ComicSurface.Glass;
+            K.MinMaxBox(m, V(x0 + .2f, y0, front ? z0 + .55f : z0), V(x1 - .55f, y1, z1 - .2f), glass);
+            m.Surface = ComicSurface.Concrete;
+            for (float y = y0; y < y1 - .5f; y += fh)
+                K.MinMaxBox(m, V(x0, y, z0), V(x1, y + Mathf.Min(.85f, fh * .25f), z1), slab);                 // slab edge + upstand
+            K.MinMaxBox(m, V(x0, y0, z1 - 1.4f), V(x1, y1, z1), slab);                                          // end pier
+            if (!front) K.MinMaxBox(m, V(x0, y0, z0), V(x1, y1, z0 + 1.4f), slab);
+            else K.MinMaxBox(m, V(x0, y0, z0), V(x0 + 1.4f, y1, z1), slab);
+            K.MinMaxBox(m, V(x0 - .1f, y1, z0 - .1f), V(x1 + .1f, y1 + 1.1f, z1 + .1f), slab);                  // parapet
+            m.Surface = ComicSurface.PaintedMetal;
+            K.MinMaxBox(m, V(x0 - .2f, y1 + 1.1f, z0 - .2f), V(x1 + .2f, y1 + 1.3f, z1 + .2f), FshCoping);
+        }
+
+        /// <summary>Coloured vertical sun blades in front of a +X face (and along a -Z face): 3D fins that cast shadows.</summary>
+        static void Fins(ComicMesh m, float x1, float z0, float z1, float y0, float y1, float pitch, int seed, float zFace = float.NaN, float fx0 = 0f, float fx1 = 0f)
+        {
+            m.Surface = ComicSurface.PaintedMetal;
+            int k = seed;
+            for (float z = z0 + pitch * .5f; z < z1 - .3f; z += pitch, k++)
+                K.MinMaxBox(m, V(x1 - .1f, y0, z - .15f), V(x1 + 1.25f, y1, z + .15f), FinColours[Mathf.Abs(k) % FinColours.Length]);
+            if (float.IsNaN(zFace)) return;
+            for (float x = fx1 - pitch * .5f; x > fx0 + .3f; x -= pitch, k++)
+                K.MinMaxBox(m, V(x - .15f, y0, zFace - 1.25f), V(x + .15f, y1, zFace + .1f), FinColours[Mathf.Abs(k) % FinColours.Length]);
+        }
+
+        /// <summary>A roof plant room: grey box, dark louvre bands, a coping.</summary>
+        static void PlantRoom(ComicMesh m, Vector3 c, Vector3 size)
+        {
+            m.Surface = ComicSurface.Metal;
+            m.Box(c + V(0, size.y * .5f, 0), size, FshPlant);
+            for (float y = .6f; y < size.y - .3f; y += .7f) m.Box(c + V(0, y, 0), V(size.x + .08f, .16f, size.z + .08f), H("5C646C"));
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(c + V(0, size.y + .08f, 0), V(size.x + .3f, .16f, size.z + .3f), FshCoping);
+        }
+
+        /// <summary>A deep-framed diamond panel: a white diamond frame standing out of the facade with a dark glass
+        /// diamond on its face. n = the facade's outward normal (+X or -Z).</summary>
+        static void Diamond(ComicMesh m, Vector3 onFace, Vector3 n, float size)
+        {
+            bool alongZ = Mathf.Abs(n.x) > .5f;
+            Quaternion q = alongZ ? Quaternion.Euler(45f, 0, 0) : Quaternion.Euler(0, 0, 45f);
+            Vector3 frame = alongZ ? V(.55f, size, size) : V(size, size, .55f), pane = alongZ ? V(.06f, size * .62f, size * .62f) : V(size * .62f, size * .62f, .06f);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(onFace + n * .27f, frame, FshSlab, q);
+            m.Surface = ComicSurface.Glass;
+            m.Box(onFace + n * .57f, pane, FshGlass, q);
+        }
+
+        /// <summary>Fiona Stanley Hospital (no name): a two-storey podium with a colonnade, two ward wings of different
+        /// heights with coloured 3D fins and a glazed link, the tall block with deep-framed diamond panels and a helipad
+        /// deck (H, yellow ring, safety rail, a red rescue helicopter), roof plant, the white flue stack, an orange
+        /// entrance canopy, planters and parked cars. Facade line of the front wing at x = fx (facing +X, the freeway).</summary>
         static void Hospital(ComicMesh m, float fx, float z0)
         {
-            // Block A: the ward block facing the freeway (facade at x = fx), in 8 m pieces along z
-            const float hA = 24f, dA = 18f;
-            for (float z = z0 - 8f; z < z0 + 48f - .01f; z += 8f)
-            {
-                m.Surface = ComicSurface.Plaster;
-                m.Box(V(fx - dA * .5f, hA * .5f, z + 4f), V(dA, hA, 8f), FshWhite);
-                m.Surface = ComicSurface.Glass;
-                for (float y = 3.2f; y < hA - 1f; y += 4f) m.Box(V(fx + .02f, y + 1.2f, z + 4f), V(.1f, 1.8f, 7.6f), DarkGlass);
-                m.Surface = ComicSurface.PaintedMetal;
-                for (float a = .5f; a < 8f; a += 2f)
-                {
-                    int k = Mathf.Abs(Mathf.RoundToInt((z + a) / 2f)) % FinColours.Length;
-                    m.Box(V(fx + .45f, hA * .5f + 1f, z + a), V(.9f, hA - 4f, .32f), FinColours[k]);
-                }
-                m.Box(V(fx - dA * .5f, hA + .2f, z + 4f), V(dA + .2f, .4f, 8.05f), FshGrey);
-            }
-            // Block B: the tall block behind with the triangulated (diamond) facade and the helipad
-            const float hB = 38f;
-            float bx0 = fx - dA - 4f, bx1 = bx0 - 26f, bz0 = z0 + 6f, bz1 = z0 + 34f;
-            m.Surface = ComicSurface.Plaster;
-            for (float z = bz0; z < bz1 - .01f; z += 7f) m.Box(V((bx0 + bx1) * .5f, hB * .5f, z + 3.5f), V(bx0 - bx1, hB, 7f), FshGrey);
-            m.Surface = ComicSurface.PaintedMetal;
-            for (int row = 0; row < 7; row++)
-                for (float z = bz0 + 2f; z < bz1 - 1f; z += 3.5f)
-                {
-                    float y = hA + 2f + row * 2f;
-                    if (y > hB - 1.2f) continue;
-                    Color col = (row + Mathf.RoundToInt(z)) % 2 == 0 ? FshWhite : H("9EA6AE");
-                    m.Box(V(bx0 + .05f, y, z + (row % 2) * 1.75f), V(.12f, 1.6f, 1.6f), col, Quaternion.Euler(45f, 0, 0));
-                }
-            for (int row = 0; row < 7; row++)
-                for (float x = bx1 + 2f; x < bx0 - 1f; x += 3.5f)
-                {
-                    float y = 6f + row * 4.5f;
-                    m.Box(V(x + (row % 2) * 1.75f, y, bz0 - .05f), V(2.4f, 2.4f, .12f), row % 2 == 0 ? FshWhite : H("9EA6AE"), Quaternion.Euler(0, 0, 45f));
-                }
-            // helipad with a red rescue helicopter
-            Vector3 pad = V((bx0 + bx1) * .5f, hB, (bz0 + bz1) * .5f);
+            const float g = .12f, ph = 8f;
+            // podium (projects 3 m in front of the wings): lobby glazing between slab edges, a white colonnade
+            GlazedBlock(m, fx - 44f, fx + 3f, z0 - 6f, z0 + 46f, g, g + ph, 4f, FshSlab, FshGlass, true);
             m.Surface = ComicSurface.Concrete;
-            m.Cylinder(pad + V(0, .25f, 0), 9f, .5f, H("4A5058"), 12);
-            m.Cylinder(pad + V(0, .52f, 0), 7.2f, .05f, K.R.yellow, 12);
-            m.Cylinder(pad + V(0, .55f, 0), 6.6f, .05f, H("4A5058"), 12);
-            m.Surface = ComicSurface.Plain;
-            m.Box(pad + V(-1.4f, .6f, 0), V(.6f, .04f, 4f), RailWhite);
-            m.Box(pad + V(1.4f, .6f, 0), V(.6f, .04f, 4f), RailWhite);
-            m.Box(pad + V(0, .6f, 0), V(2.4f, .04f, .6f), RailWhite);
-            m.Add(HelicopterMesh(), pad + V(0, .6f, 1.2f), Quaternion.Euler(0, -60f, 0), Vector3.one * 1.3f);
-            // the white flue stack and a low orange entrance canopy
-            m.Surface = ComicSurface.Plaster;
-            m.Box(V(bx1 + 4f, 26f, z0 + 44f), V(3.5f, 52f, 3.5f), FshWhite);
-            m.Box(V(bx1 + 4f, 52.3f, z0 + 44f), V(3.9f, .6f, 3.9f), FshGrey);
+            for (float z = z0 - 4f; z < z0 + 45f; z += 4f) m.Box(V(fx + 3.45f, g + (ph - .9f) * .5f, z), V(.55f, ph - .9f, .55f), FshSlab);
+            // wing A (front, 5 floors over the podium) and wing B (4 floors), set back, with fins on the road faces
+            float a1 = g + ph + 20f, b1 = g + ph + 16f;
+            GlazedBlock(m, fx - 15f, fx, z0 - 4f, z0 + 20f, g + ph, a1, 4f, FshSlab, FshGlass, true);
+            Fins(m, fx, z0 - 2.6f, z0 + 18.6f, g + ph + .3f, a1 - .2f, 1.8f, 0, z0 - 4f, fx - 13.6f, fx);
+            GlazedBlock(m, fx - 15f, fx, z0 + 26f, z0 + 44f, g + ph, b1, 4f, FshSlab, FshGlass, false);
+            Fins(m, fx, z0 + 27.4f, z0 + 42.6f, g + ph + .3f, b1 - .2f, 1.8f, 3);
+            // the glazed link between the wings
+            m.Surface = ComicSurface.Glass;
+            K.MinMaxBox(m, V(fx - 13f, g + ph, z0 + 20f), V(fx - 2f, g + ph + 12f, z0 + 26f), FshLink);
             m.Surface = ComicSurface.PaintedMetal;
-            m.Box(V(fx + 4f, 4.2f, z0 + 16f), V(8f, .5f, 10f), FinColours[0]);
-            foreach (float z in new[] { z0 + 12f, z0 + 20f }) m.Box(V(fx + 7.5f, 2f, z), V(.3f, 4f, .3f), MastGrey);
+            for (float z = z0 + 21.5f; z < z0 + 26f; z += 1.5f) m.Box(V(fx - 1.95f, g + ph + 6f, z), V(.12f, 12f, .12f), FshSlab);
+            for (float y = g + ph + 3f; y < g + ph + 12f; y += 3f) m.Box(V(fx - 1.95f, y, z0 + 23f), V(.14f, .14f, 6f), FshSlab);
+            K.MinMaxBox(m, V(fx - 13.2f, g + ph + 12f, z0 + 19.8f), V(fx - 1.8f, g + ph + 12.6f, z0 + 26.2f), FshCoping);
+            // the tall block with deep-framed diamonds on its two road faces
+            float cx0 = fx - 40f, cx1 = fx - 19f, cz0 = z0 + 2f, cz1 = z0 + 30f, c1 = g + 40f;
+            m.Surface = ComicSurface.Concrete;
+            K.MinMaxBox(m, V(cx0, g + ph, cz0), V(cx1, c1, cz1), FshCore);
+            K.MinMaxBox(m, V(cx0 - .15f, c1, cz0 - .15f), V(cx1 + .15f, c1 + 1.2f, cz1 + .15f), FshSlab);
+            m.Surface = ComicSurface.PaintedMetal;
+            K.MinMaxBox(m, V(cx0 - .25f, c1 + 1.2f, cz0 - .25f), V(cx1 + .25f, c1 + 1.4f, cz1 + .25f), FshCoping);
+            const float pitch = 3.3f;
+            for (int row = 0; row < 9; row++)
+            {
+                float y = g + ph + 2.2f + row * pitch;
+                if (y > c1 - 1.6f) break;
+                float shift = row % 2 == 0 ? 0f : pitch * .5f;
+                // only where the wings and the link in front do not hide it from the path
+                for (float z = cz0 + 1.8f + shift; z < cz1 - 1.4f; z += pitch)
+                {
+                    bool hidden = z < z0 + 20f ? y < a1 + 1f : z < z0 + 26f ? y < g + ph + 12.5f : y < b1 + 1f;
+                    if (!hidden) Diamond(m, V(cx1, y, z), Vector3.right, 2.3f);
+                }
+                if (y > a1 - 3f)
+                    for (float x = cx1 - 1.8f - shift; x > cx0 + 1.4f; x -= pitch) Diamond(m, V(x, y, cz0), Vector3.back, 2.3f);
+            }
+            // roof plant on the wings, the helipad deck on the tall block
+            PlantRoom(m, V(fx - 9f, a1 + 1.1f, z0 + 4f), V(6f, 2.6f, 8f));
+            PlantRoom(m, V(fx - 8f, b1 + 1.1f, z0 + 36f), V(5f, 2.2f, 6f));
+            Vector3 pad = V((cx0 + cx1) * .5f, c1 + 3.4f, (cz0 + cz1) * .5f + 2f);
+            m.Surface = ComicSurface.Concrete;
+            foreach (float dx in new[] { -5.5f, 5.5f }) foreach (float dz in new[] { -5.5f, 5.5f }) m.Box(pad + V(dx, -1.4f, dz), V(.6f, 2.8f, .6f), FshCoping);
+            m.Box(pad + V(0, -.25f, 0), V(15f, .5f, 15f), HelipadDeck);
+            m.Box(pad + V(0, -.62f, 0), V(15.4f, .3f, 15.4f), FshSlab);
+            m.Surface = ComicSurface.Plain;
+            m.Cylinder(pad + V(0, .02f, 0), 5.8f, .05f, K.R.yellow, 12);
+            m.Cylinder(pad + V(0, .045f, 0), 5.1f, .05f, HelipadDeck, 12);
+            m.Box(pad + V(-1.3f, .08f, 0), V(.55f, .04f, 3.8f), RailWhite);
+            m.Box(pad + V(1.3f, .08f, 0), V(.55f, .04f, 3.8f), RailWhite);
+            m.Box(pad + V(0, .08f, 0), V(2.1f, .04f, .55f), RailWhite);
+            m.Surface = ComicSurface.PaintedMetal;
+            for (int i = 0; i < 4; i++)
+            {
+                Quaternion q = Quaternion.Euler(0, i * 90f, 0);
+                for (float a = -7f; a < 7f; a += 2.33f) m.Box(pad + q * V(a, .5f, 7.4f), V(.1f, 1f, .1f), K.R.yellow);
+                m.Box(pad + q * V(0, 1f, 7.4f), V(14.8f, .1f, .1f), K.R.yellow);
+            }
+            m.Add(HelicopterMesh(), pad + V(1f, .05f, -1f), Quaternion.Euler(0, -60f, 0), Vector3.one * 1.3f);
+            // the white flue stack
+            m.Surface = ComicSurface.Plaster;
+            m.Box(V(cx0 + 3f, g + 26f, z0 + 40f), V(3.2f, 52f, 3.2f), FshSlab);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(V(cx0 + 3f, g + 50f, z0 + 40f), V(3.4f, .8f, 3.4f), FshCoping);
+            m.Box(V(cx0 + 3f, g + 52.2f, z0 + 40f), V(3.5f, .4f, 3.5f), K.R.ink);
+            // forecourt: paving, the orange entrance canopy on posts, planters, parked cars
+            K.Flat(m, fx + 3f, fx + 24f, fx + 3f, fx + 24f, z0 - 6f, z0 + 46f, g + .03f, H("D9D3C3"));
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(V(fx + 7.5f, g + 4.6f, z0 + 16f), V(9f, .55f, 9f), FinColours[0]);
+            m.Box(V(fx + 7.5f, g + 4.25f, z0 + 16f), V(9.2f, .18f, 9.2f), K.R.ink);
+            foreach (float dz in new[] { -3.8f, 3.8f }) m.Box(V(fx + 11.3f, g + 2.2f, z0 + 16f + dz), V(.3f, 4.4f, .3f), FshCoping);
+            for (int i = 0; i < 4; i++)
+            {
+                float z = z0 - 2f + i * 12f;
+                if (Mathf.Abs(z - z0 - 16f) < 6f) continue;
+                m.Surface = ComicSurface.Concrete;
+                m.Box(V(fx + 5.5f, g + .35f, z), V(1.6f, .7f, 6f), FshCore);
+                m.Surface = ComicSurface.Foliage;
+                m.Box(V(fx + 5.5f, g + .95f, z), V(1.3f, .55f, 5.6f), Hedge);
+            }
+            Color[] cars = { K.R.red, RailWhite, H("2F6FB5"), H("F2C14E") };
+            for (int i = 0; i < 4; i++) m.Add(ComicKitGeometry.Car(K.R, cars[i]), V(fx + 15f + (i % 2) * 5.5f, g + .05f, z0 - 2f + i * 11f), Quaternion.Euler(0, 90f, 0), Vector3.one);
         }
 
         // ==================================================================== landmarks and props
@@ -1292,65 +1386,144 @@ namespace CityScooter.EditorTools.Districts
             m.Cylinder((a + b) * .5f, r, d.magnitude, c, 8, taper, Quaternion.FromToRotation(Vector3.up, d));
         }
 
-        /// <summary>The art-deco riverside hotel shape (no name): cream render, a rounded corner tower with teal bands and
-        /// a stepped pylon, ribbon windows, flat roof with a parapet. Corner at p (towards the rider), wings along +Z and +X.</summary>
+        /// <summary>The art-deco riverside hotel shape (no name): a rounded corner drum with an upper drum and a stepped
+        /// pylon of fins, two wings that step down from three storeys to two, ribbon windows set back between cream
+        /// spandrels, sunshade eyebrows, a teal band under every parapet. p = the drum's centre (towards the rider).</summary>
         static void DecoHotel(ComicMesh m, Vector3 p)
         {
-            const float floors = 3, fh = 3.4f, hgt = floors * fh;
-            m.Surface = ComicSurface.Plaster;
-            m.Box(p + V(3f, hgt * .5f, 12f), V(9f, hgt, 20f), HotelCream);       // wing along the river
-            m.Box(p + V(11f, hgt * .5f, 2.5f), V(14f, hgt, 8f), HotelCream);      // wing inland
-            m.Cylinder(p + V(0, (hgt + 2f) * .5f, 0), 4.6f, hgt + 2f, HotelCream, 14);
-            for (int f = 0; f < floors; f++)
+            const float fh = 3.4f;
+            DecoWing(m, p.x - 1.6f, p.x + 7.4f, p.z + 2.5f, p.z + 13f, p.y, 3, false);
+            DecoWing(m, p.x - 1.6f, p.x + 7.4f, p.z + 13f, p.z + 22f, p.y, 2, false);
+            DecoWing(m, p.x + 2.5f, p.x + 12f, p.z - 1.6f, p.z + 6.4f, p.y, 3, true);
+            DecoWing(m, p.x + 12f, p.x + 19f, p.z - 1.6f, p.z + 6.4f, p.y, 2, true);
+            // the corner drum: glass set back behind cream spandrels, eyebrows, teal band, parapet
+            const float r = 5f, h3 = 3 * fh;
+            m.Surface = ComicSurface.Glass;
+            m.Cylinder(p + V(0, h3 * .5f, 0), r - .35f, h3, DarkGlass, 12);
+            for (int f = 0; f < 3; f++)
             {
-                float y = f * fh + 1.9f;
-                m.Surface = ComicSurface.Glass;
-                m.Box(p + V(-1.52f, y, 12f), V(.1f, 1.3f, 18.4f), DarkGlass);
-                m.Box(p + V(11f, y, -1.52f), V(12.4f, 1.3f, .1f), DarkGlass);
-                m.Cylinder(p + V(0, y, 0), 4.65f, 1.3f, DarkGlass, 14);
-                m.Surface = ComicSurface.PaintedMetal;
-                m.Cylinder(p + V(0, y + .95f, 0), 4.75f, .22f, HotelTrim, 14);
-                m.Box(p + V(-1.56f, y + .95f, 12f), V(.12f, .22f, 20f), HotelTrim);
-                m.Box(p + V(11f, y + .95f, -1.56f), V(14f, .22f, .12f), HotelTrim);
+                float yb = p.y + f * fh;
+                m.Surface = ComicSurface.Plaster;
+                m.Cylinder(V(p.x, yb + .5f, p.z), r, 1f, HotelCream, 12);
+                m.Cylinder(V(p.x, yb + 2.95f, p.z), r, .9f, HotelCream, 12);
+                m.Cylinder(V(p.x, yb + 2.6f, p.z), r + .7f, .16f, HotelCream, 12);
             }
-            m.Surface = ComicSurface.Plaster;
-            m.Cylinder(p + V(0, hgt + 2.2f, 0), 4.9f, .4f, LimeCap, 14);
-            m.Box(p + V(3f, hgt + .3f, 12f), V(9.3f, .6f, 20.3f), LimeCap);
-            m.Box(p + V(11f, hgt + .3f, 2.5f), V(14.3f, .6f, 8.3f), LimeCap);
-            // the stepped pylon on the corner
-            m.Box(p + V(0, hgt + 4.5f, 0), V(1.6f, 5f, 1.6f), HotelCream);
-            m.Box(p + V(0, hgt + 7.6f, 0), V(1f, 1.4f, 1f), HotelCream);
             m.Surface = ComicSurface.PaintedMetal;
-            for (int i = 0; i < 3; i++) m.Box(p + V(0, hgt + 3f + i * 1.3f, 0), V(1.7f, .25f, 1.7f), HotelTrim);
-            m.Cylinder(p + V(0, hgt + 9f, 0), .08f, 1.6f, K.R.ink, 8);
-            // a palm or two at its door
-            P.Palm(m, p + V(-3f, 0, 8f), 8f, 11);
+            m.Cylinder(V(p.x, p.y + h3 - .3f, p.z), r + .06f, .26f, HotelTrim, 12);
+            m.Surface = ComicSurface.Plaster;
+            m.Cylinder(V(p.x, p.y + h3 + .45f, p.z), r + .1f, .9f, HotelCream, 12);
+            // the upper drum, smaller, with its own window band, and the stepped pylon of fins facing the corner
+            m.Cylinder(V(p.x, p.y + h3 + 2.6f, p.z), 3.4f, 3.4f, HotelCream, 12);
+            m.Surface = ComicSurface.Glass;
+            m.Cylinder(V(p.x, p.y + h3 + 2.5f, p.z), 3.45f, 1.1f, DarkGlass, 12);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(V(p.x, p.y + h3 + 4.2f, p.z), 3.7f, .3f, HotelTrim, 12);
+            Quaternion toCorner = Quaternion.Euler(0, 225f, 0);
+            for (int i = -1; i <= 1; i++)
+            {
+                float tall = 9f - Mathf.Abs(i) * 2.2f;
+                Vector3 c = p + toCorner * V(i * .9f, 0, 3.6f) + V(0, h3 + tall * .5f, 0);
+                m.Surface = ComicSurface.Plaster;
+                m.Box(c, V(.35f, tall, 1.6f), HotelCream, toCorner);
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Box(c + V(0, tall * .5f + .1f, 0), V(.45f, .2f, 1.7f), HotelTrim, toCorner);
+            }
+            m.Cylinder(V(p.x, p.y + h3 + 10.5f, p.z) + toCorner * V(0, 0, 3.6f), .06f, 3f, K.R.ink, 8);
+            // a palm by the door
+            P.Palm(m, p + V(-3.2f, 0, 9f), 8f, 11);
         }
 
+        /// <summary>One hotel wing: ribbon windows recessed between cream spandrels with mullions, eyebrows, a teal band and
+        /// a parapet. faceZ: the face to the rider is -Z (z0), else the face to the path is -X (x0).</summary>
+        static void DecoWing(ComicMesh m, float x0, float x1, float z0, float z1, float y0, int floors, bool faceZ)
+        {
+            const float fh = 3.4f;
+            float h = floors * fh;
+            // corners of a slab along the face: s = along (x for faceZ, z otherwise), o = outward depth (0 = the face)
+            void Slab(float s0, float s1, float yA, float yB, float o0, float o1, Color c)
+            {
+                if (faceZ) K.MinMaxBox(m, V(s0, yA, z0 - o0), V(s1, yB, z0 - o1), c);
+                else K.MinMaxBox(m, V(x0 - o0, yA, s0), V(x0 - o1, yB, s1), c);
+            }
+            float a0 = faceZ ? x0 : z0, a1 = faceZ ? x1 : z1;
+            m.Surface = ComicSurface.Plaster;
+            if (faceZ) K.MinMaxBox(m, V(x0, y0, z0 + .4f), V(x1, y0 + h, z1), HotelCream);
+            else K.MinMaxBox(m, V(x0 + .4f, y0, z0), V(x1, y0 + h, z1), HotelCream);
+            for (int f = 0; f < floors; f++)
+            {
+                float yb = y0 + f * fh;
+                m.Surface = ComicSurface.Glass;
+                Slab(a0 + .5f, a1 - .5f, yb + 1f, yb + 2.5f, -.3f, -.4f, DarkGlass);
+                m.Surface = ComicSurface.Plaster;
+                Slab(a0, a1, yb, yb + 1f, 0f, -.4f, HotelCream);
+                Slab(a0, a1, yb + 2.5f, yb + fh, 0f, -.4f, HotelCream);
+                Slab(a0 - .2f, a1 + .2f, yb + 2.5f, yb + 2.66f, .75f, -.4f, HotelCream);                      // eyebrow
+                for (float a = a0 + 2f; a < a1 - 1f; a += 2f) Slab(a - .07f, a + .07f, yb + 1f, yb + 2.5f, -.05f, -.4f, HotelCream);
+            }
+            m.Surface = ComicSurface.PaintedMetal;
+            Slab(a0, a1, y0 + h - .55f, y0 + h - .3f, .06f, -.4f, HotelTrim);
+            m.Surface = ComicSurface.Plaster;
+            K.MinMaxBox(m, V(x0 - .1f, y0 + h, z0 - .1f), V(x1 + .1f, y0 + h + .8f, z1 + .1f), HotelCream);
+            m.Surface = ComicSurface.PaintedMetal;
+            K.MinMaxBox(m, V(x0 - .2f, y0 + h + .8f, z0 - .2f), V(x1 + .2f, y0 + h + .95f, z1 + .2f), LimeCap);
+        }
+
+        /// <summary>The round glass apartment tower: a wider two-storey podium, a dark teal glass shaft ringed by white
+        /// balcony slabs at every floor, white blade walls on the side facing the path, a stepped crown with plant and a mast.</summary>
         static void RoundTower(ComicMesh m, Vector3 p, float r, float h)
         {
             m.Surface = ComicSurface.Glass;
-            m.Cylinder(p + V(0, h * .5f, 0), r, h, TowerGlass, 12);
+            m.Cylinder(p + V(0, 3.5f, 0), r + 2.2f, 7f, DarkGlass, 12);
+            m.Surface = ComicSurface.Concrete;
+            m.Cylinder(p + V(0, 3.6f, 0), r + 2.45f, .35f, TowerWhite, 12);
+            m.Cylinder(p + V(0, 7.25f, 0), r + 2.6f, .5f, TowerWhite, 12);
+            m.Surface = ComicSurface.Glass;
+            m.Cylinder(p + V(0, 7.5f + (h - 7.5f) * .5f, 0), r, h - 7.5f, H("2E7489"), 12);
+            m.Surface = ComicSurface.Concrete;
+            for (float y = 7.5f + 3.2f; y < h - 1f; y += 3.2f) m.Cylinder(p + V(0, y, 0), r + .9f, .3f, TowerWhite, 12);
+            foreach (float a in new[] { 205f, 250f })
+            {
+                Quaternion q = Quaternion.Euler(0, a, 0);
+                m.Box(p + q * V(0, 0, r + .4f) + V(0, 7.5f + (h - 7.5f) * .5f, 0), V(.6f, h - 7.5f, 1.6f), TowerWhite, q);
+            }
+            m.Cylinder(p + V(0, h + .5f, 0), r + .5f, 1f, TowerWhite, 12);
+            m.Surface = ComicSurface.Metal;
+            m.Cylinder(p + V(0, h + 2.2f, 0), r * .6f, 2.4f, FshPlant, 12);
             m.Surface = ComicSurface.PaintedMetal;
-            for (float y = 3.2f; y < h - 1f; y += 3.2f) m.Cylinder(p + V(0, y, 0), r + .15f, .25f, TowerWhite, 12);
-            m.Surface = ComicSurface.Plaster;
-            m.Cylinder(p + V(0, 3f, 0), r + 1.2f, 6f, TowerWhite, 12);
-            m.Cylinder(p + V(0, h + 1.2f, 0), r * .8f, 2.4f, TowerWhite, 12);
+            m.Cylinder(p + V(0, h + 3.5f, 0), r * .66f, .25f, FshCoping, 12);
+            m.Cylinder(p + V(0, h + 7f, 0), .12f, 7f, K.R.ink, 6, .4f);
         }
 
+        /// <summary>An apartment slab tower: a dark-glass podium with white columns, a glass core set back behind white
+        /// balcony slabs and light glass balustrades on the faces to the path (-X) and the rider (-Z), corner blade walls,
+        /// a parapet and plant on the roof. p = the centre at ground.</summary>
         static void SlabTower(ComicMesh m, Vector3 p, float w, float d, float h)
         {
-            m.Surface = ComicSurface.Plaster;
-            m.Box(p + V(0, h * .5f, 0), V(w, h, d), TowerWhite);
+            float x0 = p.x - w * .5f, x1 = p.x + w * .5f, z0 = p.z - d * .5f, z1 = p.z + d * .5f, g = p.y, y0 = g + 7.1f;
+            Color glass = H("2F6E86"), rail = H("A9D0E0");
             m.Surface = ComicSurface.Glass;
-            for (float y = 4f; y < h - 2f; y += 3.2f)
+            K.MinMaxBox(m, V(x0 - 1.5f, g, z0 - 1.5f), V(x1 + 1.5f, g + 6.4f, z1 + 1.5f), DarkGlass);
+            m.Surface = ComicSurface.Concrete;
+            K.MinMaxBox(m, V(x0 - 1.8f, g + 6.4f, z0 - 1.8f), V(x1 + 1.8f, y0, z1 + 1.8f), TowerWhite);
+            for (float a = x0 - 1.5f; a <= x1 + 1.6f; a += 3.4f) m.Box(V(a, g + 3.2f, z0 - 1.65f), V(.5f, 6.4f, .5f), TowerWhite);
+            for (float a = z0 - 1.5f; a <= z1 + 1.6f; a += 3.4f) m.Box(V(x0 - 1.65f, g + 3.2f, a), V(.5f, 6.4f, .5f), TowerWhite);
+            m.Surface = ComicSurface.Glass;
+            K.MinMaxBox(m, V(x0 + 1.1f, y0, z0 + 1.1f), V(x1 - .2f, h, z1 - .2f), glass);
+            for (float y = y0 + 3.2f; y < h - 1f; y += 3.2f)
             {
-                m.Box(p + V(0, y + .9f, -d * .5f - .02f), V(w - 1.4f, 1.6f, .1f), H("5C8FA6"));
-                m.Box(p + V(-w * .5f - .02f, y + .9f, 0), V(.1f, 1.6f, d - 1.4f), H("5C8FA6"));
+                m.Surface = ComicSurface.Concrete;
+                K.MinMaxBox(m, V(x0, y - .3f, z0), V(x1, y, z1), TowerWhite);
+                m.Surface = ComicSurface.Glass;
+                K.MinMaxBox(m, V(x0, y, z0), V(x0 + .08f, y + 1f, z1 - .6f), rail);
+                K.MinMaxBox(m, V(x0, y, z0), V(x1 - .6f, y + 1f, z0 + .08f), rail);
             }
+            m.Surface = ComicSurface.Concrete;
+            K.MinMaxBox(m, V(x1 - .7f, y0, z0), V(x1, h, z0 + 1.2f), TowerWhite);
+            K.MinMaxBox(m, V(x0, y0, z1 - .7f), V(x0 + 1.2f, h, z1), TowerWhite);
+            K.MinMaxBox(m, V(x0 - .15f, h, z0 - .15f), V(x1 + .15f, h + 1f, z1 + .15f), TowerWhite);
             m.Surface = ComicSurface.PaintedMetal;
-            for (float y = 4f; y < h - 2f; y += 3.2f) m.Box(p + V(-.5f, y, -d * .5f - .5f), V(w - .4f, .18f, 1f), TowerWhite);
-            m.Box(p + V(0, h + .8f, 0), V(w * .5f, 1.6f, d * .5f), HotelTrim);
+            K.MinMaxBox(m, V(x0 - .25f, h + 1f, z0 - .25f), V(x1 + .25f, h + 1.15f, z1 + .25f), FshCoping);
+            PlantRoom(m, V(p.x + 1f, h + 1f, p.z + 1f), V(w * .45f, 2.4f, d * .45f));
         }
 
         static void Dinghy(ComicMesh m, Vector3 p, float yaw, Color band)
@@ -1645,12 +1818,15 @@ namespace CityScooter.EditorTools.Districts
             for (int i = 0; i < 7; i++)
             {
                 float x = 312f + R() * 30f, z = 60f + i * 22f + R() * 8f, h = 30f + R() * 45f, w = 9f + R() * 6f;
-                Color c = Haze(i % 3 == 0 ? TowerGlass : i % 3 == 1 ? TowerWhite : H("8FB2C2"), .3f);
+                Color c = Haze(i % 3 == 0 ? H("2E7489") : i % 3 == 1 ? H("3F5F7A") : H("4F8FA8"), .22f);
                 m.Surface = ComicSurface.Glass;
                 if (i % 2 == 0) m.Cylinder(V(x, h * .5f, z), w * .5f, h, c, 10);
                 else m.Box(V(x, h * .5f, z), V(w, h, w), c);
                 m.Surface = ComicSurface.PaintedMetal;
-                for (float y = 4f; y < h; y += 6f) m.Box(V(x, y, z), V(w + .3f, .5f, w + .3f), Haze(TowerWhite, .35f));
+                for (float y = 6f; y < h; y += 3.5f)
+                    if (i % 2 == 0) m.Cylinder(V(x, y, z), w * .5f + .4f, .45f, Haze(TowerWhite, .2f), 10);
+                    else m.Box(V(x, y, z), V(w + .8f, .45f, w + .8f), Haze(TowerWhite, .2f));
+                m.Box(V(x, h + 1.2f, z), V(w * .5f, 2.4f, w * .5f), Haze(FshPlant, .25f));
             }
             Ridge(m, r, 1, 430f, -80f, 600f, 150f, 30f, Haze(H("7A9670"), .45f), 60f);
             // ahead: the long low Mt Henry Bridge over the water on the right, Mt Henry's bush hill on the left
@@ -1685,9 +1861,13 @@ namespace CityScooter.EditorTools.Districts
             {
                 float x = -(190f + R() * 40f), z = 40f + i * 32f + R() * 10f, h = 22f + R() * 18f, w = 26f + R() * 14f;
                 m.Surface = ComicSurface.Plaster;
-                m.Box(V(x, h * .5f, z), V(w, h, 24f), Haze(i % 2 == 0 ? FshWhite : FshGrey, .25f));
+                m.Box(V(x, h * .5f, z), V(w, h, 24f), Haze(FshSlab, .08f));
+                m.Surface = ComicSurface.Glass;
+                for (float y = 5f; y < h - 2f; y += 4f) m.Box(V(x + .3f, y, z), V(w + .1f, 1.9f, 22.4f), Haze(FshGlass, .12f));
                 m.Surface = ComicSurface.PaintedMetal;
-                for (float a = -10f; a <= 10f; a += 2.5f) m.Box(V(x + w * .5f + .2f, h * .45f, z + a), V(.6f, h * .8f, .5f), Haze(FinColours[Mathf.Abs((int)(a + i * 3)) % FinColours.Length], .3f));
+                m.Box(V(x, h + .5f, z), V(w + .4f, 1f, 24.4f), Haze(FshCoping, .25f));
+                if (i % 2 == 0)
+                    for (float a = -10f; a <= 10f; a += 2f) m.Box(V(x + w * .5f + .6f, h * .5f, z + a), V(1.2f, h * .8f, .4f), Haze(FinColours[Mathf.Abs((int)(a + i * 3)) % FinColours.Length], .2f));
                 if (i == 2)
                 {
                     m.Cylinder(V(x, h + .3f, z), 8f, .6f, Haze(H("4A5058"), .25f), 10);
