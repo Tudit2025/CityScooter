@@ -54,8 +54,8 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.91, b: 0.78, a: 1}
   sunIntensity: 1.4
   skyYaw: -70
-  skySize: 0.72
-  skyHeight: -1.5
+  skySize: 0.85
+  skyHeight: -2.5
   farScenery: {fileID: 3071551644042041595, guid: f08dfcff6a807d74bbf91aa82d311f6f, type: 3}
   gateway: {fileID: 8780647176367858469, guid: 5cfd242a69e65cc48a624ee8dbcb3e9a, type: 3}
   ambience: {fileID: 0}
