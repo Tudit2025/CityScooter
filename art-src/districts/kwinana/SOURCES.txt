@@ -1,0 +1,33 @@
+KWINANA（v0.4 南线，order 120，南线美术 3）参考资料
+参考图下载在仓库外 D:\CityScooter-refs\kwinana\，不进仓库、不进游戏。只记录链接和用到了什么。
+
+照片（Wikimedia Commons）
+- Kwinana Grain Terminal, August 2019
+  https://commons.wikimedia.org/wiki/File:Kwinana_Grain_Terminal,_August_2019.jpg
+  用到：粮仓的整体造型——中间一座高的筒仓塔楼（head house），立面是蓝白相间的竖条纹，顶上一圈蓝色檐口和一个小机房；
+  两边是一长排白色圆筒仓，顶上压着一条蓝色廊道；前面是海边沙丘和灌木、白沙、木桩围栏。
+  颜色：筒仓白 #EDEFEA / 阴面 #D3D8D6，蓝 #2F5FA8，深蓝 #22477F。比例：塔楼约是筒仓高度的 2 倍。
+- Kwinana Grain Terminal and CBH Grain Jetty seen from Kwinana Beach, November 2020 01
+  https://commons.wikimedia.org/wiki/File:Kwinana_Grain_Terminal_and_CBH_Grain_Jetty_seen_from_Kwinana_Beach,_November_2020_01.jpg
+  用到：从海滩看粮仓和一条很长的蓝色传送廊通到海里的装船码头；Cockburn Sound 的水是青绿色 #3FB0B8，远处偏蓝 #2D86A6；
+  岸边低矮的灰绿灌木和石灰岩。远景里的码头（装船机、吊臂）和锚地上的散货船。
+- SS Kwinana remnants, November 2019 01
+  https://commons.wikimedia.org/wiki/File:SS_Kwinana_remnants,_November_2019_01.jpg
+  用到：船壳残骸的铁锈色（#8E3B22 / 亮 #B35A30 / 暗 #5A281A）、石灰岩礁石、远处的蓝色传送廊。
+- Kwinana wreck ewd c1960
+  https://commons.wikimedia.org/wiki/File:Kwinana_wreck_ewd_c1960.JPG
+  用到：半埋在沙滩上的旧船壳的整体剪影——船身侧倾，船头翘起带一根立柱，船尾断开，甲板上残破的舱房，白沙和浅水。
+  游戏里做成“半埋在沙里、靠水边”的装饰地标（不能撞、不能打）。
+
+视频（只看了封面图，storyboard 未用）
+- yt-dlp 搜索 "Kwinana grain terminal"、"Kwinana Beach wreck"：sy2sOxCBzpM、6osJo6dKtgk、gRU7B6u3kw8、PbVUkmgPwlc、8g6J2S2PYWI
+  多数是潜水、钓鱼视频，封面帮助不大；主要依据上面的 Commons 照片。
+
+风格化处理（没有照片的部分按常识）
+- 工业区：炼油塔（银色立塔+黑色平台+黄色栏杆）、火炬塔（红白相间+三脚架+火焰）、红白条纹的烟囱和烟、
+  白色储油罐（绿灰色腰带、螺旋楼梯）、LPG 球罐、管廊（银/黄/绿/红色管子）、铁丝网围栏和黄色警示菱形牌（只有“!”，没有文字）。
+- 红土路肩 #B5603A、石灰岩/碎石地 #CDBF9F、海岸灌木 #A9A472、Norfolk 松（海滩保护区）。
+- 卡车：自卸车（白色/黄色驾驶室，红色车斗，红土或石灰岩货）、油罐车（红色驾驶室，银色罐体）。货运列车：黄蓝色机车+赭黄色粮食漏斗车。
+- 不写任何公司名或商标（炼油厂、粮仓、航运公司都没有字）。
+- 远景：右边（西）是 Cockburn Sound 和低平的 Garden Island（有白沙边），锚地的散货船，码头和吊车；
+  左边（东）是一层层越来越灰的工业天际线（罐、塔、烟囱、火炬、厂房），最远是蓝灰色的 Darling 山脉。

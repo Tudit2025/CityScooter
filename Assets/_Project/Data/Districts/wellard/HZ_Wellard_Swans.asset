@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_Wellard_Swans
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 7927728275550538826, guid: 9f3b64ed474bc4e42952ba5f837f7a21, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -2.2
+    z: 22
+    yaw: 0
+  - prefab: {fileID: 6562238745074558634, guid: cc28d60984b5cee4b9d2be237856d926, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 0.2
+    z: 24
+    yaw: 30
+  - prefab: {fileID: 4317111301869209658, guid: 6a8e24ea3745b1649b5b20712bddf7a5, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 2.4
+    z: 27
+    yaw: -20
+  length: 45
+  minLevel: 1
+  weight: 0.8
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 30
+  roadHalfWidth: 4
