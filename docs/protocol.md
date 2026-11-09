@@ -22,7 +22,7 @@ USB 串口波特率 115200。v0 只用于 USB 直连和模拟器；无线（radi
 | `bo` | **v1** 加速：2 秒内速度提到上限的 1.35 倍。冷却 6 秒，冷却中发的不算 | `print("bo")` |
 | `toon:1` / `toon:0` | **v1** 卡通模式开/关。开着时撞到行人不算撞车：人"BOING!"一声飞出去，你减速，出拳也能把人打飞；关着时撞人就是撞车。游戏记住最后一次收到的值（只发 `toon` 也算开）。程序一开始就发的那条可能游戏还没收到，所以放在循环里或按钮里发 | `print("toon:1")` |
 | `trick` | **v0.3 跳台** 在空中做特技：从跳台飞起来以后（收到 `air:1` 之后）第一次是转体 SPIN，第二次是后空翻 FLIP，轮流来，每个 0.6 秒，各加 50 分；一次飞行里做完 2 个以上，安全落地时每个再加 25 分（COMBO）。正在做的时候再发一条会排在后面（最多排 1 条）。落地时特技还没做完：不算撞车，显示 SKETCHY!，这一个不加分。在地上、普通小跳里发了不算。3 秒内发了 6 条以上（在地上发的也算）就会"头晕"，3 秒内不能做特技，所以放进 forever 里一直发没用。`trick:1` 也认。键盘 `Q` | `print("trick")` |
-| `start:kingspark` | **v0.3 场景（11/9）** 选出发场景：id 和 `zone:` 一样（`uwa`、`matilda`、`kingspark`、`westperth`、`cbd`、`quay`、`mountsbay`），空格、大写和其他符号会被去掉，所以 `start: Kings Park` 也认。在开局画面上马上换过去（最多每 0.3 秒换一次）；骑行中或撞车画面上发的，这一局照常，下一局从那里出发。游戏记住最后一次收到的值，同一个值重复发不会重建赛道。不在路线上的 id 不理（网页监视器会列出可用的 id）。积木"start rides in [Kings Park]"大约每秒会再发一次，因为程序一开始就发的那条游戏可能没收到 | `print("start:kingspark")` |
+| `start:kingspark` | **v0.3 场景（11/9）** 选出发场景：id 和 `zone:` 一样（v0.4 起共 15 个，见下面 `zone:` 一行），空格、大写和其他符号会被去掉，所以 `start: Kings Park` 也认。在开局画面上马上换过去（最多每 0.3 秒换一次）；骑行中或撞车画面上发的，这一局照常，下一局从那里出发。游戏记住最后一次收到的值，同一个值重复发不会重建赛道。不在路线上的 id 不理（网页监视器会列出可用的 id）。积木"start rides in [Kings Park]"大约每秒会再发一次，因为程序一开始就发的那条游戏可能没收到 | `print("start:kingspark")` |
 | `sur` | **v1 警察（11/8）** 投降：被警察追的时候马上靠边停车（自动刹车到停下），停稳 1.5 秒后 ARRESTED。没被追时发了不算。`sur:1` 也认 | `print("sur")` |
 
 - 推荐循环 `sleep(50)`，也就是每秒 20 次左右。转向超过 0.5 秒没更新，游戏会把转向归零（拔线、程序报错时车不会一直往一边跑）。
@@ -53,7 +53,7 @@ USB 串口波特率 115200。v0 只用于 USB 直连和模拟器；无线（radi
 | `air:1` / `air:0` | **v0.3 跳台** 从跳台飞起来了 / 落地了（或者在空中撞车、掉进水里，这时 `air:0` 在 `crash` 前面）。每次飞行各发一次。普通跳（`jp`）只飞 0.65 秒，**不发**；只有从跳台起飞，或者预计能飞 0.8 秒以上的（比如在高平台上起跳）才发（`GameTuning.airMessageMinSeconds`） |
 | `land:ok` / `land:trick` | **v0.3 跳台** 安全落地，紧跟在 `air:0` 后面：这次飞行里至少做完 1 个特技是 `land:trick`，否则 `land:ok`。掉进缺口（SPLASH!）、落在车上撞车时没有 `land:` |
 | `lost` | **v1 警察** 甩掉警察了（LOST THEM!）：星级掉到 0。加分只算打警察挣来的星（每颗 100），`do:stars` 这类程序给的星不加分 |
-| `zone:uwa` … | **v0.3 场景** 你在哪个场景（沿 UWA → 珀斯市中心的真实骑行线）：一局开始时在 `go` 后面发一次出发的场景，之后每骑进下一个场景发一次（几百米一次，很少）。id 按路线顺序：`uwa`（UWA）、`matilda`（Matilda Bay）、`kingspark`（Kings Park）、`westperth`（West Perth）、`cbd`（Perth CBD）、`quay`（Elizabeth Quay）、`mountsbay`（Mounts Bay Road），走完再回到 `uwa`。只有小写字母。屏幕上同时显示 `ENTERING KINGS PARK` |
+| `zone:uwa` … | **v0.3 场景** 你在哪个场景（沿 UWA → 珀斯市中心的真实骑行线）：一局开始时在 `go` 后面发一次出发的场景，之后每骑进下一个场景发一次（几百米一次，很少）。id 按路线顺序：`uwa`（UWA）、`matilda`（Matilda Bay）、`kingspark`（Kings Park）、`westperth`（West Perth）、`cbd`（Perth CBD）、`quay`（Elizabeth Quay）、`mountsbay`（Mounts Bay Road）；**v0.4 南线**接着是 `canningbridge`（Canning Bridge）、`murdoch`（Murdoch）、`cockburn`（Cockburn Central）、`aubingrove`（Aubin Grove）、`kwinana`（Kwinana）、`wellard`（Wellard）、`rockingham`（Rockingham）、`warnbro`（Warnbro），走完再回到 `uwa`。只有小写字母。屏幕上同时显示 `ENTERING KINGS PARK` |
 
 键盘对应：`F` 出拳，`R` 按铃，`E` 加速，`T` 卡通模式开/关，`Q` 特技（v0.3；外壳关掉键盘时这些键都不起作用，板子发的 `trick` 照样有效）。
 

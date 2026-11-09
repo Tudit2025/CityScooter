@@ -26,7 +26,10 @@
 
   // ---- Districts (v0.3): zone:<id> at the start of a ride and when you ride into the next district (route order).
   const DISTRICTS = [["UWA", "uwa"], ["Matilda Bay", "matilda"], ["Kings Park", "kingspark"], ["West Perth", "westperth"],
-    ["Perth CBD", "cbd"], ["Elizabeth Quay", "quay"], ["Mounts Bay Road", "mountsbay"]];
+    ["Perth CBD", "cbd"], ["Elizabeth Quay", "quay"], ["Mounts Bay Road", "mountsbay"],
+    // v0.4 south line: down the Kwinana Freeway to Rockingham
+    ["Canning Bridge", "canningbridge"], ["Murdoch", "murdoch"], ["Cockburn Central", "cockburn"], ["Aubin Grove", "aubingrove"],
+    ["Kwinana", "kwinana"], ["Wellard", "wellard"], ["Rockingham", "rockingham"], ["Warnbro", "warnbro"]];
   for (const [name, id] of DISTRICTS) MESSAGE_OPTIONS.push(["zone:" + id + " (entering " + name + ")", "zone:" + id]);
   // ---- end Districts (v0.3)
 
@@ -93,11 +96,11 @@
       args0: [{ type: "field_dropdown", name: "ZONE", options: DISTRICTS.map(([name, id]) => [name, id]) },
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "game_blocks",
-      tooltip: "Runs when your ride starts in this part of Perth, and each time you ride into it (UWA, Matilda Bay, Kings Park, West Perth, Perth CBD, Elizabeth Quay, Mounts Bay Road). The game sends zone:<name>, e.g. zone:kingspark." },
+      tooltip: "Runs when your ride starts in this part of Perth, and each time you ride into it (from UWA through the city, then down the freeway to Rockingham and Warnbro). The game sends zone:<name>, e.g. zone:kingspark." },
     { type: "cs_start", message0: "start rides in %1",
       args0: [{ type: "field_dropdown", name: "ZONE", options: DISTRICTS.map(([name, id]) => [name, id]) }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
-      tooltip: "Choose where your rides start on the route from UWA to the city. Put it in \"on start\" (or on a button). On the start screen the game moves there straight away; during a ride, your next ride starts there. Your program sends it again every second, in case the game was not listening yet. Python: print(\"start:kingspark\")" },
+      tooltip: "Choose where your rides start on the route from UWA through the city to Rockingham and Warnbro. Put it in \"on start\" (or on a button). On the start screen the game moves there straight away; during a ride, your next ride starts there. Your program sends it again every second, in case the game was not listening yet. Python: print(\"start:kingspark\")" },
   ];
 
   const GENERATORS = {

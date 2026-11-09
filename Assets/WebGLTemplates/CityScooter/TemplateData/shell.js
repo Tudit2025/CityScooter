@@ -280,7 +280,10 @@
 
   // ---- Districts (v0.3): the monitor names the part of Perth a zone:<id> message means (route order).
   const ZONE_NAMES = { uwa: "UWA", matilda: "Matilda Bay", kingspark: "Kings Park", westperth: "West Perth",
-    cbd: "Perth CBD", quay: "Elizabeth Quay", mountsbay: "Mounts Bay Road" };
+    cbd: "Perth CBD", quay: "Elizabeth Quay", mountsbay: "Mounts Bay Road",
+    // v0.4 south line
+    canningbridge: "Canning Bridge", murdoch: "Murdoch", cockburn: "Cockburn Central", aubingrove: "Aubin Grove",
+    kwinana: "Kwinana", wellard: "Wellard", rockingham: "Rockingham", warnbro: "Warnbro" };
   const zoneHint = (line) => {
     const m = /^zone:([a-z]+)$/.exec(line);
     return m ? "entering " + (ZONE_NAMES[m[1]] || m[1]) : "";
@@ -367,7 +370,7 @@
       case "malformed":
         logLine("warn", d.id, line, /^\s*toon/i.test(line) ? "toon: needs 1 (on) or 0 (off), e.g. toon:1"
           : /^\s*say/i.test(line) ? "say: one word of your own (letters, digits, _ - ! ?, up to 16), not a game word like crash"
-          : /^\s*start/i.test(line) ? "start: one of uwa, matilda, kingspark, westperth, cbd, quay, mountsbay, e.g. start:kingspark"
+          : /^\s*start/i.test(line) ? "start: a district id, e.g. start:kingspark or start:rockingham (" + Object.keys(ZONE_NAMES).join(", ") + ")"
           : /^\s*do/i.test(line) ? "do: one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole, ramp"
           : "st: needs a number, e.g. st:-35");
         break;
