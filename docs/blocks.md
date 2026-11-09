@@ -111,11 +111,15 @@
     while True:
         ...
         # radio from other micro:bits: read everything that arrived, every loop
-        got_radio = radio.receive()
-        while got_radio:
+        while True:
+            try:
+                got_radio = radio.receive()
+            except ValueError:  # not text (e.g. sent by a MakeCode program): skip it
+                continue
+            if not got_radio:
+                break
             if pass_radio:
                 print("rx:" + got_radio)  # pass it on to the game
-            got_radio = radio.receive()
         # messages from the game
         for msg in messages():
             ...
@@ -130,7 +134,12 @@
                 print("race:" + race_name + ":" + str(radio_group))  # I want to race, in this group
         sleep(50)
     ```
-  - 没加 `try/except`：如果同组有板子用 `send_bytes` 或 MakeCode 发了不是文字的包，`radio.receive()` 会报 `ValueError: received packet is not a string`，程序停下。串口监视器对这一行有提示（"换一个组号"）。课上讲"信任"时可以拿来演示。
+  - 不是文字的包会跳过（11/9 加的）：
+    - 同组有板子用 `send_bytes` 或 MakeCode 发了不是文字的包时，`radio.receive()` 会报 `ValueError: received packet is not a string`。
+    - V1 和 V2 的固件都是先把这一包丢掉再报错（查过两边的 `modradio` 源码，模拟器里也试过），所以生成的代码用 `try/except ValueError` 包住 `radio.receive()`，`continue` 读下一条，不会死循环。
+    - 一个乱发的包不会让同组所有板子的程序停下。积木测试和竞速程序测试都往模拟器里喂了一个不带头的包，`rx:` 照常往下走，没有报错。
+    - 只用 "when radio receives a message"（不用竞速积木）时也一样包住，这一轮就当没收到。
+    - `microbit/race.py` 用的是同样的写法。学生自己写的代码没处理时程序会停，串口监视器对这一行有提示（"换一个组号"）。
 
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 
@@ -224,6 +233,8 @@ USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不�
      - 在模拟器的 V2 和模拟 V1 上运行，打开机器人对手：`race:AMY:12` 到了游戏，三个机器人的 `rx:p:BOT1…` 每秒约 4 条到了游戏，监视器每秒一行汇总、没有逐行的 `rx:`；
      - 游戏发 `pos:` / `fin:` 后模拟器的 `radio_output` 是 `p:AMY:…` / `f:AMY:72.35`（带 3 字节文字头）；监视器里 `pos:` 每秒最多一行；
      - Send go 后游戏收到 `rx:go:<种子>:uwa:2000`；摇一摇时发出 5 次同一个种子的 `go:…:kingspark:1500`，自己的游戏也收到一次 `rx:go:…`；
+     - 机器人对手发着的时候喂一个不是文字的包（不带 3 字节头）：程序不停，`rx:` 照常往下走；只用 "when radio receives" 的程序也一样（收到 one、two，跳过中间那个坏包）；
+     - 竞速积木误放进 "forever"：只设变量，不打印、不发无线；
      - 全部积木的程序里也加了竞速积木（和 Radio 分类的积木一起用）；
    - 引脚 0 加声音时会出警告；
    - 积木和 Python 的切换规则；
@@ -234,7 +245,7 @@ USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不�
 5. **竞速程序测试**（`race.test.js`，11/9）：
    - `microbit/race.py`、`microbit/race_start.py` 用 CPython 检查语法（`python -I`，不写任何文件）；
    - 先验证模拟器的无线格式：`radio_input` 带 `\x01\x00\x01` 头才是文字，不带头 `radio.receive()` 报 ValueError，超过 29 个字符会被截断；
-   - `race.py` 在 V2 和模拟 V1 上跑：机器人对手的 `rx:p:` 到了游戏，`pos:` / `fin:` 变成无线的 `p:AMY:…` / `f:AMY:…`；
+   - `race.py` 在 V2 和模拟 V1 上跑：机器人对手的 `rx:p:` 到了游戏，喂一个不是文字的包以后照常转发、没有报错，`pos:` / `fin:` 变成无线的 `p:AMY:…` / `f:AMY:…`；
    - `race_start.py`：开机在 11 组，B 换到 12 组，A 倒数 3 秒后发 5 次同一个 `go:…:uwa:2000`，A+B 依次在 11～15 组各发 5 次（同一个种子）再回到 12 组，B 在 15 组之后是决赛 20 组。
 3. **真实网页包测试**：用真的 Unity 网页包，USB 和模拟器两条路都能开一局，游戏消息能发回设备。
 4. **发送测试**（`send.test.js`）：页面的 Web Serial 接到用 CPython 模拟的 MicroPython 板子（`fake_repl_board.py`，原始 REPL 的每条命令都真的执行）：

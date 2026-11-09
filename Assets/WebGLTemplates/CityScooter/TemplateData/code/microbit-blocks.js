@@ -311,14 +311,18 @@
     }
     // A pack can look at every radio message too (CityScooter: "pass radio messages to the game"). Then the loop reads
     // the whole queue each time, so nothing piles up; otherwise one message a loop, as before.
+    // radio.receive() raises ValueError for a packet that is not text (a MakeCode program, send_bytes) and drops that
+    // packet first (V1 and V2), so skipping it is safe: one stray packet must not stop every board in the group.
+    const NOT_TEXT = "  # not text (e.g. sent by a MakeCode program): skip it\n";
     const radioEach = c.flags.radio && pack && pack.radioEach ? pack.radioEach(c) : "";
     if (radioEach) {
-      loopParts.push("    # radio from other micro:bits: read everything that arrived, every loop\n    got_radio = radio.receive()\n    while got_radio:\n"
-        + indent(radioEach, 8) + (c.flags.radioMsg ? "        radio_msg = got_radio\n" + indent(s("radio"), 4) : "")
-        + "        got_radio = radio.receive()\n");
+      loopParts.push("    # radio from other micro:bits: read everything that arrived, every loop\n    while True:\n"
+        + "        try:\n            got_radio = radio.receive()\n        except ValueError:" + NOT_TEXT + "            continue\n"
+        + "        if not got_radio:\n            break\n"
+        + indent(radioEach, 8) + (c.flags.radioMsg ? "        radio_msg = got_radio\n" + indent(s("radio"), 4) : ""));
     } else if (c.flags.radioMsg) {
-      loopParts.push("    # radio from other micro:bits\n    got_radio = radio.receive()\n    if got_radio:\n        radio_msg = got_radio\n"
-        + indent(s("radio"), 4));
+      loopParts.push("    # radio from other micro:bits\n    try:\n        got_radio = radio.receive()\n    except ValueError:" + NOT_TEXT
+        + "        got_radio = None\n    if got_radio:\n        radio_msg = got_radio\n" + indent(s("radio"), 4));
     }
     if (pack && pack.loopTail) loopParts.push(indent(pack.loopTail(c, s), 4));
     if (c.flags.broadcasts) {

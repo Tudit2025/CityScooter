@@ -122,6 +122,13 @@ while True:
     let lines = await ev((n) => window.__fakeUnity.since(n), before);
     for (const bot of ["BOT1", "BOT2", "BOT3"]) check(label + ": rx:p:" + bot + " reaches the game", lines.some((l) => new RegExp("^sim\\|rx:p:" + bot + ":\\d+:-?\\d$").test(l)));
     check(label + ": steering still goes to the game", lines.some((l) => /^sim\|st:-?\d+$/.test(l)));
+    // One stray packet that is not text (no header, e.g. from MakeCode) must not stop the relay
+    const stray = await ev(() => window.__fakeUnity.total);
+    await radioIn([0, 1, 2, 104, 105]);
+    await sleep(1500);
+    const afterStray = await ev((n) => window.__fakeUnity.since(n).filter((l) => l.startsWith("sim|rx:p:BOT")).length, stray);
+    const errs = (await log()).filter((x) => /cs-l-error/.test(x));
+    check(label + ": a packet that is not text is skipped: rx: keeps flowing, no error", afterStray >= 10 && errs.length === 0, afterStray + " " + errs.slice(0, 3).join(" | "));
     for (let i = 0; i < 4; i++) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), "pos:" + (300 + i * 4) + ":1"); await sleep(250); }
     await ev(() => window.CityScooterShell.sendToDevices("*", "fin:65.10"));
     await sleep(700);
@@ -135,14 +142,15 @@ while True:
     check(label + ": Send go -> rx:go:<seed>:uwa:2000", lines.some((l) => /^sim\|rx:go:\d{1,5}:uwa:2000$/.test(l)));
     const L = await log();
     check(label + ": monitor sums up the radio once a second", L.some((x) => /radio: \d+ messages\/s from BOT\d, BOT\d, BOT\d$/.test(x)), L.filter((x) => /radio/.test(x)).slice(-2).join(" | "));
-    check(label + ": no Python error", !L.some((x) => /cs-l-error/.test(x)), L.filter((x) => /cs-l-error/.test(x)).slice(0, 3).join(" | "));
-    await page.click("#cs-bots"); // robots off
+    check(label + ": no Python error, no simulator error", !L.some((x) => /cs-l-error/.test(x)), L.filter((x) => /cs-l-error/.test(x)).slice(0, 3).join(" | "));
     return lines;
   }
   const v2 = await runRace(RACE, "race.py on V2");
   check("race.py on V2: hi:v2", v2.includes("sim|hi:v2"));
+  // flashed again while the robots are still sending (the shell lets the program read its queue first)
   const v1 = await runRace(forceV1(RACE), "race.py forced V1");
   check("race.py forced V1: hi:v1", v1.includes("sim|hi:v1"));
+  await page.click("#cs-bots"); // robots off
   await page.screenshot({ path: path.join(OUT, "race_py_sim.png") });
 
   // ---- race_start.py: the teacher's starter

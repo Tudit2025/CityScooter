@@ -1130,10 +1130,22 @@
     else if (sim.activated) simFlash(); // back from another mode: run the code again
   }
 
+  // The simulator reports an internal error ("Must be running as called via HAL") when it stops a program while a
+  // radio packet is waiting for radio.receive(). So with robot racers feeding it: stop feeding at once and give the
+  // program a few loops to read its queue before a flash or a stop. Returns that wait in ms (0 if nothing was fed).
+  function simQuietRadio() {
+    const feeding = bots.on && sim.running && sim.radioOn;
+    sim.radioOn = false; // the robots stop now; the next program turns the radio on again (state_change)
+    return feeding ? 250 : 0;
+  }
+
   function simLeave() {
-    if (sim.activated) simPost({ kind: "stop" });
+    const wait = simQuietRadio();
+    if (sim.activated) {
+      if (wait) setTimeout(() => { if (shell.mode !== "sim") simPost({ kind: "stop" }); }, wait); // back already: it flashes
+      else simPost({ kind: "stop" });
+    }
     sim.running = false;
-    sim.radioOn = false;
     const d = simDevice();
     d.connected = false;
     releaseSimKeys();
@@ -1145,9 +1157,11 @@
       $("cs-sim-hint").classList.remove("cs-pulse"); void $("cs-sim-hint").offsetWidth; $("cs-sim-hint").classList.add("cs-pulse");
       return;
     }
-    simPost({ kind: "flash", filesystem: { "main.py": new TextEncoder().encode(currentCode()) } });
+    const wait = simQuietRadio(); // the new program turns the radio on again (state_change)
+    const main = new TextEncoder().encode(currentCode());
+    const flash = () => simPost({ kind: "flash", filesystem: { "main.py": main } });
+    if (wait) setTimeout(flash, wait); else flash();
     sim.running = true;
-    sim.radioOn = false; // the new program turns it on again (state_change)
     sim.buf = "";
     const d = simDevice();
     if (!d.ver) d.ver = "v2";

@@ -118,7 +118,7 @@ def messages():
   - `rx:f:…` 每人记一次："radio: BEN finished in 72.35 s"。
 - 游戏发给板子的 `pos:` / `fin:` 照常写进板子，监视器每秒只显示最新一条，后面注明这一秒发了几条。
 - 板子自己打印 `pos:…`、`fin:…`（这是游戏发的）或者 `p:…`、`f:…`、`go:…`（这些要用 `radio.send` 发），监视器照常显示这一行，并给出提示。
-- `ValueError: received packet is not a string`：同组有板子发了不是文字的包（MakeCode 或 `send_bytes`），监视器提示换一个组号。
+- `ValueError: received packet is not a string`：同组有板子发了不是文字的包（MakeCode 或 `send_bytes`）。积木生成的代码和 `microbit/race.py` 会跳过这种包，不会停；学生自己写的代码没处理时程序会停，监视器提示换一个组号。
 - 模拟器模式里有 **Robot racers**（三个机器人对手）和 **Send go**，见 `docs/bridge.md` 的"机器人对手"；模拟器的 `radio_output`（学生程序 `radio.send` 出去的）也在监视器里每秒汇总一行。
 
 ## V1 / V2 兼容

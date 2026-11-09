@@ -77,9 +77,13 @@ while True:
 
     # Radio: pass everything you heard to the game, so it can draw the others.
     # Read until the queue is empty: if it fills up, new messages are lost.
-    heard = radio.receive()
-    while heard:
+    while True:
+        try:
+            heard = radio.receive()
+        except ValueError:  # not text (e.g. sent by a MakeCode program): skip it
+            continue
+        if not heard:
+            break
         print("rx:" + heard)
-        heard = radio.receive()
 
     sleep(50)

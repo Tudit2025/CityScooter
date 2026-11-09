@@ -205,7 +205,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"',
     'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:', 'print("say:party")', 'msg == "party"', 'print("do:chase")', 'hits = (hits if type(hits) in (int, float) else 0) + 1', 'print("do:stars:" + str(max(0, min(5, int(2)))))',
     'broadcasts.append("party")', 'if got == "party":', 'import radio', 'radio_group = 1', 'radio.config(group=radio_group, queue=10)', "radio.send(str('gift!'))", 'got_radio = radio.receive()', 'del broadcasts[:]',
-    'race_name = "ZED"', 'if radio_group != 14:', 'send_position = True', 'pass_radio = True', '    while got_radio:', '            print("rx:" + got_radio)',
+    'race_name = "ZED"', 'if radio_group != 14:', 'send_position = True', 'pass_radio = True', '        except ValueError:  # not text (e.g. sent by a MakeCode program): skip it\n            continue\n', '            print("rx:" + got_radio)',
     '        radio_msg = got_radio', 'def start_race(place, metres):', 'start_race("cbd", 3000)', 'print("race:" + race_name + ":" + str(radio_group))',
     'held_since_b = -1', 'if held_b >= 1000 and held_done_b < 1000:', 'elif held_since_b >= 0:',
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
@@ -307,7 +307,8 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   check("race blocks: on start sets variables only (safe in forever too)", racePy.includes(RACE_ON_START), racePy.slice(racePy.indexOf("# on start"), racePy.indexOf("# on start") + 260));
   for (const want of ["import radio", "import random", 'race_name = ""  # your name in the race', "send_position = False", "pass_radio = False",
     "radio.on()", "radio.config(group=radio_group, queue=10)",
-    '    got_radio = radio.receive()\n    while got_radio:\n        if pass_radio:\n            print("rx:" + got_radio)  # pass it on to the game\n        got_radio = radio.receive()\n',
+    '    while True:\n        try:\n            got_radio = radio.receive()\n        except ValueError:  # not text (e.g. sent by a MakeCode program): skip it\n            continue\n'
+      + '        if not got_radio:\n            break\n        if pass_radio:\n            print("rx:" + got_radio)  # pass it on to the game\n    # messages from the game\n',
     '        elif send_position and msg.startswith("pos:"):\n            radio.send("p:" + race_name + ":" + msg[4:])',
     '        elif send_position and msg.startswith("fin:"):\n            radio.send("f:" + race_name + ":" + msg[4:])',
     '        print("hi:" + VERSION)  # tell the game which micro:bit this is\n        if race_name:\n            print("race:" + race_name + ":" + str(radio_group))',
@@ -358,6 +359,14 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": monitor sums up rx: once a second", log.some((x) => /cs-l-radio/.test(x) && /radio: \d+ messages\/s from BOT\d, BOT\d, BOT\d$/.test(x)), log.filter((x) => /radio/.test(x)).slice(-2).join(" | "));
     check(label + ": no rx: line by line in the monitor", !log.some((x) => /rx:/.test(x)), log.filter((x) => /rx:/.test(x)).slice(0, 2).join(" | "));
     check(label + ": joining noted once", log.filter((x) => x.includes("joins race 12 as AMY")).length === 1, log.filter((x) => /joins/.test(x)).join(" | "));
+    // One stray packet that is not text (no \x01\x00\x01 header, e.g. from MakeCode): skipped, the relay keeps going
+    const stray = await ev(() => window.__fakeUnity.total);
+    await ev(() => document.getElementById("cs-sim").contentWindow.postMessage({ kind: "radio_input", data: new Uint8Array([0, 1, 2, 104, 105]) }, "https://python-simulator.usermbit.org"));
+    await sleep(1500);
+    const afterStray = await ev((n) => window.__fakeUnity.since(n).filter((l) => l.startsWith("sim|rx:p:BOT")).length, stray);
+    log = await ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].map((r) => r.className + " :: " + r.textContent));
+    check(label + ": a packet that is not text is skipped: rx: keeps flowing, no error", afterStray >= 10 && !log.some((x) => /cs-l-error/.test(x)),
+      afterStray + " " + log.filter((x) => /cs-l-error/.test(x)).slice(0, 3).join(" | "));
     // the game says where you are: the program sends it on by radio with its name
     for (let i = 0; i < 6; i++) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), "pos:" + (1200 + i * 5) + ":-2"); await sleep(250); }
     await ev(() => window.CityScooterShell.sendToDevices("*", "fin:72.35"));
@@ -397,6 +406,37 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   check("race blocks forced V1: hi:v1", raceV1.includes("sim|hi:v1"));
   await page.click("#cs-bots"); // robots off
   await page.screenshot({ path: path.join(OUT, "race_blocks_sim.png") });
+
+  // "when radio receives" alone (no race blocks): one message a loop as before, and a stray non-text packet is skipped
+  const radioOnlyPy = await ev(() => {
+    const ws = window.Blockly.getMainWorkspace();
+    ws.clear();
+    window.Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [
+      { type: "mb_on_start", x: 10, y: 10, inputs: { DO: { block: { type: "mb_radio_group", inputs: { GROUP: { shadow: { type: "math_number", fields: { NUM: 7 } } } } } } } },
+      { type: "mb_on_radio", x: 10, y: 200, inputs: { DO: { block: { type: "mb_print", inputs: { VALUE: { block: { type: "text_join", extraState: { itemCount: 2 },
+        inputs: { ADD0: { shadow: { type: "text", fields: { TEXT: "heard " } } }, ADD1: { block: { type: "mb_radio_msg" } } } } } } } } } },
+    ] } }, ws);
+    return window.MicrobitBlocks.generate(ws);
+  });
+  check("when radio receives: valid Python", !pySyntax(radioOnlyPy, "radio_only"), pySyntax(radioOnlyPy, "radio_only"));
+  check("when radio receives: one message a loop, a non-text packet skipped",
+    radioOnlyPy.includes("    try:\n        got_radio = radio.receive()\n    except ValueError:  # not text (e.g. sent by a MakeCode program): skip it\n        got_radio = None\n    if got_radio:\n        radio_msg = got_radio\n")
+    && radioOnlyPy.includes("radio_group = int(7)\nradio.config(group=radio_group)") && !radioOnlyPy.includes("queue="), radioOnlyPy.slice(radioOnlyPy.indexOf("while True:")));
+  {
+    await ev(() => document.querySelectorAll("#cs-log .cs-line").forEach((r) => { r.dataset.old = "1"; }));
+    await ev((code) => { document.querySelector('.cs-tabs button[data-view="python"]').click(); const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, radioOnlyPy);
+    await page.click("#cs-run");
+    await sleep(2500); // flashed and running (it only prints hi: and what it hears)
+    const mark = await ev(() => window.__fakeUnity.total);
+    const feed = (bytes) => ev((b) => document.getElementById("cs-sim").contentWindow.postMessage({ kind: "radio_input", data: new Uint8Array(b) }, "https://python-simulator.usermbit.org"), bytes);
+    await feed([1, 0, 1, 111, 110, 101]); await sleep(300); // "one"
+    await feed([0, 1, 2, 104, 105]); await sleep(300);      // not text
+    await feed([1, 0, 1, 116, 119, 111]); await sleep(600); // "two"
+    const heard = await ev((n) => window.__fakeUnity.since(n).filter((l) => l.startsWith("sim|heard ")), mark);
+    const L = await ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].map((r) => r.className + " :: " + r.textContent));
+    check("when radio receives in the simulator: hears one and two, skips the non-text packet, no error",
+      heard.join(",") === "sim|heard one,sim|heard two" && !L.some((x) => /cs-l-error/.test(x)), heard.join(",") + " " + L.filter((x) => /cs-l-error/.test(x)).slice(0, 2).join(" | "));
+  }
 
   // ---- Blocks <-> Python
   await ev(() => document.querySelector('.cs-tabs button[data-view="blocks"]').click());

@@ -101,6 +101,7 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
   - 模拟器在无线开关、换组时发 `{kind: "state_change", change: {radio: {type: "radio", enabled, group}}}`；
   - `radio.config(queue=10)` 会先关再开，所以会连着来一条 `enabled: false` 和一条 `enabled: true`；
   - 每次 flash 外壳先当作无线关着，等新程序打开。
+- **有包在排队时不能停程序。** 程序停下（flash 新代码、切到别的模式）的那一刻，如果 `radio.receive()` 正好有包要读，模拟器会报 internal_error "Must be running as called via HAL"（它的 HAL 在板子已经算停了以后还去取包）。外壳在机器人开着时先停喂，等 0.25 秒（程序这时把队列读空），再 flash 或 stop。
 - **模拟器发出来的**：`{kind: "radio_output", data: Uint8Array}`，就是 `radio.send` 发出去的字节，带同样的 3 字节头，例如 `[1,0,1,112,58,65,77,89,…]` 是 `p:AMY…`。外壳把它显示在串口监视器里，每秒一行（"radio sent: 4 messages/s, last p:AMY:1234:-2"）。
 
 ### 机器人对手（Robot racers）
