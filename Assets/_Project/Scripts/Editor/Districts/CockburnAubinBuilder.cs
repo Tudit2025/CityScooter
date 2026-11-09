@@ -520,51 +520,81 @@ namespace CityScooter.EditorTools.Districts
         static void Apartment(CqChunkDraft d, CqLot l, int floors, Color body, Color accent, int style)
         {
             ComicMesh m = d.Frontage;
-            float W = l.W, D = l.Depth, gh = 4f, fh = 3.1f, h = gh + floors * fh;
+            float W = l.W, D = l.Depth, gh = 4.2f, fh = 3.1f, h = gh + floors * fh;
+            Color podium = style % 2 == 0 ? Charcoal : K.Hex("8A4B3A"), trim = Color.Lerp(body, K.R.ink, .22f), frame = K.Hex("2F3640");
             m.Surface = ComicSurface.Concrete;
             K.LBox(m, l, 0, W, -2.6f, 0f, .02f, -D, K.R.ink);
             d.Wall(l, h);
             m.Surface = ComicSurface.Plaster;
             K.LBox(m, l, 0, W, 0, h, 0, -D, body);
-            // ground floor: framed dark glass, mullions, a charcoal awning and a plain sign band
+            // podium: dark tiled piers and fascia standing proud of recessed shop glass (mullions, a door), a charcoal
+            // awning under the fascia, a blank sign box, then a deep ledge that carries the floors above
             m.Surface = ComicSurface.Glass;
-            K.LQuad(m, l, .4f, W - .4f, .15f, 3.3f, .02f, K.R.ink);
-            K.LQuad(m, l, .55f, W - .55f, .25f, 3.15f, .04f, ShopGlass);
+            K.LQuad(m, l, .3f, W - .3f, .1f, 3.4f, .02f, K.R.ink);
+            K.LQuad(m, l, .4f, W - .4f, .2f, 3.3f, .04f, ShopGlass);
             m.Surface = ComicSurface.PaintedMetal;
-            for (float a = 3f; a < W - 1f; a += 3f) K.LBox(m, l, a - .06f, a + .06f, .25f, 3.15f, .1f, 0, K.R.ink);
-            K.LBox(m, l, -.05f, W + .05f, 3.4f, 3.65f, 2.2f, 0, Charcoal);
-            K.LBox(m, l, W * .15f, W * .45f, 3.7f, 3.98f, .12f, 0, accent);
-            // upper floors
+            for (float a = 1.9f; a < W - .5f; a += 1.9f) K.LBox(m, l, a - .05f, a + .05f, .2f, 3.3f, .1f, 0, K.R.ink);
+            K.LBox(m, l, .3f, W - .3f, 2.55f, 2.65f, .1f, 0, K.R.ink);
+            m.Surface = ComicSurface.Concrete;
+            for (float a = 0f; a <= W + .01f; a += W / Mathf.Max(2, Mathf.RoundToInt(W / 4.5f)))
+                K.LBox(m, l, Mathf.Max(-.05f, a - .32f), Mathf.Min(W + .05f, a + .32f), 0, gh - .9f, .32f, 0, podium);
+            K.LBox(m, l, -.08f, W + .08f, gh - .9f, gh, .4f, 0, podium);
+            m.Surface = ComicSurface.PaintedMetal;
+            K.LBox(m, l, -.05f, W + .05f, 3.25f, 3.42f, 2.3f, .32f, Charcoal);
+            K.LBox(m, l, W * .12f, W * .42f, gh - .78f, gh - .12f, .52f, .4f, accent);
+            K.LBox(m, l, W * .12f + .12f, W * .42f - .12f, gh - .66f, gh - .24f, .55f, .52f, White);
+            m.Surface = ComicSurface.Concrete;
+            K.LBox(m, l, -.12f, W + .12f, gh, gh + .26f, .62f, -D, trim);
+            // upper floors: slab bands, framed windows with sills and lintels (mullions low down, where the rider sees
+            // them), balconies with coloured balustrades on alternate bays
             int bays = Mathf.Max(2, Mathf.RoundToInt(W / 4.2f));
             float bw = W / bays;
             for (int f = 0; f < floors; f++)
             {
                 float y = gh + f * fh;
                 m.Surface = ComicSurface.Concrete;
-                K.LBox(m, l, -.04f, W + .04f, y - .12f, y + .1f, .12f, -D, Slab);
+                if (f > 0) K.LBox(m, l, -.04f, W + .04f, y - .12f, y + .1f, .14f, -D, trim);
                 for (int b = 0; b < bays; b++)
                 {
                     float a0 = b * bw + .3f, a1 = (b + 1) * bw - .3f;
                     m.Surface = ComicSurface.Glass;
-                    K.LQuad(m, l, a0 + .25f, a1 - .25f, y + .45f, y + 2.75f, .02f, K.R.ink);
-                    K.LQuad(m, l, a0 + .35f, a1 - .35f, y + .55f, y + 2.65f, .04f, WinGlass);
+                    K.LQuad(m, l, a0 + .25f, a1 - .25f, y + .45f, y + 2.75f, .02f, frame);
+                    K.LQuad(m, l, a0 + .38f, a1 - .38f, y + .58f, y + 2.62f, .04f, WinGlass);
+                    m.Surface = ComicSurface.Concrete;
+                    K.LBox(m, l, a0 + .12f, a1 - .12f, y + .33f, y + .47f, .2f, 0, trim);
+                    K.LBox(m, l, a0 + .12f, a1 - .12f, y + 2.73f, y + 2.93f, .14f, 0, trim);
+                    if (f < 3)
+                    {
+                        m.Surface = ComicSurface.PaintedMetal;
+                        K.LBox(m, l, (a0 + a1) * .5f - .05f, (a0 + a1) * .5f + .05f, y + .58f, y + 2.62f, .08f, 0, frame);
+                    }
                     if ((b + f + style) % 2 != 0) continue;
                     m.Surface = ComicSurface.Concrete;
                     K.LBox(m, l, a0, a1, y + .1f, y + .32f, 1.35f, 0, Slab);
                     m.Surface = ComicSurface.PaintedMetal;
                     K.LBox(m, l, a0, a1, y + .32f, y + 1.3f, 1.35f, 1.22f, accent);
+                    K.LBox(m, l, a0, a1, y + 1.3f, y + 1.38f, 1.37f, 1.2f, frame);
                 }
             }
-            // stair core (charcoal) at one end, rising above the roof
+            // stair core (charcoal) at one end, rising above the roof, with a glass slit
             m.Surface = ComicSurface.PaintedMetal;
             float c0 = style % 2 == 0 ? .2f : W - 2.6f;
-            K.LBox(m, l, c0, c0 + 2.4f, gh, h + 1.4f, .35f, -D * .4f, Charcoal);
-            for (int f = 0; f < floors; f++) K.LQuad(m, l, c0 + .9f, c0 + 1.5f, gh + f * fh + .6f, gh + f * fh + 2.4f, .37f, WinGlass);
-            // parapet and roof plant
+            K.LBox(m, l, c0, c0 + 2.4f, gh + .26f, h + 1.4f, .45f, -D * .4f, Charcoal);
+            K.LQuad(m, l, c0 + .9f, c0 + 1.5f, gh + .8f, h - .6f, .47f, WinGlass);
+            // cornice, parapet, a set-back penthouse floor with a glass band, roof plant
+            m.Surface = ComicSurface.Concrete;
+            K.LBox(m, l, -.18f, W + .18f, h, h + .32f, .45f, -D - .1f, trim);
             m.Surface = ComicSurface.Plaster;
-            K.LBox(m, l, -.08f, W + .08f, h, h + .6f, .1f, -D, Color.Lerp(body, K.R.ink, .1f));
+            K.LBox(m, l, -.05f, W + .05f, h + .32f, h + 1f, .12f, -.45f, body);
+            float p0 = style % 2 == 0 ? 3f : W * .18f, p1 = style % 2 == 0 ? W * .82f : W - 3f;
+            m.Surface = ComicSurface.PaintedMetal;
+            K.LBox(m, l, p0, p1, h + .32f, h + 3.1f, -2.4f, -D + 2.5f, podium);
+            m.Surface = ComicSurface.Glass;
+            K.LQuad(m, l, p0 + .5f, p1 - .5f, h + .8f, h + 2.7f, -2.38f, WinGlass);
+            m.Surface = ComicSurface.PaintedMetal;
+            K.LBox(m, l, p0 - .4f, p1 + .4f, h + 3.1f, h + 3.35f, -1.6f, -D + 2f, trim);
             m.Surface = ComicSurface.Metal;
-            K.LBox(m, l, W * .4f, W * .7f, h + .6f, h + 1.8f, -3f, -D * .6f, PlantGrey);
+            K.LBox(m, l, W * .45f, W * .7f, h + 3.35f, h + 4.3f, -5f, -D * .7f, PlantGrey);
         }
 
         /// <summary>Second rows of blocks behind the street (no outline, no shadows): render with coloured balcony stripes.</summary>
@@ -715,13 +745,29 @@ namespace CityScooter.EditorTools.Districts
             K.LBox(m, l, 0, W, -2.6f, 0f, .02f, -D, K.R.ink);
             d.Wall(l, h);
             K.LBox(m, l, .2f, W - .2f, 0, h, -.9f, -D, DeckDark);
+            // the decks: slab edges standing out, parapet upstands with a darker cap, ceiling shadow under each slab
             for (int f = 0; f <= floors; f++)
             {
                 float y = f * fh;
-                K.LBox(m, l, 0, W, y, y + .45f, 0, -D, Concrete);
-                if (f > 0) K.LBox(m, l, 0, W, y + .45f, y + 1.15f, .05f, -.3f, f % 2 == 0 ? White : Concrete);
+                K.LBox(m, l, -.1f, W + .1f, y, y + .45f, .25f, -D, Concrete);
+                if (f == floors) continue;
+                K.LQuad(m, l, .2f, W - .2f, y + 2.35f, y + fh, -.85f, K.Hex("1E2329"), false);
+                if (f > 0)
+                {
+                    K.LBox(m, l, 0, W, y + .45f, y + 1.1f, .2f, -.1f, f % 2 == 0 ? White : Concrete);
+                    K.LBox(m, l, -.04f, W + .04f, y + 1.1f, y + 1.2f, .26f, -.14f, SilverDark);
+                }
+                // cars parked on the deck, their roofs and noses showing over the parapet
+                for (float a = 2.2f + (f % 2) * 1.6f; a < W - 4.5f; a += 3.4f)
+                    if (((int)(a * 3f) + f) % 3 != 0)
+                        K.LBox(m, l, a, a + 1.8f, y + .45f, y + 1.65f, -.15f, -.88f, CarColours[((int)a + f * 3) % CarColours.Length]);
             }
-            for (float a = 0; a <= W + .01f; a += 6.3f) K.LBox(m, l, Mathf.Max(0, a - .35f), Mathf.Min(W, a + .35f), 0, h, .1f, -D, Concrete);
+            // columns standing proud of the slabs
+            for (float a = 0; a <= W + .01f; a += 6.3f) K.LBox(m, l, Mathf.Max(-.1f, a - .38f), Mathf.Min(W + .1f, a + .38f), 0, h + .45f, .4f, -D, Concrete);
+            // the ramp: a sloped deck climbing the open side from the street, with a solid upstand and hazard stripes
+            Vector3 r0 = l.P(9.5f, .1f, -1.2f), r1 = l.P(W - 4.2f, fh + .1f, -1.2f);
+            m.Beam(r0, r1, 1.6f, Color.Lerp(Concrete, K.R.ink, .12f));
+            m.Beam(r0 + Vector3.up * .9f, r1 + Vector3.up * .9f, .35f, K.R.yellow);
             // stair core with silver cladding and a teal stripe
             m.Surface = ComicSurface.Metal;
             K.LBox(m, l, W - 3.4f, W, 0, h + 2.4f, .4f, -4f, Silver);
@@ -788,6 +834,14 @@ namespace CityScooter.EditorTools.Districts
             K.LBox(m, l, -.1f, W + .1f, h - 2f, h - .7f, .15f, -D, MallBand);
             K.LBox(m, l, 0, W, 0, 1f, .08f, 0, Color.Lerp(MallRender, K.R.ink, .2f));
             float e0 = W * .36f, e1 = W * .64f;
+            // pilasters between the tenancies, a projecting cornice and a parapet with a dark cap
+            Color pilaster = Color.Lerp(MallRender, K.R.ink, .14f);
+            m.Surface = ComicSurface.Concrete;
+            for (float a = 0f; a <= W + .01f; a += 4.7f)
+                if (a < e0 - 1.2f || a > e1 + 1.2f) K.LBox(m, l, Mathf.Max(-.1f, a - .35f), Mathf.Min(W + .1f, a + .35f), 0, h - .7f, .45f, 0, pilaster);
+            K.LBox(m, l, -.25f, W + .25f, h - .7f, h - .3f, .65f, -D, K.R.cream);
+            K.LBox(m, l, -.1f, W + .1f, h - .3f, h + .9f, .25f, -.4f, MallRender);
+            K.LBox(m, l, -.15f, W + .15f, h + .9f, h + 1.1f, .32f, -.5f, Charcoal);
             // atrium and portal
             m.Surface = ComicSurface.Glass;
             K.LBox(m, l, e0, e1, 0, h + 4f, 1.5f, -6f, AtriumGlass);
@@ -813,7 +867,11 @@ namespace CityScooter.EditorTools.Districts
                 {
                     K.LQuad(m, l, a, a + 3.8f, .2f, 3f, .02f, K.R.ink);
                     K.LQuad(m, l, a + .15f, a + 3.65f, .3f, 2.9f, .04f, ShopGlass);
-                    K.LBox(m, l, a + .4f, a + 3.4f, 4.1f, 5.2f, .12f, 0, panels[k % panels.Length]);
+                    K.LBox(m, l, a + 1.85f, a + 1.95f, .3f, 2.9f, .1f, 0, K.R.ink);
+                    // a blank sign box: ink frame, coloured face, a white inset (no letters)
+                    K.LBox(m, l, a + .3f, a + 3.5f, 4f, 5.4f, .3f, 0, K.R.ink);
+                    K.LBox(m, l, a + .4f, a + 3.4f, 4.1f, 5.3f, .36f, .3f, panels[k % panels.Length]);
+                    K.LBox(m, l, a + 1f, a + 2.8f, 4.45f, 4.95f, .4f, .36f, White);
                 }
             }
             m.Surface = ComicSurface.Metal;
@@ -897,12 +955,19 @@ namespace CityScooter.EditorTools.Districts
             K.LQuad(m, l, .5f, W - .5f, .2f, 4.1f, .04f, ShopGlass);
             m.Surface = ComicSurface.PaintedMetal;
             for (float a = 2.5f; a < W - .5f; a += 2.5f) K.LBox(m, l, a - .06f, a + .06f, .2f, 4.1f, .1f, 0, K.R.ink);
+            // upper wall: timber louvre boards in frames between cream columns, a transom under them, a deep fascia
+            m.Surface = ComicSurface.Concrete;
+            K.LBox(m, l, -.1f, W + .1f, 4.2f, 4.55f, .45f, -D, Color.Lerp(ArcCream, K.R.ink, .15f));
             m.Surface = ComicSurface.Wood;
-            for (float y = 4.6f; y < h - .2f; y += 1f) K.LBox(m, l, -.05f, W + .05f, y, y + .5f, .18f, 0, ArcTimber);
+            for (float y = 4.8f; y < h - .3f; y += .7f) K.LBox(m, l, -.05f, W + .05f, y, y + .36f, .22f, 0, ArcTimber);
+            m.Surface = ComicSurface.Concrete;
+            for (float a = 0f; a <= W + .01f; a += 5f) K.LBox(m, l, Mathf.Max(-.15f, a - .35f), Mathf.Min(W + .15f, a + .35f), 0, h, .55f, 0, ArcCream);
+            K.LBox(m, l, -.2f, W + .2f, h - .3f, h + .25f, .7f, -D, K.Hex("2F3640"));
             m.Surface = ComicSurface.PaintedMetal;
-            K.LBox(m, l, 12f, 15f, 0, h + 1.2f, .4f, -1f, Teal);
+            K.LBox(m, l, 12f, 15f, 0, h + 1.2f, .75f, -1f, Teal);
             K.LBox(m, l, 9f, 24f, 4.3f, 4.9f, 6f, -.5f, White);
             K.LBox(m, l, 9.2f, 23.8f, 4.1f, 4.3f, 5.8f, -.3f, Charcoal);
+            foreach (float a in new[] { 9.6f, 23.4f }) K.LBox(m, l, a - .15f, a + .15f, 0f, 4.1f, 5.6f, 5.3f, Charcoal);
             // the barrel roof: rises from the eave at the front (outward +1.5) to a crown two thirds back, down to the back
             const int n = 12;
             float Rise(float t) => h + .2f + 7.5f * Mathf.Sin(Mathf.PI * Mathf.Pow(t, .8f));
@@ -1518,14 +1583,20 @@ namespace CityScooter.EditorTools.Districts
             {
                 float yb = storey * 2.8f;
                 float a0 = storey == 0 ? w0 : .8f, a1 = storey == 0 ? w1 : W - .8f;
+                // window frames: charcoal (Monument) on pale render, white on face brick; a mullion, a sill, a head
+                Color frame = wall == HouseWalls[4] ? White : K.Hex("2F3640");
                 for (float a = a0; a + 1.4f <= a1; a += 2.4f)
                 {
                     m.Surface = ComicSurface.PaintedMetal;
-                    K.LQuad(m, l, a, a + 1.6f, yb + .8f, yb + 2.3f, .02f, White);
+                    K.LQuad(m, l, a, a + 1.6f, yb + .8f, yb + 2.3f, .02f, frame);
                     m.Surface = ComicSurface.Glass;
                     K.LQuad(m, l, a + .12f, a + 1.48f, yb + .9f, yb + 2.2f, .04f, WinGlass);
+                    m.Surface = ComicSurface.PaintedMetal;
+                    K.LBox(m, l, a + .76f, a + .84f, yb + .9f, yb + 2.2f, .08f, 0, frame);
+                    K.LBox(m, l, a + .12f, a + 1.48f, yb + 1.62f, yb + 1.68f, .08f, 0, frame);
                     m.Surface = ComicSurface.Concrete;
-                    K.LBox(m, l, a - .1f, a + 1.7f, yb + .7f, yb + .82f, .14f, 0, White);
+                    K.LBox(m, l, a - .1f, a + 1.7f, yb + .7f, yb + .82f, .16f, 0, LimestoneCap);
+                    K.LBox(m, l, a - .05f, a + 1.65f, yb + 2.3f, yb + 2.42f, .1f, 0, Color.Lerp(wall, K.R.ink, .15f));
                 }
             }
             if (twoStorey)
@@ -1554,8 +1625,21 @@ namespace CityScooter.EditorTools.Districts
             K.TriFacing(m, f0, b0, t0, Color.Lerp(c, K.R.ink, .06f), (Vector3.back + Vector3.up).normalized);
             K.TriFacing(m, f1, b1, t1, Color.Lerp(c, K.R.ink, .06f), (Vector3.forward + Vector3.up).normalized);
             K.Face(m, f0, f1, b1, b0, Color.Lerp(c, K.R.ink, .45f), Vector3.down);
+            // ridge and hip capping (lighter), and the Colorbond ribs running down the front slope (paint, no ink)
             m.Surface = ComicSurface.PaintedMetal;
-            m.Beam(t0 + Vector3.up * .05f, t1 + Vector3.up * .05f, .16f, Color.Lerp(c, White, .25f));
+            Color cap = Color.Lerp(c, White, .25f);
+            m.Beam(t0 + Vector3.up * .05f, t1 + Vector3.up * .05f, .16f, cap);
+            foreach ((Vector3 lo, Vector3 hi) in new[] { (f0, t0), (b0, t0), (f1, t1), (b1, t1) }) m.Beam(lo + Vector3.up * .04f, hi + Vector3.up * .05f, .12f, cap);
+            m.Surface = ComicSurface.Plain;
+            Color rib = Color.Lerp(c, K.R.ink, .28f);
+            Vector3 lift = ((toRoad + Vector3.up).normalized) * .03f;
+            for (float a = a0 + .5f; a < a1 - .4f; a += .55f)
+            {
+                float sMax = Mathf.Min(1f, Mathf.Min(a - a0, a1 - a) / Mathf.Max(.01f, inset));
+                if (sMax < .1f) continue;
+                Vector3 lo = l.P(a, u0, oFront) + lift, hi = l.P(a, Mathf.Lerp(u0, u1, sMax), Mathf.Lerp(oFront, oMid, sMax)) + lift;
+                K.Face(m, lo, lo + Vector3.forward * .07f, hi + Vector3.forward * .07f, hi, rib, (toRoad + Vector3.up).normalized, false);
+            }
         }
 
         /// <summary>A simple house in world space (ridge along z): walls and a hip roof, for back rows and the far view.</summary>
