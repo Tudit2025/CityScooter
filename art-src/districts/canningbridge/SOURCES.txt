@@ -1,0 +1,30 @@
+CANNING BRIDGE (district id canningbridge, order 80) - 参考资料和用到的内容
+参考图都在仓库外 D:\CityScooter-refs\canningbridge\<来源>\（sb.mhtml、sheets/、commons/），不进仓库、不进游戏。
+游戏里的美术全是生成的几何体（CanningMurdochBuilder.cs，复用 CbdQuayKit / ParkRiverKit），只用顶点色。
+
+视频（YouTube 预览帧，yt-dlp -f sb0）：
+- JOlvOrh7RWM  "Cycle Paths PERTH WESTERN AUSTRALIA CBD KWINANA FREEWAY TO MOUNT HENRY BRIDGE"
+  https://www.youtube.com/watch?v=JOlvOrh7RWM
+  用到：高速公路边的共享车道（灰色沥青 #5C636C、白色虚线中线）、黑色铁丝网围栏 #2A3038、
+  高速公路桥的混凝土梁、河边的圆柱形玻璃公寓楼（蓝绿玻璃 #4C8FA3、白色楼层带）和白色低层公寓、
+  停泊的小船和栈桥、河岸的 Norfolk 松（分层的平枝）、平静宽阔的河面。
+- zG1i78V2TzU  "Perth Canning Bridge Station Walk 2026 - Swan River Crossing & Under Bridge Art (4K)"
+  https://www.youtube.com/watch?v=zG1i78V2TzU
+  用到：Canning Bridge 站的岛式站台：红砖铺地 #B5523B、黄色安全线、中间灰色导盲带 #9A9EA4、
+  黑色栏杆、接触网立柱和悬臂；蓝绿色玻璃的人行天桥/大厅横跨高速公路 #3E7F86；
+  Canning Highway 桥上的人行道：白色粗立柱 + 白色栏杆和铁丝网（#F2F2EC）；
+  桥头绿色的高速公路指示牌（游戏里写 ROCKINGHAM，只写地名）；Applecross 一侧的高楼群。
+
+Wikimedia Commons（分类 Canning_Bridge_railway_station，看了缩略图列表；单张下载被限流，没用到具体照片）。
+
+常识（没有拷贝任何图片）：
+- 11 月蓝花楹开紫花（#8E6CDF / #A98AF0 / #C9B4FA），草地上落满紫色花瓣。
+- Applecross 河边那座装饰艺术风格的老酒店：奶油色抹灰、圆角塔楼、横向的蓝绿色装饰带、阶梯状的塔尖。
+  游戏里只做造型，不写名字。
+- 鹈鹕（白身、黑翅、粉色大嘴），Transperth 火车（白车身、黑色窗带、绿色腰线、黄色车头，不放标志）。
+- Mt Henry 桥：河上很长很低的混凝土桥（远景里）。
+
+比例：共享车道 8 m + 两侧 4 m 路肩（契约）；围栏 x = -8.45 m，高 1.9 m；混凝土护栏 x = -11.05..-11.85 m；
+高速公路每侧 3 车道约 11.3 m；铁路走廊 x = -24.3..-36.9 m（轨道 x = -25.8 / -35.4，岛式站台 x = -27.2..-34，高 1 m）；
+天桥底面离车道 6.6 m；河面比车道低 1.3 m；Canning Highway 桥在右侧 x = 34..46 m，桥面高 1.2 m。
+游戏里的发明：河湾缺口（6 m 水面，SPLASH）前面一个满宽的木栈桥跳台（宽 16、坡长 6、高 1.4、平台 3）。

@@ -1,0 +1,34 @@
+MURDOCH (district id murdoch, order 90) - 参考资料和用到的内容
+参考图都在仓库外 D:\CityScooter-refs\murdoch\<来源>\（sb.mhtml、sheets/、commons/），不进仓库、不进游戏。
+游戏里的美术全是生成的几何体（CanningMurdochBuilder.cs，复用 CbdQuayKit / ParkRiverKit），只用顶点色。
+
+视频（YouTube 预览帧，yt-dlp -f sb0）：
+- iUxYFwSs4FI  "Trains at Murdoch"
+  https://www.youtube.com/watch?v=iUxYFwSs4FI
+  用到：站台在大桥/大厅下面，红砖站台 + 黄色安全线，Transperth 火车（白车身、黑窗带、绿色、黄色车头），
+  站台尽头的橙色构件、接触网立柱。
+- DcALNnmy29M  "Fiona Stanley Hospital Perth: Complete Guide (2026)"
+  https://www.youtube.com/watch?v=DcALNnmy29M
+  只参考了屋顶停机坪和红色救援直升机的样子（视频像是生成的画面，其他内容不作依据）。
+
+Wikimedia Commons：
+- View_of_Fiona_Stanley_Hospital_from_Murdoch_E.jpg
+  https://commons.wikimedia.org/wiki/File:View_of_Fiona_Stanley_Hospital_from_Murdoch_E.jpg
+  用到：高速公路另一侧又长又低的白色楼群（#F1EFE9 / #C9CCD0），三角形/菱形图案立面的高楼，白色高烟囱；
+  高速公路边红色的共享车道（#A4523F）和路边的铁丝网围栏。
+- Transperth_Murdoch_Station_building_freeway_north.jpg
+  https://commons.wikimedia.org/wiki/File:Transperth_Murdoch_Station_building_freeway_north.jpg
+  用到：银色波纹钢板的车站大厅（#BCC3C9 / #8A939B）、弧形屋顶、一条深色窗带；红砖铺地、橙色花槽、白沙地、
+  后面红瓦屋顶的住宅区。
+
+常识（没有拷贝任何图片）：
+- 公交换乘站在跨过高速公路和铁路的桥上，所以骑车道从它下面穿过。游戏里写 MURDOCH（只写地名）。
+- Fiona Stanley 医院：病房楼立面有彩色竖向遮阳片（橙、绿、蓝、黄、红），屋顶停机坪；直升机做成没有标志的红白救援直升机。
+- Murdoch 大学的 banksia 林地：白沙地、balga（草树）、banksia、桉树、袋鼠爪花。
+- 高速公路的隔音墙：彩色板块 + 浮雕图案（banksia 花穗、菱形、沙丘、太阳），这是风格化的，不是某一面真实的墙。
+- 动物：蓝舌蜥（bobtail / shingleback）——矮胖、带奶油色横纹、粗短的松果状尾巴、蓝色舌头。
+- 远景：东边远处低低的蓝色 Darling 山脉。
+
+比例：共享车道 8 m + 两侧 4 m 路肩（契约）；隔音墙 x = 9.3..9.7 m，高 4.6 m，每块 4 m；
+公交大厅桥面底部离车道 7 m，桥面厚 1.2 m，大厅墙高 4.6 m；医院病房楼高 24 m，高楼 38 m，烟囱 52 m，
+在高速公路外侧 x 约 -76 m 起。路面驼峰：坡长 6、高 1.2、顶 4、下坡 6，只盖住车道（宽 8 m），路肩可以绕过。
