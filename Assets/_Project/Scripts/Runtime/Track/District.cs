@@ -71,10 +71,15 @@ namespace CityScooter.Track
                  "skyline ahead-left with the river on the right, as seen from Kings Park; 180 = the city behind you " +
                  "(Mounts Bay Rd, riding west along the river).")]
         [Range(-180f, 180f)] public float skyYaw;
-        [Tooltip("Apparent size of the skyline: below 1 = further from the city (UWA), above 1 = closer (CBD).")]
+        [Tooltip("Apparent size of the skyline: below 1 = further from the city (UWA), above 1 = closer (CBD). It grows " +
+                 "or shrinks from the horizon, so the city stays standing on it.")]
         [Range(0.5f, 1.6f)] public float skySize = 1f;
         [Tooltip("Moves the skyline up (+) or down (-), in degrees: down when you look over the city from a hill.")]
         [Range(-10f, 10f)] public float skyHeight;
+        [Tooltip("How much of the Perth CBD skyline shows: 1 = all of it, 0 = none (it sinks below the horizon). 0 for " +
+                 "districts far from the city (the south line from Canning Bridge): their farScenery is the horizon. " +
+                 "Blends across a boundary, so the city sets behind you as you ride away.")]
+        [Range(0f, 1f)] public float skyline = 1f;
 
         [Header("Scenery and sound (optional)")]
         [Tooltip("Far scenery that follows the rider at the horizon while in this district (no colliders), e.g. the river " +
