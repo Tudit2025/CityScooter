@@ -514,7 +514,7 @@ namespace CityScooter.Gameplay
             int count = track.Route != null ? track.Route.Count : 0;
             bool ready = _game == null || _game.State == RunState.Ready;
             // One district alone: nothing to choose, the start screen stays as it was.
-            bool show = ready && start != null && count > 1;
+            bool show = ready && start != null && count > 1 && !RaceDirector.On; // ---- Radio race (v0.4): go: picks it
             int state = !show ? 0 : KeysAllowed ? 1000 + count : 1;
             if (start == _shownStart && state == _shownState) return;
             _shownStart = start;
@@ -525,7 +525,7 @@ namespace CityScooter.Gameplay
         void HandleStartKeys()
         {
             if (_game == null || _game.State != RunState.Ready || track.Route == null || track.Route.Count < 2) return;
-            if (!KeysAllowed) return;
+            if (!KeysAllowed || RaceDirector.On) return; // ---- Radio race (v0.4): the race's go: picks the start
             Keyboard k = Keyboard.current;
             if (k == null) return;
             int n = Mathf.Min(9, track.Route.Count);
@@ -555,6 +555,7 @@ namespace CityScooter.Gameplay
         public bool RequestStart(string districtId)
         {
             if (track == null || track.Route == null || track.Route.Count < 2) return false;
+            if (RaceDirector.On) return false; // ---- Radio race (v0.4): start: is ignored, the race's go: picks the start
             int index = DistrictRoute.IndexOf(track.Route, districtId);
             if (index < 0) return false;
             string id = track.Route[index].id;

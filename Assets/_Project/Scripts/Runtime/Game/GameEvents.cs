@@ -113,5 +113,17 @@ namespace CityScooter.Game
             AirChanged = null; // ---- Ramps and air (v0.3)
             Landed = null;
         }
+
+        // ---- Radio race (v0.4, RaceDirector)
+        /// <summary>A board sent "race:NAME:GROUP": (device id, name, group 0..255).</summary>
+        public static event Action<string, string, int> RaceRequested;
+        /// <summary>A board passed on a radio message ("rx:&lt;payload&gt;"): (device id, payload).</summary>
+        public static event Action<string, string> RadioHeard;
+        public static void RaiseRaceRequested(string deviceId, string name, int group) => RaceRequested?.Invoke(deviceId, name, group);
+        public static void RaiseRadioHeard(string deviceId, string payload) => RadioHeard?.Invoke(deviceId, payload);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetRaceStatics() { RaceRequested = null; RadioHeard = null; }
+        // ---- end Radio race (v0.4)
     }
 }

@@ -686,6 +686,7 @@ namespace CityScooter.Gameplay
                 // The turn is fixed in the world now, so it shows up in the distance like the rest of the pattern.
                 if (_riderController == null && rider != null) _riderController = rider.GetComponent<RiderController>();
                 float speed = _riderController != null ? Mathf.Max(T.startSpeed, _riderController.Speed) : T.startSpeed;
+                if (fixedPlanning) speed = PlannedSpeed(start); // ---- Radio race (v0.4)
                 FakeTurnDirector.Instance?.RequestTurn(start + p.turnAtZ, mirror ? -p.turnDirection : p.turnDirection, p.turnStrength, Mathf.Max(T.turnMinLength, speed * p.turnSeconds));
             }
         }
@@ -971,8 +972,22 @@ namespace CityScooter.Gameplay
             return r;
         }
 
+        // ---- Radio race (v0.4): every board must build the same road from the same seed, so in a race the planning that
+        // normally uses the rider's live speed (ramp landing zones, a roadworks turn's length) uses a speed worked out
+        // from the distance alone. RaceDirector turns it on in race mode.
+        [System.NonSerialized] public bool fixedPlanning;
+
+        float PlannedSpeed(float z)
+        {
+            float d = Mathf.Max(0f, z - _runStartZ);
+            float seconds = d / Mathf.Max(1f, 0.5f * (T.startSpeed + T.maxSpeed));
+            return Mathf.Max(T.startSpeed, Mathf.Lerp(T.startSpeed, T.MaxSpeedAt(seconds), T.Difficulty01(d)));
+        }
+        // ---- end Radio race (v0.4)
+
         float ExpectedRampSpeed(float z)
         {
+            if (fixedPlanning) return PlannedSpeed(z); // ---- Radio race (v0.4)
             if (_riderController == null && rider != null) _riderController = rider.GetComponent<RiderController>();
             float now = _riderController != null ? _riderController.Speed : 0f;
             float run = _riderController != null ? _riderController.RunTime : 0f;

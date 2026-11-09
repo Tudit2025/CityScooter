@@ -49,6 +49,14 @@ namespace CityScooter.Gameplay
 
         void OnTrigger(string deviceId, string name, int value)
         {
+            if (RaceDirector.On)
+            {
+                // ---- Radio race (v0.4): everyone gets the same road, so programs cannot change it in race mode.
+                Dropped++;
+                _queue.Clear();
+                Caption(deviceId ?? "?", Label(name, value) + ": not in race mode");
+                return;
+            }
             string key = deviceId ?? "?";
             if (rider == null) { Dropped++; return; }
             if (!rider.Running)
@@ -68,6 +76,7 @@ namespace CityScooter.Gameplay
         void OnRunStarted()
         {
             _next.Clear();
+            if (RaceDirector.On) _queue.Clear(); // ---- Radio race (v0.4): events kept from before race mode do not happen in a race
             _runQueueAt = _queue.Count > 0 ? Time.time + queuedDelay : -1f;
         }
 
