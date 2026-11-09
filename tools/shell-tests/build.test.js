@@ -105,10 +105,13 @@ function installFakeSerial() {
   await ev(() => document.getElementById("unity-canvas").focus());
   await page.keyboard.press("Space"); await sleep(1200);
   check("micro:bit only: Space does not start a ride", !/(^|\n)go\n/.test(await ev(() => window.__serial.ports[0].written)));
+  // The board picks where rides start (block "start rides in [Kings Park]"): the start screen moves there.
+  await ev(() => window.__serial.ports[0].push("start:kingspark\n")); await sleep(800);
   await ev(() => window.__serial.ports[0].push("jp\n"));
   for (let i = 0; i < 40; i++) { await ev((v) => window.__serial.ports[0].push("st:" + v + "\n"), i < 20 ? 40 : -40); await sleep(50); }
   const written = await ev(() => window.__serial.ports[0].written);
   check("USB: jp starts a ride, game sends go to the board", /(^|\n)go\n/.test(written), JSON.stringify(written.slice(0, 60)));
+  check("USB: start:kingspark from the board, the ride starts in Kings Park", /(^|\n)go\nzone:kingspark\n/.test(written), JSON.stringify(written.slice(0, 60)));
   check("USB: game sends speed to the board", /spd:\d\n/.test(written));
   check("USB: Unity got the board's lines", (await ev(() => window.__toUnity.filter((c) => c.startsWith("OnDeviceLines") && c.includes("usb1|st:")).length)) > 10);
   await page.screenshot({ path: path.join(OUT, "real_usb.png") });

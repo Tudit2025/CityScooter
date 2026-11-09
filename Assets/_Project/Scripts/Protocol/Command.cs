@@ -28,6 +28,8 @@ namespace CityScooter.Protocol
         Surrender,
         /// <summary>v0.3 ramps: "trick" do a spin or flip while flying off a ramp.</summary>
         Trick,
+        /// <summary>v0.3 districts: "start:kingspark" rides start in this district (Text = district id, lower case letters).</summary>
+        Start,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

@@ -79,9 +79,12 @@ namespace CityScooter.Game
         /// <summary>The rider is in a district: at the start of a ride and once per boundary crossing ("zone:&lt;id&gt;").</summary>
         public static event Action<string> ZoneEntered;
         public static void RaiseZoneEntered(string districtId) => ZoneEntered?.Invoke(districtId);
+        /// <summary>A board sent "start:&lt;id&gt;" (deviceId, district id): rides start in that district.</summary>
+        public static event Action<string, string> StartRequested;
+        public static void RaiseStartRequested(string deviceId, string districtId) => StartRequested?.Invoke(deviceId, districtId);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetDistrictStatics() => ZoneEntered = null;
+        static void ResetDistrictStatics() { ZoneEntered = null; StartRequested = null; }
         // ---- end Districts (v0.3)
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

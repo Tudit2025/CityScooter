@@ -143,6 +143,13 @@ function installFakeSerial() {
     zlog.filter((x) => /zone/.test(x)).join(" | "));
   check("zone: from a board is a student print with a hint", zlog.some((x) => /cs-l-print/.test(x) && x.includes("zone:uwa") && /FROM the game/.test(x)),
     zlog.filter((x) => /zone/.test(x)).join(" | "));
+  // start:<id> picks where rides start; programs send it every second, so the monitor notes only a change
+  await push(p, "start:Kings Park\nstart:kingspark\nstart:kingspark\nstart:perth\n");
+  await sleep(400);
+  const slog = await logText(), sl = await lines();
+  check("start:Kings Park reaches Unity (spaces and capitals forgiven there too)", sl.includes("usb1|start:Kings Park") && sl.filter((x) => x === "usb1|start:kingspark").length === 2);
+  check("start: noted once with the district name", slog.filter((x) => x.includes("rides start in Kings Park")).length === 1, slog.filter((x) => /start/.test(x)).join(" | "));
+  check("start:perth yellow with the list of districts", slog.some((x) => /cs-l-warn/.test(x) && x.includes("start:perth") && /kingspark/.test(x)), slog.filter((x) => /start/.test(x)).join(" | "));
   await page.screenshot({ path: path.join(OUT, "shell_usb.png") });
 
   // silent board: second board sends nothing

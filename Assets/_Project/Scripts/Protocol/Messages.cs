@@ -44,6 +44,7 @@ namespace CityScooter.Protocol
                 // board commands too: a relayed "sur" or "jp" must not look like a command to an echoing program
                 case Jump: case Brake: case Punch: case Bell: case Boost: case Toon: case Say: case Do: case "sur":
                 case Trick: // ---- Ramps and air (v0.3)
+                case Start: // ---- Districts (v0.3)
                     return true;
             }
             return w.IndexOf(':') >= 0;
@@ -81,6 +82,19 @@ namespace CityScooter.Protocol
             var sb = new System.Text.StringBuilder(ZonePrefix);
             foreach (char c in (districtId ?? "").ToLowerInvariant())
                 if (c >= 'a' && c <= 'z' && sb.Length < ZonePrefix.Length + 16) sb.Append(c);
+            return sb.ToString();
+        }
+        // micro:bit -> game
+        /// <summary>"start:kingspark": rides start in this district (the start screen switches now, a ride in progress
+        /// keeps going and the next one starts there). The id is a district id; spaces, capitals and other characters are
+        /// dropped, so "start: Kings Park" works too.</summary>
+        public const string Start = "start";
+        /// <summary>Lower case letters only, at most 16: "Kings Park" -> "kingspark". Empty when nothing is left.</summary>
+        public static string DistrictId(string text)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in (text ?? "").ToLowerInvariant())
+                if (c >= 'a' && c <= 'z' && sb.Length < 16) sb.Append(c);
             return sb.ToString();
         }
         // ---- end Districts (v0.3)

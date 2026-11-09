@@ -76,12 +76,14 @@ namespace CityScooter.Gameplay
         {
             Instance = this;
             GameEvents.RunStarted += OnRunStarted;
+            GameEvents.StartRequested += OnStartRequested;
             RenderPipelineManager.beginCameraRendering += BeforeCamera;
         }
 
         void OnDisable()
         {
             GameEvents.RunStarted -= OnRunStarted;
+            GameEvents.StartRequested -= OnStartRequested;
             RenderPipelineManager.beginCameraRendering -= BeforeCamera;
             if (Instance == this) Instance = null;
             Restore();
@@ -145,6 +147,7 @@ namespace CityScooter.Gameplay
                 FadeAmbience(from, to, t);
             }
             HandleStartKeys();
+            ApplyBoardStart();
             UpdateStartLine();
         }
 
@@ -473,6 +476,47 @@ namespace CityScooter.Gameplay
                     SelectStartDistrict(i);
                     return;
                 }
+        }
+
+        // ---------------- "start:kingspark" from a board (block "start rides in [Kings Park]")
+
+        /// <summary>The start screen is rebuilt at most this often for boards' start: messages.</summary>
+        public const float BoardStartRebuildSeconds = 0.3f;
+        bool _boardStartDirty;
+        float _boardStartRebuiltAt = -10f;
+
+        void OnStartRequested(string deviceId, string districtId) => RequestStart(districtId);
+
+        /// <summary>
+        /// A board's "start:&lt;id&gt;": rides start in this district from now on. On the start screen it shows there
+        /// within a frame (rebuilt at most every BoardStartRebuildSeconds); during a ride or on the crash screen the ride
+        /// carries on and the next one starts there. The blocks send it again every second, so the district already
+        /// chosen does nothing. False for an id that is not on the route (or a route of one district).
+        /// </summary>
+        public bool RequestStart(string districtId)
+        {
+            if (track == null || track.Route == null || track.Route.Count < 2) return false;
+            int index = DistrictRoute.IndexOf(track.Route, districtId);
+            if (index < 0) return false;
+            string id = track.Route[index].id;
+            track.startDistrictOverride = id; // StartRun builds the next ride from it
+            if (_game == null) _game = GetComponent<GameController>();
+            bool ready = _game == null || _game.State == RunState.Ready;
+            if (ready && track.StartDistrict != track.Route[index]) _boardStartDirty = true;
+            return true;
+        }
+
+        void ApplyBoardStart()
+        {
+            if (!_boardStartDirty) return;
+            if (_game != null && _game.State != RunState.Ready) { _boardStartDirty = false; return; } // StartRun rebuilt it
+            if (Time.unscaledTime - _boardStartRebuiltAt < BoardStartRebuildSeconds) return;
+            _boardStartDirty = false;
+            _boardStartRebuiltAt = Time.unscaledTime;
+            int want = DistrictRoute.IndexOf(track.Route, track.startDistrictOverride);
+            if (want < 0 || track.StartDistrict == track.Route[want]) return; // e.g. the number keys got there first
+            if (_game != null) _game.EnterReady();
+            else track.ResetTrack(rider != null ? rider.transform.position.z - 2f : 0f);
         }
 
         /// <summary>Start screen: the next ride starts in this district (index in route order). False when there is none.</summary>

@@ -90,6 +90,11 @@ namespace CityScooter.Protocol
                     return new Command(CommandKind.Surrender);
                 case Messages.Trick: // ---- Ramps and air (v0.3): "trick:1" is forgiven like "jp:1"
                     return new Command(CommandKind.Trick);
+                case Messages.Start: // ---- Districts (v0.3): "start:kingspark"; the game ignores ids not on its route
+                {
+                    string id = Messages.DistrictId(arg);
+                    return id.Length > 0 ? new Command(CommandKind.Start, 0f, id) : new Command(CommandKind.Malformed, 0f, s);
+                }
                 case Messages.Toon:
                     switch (arg.ToLowerInvariant())
                     {

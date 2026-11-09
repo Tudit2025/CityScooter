@@ -107,6 +107,9 @@ namespace CityScooter.Devices
                 case CommandKind.Say:
                     Game.GameEvents.RaiseBoardSaid(deviceId, cmd.Text);
                     break;
+                case CommandKind.Start: // ---- Districts (v0.3)
+                    Game.GameEvents.RaiseStartRequested(deviceId, cmd.Text);
+                    break;
                 case CommandKind.Hello:
                     if (dev.Version != cmd.Text)
                     {

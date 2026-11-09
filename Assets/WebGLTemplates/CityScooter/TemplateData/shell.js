@@ -222,6 +222,10 @@
     const arg = s.slice(colon + 1).trim();
     switch (key) {
       case "zone": return { kind: "gameword" }; // ---- Districts (v0.3): the game sends zone:<id>; from a board it does nothing
+      case "start": { // ---- Districts (v0.3): "start:kingspark" (spaces and capitals dropped, like CommandParser)
+        const id = arg.toLowerCase().replace(/[^a-z]/g, "").slice(0, 16);
+        return ZONE_NAMES[id] ? { kind: "start", value: id } : { kind: "malformed" };
+      }
       case "st":
         if (NUMBER.test(arg)) {
           const v = parseFloat(arg);
@@ -237,7 +241,7 @@
       case "bo": return { kind: "boost" };
       case "do": return /^(chase|heli|calm|car|slowcar|roadworks|police|crossing|manhole|ramp|stars\s*:\s*[0-5]|turn\s*:\s*(l|r|left|right|-1|1))$/i.test(arg)
         ? { kind: "trigger", value: arg.toLowerCase() } : { kind: "malformed" };
-      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo|jp|br|pu|bl|bo|toon|say|do|sur|trick)$/i.test(arg)
+      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo|jp|br|pu|bl|bo|toon|say|do|sur|trick|start)$/i.test(arg)
         ? { kind: "say", value: arg } : { kind: "malformed" };
       case "sur": return { kind: "surrender" };
       case "trick": return { kind: "trick" }; // v0.3 ramps: "trick:1" is forgiven like "jp:1"
@@ -331,6 +335,12 @@
       case "boost":
         d.boostUntil = t + 300;
         break;
+      case "start": // ---- Districts (v0.3): programs send it every second, so the monitor notes only a change
+        if (d.start !== c.value) {
+          d.start = c.value;
+          logLine("game", d.id, "rides start in " + ZONE_NAMES[c.value], "");
+        }
+        break;
       case "gameword": // ---- Districts (v0.3)
         logLine("print", d.id, line, "zone: is a message FROM the game (you rode into a new part of Perth). Use \"when entering\" to react to it.");
         break;
@@ -356,6 +366,7 @@
       case "malformed":
         logLine("warn", d.id, line, /^\s*toon/i.test(line) ? "toon: needs 1 (on) or 0 (off), e.g. toon:1"
           : /^\s*say/i.test(line) ? "say: one word of your own (letters, digits, _ - ! ?, up to 16), not a game word like crash"
+          : /^\s*start/i.test(line) ? "start: one of uwa, matilda, kingspark, westperth, cbd, quay, mountsbay, e.g. start:kingspark"
           : /^\s*do/i.test(line) ? "do: one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole, ramp"
           : "st: needs a number, e.g. st:-35");
         break;

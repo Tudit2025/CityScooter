@@ -632,6 +632,68 @@ namespace CityScooter.Tests
             Assert.AreEqual("", _game.hud.StartLineText, "only on the start screen");
         }
 
+        // A board's "start:<id>" (block "start rides in [Kings Park]"): the class build has no number keys.
+        [UnityTest]
+        public IEnumerator BoardStart_SwitchesTheStartScreen_SameAgainDoesNothing_UnknownIgnored()
+        {
+            DeviceHub hub = DeviceHub.Instance;
+            if (hub == null) Assert.Ignore("no DeviceHub (Bootstrap)");
+            yield return null;
+            Assert.AreSame(_a, Track.StartDistrict);
+            hub.Receive("start-test", "start:bravo");
+            yield return null;
+            yield return null;
+            Assert.AreSame(_b, Track.StartDistrict, "the start screen moves to the board's district");
+            Assert.AreEqual("B1", Name(Track.ChunkAt(1f, out _)));
+            StringAssert.StartsWith("Start: BRAVO", _game.hud.StartLineText);
+            RoadChunk first = Track.ChunkAt(1f, out _);
+            hub.Receive("start-test", "start: Bravo"); // the blocks send it again every second
+            yield return new WaitForSecondsRealtime(DistrictDirector.BoardStartRebuildSeconds + 0.1f);
+            Assert.AreSame(first, Track.ChunkAt(1f, out _), "the same district again does not rebuild the start screen");
+            hub.Receive("start-test", "start:perth");
+            yield return null;
+            yield return null;
+            Assert.AreSame(_b, Track.StartDistrict, "an id that is not on the route changes nothing");
+            _game.StartRun();
+            yield return null;
+            Assert.AreEqual("bravo", _zones.Last(), "the ride starts there");
+        }
+
+        [UnityTest]
+        public IEnumerator BoardStart_DuringARide_TheRideGoesOn_TheNextStartsThere()
+        {
+            DeviceHub hub = DeviceHub.Instance;
+            if (hub == null) Assert.Ignore("no DeviceHub (Bootstrap)");
+            _game.StartRun();
+            yield return null;
+            Assert.AreEqual("alpha", _zones.Last());
+            RoadChunk riding = Track.ChunkAt(1f, out _);
+            hub.Receive("start-test", "start:bravo");
+            yield return new WaitForSecondsRealtime(DistrictDirector.BoardStartRebuildSeconds + 0.1f);
+            Assert.AreEqual(RunState.Running, _game.State);
+            Assert.AreSame(riding, Track.ChunkAt(1f, out _), "the road under the rider is not rebuilt");
+            Assert.AreSame(_a, Track.StartDistrict);
+            _game.StartRun(); // the next ride (after a crash, A starts it straight away)
+            yield return null;
+            Assert.AreSame(_b, Track.StartDistrict);
+            Assert.AreEqual("bravo", _zones.Last());
+        }
+
+        [UnityTest]
+        public IEnumerator BoardStart_QuickChanges_TheLastOneWins()
+        {
+            DeviceHub hub = DeviceHub.Instance;
+            if (hub == null) Assert.Ignore("no DeviceHub (Bootstrap)");
+            hub.Receive("start-test", "start:bravo");
+            yield return null;
+            yield return null;
+            Assert.AreSame(_b, Track.StartDistrict);
+            hub.Receive("start-test", "start:alpha"); // within 0.3 s of the last rebuild: it waits, then applies
+            yield return new WaitForSecondsRealtime(DistrictDirector.BoardStartRebuildSeconds + 0.15f);
+            Assert.AreSame(_a, Track.StartDistrict);
+            Assert.AreEqual("Start: ALPHA", _game.hud.StartLineText.Replace("  (keys 1-2)", ""));
+        }
+
         [UnityTest]
         public IEnumerator StartScreen_KeyboardOff_NoKeysMentioned()
         {

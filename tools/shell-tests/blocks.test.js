@@ -39,6 +39,7 @@ const chain = (...bs) => { for (let i = bs.length - 2; i >= 0; i--) bs[i].next =
 const ALL = { blocks: { languageVersion: 0, blocks: [
   B("mb_on_start", { x: 10, y: 10, inputs: { DO: chain(
     B("mb_show", { inputs: { VALUE: val(B("mb_version")) } }),
+    B("cs_start", { fields: { ZONE: "quay" } }), // districts (v0.3): where rides start
     B("variables_set", { fields: { VAR: { id: "v1" } }, inputs: { VALUE: n(0) } }),
     B("math_change", { fields: { VAR: { id: "v1" } }, inputs: { DELTA: n(1) } }),
     B("mb_play", { fields: { TUNE: "POWER_UP" } })) } }),
@@ -188,7 +189,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
     'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:',
     'msg == "air:1"', 'print("trick")', 'msg == "land:trick"', 'print("do:ramp")',
-    'msg == "zone:kingspark"', 'msg == "zone:quay"',
+    'msg == "zone:kingspark"', 'msg == "zone:quay"', 'start_zone = ""', 'start_zone = "quay"', 'print("start:" + start_zone)', '    if start_zone:',
     "count = (count if type(count) in (int, float) else 0) + 1"]) {
     check("all blocks make: " + want, allPy.includes(want));
   }
@@ -249,6 +250,10 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": 3rd quick press runs the 3-times block", log.some((x) => x.includes("presses 3")), log.filter((x) => /presses/.test(x)).slice(-3).join(" | "));
     check(label + ": speed handler ran", log.some((x) => /speed 9/.test(x)), log.filter((x) => /speed/.test(x)).slice(-2).join(" | "));
     check(label + ": zone:kingspark runs the when entering Kings Park block (once)", log.filter((x) => x.includes("in kings park")).length === 1, log.filter((x) => /zone|kings/.test(x)).slice(-3).join(" | "));
+    const starts = lines.filter((l) => l === "sim|start:quay").length, noted = log.filter((x) => x.includes("rides start in Elizabeth Quay")).length;
+    check(label + ": start rides in sends start:quay, and again about every second", starts >= 3, starts);
+    // noted once when it changes (shell.test.js checks that exactly; this long run can trim it from the 300-line monitor)
+    check(label + ": the monitor does not note the start district every second", noted <= 1, noted);
     return lines;
   }
   const v2 = await runInSim(allPy, "all blocks on V2");

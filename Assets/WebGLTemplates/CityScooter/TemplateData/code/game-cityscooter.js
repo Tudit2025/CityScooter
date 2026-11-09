@@ -1,6 +1,7 @@
 /* CityScooter block pack for MicrobitBlocks (Claude, 2026-11-07). Protocol: docs/protocol.md.
  * Blocks send st:/jp/br (v1: pu/bl, police: sur) and react to the game's crash/gift/go/spd:N (v1: ko/warn:/turn:;
- * police 11/8: wanted:N, chase:, cop:N, heli:, inc:, arrested, busted, lost; v0.3 ramps: trick, do:ramp, air:, land:). The generated message reader is the same
+ * police 11/8: wanted:N, chase:, cop:N, heli:, inc:, arrested, busted, lost; v0.3 ramps: trick, do:ramp, air:, land:;
+ * v0.3 districts: zone:, and start:<id> to pick where rides start). The generated message reader is the same
  * buffered messages() as microbit/starter.py (uart.readline() can return half a line).
  * A pack for another game copies this file's shape: blocks, generators, isHat, globals, helpers, loopTail,
  * toolbox, starter. */
@@ -93,6 +94,10 @@
         { type: "input_dummy" }, { type: "input_statement", name: "DO" }],
       style: "game_blocks",
       tooltip: "Runs when your ride starts in this part of Perth, and each time you ride into it (UWA, Matilda Bay, Kings Park, West Perth, Perth CBD, Elizabeth Quay, Mounts Bay Road). The game sends zone:<name>, e.g. zone:kingspark." },
+    { type: "cs_start", message0: "start rides in %1",
+      args0: [{ type: "field_dropdown", name: "ZONE", options: DISTRICTS.map(([name, id]) => [name, id]) }],
+      previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Choose where your rides start on the route from UWA to the city. Put it in \"on start\" (or on a button). On the start screen the game moves there straight away; during a ride, your next ride starts there. Your program sends it again every second, in case the game was not listening yet. Python: print(\"start:kingspark\")" },
   ];
 
   const GENERATORS = {
@@ -117,6 +122,9 @@
     cs_trick: () => 'print("trick")\n',
     // ---- Districts (v0.3): the same branch as "when the game says zone:<id>" (compact: one elif per district used)
     cs_on_zone: (b) => { MB.addSection("msg:zone:" + b.getFieldValue("ZONE"), MB.statements(b, "DO")); return ""; },
+    // Remembered in start_zone and sent again with hi: (about once a second): a print in "on start" can run before the
+    // game is listening.
+    cs_start: (b) => { MB.setFlag("usesStart"); return 'start_zone = "' + b.getFieldValue("ZONE") + '"\nprint("start:" + start_zone)\n'; },
   };
 
   const MESSAGES_HELPER = [
@@ -144,12 +152,13 @@
     colour: "#e81f26",
     blocks: BLOCKS,
     generators: GENERATORS,
-    reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance",
+    reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance,start_zone",
     isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted"
       || type === "cs_on_zone", // ---- Districts (v0.3)
     // wanted_level / police_distance only when a block uses them, so Lesson 1 programs look the same as before.
     globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
-      ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null].filter(Boolean),
+      ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null,
+      ctx.flags.usesStart ? 'start_zone = ""  # where rides start (the "start rides in" block)' : null].filter(Boolean),
     helpers: () => [MESSAGES_HELPER],
     loopTail: (ctx, section) => {
       const branches = [];
@@ -178,6 +187,7 @@
         out += "messages()  # read (and ignore) what the game sends\n";
       }
       out += 'loops += 1\nif loops % 20 == 0:\n    print("hi:" + VERSION)  # tell the game which micro:bit this is\n';
+      if (ctx.flags.usesStart) out += '    if start_zone:\n        print("start:" + start_zone)  # again, in case the game missed it\n';
       return out;
     },
     toolbox: (blk, num) => [{
@@ -189,7 +199,7 @@
         blk("cs_on_wanted"), blk("cs_wanted"), blk("cs_cop"), blk("cs_surrender"),
         blk("cs_do"), blk("cs_stars", { inputs: { N: num(1) } }), blk("cs_say"), blk("cs_on_word"),
         blk("cs_on_message", { fields: { MSG: "air:1" } }), blk("cs_trick"), // ramps and air (v0.3)
-        blk("cs_on_zone", { fields: { ZONE: "kingspark" } }), // ---- Districts (v0.3)
+        blk("cs_on_zone", { fields: { ZONE: "kingspark" } }), blk("cs_start", { fields: { ZONE: "kingspark" } }), // ---- Districts (v0.3)
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

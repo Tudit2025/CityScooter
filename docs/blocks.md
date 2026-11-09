@@ -64,6 +64,10 @@
   - 新的帽子积木"当进入 [Kings Park] 时"（`cs_on_zone`，下拉是场景名，按路线顺序），和"当游戏说 zone:kingspark"放进同一个分支，只多一个 `elif msg == "zone:kingspark":`，不加全局变量，V1 的内存也够；
   - 开局时在 `go` 后面收到出发场景，之后每进一个新场景收到一次。例子：进 Kings Park 显示一棵树，进 Elizabeth Quay 放一段音乐。
   - 串口监视器里游戏发的 `zone:` 后面会标出场景名（"entering Kings Park"）；板子自己打印 `zone:...` 时提示这是游戏发的消息。
+- 选出发场景（11/9）：
+  - CityScooter 分类加了"start rides in [Kings Park]"（`cs_start`，下拉是 7 个场景，按路线顺序），生成 `start_zone = "kingspark"` 和 `print("start:" + start_zone)`。
+  - 放在"开始时"里最方便。程序一开始发的那条游戏可能还没在听，所以生成的代码在每秒一次的 `hi:` 旁边再发一次 `start:`（只在用了这块积木时才有 `start_zone` 这个全局变量）。
+  - 在开局画面上马上换过去；骑行中发的，下一局从那里出发。串口监视器只在场景变化时记一行"rides start in Kings Park"，不会每秒刷屏。
 
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 
