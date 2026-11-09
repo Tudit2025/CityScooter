@@ -136,6 +136,14 @@ namespace CityScooter.Gameplay
                 else if (!running) _zoneSerial = span.Serial;
             }
 
+            // Someone put a sky material back (ApplySceneLook re-applies the scene look, e.g. one editor tick after
+            // loading): take it as the new original and apply the district's sky to a fresh copy of it.
+            if (_skyInstance != null && RenderSettings.skybox != _skyInstance)
+            {
+                Destroy(_skyInstance);
+                _skyInstance = null;
+                _lastBlend = -1f;
+            }
             Blend(z, out District from, out District to, out float t);
             LookFrom = from;
             LookTo = to;
@@ -234,30 +242,76 @@ namespace CityScooter.Gameplay
                 sun.intensity = Mathf.Lerp(a.sunIntensity, b.sunIntensity, t);
             }
             ApplySkyTint(Color.Lerp(a.skyTint, b.skyTint, t));
-            ApplySkyView(Mathf.LerpAngle(a.skyYaw, b.skyYaw, t), Mathf.Lerp(a.skySize, b.skySize, t), Mathf.Lerp(a.skyHeight, b.skyHeight, t));
+            ApplySkyView(Mathf.LerpAngle(a.skyYaw, b.skyYaw, t), Mathf.Lerp(a.skySize, b.skySize, t), Mathf.Lerp(a.skyHeight, b.skyHeight, t),
+                Mathf.Lerp(a.skyline, b.skyline, t));
         }
 
         // ---------------- sky view: the one Perth panorama turned (which way the road runs) and sized (how far the city is)
         // Yaw goes through FakeTurnDirector.SkyOffset (the sky heading); size and height adjust the panorama globals
         // that ComicCityBackdrop writes every frame, just after it wrote them (see BeforeCamera).
-        float _skySize = 1f, _skyHeight;
+        float _skySize = 1f, _skyHeight, _skyline = 1f;
         float _writtenScale = float.NaN, _writtenElevation = float.NaN;
+
+        /// <summary>District.skyline = 0 sinks the panorama this far (degrees): the tallest tower is well below the horizon.</summary>
+        public const float SkylineSinkDegrees = 30f;
 
         /// <summary>Sky now (tests): yaw in degrees, size multiplier, height in degrees.</summary>
         public Vector3 SkyView { get; private set; } = new Vector3(0f, 1f, 0f);
+        /// <summary>How much of the Perth skyline shows now (tests): 1 all, 0 sunk below the horizon.</summary>
+        public float SkylineShown => _skyline;
 
-        void ApplySkyView(float yawDegrees, float size, float heightDegrees)
+        void ApplySkyView(float yawDegrees, float size, float heightDegrees, float skyline = 1f)
         {
             SkyView = new Vector3(yawDegrees, size, heightDegrees);
             _skySize = size;
             _skyHeight = heightDegrees;
+            _skyline = Mathf.Clamp01(skyline);
             FakeTurnDirector turns = FakeTurnDirector.Instance;
             if (turns != null) turns.SkyOffset = yawDegrees * Mathf.Deg2Rad;
+            // The sky material keeps its own _ComicSkyMapping and _ComicSkyScale (Sky_ComicCity.mat), and a material's own
+            // value wins over a global: so size, height and skyline go onto the runtime copy of the sky material. (Until
+            // 11/9 they only went to the globals, which the sky never read: UWA kept the full-size city.)
+            bool neutral = Mathf.Abs(size - 1f) < 0.001f && Mathf.Abs(heightDegrees) < 0.001f && _skyline > 0.999f;
+            if (neutral && _skyInstance == null) return;
+            if (!EnsureSkyInstance()) return;
+            if (_skyInstance.HasProperty(SkyMappingId))
+            {
+                Vector4 mapping = _skyMappingBase;
+                mapping.y = SkyElevation(mapping.y, size, heightDegrees, _skyline);
+                _skyInstance.SetVector(SkyMappingId, mapping);
+            }
+            if (_skyInstance.HasProperty(SkyScaleId)) _skyInstance.SetFloat(SkyScaleId, _skyScaleBase * size);
         }
+
+        Vector4 _skyMappingBase;
+        float _skyScaleBase = 1f;
+
+        /// <summary>A runtime copy of the panorama sky material, for the district tint and sky view (once one needs it).</summary>
+        bool EnsureSkyInstance()
+        {
+            if (_skyInstance != null) return true;
+            Material sky = RenderSettings.skybox;
+            if (sky == null || !sky.HasProperty(SkyHazeId)) return false;
+            _skyOriginal = sky;
+            _skyHazeBase = sky.GetColor(SkyHazeId);
+            _skyMappingBase = sky.HasProperty(SkyMappingId) ? sky.GetVector(SkyMappingId) : Vector4.zero;
+            _skyScaleBase = sky.HasProperty(SkyScaleId) ? sky.GetFloat(SkyScaleId) : 1f;
+            _skyInstance = new Material(sky) { name = sky.name + " (district)" };
+            RenderSettings.skybox = _skyInstance;
+            return true;
+        }
+
+        /// <summary>
+        /// The panorama elevation for a district: size scales the skyline about the horizon (elevation 0), not about the
+        /// panorama's middle row (_ComicSkyMapping.y, 12 degrees up), so a smaller city still stands on the horizon.
+        /// Then height moves it, and skyline below 1 sinks it below the horizon (SkylineSinkDegrees at 0).
+        /// </summary>
+        public static float SkyElevation(float elevation, float size, float heightDegrees, float skyline) =>
+            elevation * size + (heightDegrees - (1f - Mathf.Clamp01(skyline)) * SkylineSinkDegrees) * Mathf.Deg2Rad;
 
         void ApplySkySizeAndHeight()
         {
-            if (Mathf.Abs(_skySize - 1f) < 0.001f && Mathf.Abs(_skyHeight) < 0.001f) return;
+            if (Mathf.Abs(_skySize - 1f) < 0.001f && Mathf.Abs(_skyHeight) < 0.001f && _skyline > 0.999f) return;
             // Only on top of a fresh value from ComicCityBackdrop: if what is there is what we wrote last, it was not
             // rewritten since (no backdrop in this scene), so do not apply it twice.
             float scale = Shader.GetGlobalFloat(SkyScaleId);
@@ -269,7 +323,7 @@ namespace CityScooter.Gameplay
             Vector4 mapping = Shader.GetGlobalVector(SkyMappingId);
             if (mapping.w > 0.5f && !Mathf.Approximately(mapping.y, _writtenElevation))
             {
-                mapping.y += _skyHeight * Mathf.Deg2Rad;
+                mapping.y = SkyElevation(mapping.y, _skySize, _skyHeight, _skyline);
                 _writtenElevation = mapping.y;
                 Shader.SetGlobalVector(SkyMappingId, mapping);
             }
@@ -314,15 +368,7 @@ namespace CityScooter.Gameplay
             _tintTarget = tint;
             _tintWeight = w;
             if (w <= 0.001f && _skyInstance == null) return;
-            if (_skyInstance == null)
-            {
-                Material sky = RenderSettings.skybox;
-                if (sky == null || !sky.HasProperty(SkyHazeId)) return;
-                _skyOriginal = sky;
-                _skyHazeBase = sky.GetColor(SkyHazeId);
-                _skyInstance = new Material(sky) { name = sky.name + " (district tint)" };
-                RenderSettings.skybox = _skyInstance;
-            }
+            if (!EnsureSkyInstance()) return;
             _skyInstance.SetColor(SkyHazeId, TintHaze(_skyHazeBase, tint, w));
         }
 

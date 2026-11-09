@@ -352,7 +352,8 @@ namespace CityScooter.Gameplay
                 string one = d.Id == "sim" ? "Simulator" : "micro:bit " + (d.Version != null ? d.Version.ToUpperInvariant() : "");
                 label = label == null ? one : label + " + " + one;
             }
-            return label ?? "Keyboard";
+            // The class build has no keyboard (micro:bit only): say what is missing instead.
+            return label ?? (hub.KeyboardEnabled ? "Keyboard" : "No micro:bit yet");
         }
     }
 }

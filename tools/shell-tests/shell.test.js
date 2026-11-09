@@ -32,14 +32,28 @@ function installFakeSerial() {
       this.name = name; this.written = ""; this.opened = false; this.busy = false;
       this.readable = null; this.writable = null;
     }
-    async open() {
-      if (this.busy) { const e = new Error("Failed to open serial port."); e.name = "NetworkError"; throw e; }
+    async open(opts) {
+      const fail = () => { const e = new Error("Failed to open serial port."); e.name = "NetworkError"; throw e; };
+      if (this.busy) fail();
+      this.opens = (this.opens || 0) + 1;
+      if (this.failOpens > 0) { this.failOpens--; fail(); } // e.g. Windows still holds the port after a refresh / re-plug
+      this.opts = opts;
       this.opened = true;
       this.readable = new ReadableStream({ start: (c) => { this.ctl = c; } });
       this.writable = new WritableStream({ write: (chunk) => { this.written += dec.decode(chunk); } });
     }
+    async close() { this.opened = false; this.readable = null; this.writable = null; this.closes = (this.closes || 0) + 1; }
     push(text) { if (this.ctl) this.ctl.enqueue(enc.encode(text)); }
     unplug() { try { this.ctl.error(new Error("device lost")); } catch (e) {} this.readable = null; this.writable = null; this.opened = false; }
+    // A non-fatal read error: Chrome errors the stream and gives the port a new readable.
+    glitch() {
+      const old = this.ctl;
+      this.readable = new ReadableStream({ start: (c) => { this.ctl = c; } });
+      const e = new Error("Buffer overrun"); e.name = "BufferOverrunError";
+      try { old.error(e); } catch (x) {}
+    }
+    // A fatal stream error while the board stays plugged in (no disconnect event).
+    die() { const old = this.ctl; this.readable = null; try { old.error(new Error("The device has been lost.")); } catch (x) {} }
   }
   const serial = {
     async requestPort() {
@@ -92,7 +106,11 @@ function installFakeSerial() {
   await ev(() => window.__serial.next("busy"));
   await page.click("#cs-connect");
   await sleep(100);
-  check("busy port shows the python.microbit.org hint", /python\.microbit\.org/.test(await ev(() => document.getElementById("cs-usb-msg").textContent)));
+  check("busy port: tries again first (Connecting…)", /Connecting/.test(await ev(() => document.getElementById("cs-usb-msg").textContent)));
+  const busyHint = await page.waitForFunction(() => /python\.microbit\.org/.test(document.getElementById("cs-usb-msg").textContent), { timeout: 9000, polling: 100 }).then(() => true, () => false);
+  check("busy port shows the python.microbit.org hint after about 6 s of tries", busyHint);
+  check("the open tries are in the USB log", (await ev(() => window.CityScooterShell.usbLog.filter((l) => /could not open the port \(NetworkError/.test(l)).length)) === 6,
+    JSON.stringify(await ev(() => window.CityScooterShell.usbLog)));
   // The busy port (ports[0]) took the usb1 slot but never opened; the next port reuses that slot.
   await ev(() => window.__serial.next(null));
   await page.click("#cs-connect"); // ports[1] -> usb1
@@ -152,6 +170,22 @@ function installFakeSerial() {
   check("start:perth yellow with the list of districts", slog.some((x) => /cs-l-warn/.test(x) && x.includes("start:perth") && /kingspark/.test(x)), slog.filter((x) => /start/.test(x)).join(" | "));
   await page.screenshot({ path: path.join(OUT, "shell_usb.png") });
 
+  // USB robustness (lesson 1, 11/9: boards dropped out until the page was refreshed)
+  check("port opened with a big read buffer", (await ev((i) => window.__serial.ports[i].opts && window.__serial.ports[i].opts.bufferSize, p)) >= 4096);
+  await ev((i) => window.__serial.ports[i].glitch(), p);
+  await sleep(100);
+  await push(p, "st:12\n");
+  await sleep(300);
+  check("a read glitch (buffer overrun) keeps the board connected", (await lines()).includes("usb1|st:12") && (await ev(() => window.__fakeUnity.status.usb1)).startsWith("usb1|usb|1"));
+  check("the glitch is noted in the monitor", (await logText()).some((x) => /cs-l-warn/.test(x) && /read glitch \(BufferOverrunError/.test(x)));
+  await ev((i) => { window.__serial.ports[i].failOpens = 1; window.__serial.ports[i].die(); }, p); // dies, and the first reopen fails too
+  const back = await page.waitForFunction((i) => window.__serial.ports[i].opened && window.__fakeUnity.status.usb1.startsWith("usb1|usb|1"), { timeout: 4000, polling: 50 }, p).then(() => true, () => false);
+  await push(p, "st:13\n");
+  await sleep(300);
+  check("a connection that breaks without an unplug is closed and opened again", back && (await ev((i) => window.__serial.ports[i].closes, p)) >= 1 && (await lines()).includes("usb1|st:13"),
+    JSON.stringify(await ev(() => window.CityScooterShell.usbLog)));
+  check("the monitor says it reconnected", (await logText()).some((x) => /broke without an unplug/.test(x)) && (await logText()).some((x) => /connected again/.test(x)));
+
   // silent board: second board sends nothing
   await page.click("#cs-connect");
   for (let i = 0; i < 19; i++) { await push(p, "st:-35\n"); await sleep(200); } // usb1 keeps sending like a real program
@@ -173,9 +207,12 @@ function installFakeSerial() {
   await ev((i) => { window.__serial.ports[i].unplug(); window.__serial.fire("disconnect", window.__serial.ports[i]); }, p);
   await sleep(200);
   check("unplug sends status 0", (await ev(() => window.__fakeUnity.status.usb1)).startsWith("usb1|usb|0"));
-  await ev(() => { const np = new window.__serial.FakePort("replug"); window.__serial.ports.push(np); window.__serial.fire("connect", np); });
+  // the re-plugged board (a V1 after a flash) is not ready at first: the first two opens fail
+  await ev(() => { const np = new window.__serial.FakePort("replug"); np.failOpens = 2; window.__serial.ports.push(np); window.__serial.fire("connect", np); });
   await sleep(200);
-  check("replug comes back as usb1", (await ev(() => window.__fakeUnity.status.usb1)).startsWith("usb1|usb|1"));
+  check("replug not ready yet: still trying", (await ev(() => window.__fakeUnity.status.usb1)).startsWith("usb1|usb|0"));
+  const replugged = await page.waitForFunction(() => window.__fakeUnity.status.usb1.startsWith("usb1|usb|1"), { timeout: 3000, polling: 50 }).then(() => true, () => false);
+  check("replug comes back as usb1 after the open tries", replugged, await ev(() => window.__fakeUnity.status.usb1));
 
   // ---------------- Simulator mode (real simulator)
   await page.click('.cs-modes button[data-mode="sim"]');
