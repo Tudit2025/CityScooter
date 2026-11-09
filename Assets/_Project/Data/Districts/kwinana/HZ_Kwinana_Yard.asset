@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_Kwinana_Yard
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 1585811338208953004, guid: bd2f48082064f764ca569936446d9c4d, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -2.6
+    z: 20
+    yaw: 0
+  - prefab: {fileID: 9131644605842365754, guid: f6180da4313b6134ea93d8b30777307c, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 0
+    z: 26
+    yaw: 0
+  - prefab: {fileID: 2842187966134181227, guid: d6c628eb54dfe7841b4e6eb1874a8cdb, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 2.6
+    z: 32
+    yaw: 0
+  length: 50
+  minLevel: 1
+  weight: 0.8
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 30
+  roadHalfWidth: 4

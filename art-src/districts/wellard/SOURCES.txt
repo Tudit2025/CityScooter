@@ -1,0 +1,31 @@
+WELLARD（v0.4 南线，order 130，南线美术 3）参考资料
+参考图下载在仓库外 D:\CityScooter-refs\wellard\，不进仓库、不进游戏。只记录链接和用到了什么。
+
+照片（Wikimedia Commons）
+- Transperth Wellard Station entrance
+  https://commons.wikimedia.org/wiki/File:Transperth_Wellard_Station_entrance.jpg
+  用到：车站入口的大雨棚——蓝绿色钢结构 #1F7F96（亮面 #38A3BA），前檐上白字站名（游戏里只写 WELLARD），
+  灰色混凝土方柱，后面一面橙色墙 #F39A1E，粉米色墙面，绿色/黄色垃圾桶。
+- Wellard Station, August 2021 03
+  https://commons.wikimedia.org/wiki/File:Wellard_Station,_August_2021_03.jpg
+  用到：站房是灰色抹灰 #AEB4B8，屋顶上两个凸起的深蓝灰色天窗盒子（带一条窗带），站台是红砖铺地 #B5523B 加黄线，
+  接触网立柱，道砟和石笼挡墙。
+
+视频（封面图）
+- Perth The Spectacles Walk 2026 – Wetlands Boardwalk & Lookouts：https://www.youtube.com/watch?v=9jzUUIrj_so
+  用到：木栈道（灰褐色木板 #8E7A64，木扶手 #A68A6A），两边是白千层（paperbark）林，草地很绿。
+- The Spectacles wetland reserve. Western Australia.：https://www.youtube.com/watch?v=NW6ZuMJ44ZM
+  用到：白千层的树干——奶白到浅褐色、纸一样剥落的树皮（#E6D9BE，斑块 #B39C78），树干多分叉、倾斜，
+  树冠稀疏，橄榄绿 #7E8F5A；水面上铺满亮绿色浮萍 #9CC23A。
+- 另见 yt-dlp 搜索 "Wellard station Perth"：p7nEMuGj_jY、8JdGYhz_O0g（车站和列车：银色车身、深色窗带、蓝色车门）。
+
+风格化处理（按 Perth 新住宅区常识）
+- 新住宅区：单层抹灰砖房（奶白、沙色、浅灰、红砖），前面是双车库和 Colorbond 卷帘门，带一个浅色门廊；
+  Colorbond 四坡屋顶（Monument 深灰 #4A4F55、Woodland Grey #6E7378、Surfmist 白 #E6E5DE、陶瓦红）；
+  前院草坪，石灰岩矮挡土墙 #E6D7AE，砖砌信箱柱，Colorbond 侧围栏，路边草带上有木桩扶着的小行道树。
+- Wellard 村中心：两层的小商铺，带悬挑雨棚，咖啡桌和阳伞，小广场上有砖砌钟塔和树。
+- 公园：游乐场（塔台、黄色滑梯、秋千）上方三块三角形遮阳帆（黄、青、红），蓝色软胶地面，
+  椭圆形草坪上的澳式足球门柱（四根白柱），桉树，烧烤亭。车道换成共享步道（浅色混凝土 + 白色中线虚线），没有车。
+- 动物：黑天鹅（红嘴白环）、太平洋黑鸭（褐色身体，脸上浅色和深色条纹，翅膀上一块青绿色）。
+- 远景：两边是白千层和桉树林带（近处深、远处发灰），林间是低矮的住宅屋顶，右边有湿地水塘，
+  左边（东）一排输电塔，最远处是低低的蓝色 Darling 山脉。
