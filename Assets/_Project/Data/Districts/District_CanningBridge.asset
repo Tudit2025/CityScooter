@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_CanningBridge
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: canningbridge
+  displayName: CANNING BRIDGE
+  order: 80
+  length: {x: 320, y: 440}
+  chunks:
+  - {fileID: 4568812674813765590, guid: 4fcda8ef989b2f84798d9a505bd2f558, type: 3}
+  - {fileID: 163309156360178059, guid: 2724153f514fcbe4c95376dbd71ec128, type: 3}
+  - {fileID: 5199522560213448754, guid: 63be2d720a7556647915802defebeb8c, type: 3}
+  - {fileID: 6847715167055456765, guid: 3a3262df91ee7584cb16a7f4b452384b, type: 3}
+  - {fileID: 2707183102639162717, guid: aabf5924ce67e254da18567c2976face, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 3681578621282704947, guid: c20f46e48a6e71741920d2e8b4750d48, type: 3}
+  exit: {fileID: 7411484739417512847, guid: 12bfd4141210ad04f91349bac3101e13, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 655589184157288147, guid: 79228dad04b1d4948973f6d4a1a706ef, type: 3}
+  - {fileID: 3512400253426647422, guid: 188d4152f75ba9a42922a78261f3cfd9, type: 3}
+  - {fileID: 7403305453604453238, guid: add9f1c9211410a42ba58be1c1c9a561, type: 3}
+  - {fileID: 534185336433319250, guid: ce5c61c811b2ff446b2a46bab0ce5f5e, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: 50c6b87570da25b49ac09bf35a07f703, type: 2}
+  - {fileID: 11400000, guid: 598004cd86dfa974ea8eaee97047e696, type: 2}
+  - {fileID: 11400000, guid: 551569bc8a1d96b46aa3fdeb16c6e6df, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  pedestrians:
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 5304581062665531620, guid: b8d44693b833d8e4fa04803501bacf9e, type: 3}
+  - {fileID: 5304581062665531620, guid: b8d44693b833d8e4fa04803501bacf9e, type: 3}
+  - {fileID: 4957197346979025906, guid: cfde70b047ac96748b0f28fc9b870eb9, type: 3}
+  - {fileID: 4957197346979025906, guid: cfde70b047ac96748b0f28fc9b870eb9, type: 3}
+  ramps:
+  - {fileID: 5391991360582407064, guid: 75c63e916be2fc849add68a62fc39185, type: 3}
+  - {fileID: 4705129217516853858, guid: f20500551d6f77748a8925175c743c2c, type: 3}
+  rampFrequency: 1.3
+  blendMeters: 150
+  fogColor: {r: 0.7, g: 0.83, b: 0.92, a: 1}
+  skyTint: {r: 0.97, g: 1, b: 1, a: 1}
+  ambientSky: {r: 0.66, g: 0.83, b: 0.97, a: 1}
+  ambientEquator: {r: 0.85, g: 0.88, b: 0.86, a: 1}
+  ambientGround: {r: 0.6, g: 0.6, b: 0.55, a: 1}
+  sunColor: {r: 1, g: 0.97, b: 0.9, a: 1}
+  sunIntensity: 1.45
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 635700463114129597, guid: aff4db9c052f5e54ea330118cad26212, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
