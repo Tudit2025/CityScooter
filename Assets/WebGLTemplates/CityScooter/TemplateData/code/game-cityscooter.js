@@ -1,8 +1,10 @@
 /* CityScooter block pack for MicrobitBlocks (Claude, 2026-11-07). Protocol: docs/protocol.md.
  * Blocks send st:/jp/br (v1: pu/bl, police: sur) and react to the game's crash/gift/go/spd:N (v1: ko/warn:/turn:;
  * police 11/8: wanted:N, chase:, cop:N, heli:, inc:, arrested, busted, lost; v0.3 ramps: trick, do:ramp, air:, land:;
- * v0.3 districts: zone:, and start:<id> to pick where rides start). The generated message reader is the same
- * buffered messages() as microbit/starter.py (uart.readline() can return half a line).
+ * v0.3 districts: zone:, and start:<id> to pick where rides start; radio race 11/9: race:NAME:GROUP, pos:/fin: from
+ * the game relayed by radio as p:/f:, rx:<what the radio heard>, go: from the host, see docs/radio-race.md).
+ * The generated message reader is the same buffered messages() as microbit/starter.py (uart.readline() can return
+ * half a line).
  * A pack for another game copies this file's shape: blocks, generators, isHat, globals, helpers, loopTail,
  * toolbox, starter. */
 (() => {
@@ -35,6 +37,14 @@
 
   // Words of your own that the game repeats to every board ("say:party" -> "party").
   const sayWord = (w) => String(w || "").replace(/[^A-Za-z0-9_!?-]/g, "").slice(0, 16) || "party";
+
+  // ---- Race (radio race v1, 11/9; docs/radio-race.md): a name in race:NAME:GROUP and p:NAME:… is 1-5 letters or
+  // digits in capitals, the same rule the game applies.
+  const raceName = (s) => String(s == null ? "" : s).replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 5);
+  window.Blockly.Extensions.register("cs_race_name", function () {
+    this.getField("NAME").setValidator((v) => raceName(v) || null); // "amy!" shows as AMY; an empty name is refused
+  });
+  const intField = (b, name, lo, hi) => String(Math.max(lo, Math.min(hi, Math.round(Number(b.getFieldValue(name)) || 0))));
 
   const BLOCKS = [
     { type: "cs_steer", message0: "steer %1", args0: [{ type: "input_value", name: "VALUE", check: "Number" }],
@@ -101,6 +111,21 @@
       args0: [{ type: "field_dropdown", name: "ZONE", options: DISTRICTS.map(([name, id]) => [name, id]) }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "Choose where your rides start on the route from UWA through the city to Rockingham and Warnbro. Put it in \"on start\" (or on a button). On the start screen the game moves there straight away; during a ride, your next ride starts there. Your program sends it again every second, in case the game was not listening yet. Python: print(\"start:kingspark\")" },
+    // ---- Race (radio race v1): three setup blocks for "on start" (they only set variables; the main loop does the work)
+    { type: "cs_race_join", message0: "join race %1 as %2",
+      args0: [{ type: "field_number", name: "GROUP", value: 12, min: 0, max: 255, precision: 1 },
+        { type: "field_input", name: "NAME", text: "AMY" }],
+      previousStatement: null, nextStatement: null, style: "game_blocks", extensions: ["cs_race_name"],
+      tooltip: "Put it in \"on start\". Your race number is your radio group (look at the card on your computer): only micro:bits in the same group hear each other. About once a second your program tells the game you want to race, with your name (1-5 letters or digits, everyone in a race needs a different one). Python: print(\"race:AMY:12\")" },
+    { type: "cs_race_send", message0: "send my position by radio", previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Put it in \"on start\". In a race the game tells your micro:bit where you are 4 times a second (pos:1234:-2); this sends it by radio to everyone in your race (p:AMY:1234:-2). After the finish line it sends your time (f:AMY:72.35). Python: radio.send(\"p:\" + race_name + \":\" + msg[4:])" },
+    { type: "cs_race_relay", message0: "pass radio messages to the game", previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Put it in \"on start\". Every loop your program reads everything your micro:bit heard by radio and passes it on to the game (rx:p:BEN:1200:0), so the game can draw the other riders. Without it you race alone. Python: print(\"rx:\" + got_radio)" },
+    { type: "cs_race_start", message0: "start a race from %1 for %2 m",
+      args0: [{ type: "field_dropdown", name: "ZONE", options: DISTRICTS.map(([name, id]) => [name, id]) },
+        { type: "field_number", name: "METRES", value: 2000, min: 300, max: 5000, precision: 1 }],
+      previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Put it inside \"when shaken\" (or a button you don't use for riding). Only the host of each race needs it. It sends go: by radio 5 times in half a second: every game in your race (yours too) counts down 3-2-1 and everyone rides the same road, from this place, this many metres (300-5000). Python: radio.send(\"go:4821:uwa:2000\")" },
   ];
 
   const GENERATORS = {
@@ -128,7 +153,36 @@
     // Remembered in start_zone and sent again with hi: (about once a second): a print in "on start" can run before the
     // game is listening.
     cs_start: (b) => { MB.setFlag("usesStart"); return 'start_zone = "' + b.getFieldValue("ZONE") + '"\nprint("start:" + start_zone)\n'; },
+    // ---- Race (radio race v1). The setup blocks only set variables, so they are harmless in "forever" too; the main
+    // loop prints race: with hi:, relays pos:/fin: as p:/f:, and passes the radio queue on as rx:.
+    cs_race_join: (b, g) => {
+      MB.useRadio(g, 10);
+      MB.setFlag("race");
+      const group = intField(b, "GROUP", 0, 255);
+      return 'race_name = "' + (raceName(b.getFieldValue("NAME")) || "ME") + '"\n'
+        + "if radio_group != " + group + ":  # a new group: tell the radio\n    radio_group = " + group + "\n    radio.config(group=radio_group)\n";
+    },
+    cs_race_send: (b, g) => { MB.useRadio(g, 10); MB.setFlag("raceSend"); return "send_position = True\n"; },
+    cs_race_relay: (b, g) => { MB.useRadio(g, 10); MB.setFlag("raceRelay"); return "pass_radio = True\n"; },
+    cs_race_start: (b, g) => {
+      MB.useRadio(g);
+      MB.setFlag("raceStart");
+      g.definitions_.import_random = "import random";
+      return 'start_race("' + b.getFieldValue("ZONE") + '", ' + intField(b, "METRES", 300, 5000) + ")\n";
+    },
   };
+
+  // "start a race from … for … m": the same road for everyone (a random seed), sent 5 times because radio messages
+  // can get lost. A micro:bit does not hear its own radio, so the host's game gets the go: over USB.
+  const START_RACE_HELPER = [
+    "def start_race(place, metres):",
+    "    # go:<seed>:<place>:<metres> starts the race in every game in your group: the same seed makes the same road.",
+    '    go = "go:" + str(random.randint(1, 99999)) + ":" + place + ":" + str(metres)',
+    '    print("rx:" + go)  # your own game too: a micro:bit does not hear its own radio',
+    "    for i in range(5):  # 5 times in half a second, in case one gets lost",
+    "        radio.send(go)",
+    "        sleep(100)",
+  ].join("\n");
 
   const MESSAGES_HELPER = [
     "def messages():",
@@ -155,14 +209,21 @@
     colour: "#e81f26",
     blocks: BLOCKS,
     generators: GENERATORS,
-    reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance,start_zone",
+    reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance,start_zone,"
+      + "race_name,send_position,pass_radio,start_race",
     isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted"
       || type === "cs_on_zone", // ---- Districts (v0.3)
-    // wanted_level / police_distance only when a block uses them, so Lesson 1 programs look the same as before.
+    // wanted_level / police_distance (and the race variables) only when a block uses them, so Lesson 1 programs look
+    // the same as before.
     globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
       ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null,
-      ctx.flags.usesStart ? 'start_zone = ""  # where rides start (the "start rides in" block)' : null].filter(Boolean),
-    helpers: () => [MESSAGES_HELPER],
+      ctx.flags.usesStart ? 'start_zone = ""  # where rides start (the "start rides in" block)' : null,
+      ctx.flags.race || ctx.flags.raceSend ? 'race_name = ""  # your name in the race ("join race")' : null,
+      ctx.flags.raceSend ? "send_position = False  # True: send where you are by radio" : null,
+      ctx.flags.raceRelay ? "pass_radio = False  # True: pass what the radio hears to the game" : null].filter(Boolean),
+    helpers: (ctx) => [MESSAGES_HELPER, ctx.flags.raceStart ? START_RACE_HELPER : null].filter(Boolean),
+    // ---- Race: every radio message, when "pass radio messages to the game" is on (the generic loop reads them all)
+    radioEach: (ctx) => (ctx.flags.raceRelay ? 'if pass_radio:\n    print("rx:" + got_radio)  # pass it on to the game\n' : ""),
     loopTail: (ctx, section) => {
       const branches = [];
       for (const [, m] of MESSAGE_OPTIONS) {
@@ -183,6 +244,11 @@
         branches.push('if msg.startswith("wanted:"):\n    try:\n        wanted_level = int(msg[7:])\n    except ValueError:  # half a line got lost: skip it\n        pass\n' + section("msg:wanted"));
       }
       if (ctx.flags.usesCop) branches.push('if msg.startswith("cop:"):\n    try:\n        police_distance = int(msg[4:])\n    except ValueError:  # half a line got lost: skip it\n        pass\n');
+      // ---- Race: the game says where you are (pos:DIST:LANE) and your time at the finish (fin:SECONDS)
+      if (ctx.flags.raceSend) {
+        branches.push('if send_position and msg.startswith("pos:"):\n    radio.send("p:" + race_name + ":" + msg[4:])  # tell the others where you are\n');
+        branches.push('if send_position and msg.startswith("fin:"):\n    radio.send("f:" + race_name + ":" + msg[4:])  # you crossed the line: tell them your time\n');
+      }
       let out = "";
       if (branches.length) {
         out += "# messages from the game\nfor msg in messages():\n" + indent(branches.map((b, i) => (i ? "el" : "") + b).join(""), 4);
@@ -191,6 +257,7 @@
       }
       out += 'loops += 1\nif loops % 20 == 0:\n    print("hi:" + VERSION)  # tell the game which micro:bit this is\n';
       if (ctx.flags.usesStart) out += '    if start_zone:\n        print("start:" + start_zone)  # again, in case the game missed it\n';
+      if (ctx.flags.race) out += '    if race_name:\n        print("race:" + race_name + ":" + str(radio_group))  # I want to race, in this group\n';
       return out;
     },
     toolbox: (blk, num) => [{
@@ -203,6 +270,9 @@
         blk("cs_do"), blk("cs_stars", { inputs: { N: num(1) } }), blk("cs_say"), blk("cs_on_word"),
         blk("cs_on_message", { fields: { MSG: "air:1" } }), blk("cs_trick"), // ramps and air (v0.3)
         blk("cs_on_zone", { fields: { ZONE: "kingspark" } }), blk("cs_start", { fields: { ZONE: "kingspark" } }), // ---- Districts (v0.3)
+        // ---- Race (radio race v1): the slides use these four, in this order
+        { kind: "label", text: "Race" },
+        blk("cs_race_join"), blk("cs_race_send"), blk("cs_race_relay"), blk("cs_race_start", { fields: { ZONE: "uwa", METRES: 2000 } }),
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

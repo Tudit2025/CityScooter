@@ -6,6 +6,7 @@
     "shell": "node shell.test.js ../.. out",
     "blocks": "node blocks.test.js ../.. out",
     "send": "node send.test.js ../.. out",
+    "race": "node race.test.js ../.. out",
     "build": "node build.test.js ../../Builds/Web ../labcheck/labcheck.py out"
   },
   "dependencies": {

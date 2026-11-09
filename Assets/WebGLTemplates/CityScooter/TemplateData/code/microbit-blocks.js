@@ -8,6 +8,7 @@
  *   VERSION = "v1" / "v2"          (V2-only blocks check it, so a V1 never crashes)
  *   uart.init(baudrate=115200)     (the game talks at 115200)
  *   variables, pack globals and helpers
+ *   radio.on() / radio.config(group=radio_group, ...) (only with radio blocks)
  *   "on start" blocks
  *   while True:
  *       "forever" blocks, "when button pressed" blocks, the pack's loop tail (game messages)
@@ -153,16 +154,18 @@
   const useBroadcasts = (g) => { ctx.flags.broadcasts = true; g.definitions_.broadcasts = "broadcasts = []  # messages your blocks broadcast, handled at the end of each loop"; };
   G.mb_broadcast = (b, g) => { useBroadcasts(g); return "broadcasts.append(" + pyString(b.getFieldValue("NAME")) + ")\n"; };
   G.mb_on_receive = (b, g) => { useBroadcasts(g); addSection("receive:" + b.getFieldValue("NAME"), body(b, "DO")); return ""; };
-  // Radio between micro:bits (V1 and V2).
-  const useRadio = (g) => {
+  // Radio between micro:bits (V1 and V2). One radio_group variable for every block that sets the group ("radio: set
+  // group", a pack's "join race"), so the last one wins and the program can print the group it is really in.
+  // queue: how many messages the radio keeps until the program reads them (MicroPython's default is 3; a race needs 10).
+  const useRadio = (g, queue) => {
     ctx.flags.radio = true;
+    if (queue) ctx.flags.radioQueue = Math.max(ctx.flags.radioQueue || 0, queue);
     g.definitions_.import_radio = "import radio";
-    g.definitions_.radio = "radio.on()  # micro:bits in the same group hear each other\nradio.config(group=1)\nradio_msg = \"\"  # the last text received by radio";
   };
-  G.mb_radio_group = (b, g) => { useRadio(g); return "radio.config(group=int(" + (g.valueToCode(b, "GROUP", Order.NONE) || "1") + "))\n"; };
+  G.mb_radio_group = (b, g) => { useRadio(g); return "radio_group = int(" + (g.valueToCode(b, "GROUP", Order.NONE) || "1") + ")\nradio.config(group=radio_group)\n"; };
   G.mb_radio_send = (b, g) => { useRadio(g); return "radio.send(str(" + (g.valueToCode(b, "VALUE", Order.NONE) || '""') + "))\n"; };
-  G.mb_on_radio = (b, g) => { useRadio(g); addSection("radio", body(b, "DO")); return ""; };
-  G.mb_radio_msg = (b, g) => { useRadio(g); return ["radio_msg", Order.ATOMIC]; };
+  G.mb_on_radio = (b, g) => { useRadio(g); ctx.flags.radioMsg = true; addSection("radio", body(b, "DO")); return ""; };
+  G.mb_radio_msg = (b, g) => { useRadio(g); ctx.flags.radioMsg = true; return ["radio_msg", Order.ATOMIC]; };
 
   // Holding a button: tracked in the main loop (see "held" in generate()).
   const trackHold = (btn, g) => {
@@ -219,7 +222,7 @@
   // Student variables must not reuse these names. Blockly builds its name table on the first init(), so the
   // words are added now and in registerPack(), never later.
   gen.addReservedWords("VERSION,SOUND_PIN,microbit,microphone,display,button_a,button_b,accelerometer,pin0,pin1,pin2,pin_logo,Image,music," +
-    "uart,sleep,running_time,random,speaker,audio,Sound,radio,radio_msg,got_radio,broadcasts,got,handled");
+    "uart,sleep,running_time,random,speaker,audio,Sound,radio,radio_msg,radio_group,got_radio,broadcasts,got,handled");
 
   // ------------------------------------------------------------------ packs
   let pack = null;
@@ -253,10 +256,18 @@
     L.push("", "# Which micro:bit is this? Only V2 has a microphone.", "try:", "    from microbit import microphone",
       '    VERSION = "v2"', "except ImportError:", '    VERSION = "v1"', "",
       "uart.init(baudrate=115200)  # the game talks at 115200");
-    const globals = [...variables, ...(pack && pack.globals ? pack.globals(c) : [])].filter(Boolean);
+    const radioGlobals = !c.flags.radio ? [] : ["radio_group = 1  # micro:bits only hear others in the same group (0-255)",
+      c.flags.radioMsg ? 'radio_msg = ""  # the last text received by radio' : null];
+    const globals = [...variables, ...radioGlobals, ...(pack && pack.globals ? pack.globals(c) : [])].filter(Boolean);
     if (globals.length) L.push("", ...globals);
     for (const h of [...helpers, ...(pack && pack.helpers ? pack.helpers(c) : [])]) L.push("", "", h.replace(/\n+$/, ""));
-    L.push("", "", "display.show(VERSION[1])  # 1 or 2 on the LEDs");
+    L.push("", "");
+    if (c.flags.radio) {
+      L.push("radio.on()  # micro:bits in the same group hear each other", c.flags.radioQueue
+        ? "radio.config(group=radio_group, queue=" + c.flags.radioQueue + ")  # keep up to " + c.flags.radioQueue + " messages until the loop reads them (3 is too few for a race)"
+        : "radio.config(group=radio_group)");
+    }
+    L.push("display.show(VERSION[1])  # 1 or 2 on the LEDs");
     if (s("start")) L.push("# on start", dedent4(s("start")).replace(/\n$/, ""));
     L.push("", "while True:");
     const loopParts = [];
@@ -298,9 +309,20 @@
     for (const [, g] of GESTURES) {
       if (s("gesture:" + g)) loopParts.push('    if accelerometer.was_gesture("' + g + '"):\n' + indent(s("gesture:" + g), 4));
     }
-    if (c.flags.radio) {
-      loopParts.push("    # radio from other micro:bits\n    got_radio = radio.receive()\n    if got_radio:\n        radio_msg = got_radio\n"
-        + indent(s("radio"), 4));
+    // A pack can look at every radio message too (CityScooter: "pass radio messages to the game"). Then the loop reads
+    // the whole queue each time, so nothing piles up; otherwise one message a loop, as before.
+    // radio.receive() raises ValueError for a packet that is not text (a MakeCode program, send_bytes) and drops that
+    // packet first (V1 and V2), so skipping it is safe: one stray packet must not stop every board in the group.
+    const NOT_TEXT = "  # not text (e.g. sent by a MakeCode program): skip it\n";
+    const radioEach = c.flags.radio && pack && pack.radioEach ? pack.radioEach(c) : "";
+    if (radioEach) {
+      loopParts.push("    # radio from other micro:bits: read everything that arrived, every loop\n    while True:\n"
+        + "        try:\n            got_radio = radio.receive()\n        except ValueError:" + NOT_TEXT + "            continue\n"
+        + "        if not got_radio:\n            break\n"
+        + indent(radioEach, 8) + (c.flags.radioMsg ? "        radio_msg = got_radio\n" + indent(s("radio"), 4) : ""));
+    } else if (c.flags.radioMsg) {
+      loopParts.push("    # radio from other micro:bits\n    try:\n        got_radio = radio.receive()\n    except ValueError:" + NOT_TEXT
+        + "        got_radio = None\n    if got_radio:\n        radio_msg = got_radio\n" + indent(s("radio"), 4));
     }
     if (pack && pack.loopTail) loopParts.push(indent(pack.loopTail(c, s), 4));
     if (c.flags.broadcasts) {
@@ -438,5 +460,7 @@
     addSection,
     statements: body,
     setFlag: (name) => { ctx.flags[name] = true; },
+    // For pack generators that use the radio: import radio, radio.on(), radio.config(group=radio_group, queue=...).
+    useRadio: (g, queue) => useRadio(g, queue),
   };
 })();
