@@ -52,6 +52,7 @@
     codeBase: "TemplateData/",                  // where code/ lives
     vendorBase: "TemplateData/vendor/",         // Blockly; copied in from web-vendor/ after the Unity build
     codePacks: ["code/game-cityscooter.js"],    // the game's block pack(s), relative to codeBase
+    usbLog: [],              // USB events with times (open retries, glitches, reconnects): CityScooterShell.usbLog
   };
 
   // ------------------------------------------------------------------ layout
@@ -582,21 +583,51 @@
     return d;
   }
 
+  // Opening fails for a moment right after a page refresh or a re-plug / re-flash: Windows has not let go of the port
+  // yet, or is still loading the USB driver (slower on a V1). Lesson 1 (11/9): V1 boards needed several refreshes.
+  // So try again for about 6 s before giving up. Delays before each try:
+  const OPEN_RETRY_MS = [0, 250, 500, 1000, 1500, 2500];
+  // Chrome's default read buffer is only 255 bytes; while Unity loads or a frame is slow the page reads late and it
+  // overflows (a "buffer overrun" read error). 8 KB is half a minute of a board printing st: 20 times a second.
+  const USB_BUFFER = 8192;
+  const usbErr = (e) => (e && e.name && e.name !== "Error" ? e.name + ": " : "") + errText(e);
+
+  // USB events in the monitor (and in CityScooterShell.usbLog for the teacher): why a board dropped out.
+  function usbLog(d, text) {
+    const entry = new Date().toLocaleTimeString() + " " + d.id + " " + text;
+    shell.usbLog.push(entry);
+    if (shell.usbLog.length > 100) shell.usbLog.shift();
+    logLine("warn", d.id, "USB: " + text, "");
+  }
+
   async function openBoard(d) {
     if (d.connected || d.opening) return;
     d.opening = true;
-    try {
-      await d.port.open({ baudRate: 115200 });
-    } catch (e) {
-      if (!/already open/i.test(errText(e))) {
-        d.opening = false;
-        usbMsg("Could not open the micro:bit. Another tab may be using this board, e.g. python.microbit.org — click Disconnect there "
-          + "(or close that tab), then click Connect micro:bit again.", "cs-bad");
-        renderBoards();
-        return;
+    d.gone = false;
+    const port = d.port;
+    let failed = null;
+    for (let i = 0; i < OPEN_RETRY_MS.length; i++) {
+      if (OPEN_RETRY_MS[i]) await sleepMs(OPEN_RETRY_MS[i]);
+      if (d.gone || d.port !== port) { d.opening = false; renderBoards(); return; } // unplugged meanwhile
+      try {
+        await port.open({ baudRate: 115200, bufferSize: USB_BUFFER });
+        failed = null;
+        break;
+      } catch (e) {
+        if (/already open/i.test(errText(e))) { failed = null; break; }
+        failed = e;
+        if (i === 0) usbMsg("Connecting to the micro:bit…", "cs-warn");
+        usbLog(d, "could not open the port (" + usbErr(e) + ")" + (i + 1 < OPEN_RETRY_MS.length ? ", trying again" : ", gave up"));
       }
     }
     d.opening = false;
+    if (failed) {
+      usbMsg("Could not open the micro:bit. Another tab may be using this board, e.g. python.microbit.org — click Disconnect there "
+        + "(or close that tab), then click Connect micro:bit again. Still stuck: unplug it, count to 3, plug it back in.", "cs-bad");
+      renderBoards();
+      return;
+    }
+    if (d.reconnects) usbLog(d, "connected again");
     d.connected = true;
     d.connectedAt = now();
     d.lastLineAt = 0;
@@ -624,22 +655,49 @@
 
   async function readLoop(d) {
     const decoder = new TextDecoder();
+    const port = d.port;
     d.rxBuf = "";
-    while (d.connected && d.port.readable) {
-      const reader = d.port.readable.getReader();
+    while (d.connected && d.port === port && port.readable) {
+      const reader = port.readable.getReader();
       d.reader = reader;
+      let ended = false;
       try {
         for (;;) {
           const { value, done } = await reader.read();
-          if (done) break;
+          if (done) { ended = true; break; }
           feed(d, decoder.decode(value, { stream: true }));
         }
       } catch (e) {
-        // Unplugged or a serial glitch; the disconnect event handles the rest.
+        // A glitch (buffer overrun, framing, break): Chrome gives the port a new readable and the loop carries on.
+        // Unplugged: readable becomes null and the disconnect event handles the rest.
+        if (d.connected && port.readable) noteGlitch(d, e);
       } finally {
         try { reader.releaseLock(); } catch (e) { /* already released */ }
         d.reader = null;
       }
+      if (ended && d.connected) await sleepMs(50); // never spin on a stream that keeps ending
+    }
+    // The stream died but no disconnect event came (the board is still plugged in): close the port and open it again,
+    // instead of showing a connected board that never sends anything until the page is refreshed.
+    if (d.connected && d.port === port && !d.gone) {
+      d.connected = false;
+      d.reconnects = (d.reconnects || 0) + 1;
+      usbLog(d, "the connection broke without an unplug: reconnecting");
+      sendStatus(d);
+      renderChips();
+      renderBoards();
+      try { await port.close(); } catch (e) { /* already closed */ }
+      openBoard(d);
+    }
+  }
+
+  // Read glitches are normal now and then (the page was busy); many of them point at a cable, hub or old firmware.
+  function noteGlitch(d, e) {
+    const t = now();
+    d.glitches = (d.glitches || 0) + 1;
+    if (!d.glitchLoggedAt || t - d.glitchLoggedAt > 10000) {
+      d.glitchLoggedAt = t;
+      usbLog(d, "read glitch (" + usbErr(e) + "), still connected" + (d.glitches > 1 ? " — " + d.glitches + " so far" : ""));
     }
   }
 
@@ -691,7 +749,9 @@
     navigator.serial.addEventListener("disconnect", (e) => {
       for (const d of shell.devices.values()) {
         if (d.kind !== "usb" || d.port !== e.target) continue;
+        if (d.connected) usbLog(d, "unplugged (or restarting after a flash)");
         d.connected = false;
+        d.gone = true;
         d.silent = false;
         // cancel() rejects when the stream already errored (it has, after an unplug): swallow it.
         if (d.reader) d.reader.cancel().catch(() => { /* gone */ });
@@ -701,6 +761,16 @@
       renderBoards();
     });
     navigator.serial.getPorts().then((ports) => ports.forEach(addPort)).catch(() => { /* not allowed here */ });
+    // Let go of the boards when the page goes away, so the refreshed page can open them straight away.
+    window.addEventListener("pagehide", () => {
+      for (const d of shell.devices.values()) {
+        if (d.kind !== "usb" || !d.port || !d.connected) continue;
+        d.connected = false;
+        const port = d.port;
+        Promise.resolve(d.reader ? d.reader.cancel() : null).catch(() => { /* gone */ })
+          .then(() => port.close()).catch(() => { /* best effort while unloading */ });
+      }
+    });
   }
 
   function renderBoards() {
@@ -1332,6 +1402,9 @@
         $("cs-loading").textContent = "The game failed to load: " + errText(e) + ". Try reloading the page in Chrome or Edge.";
       });
     },
+
+    /** USB events with times (open retries, glitches, reconnects); the teacher can copy it from the console. */
+    get usbLog() { return shell.usbLog.slice(); },
 
     onUnityReady(version) {
       shell.unityReady = true;
