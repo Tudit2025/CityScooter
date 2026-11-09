@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_AubinGrove
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: aubingrove
+  displayName: AUBIN GROVE
+  order: 110
+  length: {x: 360, y: 440}
+  chunks:
+  - {fileID: 3375204258217968758, guid: f76de07da79165f469f24b1f94078d22, type: 3}
+  - {fileID: 5473340805024220589, guid: 80ff514c7d1036d4aa88b204c853b723, type: 3}
+  - {fileID: 3084133994863399028, guid: adbe508e2b6c5e040a87bea404aee617, type: 3}
+  - {fileID: 2769156083818827871, guid: 8227a7269ad980d49bc9885ad6905778, type: 3}
+  - {fileID: 2507602472561657426, guid: 3c6f9f92ca7d41c47897c627e30605b5, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 2916881518547997553, guid: a48b9fddbdaca354a8c7ff5c66469ee8, type: 3}
+  exit: {fileID: 6565130313141814229, guid: 5fa6ff88d69c39b43a8abca2d0d11618, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 2901859403829964729, guid: 99729c02218cc7442a85aa7f14b19dc1, type: 3}
+  - {fileID: 3955659716313355617, guid: 67ad72c2b899c664b858d2a5585a5839, type: 3}
+  - {fileID: 3273353812445237599, guid: fef6fc519109c0a469621578a3fd2da7, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: 22c9acb0d3c69684097603ab5ac7ae78, type: 2}
+  - {fileID: 11400000, guid: 69d8dd45ab6c4ef4d971c3bfa20b02c7, type: 2}
+  pedestrians:
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 8871758702734756146, guid: 78aa22beedc9d2a4697759ba48ff5f3c, type: 3}
+  - {fileID: 8871758702734756146, guid: 78aa22beedc9d2a4697759ba48ff5f3c, type: 3}
+  - {fileID: 2901781534095428365, guid: 46b651fbdf24bda4f873da2365b97805, type: 3}
+  ramps:
+  - {fileID: 7579744914409870, guid: 912c2d810359a824aba03f66fc3bad43, type: 3}
+  rampFrequency: 1.2
+  blendMeters: 150
+  fogColor: {r: 0.76, g: 0.84, b: 0.87, a: 1}
+  skyTint: {r: 1, g: 0.99, b: 0.97, a: 1}
+  ambientSky: {r: 0.66, g: 0.8, b: 0.9, a: 1}
+  ambientEquator: {r: 0.84, g: 0.84, b: 0.74, a: 1}
+  ambientGround: {r: 0.62, g: 0.58, b: 0.44, a: 1}
+  sunColor: {r: 1, g: 0.95, b: 0.84, a: 1}
+  sunIntensity: 1.45
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 5121648875438662969, guid: 9bd48ebdb0bba114b9b70cf8263d0f17, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35

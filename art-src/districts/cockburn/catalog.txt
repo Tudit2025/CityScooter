@@ -1,0 +1,11 @@
+OBS_Cockburn_Trolley 752 tris
+OBS_Cockburn_TrolleyTrain 3008 tris
+OBS_Cockburn_AFrame 288 tris
+OBS_Cockburn_DeliveryVan 968 tris
+CHN_Cockburn_Entry 15016 tris, 6 renderers
+CHN_Cockburn_Station 13246 tris, 8 renderers
+CHN_Cockburn_Mall 17662 tris, 8 renderers
+CHN_Cockburn_Square 24362 tris, 6 renderers
+CHN_Cockburn_Arc 17202 tris, 8 renderers
+CHN_Cockburn_Apartments 21298 tris, 6 renderers
+CHN_Cockburn_Exit 15030 tris, 6 renderers

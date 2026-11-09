@@ -1,0 +1,31 @@
+AUBIN GROVE（aubingrove，路线 order 110）参考资料与取材
+生成器：Assets/_Project/Scripts/Editor/Districts/CockburnAubinBuilder.cs（BuildBatch / BuildAndRenderAtlasBatch）
+参考图只存在仓库外 D:\CityScooter-refs\aubingrove\<来源>\，不进仓库、不进游戏。
+
+视频（YouTube，只取封面图）
+- iIkxiztkZSo  Aubin Grove Station opens for use（航拍封面，最有用的一张）
+  - 车站楼：白色、单坡屋顶朝天桥一端升高（楔形），底部一圈深色玻璃，橙色点缀墙。→ StationBuilding（#F3F3EF、#E98A3B）。
+  - 长长的封闭天桥从车站楼跨过共享车道和高速，落到中央分隔带的岛式站台。→ Footbridge（深蓝灰外板 #3D4F66 + 玻璃带 #7FA8C8 + 白色斜撑）、站台 LiftTower。
+  - 车站前环岛、公交候车亭、自行车架、停车场。
+  - 周边新住宅：浅色抹灰墙、灰色 Colorbond 屋顶、少量红瓦/红砖；高速边是干草、沙地、灌木；地平线上是一排深色的树和远山。
+- SoymAf1Kwzc  Aubin Grove Station walking tour（封面）：站台、桥、站台上的橙色墙块。
+- 9E-YlecA2oU  Aubin Grove Station (3)（封面）：火车与高速并行。
+- 其他取材（常识）：
+  - Kwinana Freeway 中央分隔带里是 Mandurah 线（两条轨道、碎石道床、接触网架）；两侧是混凝土护栏和隔音墙。
+  - Perth 新住宅区：白色石灰岩大块挡土墙（#E3D3AC，缝 #BFA97C），上面是灰色 Colorbond 围栏（#6E7276）；
+    单层 / 双层抹灰砖房，双车库卷帘门，门廊柱，四坡屋顶（Monument #4B4F54、Basalt #6E7276、Windspray #8C9195），
+    抹灰邮箱柱，收垃圾日红盖 + 黄盖两个 wheelie bin 摆在路边。
+  - Russell Road 立交跨过高速、铁路和车道：白色边梁、蓝灰色防抛网、桥墩在可骑范围外。
+  - Thomsons Lake 一带：白千层（paperbark，奶白色纸质树皮 #EDE6D6 + 褐色剥落块，灰绿色密冠 #6F8F5A）、
+    芦苇和香蒲（#7C8F3E、褐色穗 #6B4A2E）、浅水（#3A6F8C）、黑天鹅；西部灰袋鼠（#8A7B6C，浅色肚子 #D8CBB5）在草地上。
+  - 黄色菱形袋鼠警示牌（只画剪影，不写字）。
+
+玩法
+- 共享车道路段用 RoadType.PedestrianMall（没有汽车），estate 街道是普通 Street（有车）。
+- 湿地排水渠：全宽石灰岩跳台（rise 6, height 1.4, top 2）+ 5 m 全宽水面 RoadGap（SPLASH），起步速度 9 m/s 能飞约 7.5 m。
+- 袋鼠：animal，不可打，不可跳过，跑起来一蹦一蹦（KangarooHop）。
+
+远景（FAR_AubinGrove_Wetland）
+- 左（东）：高速远侧的隔音墙、Atwell 住宅区一排排屋顶、Rowley Road 立交、树林带、最远处低平的 Darling Scarp。
+- 右（西）：Thomsons Lake 水面、岸边和湖心的白千层与芦苇、黑天鹅、对岸树林带；右前方 Aubin Grove 自己的屋顶。
+- 颜色按距离向雾色 #A9C1D3 混合，再加场景雾。

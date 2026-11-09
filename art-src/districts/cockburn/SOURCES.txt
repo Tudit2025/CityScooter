@@ -1,0 +1,28 @@
+COCKBURN CENTRAL（cockburn，路线 order 100）参考资料与取材
+生成器：Assets/_Project/Scripts/Editor/Districts/CockburnAubinBuilder.cs（BuildBatch / BuildAndRenderAtlasBatch）
+参考图只存在仓库外 D:\CityScooter-refs\cockburn\<来源>\，不进仓库、不进游戏。
+
+视频（YouTube，只取预览帧 storyboard 和封面图）
+- bNYJK4XIySk  Cockburn Central Station Walk (Oct 2025)
+  - 公交换乘站：一长排白色顶棚、银色立柱、红褐色铺地（#A8473A）。→ BusPort：公交车位、长顶棚、红色站台岛。
+  - 车站外墙是竖缝银灰金属板（#B9BEC4 / #8E959D），封闭式天桥：深色下墙 + 玻璃带 + 斜撑桁架。→ Footbridge、LiftTower、Concourse。
+  - 站台边是高速护栏、沙地和灌木（banksia 一类）。
+- -Ewu0WPdYBY  Cockburn Station | Perth [4K]：车站大厅、闸机、天桥内部（封面图）。
+- 9SDbtxjcyCg  Cockburn ARC, Perth's newest Aquatic and Recreation Centre (2018)
+  - 航拍：长条大厅、大面积屋顶、户外彩色滑梯塔（黄、蓝、红），蓝色泳池。
+  - 外墙：首层通长玻璃，上部横向奶油色 / 木色条纹（#F1E6CE / #B68A5A），入口有大挑檐。
+  - → ArcBuilding：玻璃首层、条纹上墙、青色特色墙、白色大挑檐、弧形大屋顶（#E8EBEE，墨线屋面缝）；SlideTower：三条彩色螺旋滑梯。
+- ZiCpW94YIvU  Realmark Commercial Cockburn Central（封面）
+  - town centre 的中层公寓：白色抹灰、亮绿色阳台栏板（#9CC93A）、深灰楼梯间；街边集装箱咖啡店、年轻的桉树和铺装。
+  - → Apartment：白/暖白墙、彩色阳台板（绿、青、橙、木色交替）、首层咖啡店玻璃和深灰雨棚。
+- 其他取材（常识 + 视频画面）：Cockburn Gateways 购物中心是一大片米色盒子 + 玻璃入口 + 停车场（不写名字：
+  牌子一律做成空白色块，入口上方是红边白底的空牌，路边一根三色空白立柱牌）；多层停车楼；Beeliar Drive
+  跨高速的立交；东边远处是低矮的 Darling Range。
+
+远景（FAR_Cockburn_Skyline，南线没有 CBD 天际线，远景就是整条地平线）
+- 左（东）：高速两幅路面 + 中间的铁路，停车楼，车站顶棚和列车，Beeliar Drive 立交，中层公寓群，
+  最远处低平的 Darling Scarp（蓝灰色剪影带）。
+- 右（西）：购物中心大盒子和立柱牌，ARC 弧形屋顶和滑梯，公寓群，Beeliar 湿地一带的树林带。
+- 颜色按距离向雾色 #A9C1D3 混合（Air()），再加上场景本身的线性雾。
+
+不放任何商标、店名和品牌字。

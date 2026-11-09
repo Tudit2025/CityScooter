@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Cockburn
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: cockburn
+  displayName: COCKBURN CENTRAL
+  order: 100
+  length: {x: 360, y: 440}
+  chunks:
+  - {fileID: 3425939110870521196, guid: 1068d28f125654e41b394c7df36eec43, type: 3}
+  - {fileID: 8289919833483766126, guid: f8820b83fc29385409b8dd3c45dfcc8a, type: 3}
+  - {fileID: 8798150762984760759, guid: ca708c5aef661b84e815abeac723de30, type: 3}
+  - {fileID: 447685748927471949, guid: 562e1894249dbb14f9cd989bb611d9e0, type: 3}
+  - {fileID: 5833533420435032711, guid: 20d555fbb2726a0419e0f3eeae8619cc, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 2722185805257911070, guid: 0221d33e5fc1ecc4da0dda08a3fc1bb9, type: 3}
+  exit: {fileID: 6224131280360714366, guid: 7d34fe4452ae76d41a29b5f348b7a2d0, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 4636124733755412507, guid: 3febc2ef49982d34d911306d6a84dcd2, type: 3}
+  - {fileID: 4736471893522879486, guid: 0cba35a89ab4e70429d767ad4d872df3, type: 3}
+  - {fileID: 6118180648492782294, guid: 88956147bd1540548bc616b3dd5da3f6, type: 3}
+  - {fileID: 2458695802000287855, guid: 9cd9668511877d34ab557be47a2b5748, type: 3}
+  - {fileID: 3252785564823809802, guid: eef0a39a68ecfdb43a6831f7c8928987, type: 3}
+  jumpObstacles: []
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: 3256659962f960d409105dbb393657c3, type: 2}
+  - {fileID: 11400000, guid: d12eedbd87110334ca2fa7137e6a8691, type: 2}
+  - {fileID: 11400000, guid: 4a6cc6f8a8ce7bd4a8ca5f5916423578, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 416bace6f208e294a813b975b4690f17, type: 2}
+  - {fileID: 11400000, guid: 8578d9f54835f0d46a5d163be53caf5b, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: b44e8e9120f2ba547afe612562572111, type: 2}
+  - {fileID: 11400000, guid: f7b4a55b20b8bbf4e98de7d868f4aff7, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  - {fileID: 11400000, guid: 6e7c690878e1b4c4eaae50a5a0d90a33, type: 2}
+  - {fileID: 11400000, guid: 91a6f654d5520ac459818cc4fe289ef0, type: 2}
+  - {fileID: 11400000, guid: 7dec8bd618e265e4d9b3c9182031c3a5, type: 2}
+  - {fileID: 11400000, guid: aeceae768be1f5e45b273f39b5eebc6a, type: 2}
+  pedestrians:
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 5269257977654849716, guid: b0829f5f782ffbf45b7b77bb8e0a3c56, type: 3}
+  - {fileID: 1036303239612383499, guid: 8e9809eee542be54dbb9f901b9443560, type: 3}
+  ramps:
+  - {fileID: 226016083291589346, guid: af9ca44d67ed0ae4eab3530d1dfa61ea, type: 3}
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.72, g: 0.82, b: 0.9, a: 1}
+  skyTint: {r: 0.98, g: 0.99, b: 1, a: 1}
+  ambientSky: {r: 0.66, g: 0.8, b: 0.94, a: 1}
+  ambientEquator: {r: 0.86, g: 0.84, b: 0.78, a: 1}
+  ambientGround: {r: 0.6, g: 0.56, b: 0.48, a: 1}
+  sunColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  sunIntensity: 1.4
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 3847697125209842551, guid: 04fc998357337f24799b83970e77a2b8, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
