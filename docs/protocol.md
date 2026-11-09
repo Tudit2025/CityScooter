@@ -107,6 +107,20 @@ def messages():
 
 主循环里写 `for msg in messages(): ...`。另外别忘了 `uart.init(baudrate=115200)`。不带参数的 `uart.init()` 会把波特率改成 9600，游戏就收不到了。
 
+## 无线竞速：网页的串口监视器和模拟器（11/9）
+
+消息本身见 `docs/radio-race.md` 的"实现约定"，游戏怎么处理由游戏这边写在本文的消息表里。这里只写网页外壳怎么显示、模拟器里怎么测：
+
+- `race:AMY:12` 每秒来一次，监视器只在名字或组号变了时记一行 "joins race 12 as AMY"。名字的规则和游戏一样（去掉字母、数字以外的字符，转大写，最多 5 个），所以 `race:amy!:12` 和 `race:AMY:12` 算同一个。空名字、组号超出 0～255、少了组号，显示黄色"格式不对"，并提示 `race:AMY:12` 的写法。
+- `rx:` 行照常一条一条转给游戏，但监视器里合并成每秒一行："radio: 14 messages/s from AMY, BEN, CHLOE"。
+  - 不是 `p:`、`f:`、`go:` 的内容也算进去，并举一个例子（`· 2 others, e.g. "hello"`），提示游戏只读这三种。
+  - `rx:go:…` 只记一次（发令板连发 5 次）："radio: go! A race from UWA, 2000 m (road number 4821)"。
+  - `rx:f:…` 每人记一次："radio: BEN finished in 72.35 s"。
+- 游戏发给板子的 `pos:` / `fin:` 照常写进板子，监视器每秒只显示最新一条，后面注明这一秒发了几条。
+- 板子自己打印 `pos:…`、`fin:…`（这是游戏发的）或者 `p:…`、`f:…`、`go:…`（这些要用 `radio.send` 发），监视器照常显示这一行，并给出提示。
+- `ValueError: received packet is not a string`：同组有板子发了不是文字的包（MakeCode 或 `send_bytes`），监视器提示换一个组号。
+- 模拟器模式里有 **Robot racers**（三个机器人对手）和 **Send go**，见 `docs/bridge.md` 的"机器人对手"；模拟器的 `radio_output`（学生程序 `radio.send` 出去的）也在监视器里每秒汇总一行。
+
 ## V1 / V2 兼容
 
 起步代码只用两代都有的功能：`accelerometer`、`button_a/b`、`display`、`Image`、`music`（V1 没有扬声器，不出声但不报错）、`uart`、`sleep`。

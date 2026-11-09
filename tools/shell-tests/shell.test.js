@@ -168,6 +168,52 @@ function installFakeSerial() {
   check("start:Kings Park reaches Unity (spaces and capitals forgiven there too)", sl.includes("usb1|start:Kings Park") && sl.filter((x) => x === "usb1|start:kingspark").length === 2);
   check("start: noted once with the district name", slog.filter((x) => x.includes("rides start in Kings Park")).length === 1, slog.filter((x) => /start/.test(x)).join(" | "));
   check("start:perth yellow with the list of districts", slog.some((x) => /cs-l-warn/.test(x) && x.includes("start:perth") && /kingspark/.test(x)), slog.filter((x) => /start/.test(x)).join(" | "));
+
+  // ---- radio race (11/9): race:NAME:GROUP noted once (it comes every second); malformed ones get a hint
+  await push(p, "race:AMY:12\nrace:AMY:12\nrace:amy!:12\nrace::12\nrace:AMY:300\nrace:AMY\n");
+  await sleep(400);
+  let rlog = await logText(), rl = await lines();
+  check("race:AMY:12 reaches Unity as it is", rl.filter((x) => x === "usb1|race:AMY:12").length === 2 && rl.includes("usb1|race:amy!:12"));
+  check("race: noted once (amy! is the same name as AMY)", rlog.filter((x) => /cs-l-game/.test(x) && x.includes("joins race 12 as AMY")).length === 1,
+    rlog.filter((x) => /race/.test(x)).join(" | "));
+  for (const bad of ["race::12", "race:AMY:300", "race:AMY"]) {
+    check(bad + " is yellow with the race: hint", rlog.some((x) => /cs-l-warn/.test(x) && x.endsWith("usb1" + bad + "← " + "race: needs your name and race number, e.g. race:AMY:12 (name: 1-5 letters or digits; race number = radio group, 0-255)")),
+      rlog.filter((x) => x.includes(bad)).join(" | "));
+  }
+  // rx: lines go to Unity one by one, but the monitor shows one line a second: "radio: 14 messages/s from AMY, BEN, CHLOE"
+  const t0 = await ev(() => window.__fakeUnity.total);
+  const rx = []; // one chunk, so all of them fall into the same second of the summary
+  for (let i = 0; i < 14; i++) rx.push("rx:p:" + ["AMY", "BEN", "CHLOE"][i % 3] + ":" + (100 + i) + ":0");
+  await push(p, rx.join("\n") + "\nrx:hello\nrx:go:4821:uwa:2000\nrx:go:4821:uwa:2000\nrx:f:BEN:72.35\nrx:f:BEN:72.35\n");
+  await sleep(1300);
+  rlog = await logText();
+  rl = await ev((n) => window.__fakeUnity.since(n), t0);
+  check("every rx: line reaches Unity", rl.filter((x) => x.startsWith("usb1|rx:")).length === 19, rl.length);
+  check("no rx: line by line in the monitor", !rlog.some((x) => / :: usb1rx:/.test(x)), rlog.filter((x) => /rx:/.test(x)).join(" | "));
+  const summary = rlog.filter((x) => /cs-l-radio/.test(x) && /usb1radio: \d+ messages\/s/.test(x));
+  check("one radio summary: 19 messages/s from AMY, BEN, CHLOE, and the other one", summary.length === 1
+    && /radio: 19 messages\/s from AMY, BEN, CHLOE · 1 other, e\.g\. "hello"/.test(summary[0]), summary.join(" | "));
+  check("go: noted once with the district and length", rlog.filter((x) => /cs-l-radio/.test(x) && x.includes("radio: go! A race from UWA, 2000 m (road number 4821)")).length === 1,
+    rlog.filter((x) => /go!/.test(x)).join(" | "));
+  check("f: noted once", rlog.filter((x) => x.includes("radio: BEN finished in 72.35 s")).length === 1, rlog.filter((x) => /finished/.test(x)).join(" | "));
+  await sleep(1200);
+  check("nothing heard: no more summary lines", (await logText()).filter((x) => /cs-l-radio/.test(x) && /messages\/s/.test(x)).length === 1);
+  // game -> board: pos: (4 a second) and fin: are written to the board but shown once a second
+  const w0 = (await ev((i) => window.__serial.ports[i].written, p)).length;
+  for (let i = 0; i < 8; i++) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), "pos:" + (1200 + i) + ":-1"); await sleep(120); }
+  await ev(() => window.CityScooterShell.sendToDevices("*", "fin:72.35"));
+  await sleep(1200);
+  const written = (await ev((i) => window.__serial.ports[i].written, p)).slice(w0);
+  check("pos:/fin: are written to the board", (written.match(/^pos:\d+:-1$/gm) || []).length === 8 && written.endsWith("fin:72.35\n"), JSON.stringify(written.slice(-40)));
+  rlog = await logText();
+  const posLines = rlog.filter((x) => /pos:|fin:/.test(x));
+  check("pos:/fin: from the game shown at most once a second", posLines.length >= 1 && posLines.length <= 3 && posLines.every((x) => /this second/.test(x)), posLines.join(" | "));
+  // printed the wrong way round: a hint
+  await push(p, "pos:12:0\np:AMY:12:0\n");
+  await sleep(400);
+  rlog = await logText();
+  check("pos: printed by a board: hint that it comes FROM the game", rlog.some((x) => /cs-l-print/.test(x) && x.includes("pos:12:0") && /FROM the game/.test(x)));
+  check("p: printed by a board: hint to use radio.send", rlog.some((x) => /cs-l-print/.test(x) && x.includes("p:AMY:12:0") && /radio\.send/.test(x)));
   await page.screenshot({ path: path.join(OUT, "shell_usb.png") });
 
   // USB robustness (lesson 1, 11/9: boards dropped out until the page was refreshed)

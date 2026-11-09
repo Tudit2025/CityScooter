@@ -139,6 +139,12 @@
           </div>
         </div>
       </div>
+      <div class="cs-bots">
+        <button type="button" class="cs-small" id="cs-bots" aria-pressed="false"
+          title="3 robot riders send p:BOT1:… to your virtual micro:bit by radio, 4 times a second, like real micro:bits in your race">Robot racers</button>
+        <button type="button" class="cs-small" id="cs-bots-go" title="Start a race: sends go:…:uwa:2000 to your virtual micro:bit by radio">Send go</button>
+        <span class="cs-bots-note" id="cs-bots-note">No micro:bits to race? Turn on robots that race you by radio.</span>
+      </div>
       <div class="cs-code-slot"></div>
     </div>
     <section class="cs-code" id="cs-code-section" aria-label="Your code">
@@ -222,7 +228,17 @@
     const key = lower.slice(0, colon).trim();
     const arg = s.slice(colon + 1).trim();
     switch (key) {
-      case "zone": return { kind: "gameword" }; // ---- Districts (v0.3): the game sends zone:<id>; from a board it does nothing
+      case "zone": return { kind: "gameword", hint: ZONE_WORD_HINT }; // ---- Districts (v0.3): the game sends zone:<id>; from a board it does nothing
+      // ---- Race (radio race v1, docs/radio-race.md "实现约定")
+      case "race": { // race:NAME:GROUP. Name: letters and digits only, capitals, up to 5 (like the game). Group 0-255.
+        const m = /^([^:]*):\s*(\d{1,3})$/.exec(arg);
+        const name = m ? m[1].replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 5) : "";
+        const group = m ? parseInt(m[2], 10) : -1;
+        return name && group <= 255 ? { kind: "race", name, group } : { kind: "malformed" };
+      }
+      case "rx": return { kind: "rx", value: arg }; // what the board heard by radio; the game reads p:, f: and go: in it
+      case "pos": case "fin": return { kind: "gameword", hint: RACE_WORD_HINT };
+      case "p": case "f": case "go": return { kind: "radioword" };
       case "start": { // ---- Districts (v0.3): "start:kingspark" (spaces and capitals dropped, like CommandParser)
         const id = arg.toLowerCase().replace(/[^a-z]/g, "").slice(0, 16);
         return ZONE_NAMES[id] ? { kind: "start", value: id } : { kind: "malformed" };
@@ -265,6 +281,7 @@
     [/ImportError|no module named/i, "that module is not on this micro:bit (a V1 has fewer features)"],
     [/out of bounds/i, "LED x and y go from 0 to 4"],
     [/music mode/i, "sound uses pin 0 — touch pin 1 or 2 instead"],
+    [/not a string/, "a micro:bit in your radio group sent bytes, not text (maybe a MakeCode program): use another group"],
     [/ValueError/, "a value had the wrong form, e.g. int(\"abc\")"],
     [/MemoryError/, "your program used too much memory — keep lists and strings small"],
     [/ZeroDivisionError/, "you divided by zero"],
@@ -288,7 +305,13 @@
     const m = /^zone:([a-z]+)$/.exec(line);
     return m ? "entering " + (ZONE_NAMES[m[1]] || m[1]) : "";
   };
+  const ZONE_WORD_HINT = "zone: is a message FROM the game (you rode into a new part of Perth). Use \"when entering\" to react to it.";
   // ---- end Districts (v0.3)
+
+  // ---- Race (radio race v1): hints for race messages printed the wrong way round
+  const RACE_WORD_HINT = "pos: and fin: are messages FROM the game (where you are in a race, your time). \"send my position by radio\" sends them on as p: and f:";
+  const RADIO_WORD_HINT = "p:, f: and go: travel by radio: use radio.send(). The game reads what your micro:bit heard as rx:… (\"pass radio messages to the game\")";
+  const RACE_HINT = "race: needs your name and race number, e.g. race:AMY:12 (name: 1-5 letters or digits; race number = radio group, 0-255)";
 
   // ------------------------------------------------------------------ devices
   function getDevice(id, kind) {
@@ -345,8 +368,22 @@
           logLine("game", d.id, "rides start in " + ZONE_NAMES[c.value], "");
         }
         break;
-      case "gameword": // ---- Districts (v0.3)
-        logLine("print", d.id, line, "zone: is a message FROM the game (you rode into a new part of Perth). Use \"when entering\" to react to it.");
+      case "gameword": // ---- Districts (v0.3), race
+        logLine("print", d.id, line, c.hint);
+        break;
+      // ---- Race (radio race v1). race: comes every second (with hi:), so the monitor notes only a change; rx: lines
+      // are counted and shown once a second ("radio: 14 messages/s from AMY, BEN, CHLOE"), or they would flood it.
+      case "race":
+        if (d.race !== c.name + ":" + c.group) {
+          d.race = c.name + ":" + c.group;
+          logLine("game", d.id, "joins race " + c.group + " as " + c.name, "");
+        }
+        break;
+      case "rx":
+        noteRx(d, c.value);
+        break;
+      case "radioword":
+        logLine("print", d.id, line, RADIO_WORD_HINT);
         break;
       case "say":
         break; // the game repeats it to every board; the monitor shows that as a game line
@@ -372,6 +409,7 @@
           : /^\s*say/i.test(line) ? "say: one word of your own (letters, digits, _ - ! ?, up to 16), not a game word like crash"
           : /^\s*start/i.test(line) ? "start: a district id, e.g. start:kingspark or start:rockingham (" + Object.keys(ZONE_NAMES).join(", ") + ")"
           : /^\s*do/i.test(line) ? "do: one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole, ramp"
+          : /^\s*race/i.test(line) ? RACE_HINT
           : "st: needs a number, e.g. st:-35");
         break;
       default: {
@@ -382,6 +420,66 @@
     if (isActive(d)) {
       shell.outbox.push(d.id + "|" + line);
       if (shell.outbox.length > 400) shell.outbox.splice(0, shell.outbox.length - 400);
+    }
+  }
+
+  // ---- Race (radio race v1): radio traffic in the monitor, once a second instead of one line per message.
+  // rx: lines a board passes to the game (from all the riders in its group, about 4 a second each), pos:/fin: the game
+  // sends (4 a second), and in the simulator what the student's own program sent by radio.
+  const radioCount = () => ({ n: 0, names: [], other: 0, example: "" });
+  const raceOut = { n: 0, last: "" };   // pos:/fin: from the game this second
+  const seenRace = { go: "", fin: {} }; // go: and f: are repeated on purpose: noted once
+
+  function noteRx(d, payload) {
+    const r = d.rx || (d.rx = radioCount());
+    r.n++;
+    const m = /^(p|f):([A-Za-z0-9]{1,5}):/.exec(payload);
+    if (m) {
+      if (!r.names.includes(m[2]) && r.names.length < 12) r.names.push(m[2]);
+      const fin = /^f:([A-Za-z0-9]{1,5}):(\d+(\.\d+)?)$/.exec(payload);
+      if (fin && seenRace.fin[d.id + fin[1]] !== fin[2]) {
+        seenRace.fin[d.id + fin[1]] = fin[2];
+        logLine("radio", d.id, "radio: " + fin[1] + " finished in " + fin[2] + " s", "");
+      }
+      return;
+    }
+    const go = /^go:(\d{1,5}):([a-z]*):(\d+)$/.exec(payload);
+    if (go) {
+      if (seenRace.go !== d.id + payload) {
+        seenRace.go = d.id + payload;
+        logLine("radio", d.id, "radio: go! A race from " + (ZONE_NAMES[go[2]] || go[2]) + ", " + go[3] + " m (road number " + go[1] + ")", "");
+      }
+      return;
+    }
+    r.other++;
+    r.example = payload.slice(0, 40);
+  }
+
+  function noteRadioSent(d, text) {
+    const r = d.tx || (d.tx = { n: 0, last: "" });
+    r.n++;
+    r.last = text.slice(0, 40);
+  }
+
+  function radioSummary() {
+    const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+    for (const d of shell.devices.values()) {
+      const r = d.rx;
+      if (r && r.n) {
+        let text = "radio: " + plural(r.n, "message") + "/s";
+        if (r.names.length) text += " from " + r.names.join(", ");
+        if (r.other) text += (r.names.length ? " · " + plural(r.other, "other") : "") + ", e.g. \"" + r.example + "\"";
+        logLine("radio", d.id, text, r.other ? "the game only reads p:, f: and go: in rx:" : "");
+        d.rx = radioCount();
+      }
+      if (d.tx && d.tx.n) {
+        logLine("radio", d.id, "radio sent: " + plural(d.tx.n, "message") + "/s, last " + d.tx.last, "");
+        d.tx = null;
+      }
+    }
+    if (raceOut.n) {
+      logLine("game", "game", raceOut.last, raceOut.n + " this second (shown once a second)");
+      raceOut.n = 0;
     }
   }
 
@@ -987,7 +1085,8 @@
   }
 
   // ------------------------------------------------------------------ simulator
-  const sim = { frame: null, loaded: false, ready: false, activated: false, running: false, buf: "", accel: 0, keys: { left: false, right: false } };
+  const sim = { frame: null, loaded: false, ready: false, activated: false, running: false, buf: "", accel: 0, keys: { left: false, right: false },
+    radioOn: false }; // radioOn: the program turned the radio on (state_change from the simulator)
 
   function simPost(msg) {
     if (sim.frame && sim.frame.contentWindow) sim.frame.contentWindow.postMessage(msg, SIM_ORIGIN);
@@ -1019,6 +1118,7 @@
     sim.ready = false;
     sim.activated = false;
     sim.running = false;
+    sim.radioOn = false;
     sim.buf = "";
     simHint("Loading the simulator…");
     f.src = SIM_URL;
@@ -1033,6 +1133,7 @@
   function simLeave() {
     if (sim.activated) simPost({ kind: "stop" });
     sim.running = false;
+    sim.radioOn = false;
     const d = simDevice();
     d.connected = false;
     releaseSimKeys();
@@ -1046,9 +1147,11 @@
     }
     simPost({ kind: "flash", filesystem: { "main.py": new TextEncoder().encode(currentCode()) } });
     sim.running = true;
+    sim.radioOn = false; // the new program turns it on again (state_change)
     sim.buf = "";
     const d = simDevice();
     if (!d.ver) d.ver = "v2";
+    d.race = ""; // a new program: note its race: again
     d.connected = true;
     d.connectedAt = now();
     sendStatus(d);
@@ -1084,9 +1187,109 @@
       case "internal_error":
         logLine("error", "sim", "Simulator problem: " + errText(m.error), "click Reset simulator");
         break;
+      // ---- Race (radio race v1): is the radio on (robot racers may only send then), and what the program sends by radio
+      case "state_change": {
+        const r = m.change && m.change.radio;
+        if (r) sim.radioOn = !!r.enabled;
+        break;
+      }
+      case "radio_output": {
+        // radio.send("p:…") arrives as bytes with MicroPython's 3-byte text header \x01\x00\x01 in front
+        const b = m.data instanceof Uint8Array ? m.data : new Uint8Array(0);
+        const text = b.length >= 3 && b[0] === 1 && b[1] === 0 && b[2] === 1 ? new TextDecoder().decode(b.subarray(3))
+          : "(bytes) " + Array.from(b.subarray(0, 12)).join(" ");
+        if (shell.mode === "sim") noteRadioSent(simDevice(), text);
+        break;
+      }
       default:
         break;
     }
+  }
+
+  // ---- Race (radio race v1): robot racers. Students without a board test their relay code in the simulator: three
+  // robots "send" p:BOTn:<metres>:<lane> to the virtual micro:bit's radio (radio_input) 4 times a second, like
+  // micro:bits in the same race group. radio_input takes the bytes radio.send() puts on air: \x01\x00\x01 + the text
+  // (radio.receive() raises ValueError without that header). Checked 11/9 against micropython-microbit-v2-simulator
+  // (board/radio.ts) and in the embedded simulator. The simulator ignores the group (it assumes "your group").
+  const BOT_SPEEDS = [13, 15, 17]; // m/s; the game's top speed is about 22, so they look honest to its "?" check
+  const bots = { on: false, t0: 0, metres: 2000, finished: [], tick: 0 };
+
+  function simRadioSend(text) {
+    // The simulator throws inside the iframe if the radio is off, so only send while the program has it on.
+    if (shell.mode !== "sim" || !sim.running || !sim.radioOn) return false;
+    const body = new TextEncoder().encode(text);
+    const data = new Uint8Array(3 + body.length);
+    data.set([1, 0, 1]);
+    data.set(body, 3);
+    simPost({ kind: "radio_input", data });
+    return true;
+  }
+
+  function botsNote(text) {
+    const n = $("cs-bots-note");
+    if (n.textContent !== text) n.textContent = text;
+  }
+
+  function botsReset(delayMs, metres) {
+    bots.t0 = now() + delayMs;
+    bots.metres = metres;
+    bots.finished = BOT_SPEEDS.map(() => 0);
+  }
+
+  // Every 250 ms: riding (p: 4 a second), finished (f: twice a second for 10 s), then waiting (p:…:0:0 once a second),
+  // the same as a real micro:bit relaying its game.
+  function botsTick() {
+    if (!bots.on) return;
+    bots.tick++;
+    if (shell.mode !== "sim" || !sim.running) { botsNote("Robots are waiting for your code to run."); return; }
+    if (!sim.radioOn) { botsNote("Robots can't reach you: your code has not turned the radio on (join race)."); return; }
+    const t = (now() - bots.t0) / 1000;
+    const shown = [];
+    BOT_SPEEDS.forEach((v, i) => {
+      const name = "BOT" + (i + 1);
+      const lane = Math.round(2 * Math.sin(t * 0.4 + i * 1.7));
+      if (t < 0) { // counting down after go
+        simRadioSend("p:" + name + ":0:" + lane);
+        shown.push(name + " ready");
+        return;
+      }
+      if (!bots.finished[i]) {
+        const dist = Math.max(0, Math.floor(v * t + 15 * Math.sin(t * 0.5 + i * 2)));
+        if (dist < bots.metres) {
+          simRadioSend("p:" + name + ":" + dist + ":" + lane);
+          shown.push(name + " " + dist + " m");
+          return;
+        }
+        bots.finished[i] = Math.max(0.01, t);
+      }
+      const time = bots.finished[i].toFixed(2);
+      if (t - bots.finished[i] < 10) {
+        if (bots.tick % 2 === 0) simRadioSend("f:" + name + ":" + time);
+        shown.push(name + " " + time + " s");
+      } else {
+        if (bots.tick % 4 === 0) simRadioSend("p:" + name + ":0:0");
+        shown.push(name + " waiting");
+      }
+    });
+    botsNote(shown.join(" · "));
+  }
+
+  function botsToggle() {
+    bots.on = !bots.on;
+    $("cs-bots").setAttribute("aria-pressed", String(bots.on));
+    if (bots.on) botsReset(0, 2000);
+    botsNote(bots.on ? "Robots: getting ready…" : "Robots off.");
+  }
+
+  function botsGoClicked() {
+    if (shell.mode !== "sim" || !sim.running || !sim.radioOn) {
+      botsNote("Run code that turns the radio on first (join race), then Send go.");
+      return;
+    }
+    const go = "go:" + (1 + Math.floor(Math.random() * 99999)) + ":uwa:2000";
+    for (let i = 0; i < 5; i++) setTimeout(() => simRadioSend(go), i * 100); // like a real starter: 5 times in 0.5 s
+    logLine("game", "sim", "Robots sent " + go + " by radio: a race from UWA, 2000 m", "");
+    if (bots.on) botsReset(3000, 2000); // they count down 3-2-1 with the game, then race from 0
   }
 
   function simResetClicked() {
@@ -1341,6 +1544,8 @@
     $("cs-clear").addEventListener("click", () => { $("cs-log").textContent = ""; monitor.pending.length = 0; });
     $("cs-run").addEventListener("click", simFlash);
     $("cs-sim-reset").addEventListener("click", simResetClicked);
+    $("cs-bots").addEventListener("click", botsToggle);
+    $("cs-bots-go").addEventListener("click", botsGoClicked);
     $("cs-download").addEventListener("click", downloadCode);
     $("cs-send").addEventListener("click", () => sendClicked());
     $("cs-starter").addEventListener("click", starterClicked);
@@ -1390,6 +1595,8 @@
       setInterval(renderStats, 200);
       setInterval(checkSilent, 500);
       setInterval(simTiltTick, 40);
+      setInterval(botsTick, 250);     // ---- Race: robot racers in the simulator
+      setInterval(radioSummary, 1000); // ---- Race: radio traffic in the monitor, once a second
       if (!("serial" in navigator)) usbMsg("This browser cannot talk to USB devices. Please use Chrome or Edge.", "cs-bad");
       setMode(storeGet(KEY_MODE) || (shell.keyboardAllowed ? "keyboard" : "usb"), false);
       requestAnimationFrame(pump);
@@ -1423,7 +1630,10 @@
         if (d.kind === "usb") { if (writeBoard(d, line)) sent = true; }
         else if (d.kind === "sim") { simPost({ kind: "serial_input", data: line + "\n" }); sent = true; }
       }
-      if (sent) logLine("game", "game", line, zoneHint(line));
+      if (!sent) return;
+      // ---- Race: pos: comes 4 times a second (fin: twice), so the monitor shows the latest once a second
+      if (/^(pos|fin):/.test(line)) { raceOut.n++; raceOut.last = line; return; }
+      logLine("game", "game", line, zoneHint(line));
     },
   };
 })();

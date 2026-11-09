@@ -15,6 +15,8 @@ it prints `st:-100..100`, `jp`, `br`, `hi:v1|v2` and reacts to `go`, `crash`, `g
 | `solutions/t6_foil_keys.py` | pin 0 jump (once per touch), pin 1 left, pin 2 right, tilt when no pin is touched; V2 uses capacitive touch | yes, hold GND |
 | `coop/steer.py` | co-op board 1: only `st:` (left arrow on the LEDs) | yes |
 | `coop/jump.py` | co-op board 2: only `jp`, from A or B (up arrow) | yes |
+| `race.py` | Radio race (11/9): the Lesson 1 starter plus the relay from `docs/radio-race.md`. Set `GROUP` (the card on the computer) and `NAME` (1-5 letters/digits). Prints `race:NAME:GROUP` with `hi:`, sends the game's `pos:`/`fin:` by radio as `p:NAME:…`/`f:NAME:…`, prints everything it hears as `rx:…` (reads the radio queue until empty every loop). `radio.config(group=GROUP, queue=10)` | yes (memory not yet checked on a real V1) |
+| `race_start.py` | The teacher's race starter. A: 3-2-1 on the LEDs, then `go:<seed>:<START>:<METRES>` 5 times in 0.5 s to the group shown. B: next group 11, 12, 13, 14, 15, 20 (final), 20 shows as 0. A+B: every race, groups 11-15, one after the other, all with the same seed (same road, so times compare). Prints `race 12: go:…` for the monitor. Edit `START` / `METRES` at the top | yes |
 
 Rules all files follow: V1-safe APIs in the core loop, `uart.init(baudrate=115200)`, the buffered
 `messages()` reader (a game message can arrive in two halves), `sleep(50)` loops, no `display.scroll()`,

@@ -28,7 +28,7 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 | 函数 | 说明 |
 |---|---|
 | `CityScooterShell.onUnityReady(protocolVersion)` | DeviceBridge 就绪，可以开始 SendMessage。当前协议版本是 `"0"` |
-| `CityScooterShell.sendToDevices(target, line)` | 把游戏消息（`go`、`crash`、`gift`、`spd:N`）发给设备；`target` 是设备 ID 或 `"*"`（全部）。外壳负责加 `\n`，USB 设备写串口，`sim` 设备发 `serial_input` |
+| `CityScooterShell.sendToDevices(target, line)` | 把游戏消息（`go`、`crash`、`gift`、`spd:N`）发给设备；`target` 是设备 ID 或 `"*"`（全部）。外壳负责加 `\n`，USB 设备写串口，`sim` 设备发 `serial_input`。无线竞速的 `pos:` / `fin:` 也走这里，照常发给设备，只是串口监视器每秒只显示最新一条 |
 
 **课堂版只用 micro:bit**（2026-11-09 起）：`index.html` 调用 `CityScooterShell.boot(..., { keyboard: false })`。
 - 页面上没有 Keyboard 模式按钮，也没有键位表。
@@ -85,3 +85,34 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 
   值超出范围时 iframe 里会抛异常，外壳要先截断再发。
 - 实测数据（无界面 Chrome）：约 2 秒就绪；游戏 → 模拟器 → 回显往返 60～70 ms。
+
+### 模拟器里的无线（11/9 实测，无线竞速用）
+
+对照了模拟器的源码（micropython-microbit-v2-simulator 的 `src/board/radio.ts`、README 的消息表），也下载了线上 `/v/0.1/build/simulator.js` 核对，并在嵌入的模拟器里实际跑过（`tools/shell-tests/race.test.js` 每次都会再验证一遍）：
+
+- **发给模拟器**：`{kind: "radio_input", data: Uint8Array}`。`data` 必须是 `Uint8Array`，否则 iframe 里抛 "Invalid radio_input data field"。
+- **文字要带 3 字节头。** `radio.send("p:AMY:1:0")` 在空中发的是 `\x01\x00\x01` 加文字，`radio.receive()` 会检查并去掉这 3 个字节。
+  - 所以喂给模拟器的要是 `[1, 0, 1, ...文字的字节]`。
+  - 不带头时 `radio.receive()` 抛 `ValueError: received packet is not a string`，这一包被丢掉，下一包照常。
+- **长度**：一包最多 32 字节（`radio.config` 的 `length`，默认 32），去掉头，文字最多 29 个字符，多的被截掉。`go:99999:canningbridge:5000` 是 27 个字符，放得下。
+- **队列**：模拟器按程序的 `queue` 存，满了就丢（`queue=10` 时连发 12 条，只收到前 10 条）。
+- **组号**：模拟器不看组号，`radio_input` 一律当作"你这组的"。
+- **无线没开时不能喂。** 线上这个版本在无线关着时收到 `radio_input` 会在 iframe 里抛 TypeError（新版源码已经修了）。外壳只在知道无线开着时才喂：
+  - 模拟器在无线开关、换组时发 `{kind: "state_change", change: {radio: {type: "radio", enabled, group}}}`；
+  - `radio.config(queue=10)` 会先关再开，所以会连着来一条 `enabled: false` 和一条 `enabled: true`；
+  - 每次 flash 外壳先当作无线关着，等新程序打开。
+- **模拟器发出来的**：`{kind: "radio_output", data: Uint8Array}`，就是 `radio.send` 发出去的字节，带同样的 3 字节头，例如 `[1,0,1,112,58,65,77,89,…]` 是 `p:AMY…`。外壳把它显示在串口监视器里，每秒一行（"radio sent: 4 messages/s, last p:AMY:1234:-2"）。
+
+### 机器人对手（Robot racers）
+
+模拟器面板（micro:bit 下面）有一排：**Robot racers** 开关、**Send go** 按钮和一行状态。没有板子的同学用它测试自己的转发代码：代码在模拟器里能跑通，拿到真板子就能直接比赛。
+
+- **Robot racers 打开后**：三个机器人 BOT1、BOT2、BOT3，速度 13、15、17 m/s（游戏最高速度约 22，不会被标成 "?"）。每 0.25 秒各往模拟器的 `radio_input` 喂一条 `p:BOTn:<米数>:<车道>`，车道在 -2～2 之间慢慢变。
+  - 骑到终点（2000 m）以后，每 0.5 秒发一次 `f:BOTn:<秒数>`，持续 10 秒；之后每秒一次 `p:BOTn:0:0`，和真的游戏在大厅里一样。
+  - 一打开就从 0 m 开始骑，不用等 `go:`，学生马上能看到效果。
+- **Send go**：往模拟器喂 `go:<1～99999 的随机种子>:uwa:2000`，0.5 秒内 5 次，和真的发令板一样。
+  - 机器人开着时，它们停在 0 m 等 3 秒（游戏在倒数），再从 0 m 开始比。
+  - 串口监视器记一行 "Robots sent go:… by radio"。
+- 学生的转发代码把收到的打印成 `rx:p:BOT1:…`，外壳当作 `sim` 设备的行转给 Unity，游戏就能画出三个对手。
+- 状态行显示每个机器人骑到了哪；程序没开无线时提示 "your code has not turned the radio on (join race)"，这时什么也不喂。
+- 只在模拟器模式、代码在运行、无线开着的时候喂。切到别的模式就停。

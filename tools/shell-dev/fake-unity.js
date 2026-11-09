@@ -4,7 +4,9 @@
  * WebShellBridge.cs does. The dev toolbar sends game messages through CityScooterShell.sendToDevices(). */
 (() => {
   "use strict";
-  const fake = { calls: [], lines: [], steer: {}, keyboard: "1", status: {}, jumps: 0 };
+  const fake = { calls: [], lines: [], steer: {}, keyboard: "1", status: {}, jumps: 0, total: 0 };
+  // lines keeps the last 1000-2000 lines; total counts every line ever, so a test can take since(total) safely.
+  fake.since = (total) => fake.lines.slice(Math.max(0, fake.lines.length - (fake.total - total)));
   window.__fakeUnity = fake;
 
   function draw(canvas) {
@@ -52,6 +54,7 @@
                 const bar = entry.indexOf("|");
                 const id = entry.slice(0, bar), line = entry.slice(bar + 1);
                 fake.lines.push(entry);
+                fake.total++;
                 const m = /^\s*st\s*:\s*(-?[\d.]+)/i.exec(line);
                 if (m) fake.steer[id] = Math.max(-100, Math.min(100, parseFloat(m[1])));
                 if (/^\s*jp\s*$/i.test(line)) fake.jumps++;
@@ -76,13 +79,15 @@
   // Dev toolbar: pretend to be the game sending events to the micro:bits.
   window.addEventListener("DOMContentLoaded", () => {
     const bar = document.getElementById("dev-tools");
-    let spd = 0;
+    let spd = 0, dist = 0;
     const send = (line) => window.CityScooterShell.sendToDevices("*", line);
     for (const [label, fn] of [
       ["go", () => send("go")],
       ["crash", () => send("crash")],
       ["gift", () => send("gift")],
       ["spd +1", () => { spd = (spd + 1) % 10; send("spd:" + spd); }],
+      ["pos +50", () => { dist += 50; send("pos:" + dist + ":0"); }], // radio race: the relay sends p:NAME:<dist>:0
+      ["fin", () => send("fin:72.35")],
     ]) {
       const b = document.createElement("button");
       b.type = "button";

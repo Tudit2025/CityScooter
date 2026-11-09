@@ -69,6 +69,69 @@
   - 放在"开始时"里最方便。程序一开始发的那条游戏可能还没在听，所以生成的代码在每秒一次的 `hi:` 旁边再发一次 `start:`（只在用了这块积木时才有 `start_zone` 这个全局变量）。
   - 在开局画面上马上换过去；骑行中发的，下一局从那里出发。串口监视器只在场景变化时记一行"rides start in Kings Park"，不会每秒刷屏。
 
+- 无线竞速（11/9，方案见 `docs/radio-race.md` 的"实现约定"）：
+  - CityScooter 分类的最后，在标签 **Race** 下面按顺序放了 4 块（课件按这个顺序讲）：
+
+    | 积木 | 放在哪 | 生成的代码 |
+    |---|---|---|
+    | "join race [12] as [AMY]" | "on start" | `race_name = "AMY"`；组号变了才 `radio_group = 12`、`radio.config(group=radio_group)`。主循环每秒一次（跟 `hi:` 一起）`print("race:" + race_name + ":" + str(radio_group))` |
+    | "send my position by radio" | "on start" | `send_position = True`。主循环收到游戏的 `pos:` / `fin:` 时 `radio.send("p:" + race_name + ":" + msg[4:])` / `f:` |
+    | "pass radio messages to the game" | "on start" | `pass_radio = True`。主循环每一轮把无线队列读空，每条 `print("rx:" + got_radio)` |
+    | "start a race from [UWA] for [2000] m" | "when shaken"（或者骑车用不到的按钮） | `start_race("uwa", 2000)`：`go:<1～99999 的随机种子>:uwa:2000` 先 `print("rx:" + go)` 给自己的游戏（板子收不到自己发的无线），再 `radio.send` 5 次，每次隔 0.1 秒 |
+
+  - 前三块只设变量，真正的活在主循环里做，所以学生误放进 "forever" 也没事：不会每轮都发东西，组号没变也不会重设无线。提示文字都以 `Put it in "on start".` 开头。
+  - 名字字段带校验：去掉字母、数字以外的字符，转大写，最多 5 个（`amy!` 显示成 `AMY`），和游戏的规则一样；空名字不接受。组号 0～255，米数 300～5000。
+  - 用到才生成：`race_name`、`send_position`、`pass_radio` 三个全局变量，和 `start_race()` 函数（加上 `import random`），只在用了对应积木时才有。第一课的程序不变。
+  - 和 Radio 分类一起用：
+    - 现在所有设组号的积木共用一个 `radio_group` 变量。"radio: set group" 生成 `radio_group = int(N)` 和 `radio.config(group=radio_group)`；和 "join race" 一起用时，最后执行的那块说了算，`race:` 报的也是这个组号。
+    - 用了 "pass radio messages to the game" 时，"when radio receives a message" 和它共用同一个读空队列的循环，每条消息都先转给游戏，再跑学生的积木。否则两边抢消息，游戏会漏掉一大半。没用竞速积木时，"when radio receives" 还是每轮读一条，和以前一样。
+    - 用了竞速积木时开机是 `radio.config(group=radio_group, queue=10)`：MicroPython 默认只存 3 条，一场 5 人、每人每秒 4 条，3 条不够。
+  - 生成的代码都在模拟器的 V2 和模拟 V1 上跑过：机器人对手的 `p:` 转成 `rx:p:BOT1:…` 到了游戏；游戏发 `pos:` / `fin:` 后，模拟器的无线发出了 `p:AMY:…` / `f:AMY:…`；摇一摇发出 5 次 `go:`。
+  - 用了竞速积木以后，第一课 starter 加上三块 "on start" 生成的完整代码，见积木测试的输出 `blocks_race.py`。和第一课相比多了：
+
+    ```python
+    import radio
+    ...
+    radio_group = 1  # micro:bits only hear others in the same group (0-255)
+    race_name = ""  # your name in the race ("join race")
+    send_position = False  # True: send where you are by radio
+    pass_radio = False  # True: pass what the radio hears to the game
+    ...
+    radio.on()  # micro:bits in the same group hear each other
+    radio.config(group=radio_group, queue=10)  # keep up to 10 messages until the loop reads them (3 is too few for a race)
+    display.show(VERSION[1])  # 1 or 2 on the LEDs
+    # on start
+    race_name = "AMY"
+    if radio_group != 12:  # a new group: tell the radio
+        radio_group = 12
+        radio.config(group=radio_group)
+    send_position = True
+    pass_radio = True
+
+    while True:
+        ...
+        # radio from other micro:bits: read everything that arrived, every loop
+        got_radio = radio.receive()
+        while got_radio:
+            if pass_radio:
+                print("rx:" + got_radio)  # pass it on to the game
+            got_radio = radio.receive()
+        # messages from the game
+        for msg in messages():
+            ...
+            elif send_position and msg.startswith("pos:"):
+                radio.send("p:" + race_name + ":" + msg[4:])  # tell the others where you are
+            elif send_position and msg.startswith("fin:"):
+                radio.send("f:" + race_name + ":" + msg[4:])  # you crossed the line: tell them your time
+        loops += 1
+        if loops % 20 == 0:
+            print("hi:" + VERSION)  # tell the game which micro:bit this is
+            if race_name:
+                print("race:" + race_name + ":" + str(radio_group))  # I want to race, in this group
+        sleep(50)
+    ```
+  - 没加 `try/except`：如果同组有板子用 `send_bytes` 或 MakeCode 发了不是文字的包，`radio.receive()` 会报 `ValueError: received packet is not a string`，程序停下。串口监视器对这一行有提示（"换一个组号"）。课上讲"信任"时可以拿来演示。
+
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 
 ## 生成的程序长什么样
@@ -85,6 +148,7 @@ except ImportError:
     VERSION = "v1"
 uart.init(baudrate=115200)
 # 变量、插件的全局变量和辅助函数（CityScooter：buffer、messages()）
+# 用了无线积木才有：radio.on()、radio.config(group=radio_group)（竞速积木再加 queue=10）
 display.show(VERSION[1])
 # "on start" 积木
 while True:
@@ -138,6 +202,7 @@ USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不�
 | `reserved` | 插件生成代码里用到的名字，用逗号分隔 |
 | `globals(ctx)`、`helpers(ctx)` | 放在 `on start` 前面的全局变量和辅助函数（字符串数组） |
 | `loopTail(ctx, section)` | 每次循环末尾要执行的代码（不带缩进）；`section(key)` 取帽子积木存进来的内容，`ctx.flags` 是生成器设置的标记 |
+| `radioEach(ctx)` | 可选（11/9）：收到的每条无线消息（变量 `got_radio`）都要执行的代码（不带缩进）。返回非空时，主循环每轮把无线队列读空。CityScooter 用它把消息转给游戏（`rx:`）。生成器里用 `MicrobitBlocks.useRadio(g, 队列长度)` 打开无线 |
 | `toolbox(blk, num)` | 返回工具箱分类，排在通用分类前面 |
 | `starter()` | 默认积木（Blockly 序列化 JSON） |
 
@@ -145,7 +210,7 @@ USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不�
 
 ## 测试
 
-每次改积木或外壳，都要跑下面四套无头浏览器测试，脚本在 `tools/shell-tests/`（用法见那里的 `README.md`）：
+每次改积木或外壳，都要跑下面几套无头浏览器测试，脚本在 `tools/shell-tests/`（用法见那里的 `README.md`）：
 
 1. **积木测试**（`tools/shell-dev` 开发页 + 真的官方模拟器）：
    - starter 积木生成的关键代码行；
@@ -153,12 +218,24 @@ USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不�
    - 在模拟器里运行：倾斜转向、A 跳、报 `hi:v2`；
    - 用上全部积木的程序：在 V2 上和模拟 V1 的情况下都运行，并收发 crash/gift/go/spd，要求没有任何 Python 报错；
    - 场景（v0.3）：全部积木的程序里有"当进入 Kings Park 时"和"当游戏说 zone:quay"，收到 `zone:uwa`、`zone:kingspark` 时只有 Kings Park 那段运行一次；
+   - 无线竞速（11/9）：
+     - 工具箱 CityScooter 分类最后是 Race 标签和 4 块竞速积木，顺序不变；
+     - 第一课 starter 加三块竞速积木（名字填 `amy!`）和"when shaken → start a race from Kings Park for 1500 m"，生成的关键代码逐行核对，"on start" 里只设变量；
+     - 在模拟器的 V2 和模拟 V1 上运行，打开机器人对手：`race:AMY:12` 到了游戏，三个机器人的 `rx:p:BOT1…` 每秒约 4 条到了游戏，监视器每秒一行汇总、没有逐行的 `rx:`；
+     - 游戏发 `pos:` / `fin:` 后模拟器的 `radio_output` 是 `p:AMY:…` / `f:AMY:72.35`（带 3 字节文字头）；监视器里 `pos:` 每秒最多一行；
+     - Send go 后游戏收到 `rx:go:<种子>:uwa:2000`；摇一摇时发出 5 次同一个种子的 `go:…:kingspark:1500`，自己的游戏也收到一次 `rx:go:…`；
+     - 全部积木的程序里也加了竞速积木（和 Radio 分类的积木一起用）；
    - 引脚 0 加声音时会出警告；
    - 积木和 Python 的切换规则；
    - 分隔条能拖动；
    - 刷新后积木、视图和模式都能恢复；
    - 页面不向外网发任何请求。
-2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板；监视器里 `zone:` 的说明（v0.3）。
+2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板；监视器里 `zone:` 的说明（v0.3）；无线竞速（11/9）的 `race:`（只记一次，格式不对有提示）、`rx:` 每秒一行汇总、`go:` 和 `f:` 各记一次、游戏发的 `pos:` / `fin:` 照常写进板子但每秒最多显示一行、板子自己打印 `pos:` / `p:` 时的提示。
+5. **竞速程序测试**（`race.test.js`，11/9）：
+   - `microbit/race.py`、`microbit/race_start.py` 用 CPython 检查语法（`python -I`，不写任何文件）；
+   - 先验证模拟器的无线格式：`radio_input` 带 `\x01\x00\x01` 头才是文字，不带头 `radio.receive()` 报 ValueError，超过 29 个字符会被截断；
+   - `race.py` 在 V2 和模拟 V1 上跑：机器人对手的 `rx:p:` 到了游戏，`pos:` / `fin:` 变成无线的 `p:AMY:…` / `f:AMY:…`；
+   - `race_start.py`：开机在 11 组，B 换到 12 组，A 倒数 3 秒后发 5 次同一个 `go:…:uwa:2000`，A+B 依次在 11～15 组各发 5 次（同一个种子）再回到 12 组，B 在 15 组之后是决赛 20 组。
 3. **真实网页包测试**：用真的 Unity 网页包，USB 和模拟器两条路都能开一局，游戏消息能发回设备。
 4. **发送测试**（`send.test.js`）：页面的 Web Serial 接到用 CPython 模拟的 MicroPython 板子（`fake_repl_board.py`，原始 REPL 的每条命令都真的执行）：
    - 积木代码原样写进板子，板子重启后跑的是新程序；
