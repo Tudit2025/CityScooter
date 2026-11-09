@@ -1,0 +1,38 @@
+WARNBRO (district id warnbro, order 150) - 参考资料和用到了什么
+================================================================
+
+参考帧只用来看（YouTube storyboard），存放在仓库外 D:\CityScooter-refs\warnbro\<video>\。游戏里没有任何参考图：
+所有几何都由 Assets/_Project/Scripts/Editor/Districts/RockinghamBuilder.cs 用漫画库生成（ComicPalette.mat + ComicInk.mat，
+顶点色）。没有商标和品牌字；火车、救生俱乐部都是无名造型，牌子上只写地名（WARNBRO、WARNBRO BEACH）。
+
+视频（-f sb0 storyboard）
+- Warnbro - Western Australia
+  https://www.youtube.com/watch?v=X3-wscKw8Zo  (封面 https://i.ytimg.com/vi/X3-wscKw8Zo/maxresdefault.jpg)
+  用到的：
+  - 长长的、缓缓弯曲的白沙滩（F4EEDC），浅处碧绿（47C4C2），海浪白线；沙滩上一大群海鸥。
+  - 前沙丘上的海岸灌木：低矮、圆、灰绿（7F9364 / 5F7650 / A3AE8E），沙丘之间的沙路。
+  - 海滩通道：灰色木桩（8E8471）、上面一根铁丝、绿色网（5E7D5A），路口的牌子；红砖观景台、野餐桌。
+  - 路边的红盖垃圾桶；海边的白色弯头路灯。
+  - 后面的住宅：抹灰墙（EDE6D6）、红瓦（B85A3C）或 Colorbond 铁皮屋顶（4A5057 / E4E2D5），石灰岩挡土墙。
+  - 远处北边海上的 Garden Island 和岬角（很淡）。
+- DJI Mini 2 4k - Warnbro Beach, Western Australia
+  https://www.youtube.com/watch?v=3ro5cGxEX08
+  用到的：从高处看的沙丘：灌木连成片、中间蜿蜒的沙路和步道，海岸线向南弯出去（远景里右前方弯出去的海岸）。
+- 搜过没细看：2U6-6Ciaa3U, IL2DFLDPBW4, 6ZZZzZUcJZY, Pzw2ztd7qN4。
+- Warnbro 站和停车场、冲浪救生俱乐部按常见样子做（没有找到合适的视频帧）：站台顶棚、海军蓝柱子、电梯塔、
+  大停车场；俱乐部一楼放船的卷帘门（蓝），二楼玻璃会所和看海的平台，红黄色带；海滩上红色瞭望塔（白腿），
+  红黄对角旗（冲浪救生的巡逻旗）。
+
+路段
+- Station、BeachRoad、SurfClub：Warnbro Beach Rd（普通道路，有车）。右边沙丘、沙滩、海；左边停车场和车站 / 住宅。
+- DunePath、Creek：海边共享步道（RoadType.PedestrianMall，没有车），两边沙丘和灌木、石灰岩露头，路边木桩。
+- Creek：沙丘跳台（Ramp，全宽）后面是 6 m 宽的海滩小溪（RoadGap，SPLASH），两岸石灰岩。
+- Entry / Exit：外端安静下来：矮石灰岩墙、灌木、peppermint 树。
+
+远景 FAR_Warnbro_Sound（跟着骑手，没有碰撞体）
+- 右边开阔的海，越远越淡；右前方海岸弯出去（白沙滩、低沙丘）；右边最远处很淡的 Garden Island；几条帆船。
+- 左边起伏的灌木沙丘、红瓦和铁皮屋顶的房子、Norfolk 松、一线树林、最远处淡蓝灰的山。
+- 按本场景坡度剪切，和路段的海水高度对齐。南线不显示珀斯 CBD 天际线（skyline = 0）。
+
+动物：银鸥（站着的和走动的）、蓝舌石龙子 bobtail（在步道上慢慢爬）。都是 animal、Person、不能打。
+障碍：冲浪板架、红盖垃圾桶、海滩通道围栏（可以跳过）、红黄巡逻旗。
