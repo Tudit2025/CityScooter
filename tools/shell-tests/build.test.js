@@ -125,8 +125,11 @@ function installFakeSerial() {
   await page.waitForFunction(() => document.getElementById("cs-sim").src.includes("usermbit"), { timeout: 5000 });
   await sleep(3000);
   const simFrame = page.frames().find((f) => f.url().includes("python-simulator.usermbit.org"));
-  await simFrame.waitForSelector(".play-button", { timeout: 20000 });
-  await simFrame.click(".play-button");
+  await simFrame.waitForSelector(".play-button", { visible: true, timeout: 20000 });
+  // The external simulator sometimes shows its play button a moment before it can take a click: try a few times.
+  for (let tries = 0; ; tries++) {
+    try { await simFrame.click(".play-button"); break; } catch (e) { if (tries >= 5) throw e; await sleep(1000); }
+  }
   const running = await page.waitForFunction(() => window.__toUnity.some((c) => c.includes("sim|st:")), { timeout: 20000 }).then(() => true, () => false);
   check("sim: code runs, Unity gets sim lines", running);
   // wait for the ride from the USB test to end or not: crash is fine; press A to (re)start
