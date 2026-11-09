@@ -129,7 +129,7 @@ namespace CityScooter.Gameplay
             bool boardToon = hub != null && hub.Mixer.Toon;
             if (_lastBoardToon && !boardToon) _keyToon = false; // a board turning it off wins over the T key
             _lastBoardToon = boardToon;
-            CartoonMode = _keyToon || boardToon;
+            CartoonMode = (_keyToon || boardToon) && !RaceDirector.On; // ---- Radio race (v0.4): no cartoon mode in race mode
             GameController game = GameController.Instance;
             CanBounce = CartoonMode && (!Tune.cartoonCostsGift || (game != null && game.Gifts > 0));
             Charges = Mathf.Min(MaxCharges, Charges + Time.deltaTime / Mathf.Max(0.1f, Tune.punchRechargeSeconds));
@@ -759,6 +759,9 @@ namespace CityScooter.Gameplay
             existing.track = rider.track;
             return existing;
         }
+
+        /// <summary>Radio race (v0.4): the thrown rider and scooter go away and the rider is back on the scooter (respawn).</summary>
+        internal void ClearCrashShow() => ClearCrash();
 
         void ClearCrash()
         {

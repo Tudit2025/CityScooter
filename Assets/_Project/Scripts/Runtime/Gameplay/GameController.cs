@@ -90,6 +90,7 @@ namespace CityScooter.Gameplay
         }
 
         FakeTurnDirector _turns;
+        RaceDirector _race; // ---- Radio race (v0.4)
 
         void Start()
         {
@@ -113,6 +114,10 @@ namespace CityScooter.Gameplay
             var districts = GetComponent<DistrictDirector>();
             if (districts == null && rider != null && track != null) districts = gameObject.AddComponent<DistrictDirector>();
             if (districts != null) { if (districts.rider == null) districts.rider = rider; if (districts.track == null) districts.track = track; if (districts.hud == null) districts.hud = hud; }
+            // ---- Radio race (v0.4): race mode over the micro:bit radio ("race:", "rx:"); off until a board asks for it.
+            _race = GetComponent<RaceDirector>();
+            if (_race == null && rider != null && track != null) _race = gameObject.AddComponent<RaceDirector>();
+            if (_race != null) { if (_race.rider == null) _race.rider = rider; if (_race.track == null) _race.track = track; if (_race.hud == null) _race.hud = hud; }
             EnterReady();
             Camera cam = Camera.main;
             if (cam != null && rider != null)
@@ -130,11 +135,11 @@ namespace CityScooter.Gameplay
             switch (State)
             {
                 case RunState.Ready:
-                    if (RiderInputSource.Read().Jump) StartRun();
+                    if (RiderInputSource.Read().Jump && (_race == null || _race.AllowsStart)) StartRun();
                     break;
                 case RunState.Crashed:
                     bool pressed = RiderInputSource.Read().Jump; // read every frame so stale presses are consumed
-                    if (pressed && _stateTime >= T.restartDelay) StartRun();
+                    if (pressed && _stateTime >= T.restartDelay && (_race == null || _race.AllowsStart)) StartRun();
                     break;
             }
         }
@@ -151,7 +156,9 @@ namespace CityScooter.Gameplay
 
         public void StartRun()
         {
-            _turns?.Restart(System.Environment.TickCount); // before the track: a roadworks pattern may ask for a turn
+            // before the track: a roadworks pattern may ask for a turn. Radio race (v0.4): the race's seed, so every board
+            // gets the same turns.
+            _turns?.Restart(_race != null && _race.Seeded ? _race.TurnSeed : System.Environment.TickCount);
             track?.ResetTrack(startPosition.z - 2f);
             rider?.ResetRider(startPosition);
             Gifts = 0;
@@ -182,6 +189,7 @@ namespace CityScooter.Gameplay
 
         void Finish(string title, bool crash)
         {
+            if (_race != null && _race.TakeCrash(title, crash)) return; // ---- Radio race (v0.4): a 3 s stop, the ride goes on
             rider.Stop();
             SetState(RunState.Crashed);
             if (crash && crashEffect != null) Destroy(Instantiate(crashEffect, rider.transform.position, Quaternion.identity), 4f);

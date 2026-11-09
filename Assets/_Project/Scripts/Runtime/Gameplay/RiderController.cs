@@ -527,6 +527,7 @@ namespace CityScooter.Gameplay
                 }
                 Obstacle obstacle = c.GetComponentInParent<Obstacle>();
                 if (obstacle == null) continue;
+                if (Time.time < PassThroughUntil) continue; // ---- Radio race (v0.4): just respawned, or past the finish
                 if (Airborne && obstacle.canJumpOver) continue;
                 // v0.3: flying (or riding a ramp) over something: clear when the feet are above its collider all frame.
                 if (c.bounds.max.y <= feet + 0.02f) continue;
@@ -547,5 +548,39 @@ namespace CityScooter.Gameplay
             SpeedLevel = level;
             GameEvents.RaiseSpeedLevel(level);
         }
+
+        // ---- Radio race (v0.4): in a race a crash is a 3 s stop, then the ride goes on from the same spot (RaceDirector).
+        /// <summary>Obstacles are passed through (not hit) until this Time.time: just after a race respawn, past the finish.</summary>
+        public float PassThroughUntil { get; set; } = -1f;
+
+        /// <summary>
+        /// Back on the scooter where the ride stopped (after falling into a road gap: just past the gap), in lane
+        /// <paramref name="x"/>, at the start speed. The distance and the ride time carry on. Obstacles are passed through
+        /// for <paramref name="passSeconds"/> so the thing that was hit cannot end it again.
+        /// </summary>
+        public void Respawn(float x, float passSeconds)
+        {
+            Vector3 p = transform.position;
+            float z = _gap != null ? Mathf.Max(p.z, _gap.EndZ + 1f) : p.z;
+            float limit = Mathf.Max(0.5f, (track != null ? track.RideableHalfWidthAt(z) : PlaceholderTrack.HalfWidth) - radius);
+            x = Mathf.Clamp(x, -limit, limit);
+            transform.position = new Vector3(x, track != null ? track.SurfaceHeightAt(x, z) : 0f, z);
+            _vx = _vy = _y = 0f;
+            Airborne = false;
+            Braking = false;
+            HoldBrake = false;
+            BrakeFloor = -1f;
+            _twist = 0f;
+            ClearAir();
+            if (model != null)
+            {
+                model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(z) : 0f, 0f, 0f);
+                model.localPosition = _modelBasePos;
+            }
+            Speed = T.startSpeed;
+            _running = true;
+            PassThroughUntil = Time.time + Mathf.Max(0f, passSeconds);
+        }
+        // ---- end Radio race (v0.4)
     }
 }

@@ -132,6 +132,7 @@ namespace CityScooter.Gameplay
         public bool ReportAttack(Obstacle target)
         {
             if (!Running || target == null || !target.police) return false;
+            if (RaceDirector.On) return false; // ---- Radio race (v0.4): no police in race mode
             if (Time.time - _lastAttack < Tune.policeAttackCooldown) return false;
             _lastAttack = Time.time;
             int before = Wanted;
@@ -147,6 +148,7 @@ namespace CityScooter.Gameplay
         public void SetWanted(int stars)
         {
             if (!Running) return;
+            if (RaceDirector.On && stars > 0) return; // ---- Radio race (v0.4): no police in race mode
             stars = Mathf.Clamp(stars, 0, MaxStars);
             if (stars == Wanted)
             {

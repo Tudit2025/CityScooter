@@ -51,7 +51,10 @@ namespace CityScooter.Gameplay
 
         GameTuning T => tuning != null ? tuning : GameTuning.Default;
         float RiderZ => rider != null ? rider.transform.position.z : 0f;
-        float Speed => rider != null ? Mathf.Max(T.startSpeed, rider.Speed) : T.startSpeed;
+        float Speed => fixedPlanning ? Mathf.Max(T.startSpeed, T.maxSpeed) : rider != null ? Mathf.Max(T.startSpeed, rider.Speed) : T.startSpeed;
+        /// <summary>Radio race (v0.4): plan turn lengths for a fixed speed, not the rider's, so every board gets the same
+        /// turns from the same seed. RaceDirector turns it on in race mode.</summary>
+        [System.NonSerialized] public bool fixedPlanning;
         static float BendStart { get { float y = Shader.GetGlobalVector(BendId).y; return y > 1f ? y : 32f; } }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

@@ -110,6 +110,12 @@ namespace CityScooter.Devices
                 case CommandKind.Start: // ---- Districts (v0.3)
                     Game.GameEvents.RaiseStartRequested(deviceId, cmd.Text);
                     break;
+                case CommandKind.Race: // ---- Radio race (v0.4)
+                    Game.GameEvents.RaiseRaceRequested(deviceId, cmd.Text, Mathf.RoundToInt(cmd.Value));
+                    break;
+                case CommandKind.Radio:
+                    Game.GameEvents.RaiseRadioHeard(deviceId, cmd.Text);
+                    break;
                 case CommandKind.Hello:
                     if (dev.Version != cmd.Text)
                     {

@@ -12,8 +12,9 @@ namespace CityScooter.Gameplay
     /// marker at the bottom that follows the police car left / right and turns red when it is about to ram or has
     /// you boxed in, and short flash titles ("WANTED!", "LOST THEM!").
     /// The tech artist can replace this with a designed prefab later.
+    /// Radio race (v0.4): the race screens are in HudView.Race.cs.
     /// </summary>
-    public sealed class HudView : MonoBehaviour
+    public sealed partial class HudView : MonoBehaviour
     {
         public GameController game;
 
@@ -248,6 +249,7 @@ namespace CityScooter.Gameplay
         {
             _screen = CentreScreen.Ready;
             if (_centre == null) return;
+            if (RaceDirector.On) { _centre.text = ""; return; } // ---- Radio race (v0.4): the race lobby has the centre
             _centre.text = "CITY SCOOTER\n<size=34>" + (KeysAllowed ? "Press A on your micro:bit or Space to start" : "Press A on your micro:bit to start") + "</size>";
             _centre.supportRichText = true;
         }

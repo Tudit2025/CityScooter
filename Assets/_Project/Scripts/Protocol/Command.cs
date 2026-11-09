@@ -30,6 +30,12 @@ namespace CityScooter.Protocol
         Trick,
         /// <summary>v0.3 districts: "start:kingspark" rides start in this district (Text = district id, lower case letters).</summary>
         Start,
+        /// <summary>v0.4 radio race: "race:AMY:12" race as AMY in radio group 12 (Text = name, upper case letters and
+        /// digits, 1..5; Value = group 0..255).</summary>
+        Race,
+        /// <summary>v0.4 radio race: "rx:p:BEN:120:-2" a radio message the board passed on (Text = the payload as it
+        /// came; <see cref="RadioMessage.Parse"/> reads it, anything else in it is ignored).</summary>
+        Radio,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

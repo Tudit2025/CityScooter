@@ -7,6 +7,10 @@ namespace CityScooter.Protocol
     /// v1 adds micro:bit → game "pu" punch, "bl" bell; game → micro:bit "ko", "warn:car|ped|hole", "turn:-1|0|1".
     /// v1 WA police (11/8) adds micro:bit → game "sur" surrender; game → micro:bit "wanted:N", "chase:1|0", "cop:N",
     /// "heli:1|0", "inc:L|C|R", "arrested", "busted", "lost".
+    /// v0.4 radio race (11/9, docs/radio-race.md) adds micro:bit → game "race:NAME:GROUP" (race mode is on while these
+    /// keep coming) and "rx:&lt;payload&gt;" (a radio message passed on as it is: "p:NAME:DIST:LANE", "f:NAME:SECONDS",
+    /// "go:SEED:START:METRES", see <see cref="RadioMessage"/>); game → micro:bit "pos:DIST:LANE" (4 Hz in a race,
+    /// "pos:0:0" once a second in the lobby) and "fin:SECONDS" (every 0.5 s for 10 s after the finish line).
     /// v0 boards keep working: v1 only adds messages (student code skips lines it does not know).
     /// Any other line (student prints, Python tracebacks) is shown in the serial monitor, never an error.
     /// </summary>
@@ -45,6 +49,7 @@ namespace CityScooter.Protocol
                 case Jump: case Brake: case Punch: case Bell: case Boost: case Toon: case Say: case Do: case "sur":
                 case Trick: // ---- Ramps and air (v0.3)
                 case Start: // ---- Districts (v0.3)
+                case Race: case Radio: case "pos": case "fin": // ---- Radio race (v0.4)
                     return true;
             }
             return w.IndexOf(':') >= 0;
@@ -153,6 +158,33 @@ namespace CityScooter.Protocol
         /// <summary>Landed safely, right after air:0 (land:trick when at least one trick was finished in that flight).</summary>
         public const string LandOk = "land:ok";
         public const string LandTrick = "land:trick";
+
+        // ---- Radio race (v0.4, 11/9): the boards' radio is the network (docs/radio-race.md)
+        // micro:bit -> game
+        /// <summary>"race:AMY:12": race as AMY in radio group 12 (about once a second). The game is in race mode while
+        /// these keep coming and goes back to normal 10 s after the last one.</summary>
+        public const string Race = "race";
+        /// <summary>"rx:&lt;payload&gt;": a radio message the board heard, passed on as it is (see <see cref="RadioMessage"/>).</summary>
+        public const string Radio = "rx";
+        public const int MaxRaceNameLength = 5;
+        public const int MaxRaceGroup = 255;
+        /// <summary>Letters and digits only, upper case, at most 5: "Amy-2" -> "AMY2". Empty when nothing is left.</summary>
+        public static string RaceName(string text)
+        {
+            var sb = new System.Text.StringBuilder(MaxRaceNameLength);
+            foreach (char c in (text ?? "").ToUpperInvariant())
+                if (((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) && sb.Length < MaxRaceNameLength) sb.Append(c);
+            return sb.ToString();
+        }
+        // game -> micro:bit
+        public const string PositionPrefix = "pos:";
+        /// <summary>"pos:1234:-2": metres from the start and lane x in metres, both whole numbers ("pos:0:0" in the lobby).</summary>
+        public static string Position(int metres, int lane) => PositionPrefix + Clamp(metres, 0, 99999) + ":" + Clamp(lane, -20, 20);
+        public const string FinishPrefix = "fin:";
+        /// <summary>"fin:72.35": crossed the finish line after this many seconds (two decimals).</summary>
+        public static string Finish(float seconds) =>
+            FinishPrefix + (seconds < 0f ? 0f : seconds > 99999f ? 99999f : seconds).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        // ---- end Radio race (v0.4)
 
         static int Clamp(int v, int min, int max) => v < min ? min : v > max ? max : v;
     }

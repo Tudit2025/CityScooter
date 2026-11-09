@@ -102,6 +102,18 @@ namespace CityScooter.Protocol
                         case "0": case "off": case "false": return new Command(CommandKind.Toon, 0f);
                         default: return new Command(CommandKind.Malformed, 0f, s);
                     }
+                case Messages.Race: // ---- Radio race (v0.4): "race:AMY:12" (an empty name or a bad group is malformed)
+                {
+                    int last = arg.LastIndexOf(':');
+                    if (last < 0) return new Command(CommandKind.Malformed, 0f, s);
+                    string name = Messages.RaceName(arg.Substring(0, last));
+                    string g = arg.Substring(last + 1).Trim();
+                    if (name.Length == 0 || !int.TryParse(g, NumberStyles.Integer, CultureInfo.InvariantCulture, out int group)
+                        || group < 0 || group > Messages.MaxRaceGroup) return new Command(CommandKind.Malformed, 0f, s);
+                    return new Command(CommandKind.Race, group, name);
+                }
+                case Messages.Radio: // ---- Radio race (v0.4): "rx:<payload>", read by RadioMessage.Parse
+                    return new Command(CommandKind.Radio, 0f, arg);
                 default:
                     return new Command(CommandKind.Unknown, 0f, s);
             }
