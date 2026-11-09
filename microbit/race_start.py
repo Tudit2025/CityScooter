@@ -33,7 +33,9 @@ def send_go(g, go):
 
 
 def show_group():
-    display.show(str(group))  # 1 then 2 for group 12 (the last digit stays)
+    # 1 then 2 for group 12 (the last digit stays). wait=False: the buttons keep working while it shows,
+    # so pressing B quickly never skips a group.
+    display.show(str(group), wait=False)
 
 
 show_group()

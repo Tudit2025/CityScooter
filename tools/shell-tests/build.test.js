@@ -158,6 +158,27 @@ function installFakeSerial() {
   check("sim: tilt keys steer the game", (await ev(() => window.__toUnity.filter((c) => /sim\|st:(9\d|100)/.test(c)).length)) > 0);
   await page.screenshot({ path: path.join(OUT, "real_sim.png") });
 
+  // Radio race (v0.4) on the real build, through the USB board: race: -> lobby (pos:0:0 once a second), then a go:
+  // relayed by the board as rx:go -> countdown -> the race starts in Kings Park and pos: comes 4 times a second.
+  await page.click('.cs-modes button[data-mode="usb"]');
+  await sleep(500);
+  const port = 0;
+  const pushRace = (t) => ev((i, t) => window.__serial.ports[i].push(t), port, t);
+  const writtenAt = () => ev((i) => window.__serial.ports[i].written.length, port);
+  const boardText = () => ev((i) => window.__serial.ports[i].written, port);
+  const startLen = await writtenAt();
+  for (let i = 0; i < 6; i++) { await pushRace("race:AMY:12\nrx:p:BEN:0:0\nst:0\n"); await sleep(500); }
+  const lobby = (await boardText()).slice(startLen);
+  check("race: the board's race: puts the game in the lobby (pos:0:0 to the board)", /(^|\n)pos:0:0\n/.test(lobby), JSON.stringify(lobby.slice(-80)));
+  const goLen = await writtenAt();
+  await pushRace("rx:go:4821:kingspark:300\n");
+  for (let i = 0; i < 20; i++) { await pushRace("race:AMY:12\nrx:p:BEN:" + (i * 5) + ":0\nst:0\n"); await sleep(250); }
+  const raced = (await boardText()).slice(goLen);
+  check("race: rx:go starts the race in Kings Park after the countdown", /(^|\n)go\n[\s\S]*zone:kingspark\n/.test(raced), JSON.stringify(raced.slice(0, 120)));
+  const posLines = raced.split("\n").filter((l) => /^pos:\d+:-?\d+$/.test(l) && l !== "pos:0:0");
+  check("race: pos:DIST:LANE goes to the board during the race", posLines.length >= 4, posLines.slice(-4).join(" "));
+  await page.screenshot({ path: path.join(OUT, "real_race.png") });
+
   check("no page errors", errors.length === 0, errors.slice(0, 6).join(" | "));
   console.log(failures ? failures + " FAILED" : "ALL PASSED");
   await browser.close();

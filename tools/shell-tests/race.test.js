@@ -163,6 +163,9 @@ while True:
     await page.waitForFunction(() => window.__radioState.slice(-1)[0] === "true:11", { timeout: 8000 }).catch(() => {});
     check(label + ": starts in group 11", await ev(() => window.__radioState.slice(-1)[0] === "true:11"), await ev(() => window.__radioState.join(" ")));
     await page.click(".cs-monitor-head strong");
+    // The program shows "11" first (display.show of two digits blocks for ~0.8 s, longer on a slow simulator clock):
+    // press B like a teacher would, after the number is up. Pressed during that, it is only read with the next A.
+    await sleep(2000);
     await page.keyboard.press("b"); await sleep(1500);
     check(label + ": B -> group 12", await ev(() => window.__radioState.slice(-1)[0] === "true:12"), await ev(() => window.__radioState.join(" ")));
     check(label + ": B sends nothing", (await ev(() => window.__radioOut.length)) === 0);
