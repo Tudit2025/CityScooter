@@ -82,6 +82,71 @@ namespace CityScooter.Tests
             Assert.AreEqual(0f, turns.SkyOffset, 0.001f, "restore puts the sky back");
         }
 
+        // Lesson 1 (11/9): at UWA (size 0.72) the city floated above the horizon on a pale band, because size scaled the
+        // panorama about its middle row (~16 degrees up). Size now scales about the horizon; skyline 0 sinks the city.
+        [UnityTest]
+        public IEnumerator SkySize_KeepsTheCityOnTheHorizon_Skyline0_SinksIt()
+        {
+            yield return LoadMain();
+            GameController game = GameController.Instance;
+            TrackTheme theme = Object.Instantiate(game.track.theme);
+            District wp = System.Array.Find(theme.districts, d => d.id == "westperth");
+            District a = Object.Instantiate(wp), b = Object.Instantiate(wp);
+            a.length = b.length = new Vector2(300f, 300f);
+            a.skyYaw = 0f; a.skySize = 1f; a.skyHeight = 0f; a.skyline = 1f;
+            b.id = "southline"; b.order = 41; b.skyYaw = 0f; b.skySize = 0.8f; b.skyHeight = -2f; b.skyline = 0f;
+            theme.districts = new[] { a, b };
+            GameTuning tuning = Object.Instantiate(game.tuning);
+            tuning.obstacleChanceStart = tuning.obstacleChanceMax = tuning.hazardChanceStart = tuning.hazardChanceMax = 0f;
+            tuning.startDistrict = "westperth";
+            game.tuning = game.rider.tuning = game.track.tuning = tuning;
+            game.track.theme = theme;
+            game.EnterReady();
+            yield return null;
+            float boundary = game.track.NextBoundaryZ;
+            DistrictDirector director = DistrictDirector.Instance;
+
+            yield return RiderAt(game, boundary - 200f);
+            Assert.AreEqual(1f, director.SkylineShown, 0.001f);
+            float scale = Shader.GetGlobalFloat("_ComicSkyScale");
+            Vector4 mapping = Shader.GetGlobalVector("_ComicSkyMapping"); // ComicCityBackdrop's own values (nothing to change)
+            Assume.That(mapping.w, Is.GreaterThan(0.5f), "the panorama sky is on in Main");
+#if UNITY_EDITOR
+            // The authored sky material (a district tint may already have swapped in a runtime copy of it).
+            Material authored = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Art/ComicCity/Sky_ComicCity.mat");
+#else
+            Material authored = RenderSettings.skybox;
+#endif
+            Assert.NotNull(authored);
+            Vector4 matMapping = authored.GetVector("_ComicSkyMapping");
+            float matScale = authored.GetFloat("_ComicSkyScale");
+
+            yield return RiderAt(game, boundary);
+            Assert.AreEqual(0.5f, director.SkylineShown, 0.05f, "half sunk at the boundary");
+
+            yield return RiderAt(game, boundary + 200f);
+            Assert.AreEqual(0f, director.SkylineShown, 0.001f);
+            Camera.main.Render(); // the panorama globals are adjusted just before a camera renders
+            Assert.AreEqual(scale * 0.8f, Shader.GetGlobalFloat("_ComicSkyScale"), 0.001f, "size scales the apparent size");
+            float expected = mapping.y * 0.8f + (-2f - DistrictDirector.SkylineSinkDegrees) * Mathf.Deg2Rad;
+            Assert.AreEqual(expected, Shader.GetGlobalVector("_ComicSkyMapping").y, 0.001f, "scaled about the horizon, moved, then sunk (globals: far facades)");
+            // The sky material has its own values (they win over globals): the district copy of it carries the change.
+            Material sky = RenderSettings.skybox;
+            Assert.AreNotSame(authored, sky, "a runtime copy of the sky material");
+            StringAssert.Contains("(district)", sky.name);
+            Assert.AreEqual(matMapping.y * 0.8f + (-2f - DistrictDirector.SkylineSinkDegrees) * Mathf.Deg2Rad, sky.GetVector("_ComicSkyMapping").y, 0.001f, "the sky itself");
+            Assert.AreEqual(matScale * 0.8f, sky.GetFloat("_ComicSkyScale"), 0.001f);
+            Assert.AreEqual(matMapping.x, sky.GetVector("_ComicSkyMapping").x, 0.0001f, "yaw stays with _ComicTurn");
+
+            // The horizon row of the panorama stays on the horizon when only the size changes.
+            float m = mapping.y, k = 0.72f, span = Mathf.PI * Mathf.Max(.1f, mapping.z);
+            float vBefore = 0.5f + (0f - m) / (span * scale);
+            float vAfter = 0.5f + (0f - DistrictDirector.SkyElevation(m, k, 0f, 1f)) / (span * scale * k);
+            Assert.AreEqual(vBefore, vAfter, 0.0001f);
+            director.Restore();
+            Assert.IsFalse(RenderSettings.skybox != null && RenderSettings.skybox.name.Contains("(district)"), "restore puts the scene's sky material back");
+        }
+
         IEnumerator RiderAt(GameController game, float z)
         {
             game.rider.ResetRider(new Vector3(0f, game.track.SurfaceHeightAt(z), z));
@@ -107,7 +172,7 @@ namespace CityScooter.Tests
                 game.EnterReady();
                 yield return null;
                 float start = game.rider.transform.position.z;
-                foreach (float ahead in new[] { 30f, 140f })
+                foreach (float ahead in new[] { 0f, 30f, 140f })
                 {
                     yield return RiderAt(game, start + ahead);
                     for (int f = 0; f < 6; f++) yield return null;
@@ -123,9 +188,9 @@ namespace CityScooter.Tests
             try
             {
                 camera.targetTexture = rt;
-                var request = new UnityEngine.Rendering.RenderPipeline.StandardRequest { destination = rt };
-                for (int pass = 0; pass < 2; pass++)
-                    if (UnityEngine.Rendering.RenderPipeline.SupportsRenderRequest(camera, request)) UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera, request); else camera.Render();
+                // camera.Render, not SubmitRenderRequest: only this runs beginCameraRendering, where ComicCityBackdrop and
+                // DistrictDirector write the panorama globals (sky size, height, skyline) as in the game.
+                for (int pass = 0; pass < 2; pass++) camera.Render();
                 RenderTexture.active = rt;
                 var image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
                 image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
