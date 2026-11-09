@@ -54,7 +54,17 @@ namespace CityScooter.Tests
             Assert.AreEqual("zone:", Messages.Zone(null));
             Assert.IsTrue(Messages.IsGameMessage("zone:uwa"), "a board cannot make the game say zone:uwa");
             Assert.IsFalse(Messages.IsSayWord("zone:uwa"));
-            CollectionAssert.AreEqual(new[] { "uwa", "matilda", "kingspark", "westperth", "cbd", "quay", "mountsbay" }, Messages.ZoneIds);
+            CollectionAssert.IsSubsetOf(new[] { "uwa", "matilda", "kingspark", "westperth", "cbd", "quay", "mountsbay" }, Messages.ZoneIds);
+        }
+
+        // The protocol's id list (blocks, web monitor, docs copy it) is exactly the theme's route, in route order.
+        [Test]
+        public void ZoneIds_AreTheThemesRoute_InOrder()
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<TrackTheme>(ThemePath);
+            Assert.IsNotNull(theme);
+            string[] route = System.Array.ConvertAll(DistrictRoute.Sort(theme.districts), d => d.id);
+            CollectionAssert.AreEqual(route, Messages.ZoneIds, "run DistrictSetup, and keep Messages.ZoneIds, game-cityscooter.js DISTRICTS and shell.js ZONE_NAMES in step");
         }
 
         [Test]

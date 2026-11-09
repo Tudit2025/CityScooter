@@ -72,10 +72,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.97, b: 0.9, a: 1}
   sunIntensity: 1.5
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 5845537423148387345, guid: e11eb0d19ffcbe641a82c839301e17c5, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 5767642792712596248, guid: 843abd38465abe8408b047a23cbd8aaf, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

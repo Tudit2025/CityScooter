@@ -115,6 +115,14 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 56de9769cfc5d16419a019e63351af71, type: 2}
   - {fileID: 11400000, guid: 81133b00724c79847850e371036f4b7a, type: 2}
   - {fileID: 11400000, guid: 6a0634cef43ed2f4380576293131f5af, type: 2}
+  - {fileID: 11400000, guid: a55e770e52b0bd44fa5c86f4f21e1e50, type: 2}
+  - {fileID: 11400000, guid: db6a68e594b6f4f41beb410acac43725, type: 2}
+  - {fileID: 11400000, guid: 20d32e900c8107e44bb646ff7fa8bd23, type: 2}
+  - {fileID: 11400000, guid: 359e740f3c9e92145a203d895f767906, type: 2}
+  - {fileID: 11400000, guid: 760c25ab2e3567247ba32c2c8b955fa4, type: 2}
+  - {fileID: 11400000, guid: 08870b97dd6a6aa47a941a01775e905e, type: 2}
+  - {fileID: 11400000, guid: b6c75a787d992484fa1de205cbb32e84, type: 2}
+  - {fileID: 11400000, guid: f1541badd4dfbb34c9012da42c795c20, type: 2}
   ramps:
   - {fileID: 6008180276453059417, guid: da5a276b28583f546b8236833ae9c102, type: 3}
   - {fileID: 1138295221086410786, guid: 1155d2a9ad4829143a5273b528387d70, type: 3}
