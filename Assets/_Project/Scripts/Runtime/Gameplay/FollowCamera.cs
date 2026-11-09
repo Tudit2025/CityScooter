@@ -35,6 +35,8 @@ namespace CityScooter.Gameplay
         Quaternion _base = Quaternion.identity; // rotation before the fake-turn bank, so the bank never feeds back
         float _shake;
         float _lift; // v0.3: smoothed rise with ramp flights
+        float _pull, _dip, _dipVel; // Ramp feel (11/9): pull back during a ramp flight, dip at the landing
+        int _landings = -1;
 
         /// <summary>Crash jolt: 0..1, fades out in about half a second.</summary>
         public void Shake(float strength) => _shake = Mathf.Max(_shake, Mathf.Clamp01(strength));
@@ -45,6 +47,8 @@ namespace CityScooter.Gameplay
         {
             if (target == null) return;
             _lift = LiftTarget();
+            _pull = _dip = _dipVel = 0f;
+            _landings = _rider != null ? _rider.Landings : -1;
             transform.position = Desired();
             _base = DesiredRotation(transform.position);
             transform.rotation = WithTurn(_base);
@@ -62,7 +66,7 @@ namespace CityScooter.Gameplay
         Vector3 Desired()
         {
             Vector3 p = target.position;
-            return new Vector3((directionalFollow?0:p.x*followX)+offset.x, Ground(p.z) + offset.y + _lift, p.z + offset.z);
+            return new Vector3((directionalFollow?0:p.x*followX)+offset.x, Ground(p.z) + offset.y + _lift + _dip + _pull * 0.25f, p.z + offset.z - _pull);
         }
 
         float Ground(float z)
@@ -74,14 +78,14 @@ namespace CityScooter.Gameplay
         Vector3 LookPoint()
         {
             Vector3 p = target.position;
-            return new Vector3(p.x * followX, Ground(p.z + lookAhead) + lookHeight + _lift * airLookFollow, p.z + lookAhead);
+            return new Vector3(p.x * followX, Ground(p.z + lookAhead) + lookHeight + _lift * airLookFollow + _dip * 0.6f, p.z + lookAhead);
         }
 
         Quaternion DesiredRotation(Vector3 position)
         {
             if(!directionalFollow)return Quaternion.LookRotation(LookPoint()-position,Vector3.up);
             Vector3 p=target.position;
-            Vector3 centre=new Vector3(offset.x,Ground(p.z+lookAhead)+lookHeight+_lift*airLookFollow,p.z+lookAhead);
+            Vector3 centre=new Vector3(offset.x,Ground(p.z+lookAhead)+lookHeight+_lift*airLookFollow+_dip*0.6f,p.z+lookAhead);
             Quaternion pitch=Quaternion.LookRotation(centre-position,Vector3.up);
             float yaw=Mathf.Clamp(Mathf.Atan2(p.x-offset.x,Mathf.Max(1,lookAhead-offset.z))*Mathf.Rad2Deg,-maxYaw,maxYaw);
             return Quaternion.AngleAxis(yaw,Vector3.up)*pitch;
@@ -91,6 +95,35 @@ namespace CityScooter.Gameplay
 
         /// <summary>How much the camera is raised for a ramp flight right now (tests).</summary>
         public float AirLift => _lift;
+        /// <summary>Ramp feel: metres the camera is pulled back for a ramp flight, and dipped (negative) after a landing (tests).</summary>
+        public float PullBack => _pull;
+        public float LandingDip => _dip;
+
+        // Ramp feel (11/9): pull back a little during a ramp flight (more of the arc in the picture), and dip at the landing,
+        // springing back, deeper for a harder landing (GameTuning "Ramp feel").
+        void UpdateRampFeel(float dt)
+        {
+            if (_rider == null) return;
+            GameTuning t = _rider.tuning != null ? _rider.tuning : GameTuning.Default;
+            float pull = _rider.BigAir && !_rider.Falling ? t.rampCameraPullBack : 0f;
+            _pull = Mathf.Lerp(_pull, pull, 1f - Mathf.Exp(-(pull > _pull ? 3f : 1.6f) * dt));
+            if (_rider.Landings != _landings)
+            {
+                if (_landings >= 0 && _rider.LastLandingBig)
+                    _dipVel -= t.rampCameraLandDip * (0.3f + 0.7f * _rider.LastLandingHardness) * DipOmega * 1.4f;
+                _landings = _rider.Landings;
+            }
+            const float damping = 0.45f;
+            int n = Mathf.Clamp(Mathf.CeilToInt(dt / 0.008f), 1, 25);
+            float h = dt / n;
+            for (int i = 0; i < n; i++)
+            {
+                _dipVel += (-DipOmega * DipOmega * _dip - 2f * damping * DipOmega * _dipVel) * h;
+                _dip += _dipVel * h;
+            }
+        }
+
+        const float DipOmega = 2f * Mathf.PI * 2.2f;
 
         void LateUpdate()
         {
@@ -100,6 +133,7 @@ namespace CityScooter.Gameplay
             // Ramps and air (v0.3): rise part of the way with a flight, smoothly, and settle after landing.
             float lift = LiftTarget();
             _lift = Mathf.Lerp(_lift, lift, 1f - Mathf.Exp(-(lift > _lift ? airRiseResponse : airSettleResponse) * Time.deltaTime));
+            UpdateRampFeel(Time.deltaTime);
             Vector3 desired = Desired();
             // Forward follow is exact (no lag at high speed); sideways and height are smoothed.
             Vector3 pos = Vector3.Lerp(transform.position, desired, k);

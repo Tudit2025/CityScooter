@@ -484,7 +484,7 @@ namespace CityScooter.Gameplay
         public bool Dizzy => Time.time < _dizzyUntil;
 
         TrickKind _trick;
-        float _trickT, _dizzyUntil, _gapEndAt = -1f;
+        float _trickT, _dizzyUntil, _gapEndAt = -1f, _trickDoneAt = -10f;
         bool _trickQueued;
         int _flightTrickIndex;
         string _gapWord;
@@ -567,6 +567,7 @@ namespace CityScooter.Gameplay
             // Done: points and the comic word, then the next one if it was lined up.
             TrickKind done = _trick;
             _trick = TrickKind.None;
+            _trickDoneAt = Time.time; // Ramp feel: a stomp needs a moment to bring the nose round to the landing
             rider.TrickPose = Quaternion.identity;
             Tricks++;
             FlightTricks++;
@@ -583,6 +584,9 @@ namespace CityScooter.Gameplay
             _flightTrickIndex = 0;
             _trick = TrickKind.None;
             _trickQueued = false;
+            // Ramp feel: a pop (A just before the lip): a word on the HUD (the rider stretches and flies higher). No dust
+            // puff: left at the lip the chase camera flies straight into it, carried along it hides the scooter.
+            if (rider != null && rider.LastTakeOffPopped) GameController.Instance?.hud?.Caption("POP!", 0.9f);
         }
 
         void OnLanded(bool bigAir)
@@ -609,8 +613,13 @@ namespace CityScooter.Gameplay
                     GameController.Instance?.hud?.Flash("COMBO x" + FlightTricks + "!", "+" + bonus + " points", 1.6f);
                 }
                 if (FlightTricks > 0) Popup(theme != null ? theme.landedPopup : null, p + new Vector3(1.5f, 2.4f, 1f), rider.transform);
-                ShakeCamera(0.18f);
+                // Ramp feel: stomped (the last trick finished in time to bring the nose round): no speed lost, a little extra.
+                if (FlightTricks > 0 && Time.time - _trickDoneAt >= Tune.rampStompSettle) rider.Stomp();
+                ShakeCamera(Mathf.Lerp(0.12f, Tune.rampCameraLandShake, rider.LastLandingHardness));
             }
+            // Ramp feel: a hard landing throws up dust just ahead of the wheels (half in the road, behind the rider from the
+            // camera); it travels with the rider, so the chase camera never flies into it.
+            if (rider.LastLandingHardness > 0.4f) Popup(theme != null ? theme.dustPopup : null, p + new Vector3(0f, 0f, 0.9f), rider.transform);
             _trickQueued = false;
             GameEvents.RaiseLanded(FlightTricks > 0);
         }

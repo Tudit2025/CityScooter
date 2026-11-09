@@ -75,6 +75,57 @@ namespace CityScooter.Gameplay
         public float trickSpamWindow = 3f;
         public float trickDizzySeconds = 3f;
 
+        // ---- Ramp feel (11/9): RiderController, RampFlight, FollowCamera
+        [Header("Ramp feel (11/9): climbing costs speed, pose follows ramp and arc, suspension, pop, landing impact")]
+        [Tooltip("Riding up a ramp costs speed: speed squared loses 2 x gravity x this x the metres climbed. 0 = ramps cost no speed.")]
+        [Range(0f, 1f)] public float rampClimbCost = 0.25f;
+        [Tooltip("A climb never takes the speed below this share of the speed at the foot of the ramp (the motor keeps pushing).")]
+        [Range(0.3f, 1f)] public float rampClimbKeep = 0.8f;
+        [Tooltip("Riding down a deck (a ramp turned round) gives speed back the same way (share of gravity)...")]
+        [Range(0f, 1f)] public float rampDescentGain = 0.25f;
+        [Tooltip("...but never more than this times the normal speed.")]
+        [Range(1f, 1.5f)] public float rampDescentMaxBoost = 1.1f;
+        [Tooltip("Ramp flights: share of the forward speed lost per second (the motor cannot push in the air). Normal jumps keep their speed.")]
+        [Range(0f, 0.3f)] public float rampAirDrag = 0.02f;
+        [Tooltip("Pop: jump (A / jp) at most this many seconds before the lip and the rider pops off it: rampPopVelocity extra upwards " +
+                 "(m/s). Jumping earlier is a normal jump from the ramp surface.")]
+        [Range(0f, 1f)] public float rampPopWindow = 0.25f;
+        public float rampPopVelocity = 3f;
+        [Tooltip("Pose: metres between the wheels. The scooter pitches with the ground under both wheels, so it tips up at a ramp's " +
+                 "foot and stays tipped up over the lip (no snapping).")]
+        public float rampWheelbase = 1.1f;
+        [Tooltip("Pose in the air: share of the flight path's angle (nose up rising, level at the top, nose down falling; 1 = " +
+                 "the real angle), at most rampAirPitchMax degrees. Normal jumps use half of it.")]
+        [Range(0f, 1.5f)] public float rampAirPitchFollow = 1f;
+        public float rampAirPitchMax = 35f;
+        [Tooltip("Seconds the pitch takes to follow the ground / the flight path (smoothing).")]
+        public float rampPitchSmoothGround = 0.07f;
+        public float rampPitchSmoothAir = 0.18f;
+        [Tooltip("Suspension (squash and stretch): crouch per m/s of bump where the ground bends up (ramp foot), per m/s of " +
+                 "landing impact, and stretch per m/s of take-off (1 = a full crouch).")]
+        public float rampCrouchPerBump = 0.2f;
+        public float rampCrouchPerImpact = 0.1f;
+        public float rampStretchPerLaunch = 0.08f;
+        [Tooltip("Share of the model's height squashed at a full crouch (it stretches the other way); the spring's frequency (Hz) and damping (0..1, lower = bouncier).")]
+        [Range(0f, 0.5f)] public float rampSquash = 0.25f;
+        public float rampSuspensionHz = 2.6f;
+        [Range(0.05f, 1f)] public float rampSuspensionDamping = 0.35f;
+        [Tooltip("Landing impact = speed into the surface (m/s): soft at or below the first number, hard at or above the second. " +
+                 "Landing a ramp flight hard loses up to rampLandMaxLoss of the speed; a deck coming down meets the flight (soft).")]
+        public float rampLandSoftImpact = 6f;
+        public float rampLandHardImpact = 12f;
+        [Range(0f, 0.5f)] public float rampLandMaxLoss = 0.2f;
+        [Tooltip("Stomped: landing after a trick that finished at least rampStompSettle seconds earlier (time to bring the nose " +
+                 "round to the landing) loses no speed and gets this share extra for a moment.")]
+        [Range(0f, 0.3f)] public float rampStompBoost = 0.06f;
+        public float rampStompSettle = 0.15f;
+        [Tooltip("Camera: pulls back this many metres during a ramp flight, dips this many metres at a hard landing, and shakes " +
+                 "this much (0..1) at a hard landing (less for a soft one).")]
+        public float rampCameraPullBack = 1.2f;
+        public float rampCameraLandDip = 0.45f;
+        [Range(0f, 1f)] public float rampCameraLandShake = 0.4f;
+        // ---- end Ramp feel
+
         [Header("Track content")]
         [Tooltip("No obstacles in the first metres of a run.")]
         public float safeStartDistance = 50f;

@@ -980,15 +980,20 @@ namespace CityScooter.Gameplay
             return Mathf.Max(T.startSpeed, now, target);
         }
 
-        // The predicted flight off this ramp at this speed (what RiderController does): seconds in the air.
-        float RampFlight(Ramp r, float speed, out float vy, out float g)
+        // The predicted flight off this ramp at this speed (what RiderController does, RampFlight): seconds in the
+        // air, take-off speed upwards, gravity, speed at the lip (the climb costs some), metres flown.
+        float PredictFlight(Ramp r, float speed, out float vy, out float g, out float lipSpeed, out float metres)
         {
-            g = T.gravity * Mathf.Clamp(r.hangGravity * T.rampHangGravity, 0.1f, 2f);
-            vy = Mathf.Min(speed * r.Slope * r.launch * T.rampLaunch, T.rampMaxLaunchVelocity);
-            return (vy + Mathf.Sqrt(vy * vy + 2f * g * r.height)) / g;
+            g = RampFlight.Gravity(r, T);
+            metres = RampFlight.Distance(r, speed, T, out float seconds, out vy, out lipSpeed);
+            return seconds;
         }
 
-        float RampZoneEnd(Ramp r, float start, float speed) => start + r.Length + speed * RampFlight(r, speed, out _, out _) + T.rampLandingMargin;
+        float RampZoneEnd(Ramp r, float start, float speed)
+        {
+            PredictFlight(r, speed, out _, out _, out _, out float metres);
+            return start + r.Length + metres + T.rampLandingMargin;
+        }
 
         float LaneFor(Ramp r, float start, int lane)
         {
@@ -1096,13 +1101,13 @@ namespace CityScooter.Gameplay
         {
             int n = T.rampAirGifts;
             if (n <= 0) return;
-            float total = RampFlight(r, speed, out float vy, out float g);
+            float total = PredictFlight(r, speed, out float vy, out float g, out float lipSpeed, out _);
             for (int k = 1; k <= n; k++)
             {
                 float t = total * k / (n + 1f);
                 float feet = r.height + vy * t - 0.5f * g * t * t;
                 if (feet < 2.5f) continue;
-                float z = lip + speed * t;
+                float z = lip + RampFlight.Forward(lipSpeed, t, T);
                 Active c = ActiveAt(z);
                 if (c == null || z >= _nextZ) continue;
                 float local = z - c.StartZ;

@@ -237,19 +237,9 @@ namespace CityScooter.Tests
             Assert.IsNull(r.GetComponent<Obstacle>(), label);
         }
 
-        // Horizontal distance from the lip back down to the road (which keeps going downhill at the chunk's grade).
-        static float Flight(Ramp r, float speed, float grade)
-        {
-            float vy = speed * r.height / r.rise * r.launch, g = Gravity * r.hangGravity;
-            float t = 0f;
-            while (t < 5f)
-            {
-                t += .005f;
-                float y = r.height + vy * t - .5f * g * t * t;
-                if (y <= grade * speed * t) break;
-            }
-            return speed * t;
-        }
+        // Metres from the lip to the landing at this speed at the ramp's foot: RiderController's own maths, shared by every
+        // district test (RampFlightCheck). The flight follows the road downhill, so the grade does not change it.
+        static float Flight(Ramp r, float speed, float grade) => RampFlightCheck.Flight(r, speed);
 
         [TestCaseSource(nameof(Paths))]
         public void AnimalsAreAnimals_AndPeopleAreNotPunchable(string path)

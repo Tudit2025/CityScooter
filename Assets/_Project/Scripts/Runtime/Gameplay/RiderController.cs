@@ -16,6 +16,9 @@ namespace CityScooter.Gameplay
     /// lifts the rider; past the lip the rider flies (take-off speed upwards = speed x slope x launch, gravity x
     /// hangGravity) and lands on the road or on another ramp. On the ground inside a <see cref="RoadGap"/> the rider
     /// falls (<see cref="FellIntoGap"/>; RiderActions shows SPLASH! and ends the ride); flying over a gap is fine.
+    /// Ramp feel (11/9, GameTuning "Ramp feel", maths in <see cref="RampFlight"/>): riding up costs speed and take-off uses
+    /// the speed at the lip; A just before the lip pops (higher); the scooter pitches with the ramp and the flight path,
+    /// squashes on bumps and landings and stretches at take-off; a hard landing costs speed, a deck coming down is soft.
     /// </summary>
     public sealed class RiderController : MonoBehaviour
     {
@@ -101,8 +104,33 @@ namespace CityScooter.Gameplay
         Ramp _onRamp;
         float _groundH, _gravityScale = 1f, _flightStartZ, _fallTime;
         RoadGap _gap;
-        Vector3 _modelBasePos;
+        Vector3 _modelBasePos, _modelBaseScale = Vector3.one;
         static readonly Vector3 TrickPivot = new Vector3(0f, 0.85f, 0f);
+
+        // ---- Ramp feel (11/9): slope physics, pose, suspension, pop, landing impact (numbers: GameTuning "Ramp feel")
+
+        /// <summary>Pitch of the scooter relative to the road (degrees, nose up positive): the ramp under both wheels, the
+        /// flight path in the air, smoothed. Tricks (TrickPose) turn the model on top of it.</summary>
+        public float RampPitch => _pitch;
+        /// <summary>Suspension: 0 at rest, up to 1 crouched (squashed), below 0 stretched (take-off).</summary>
+        public float Crouch => _crouch;
+        /// <summary>A pop is lined up: A was pressed just before the lip; the rider pops off it.</summary>
+        public bool PopQueued => _popQueued;
+        /// <summary>The last take-off was a pop (A pressed just before the lip).</summary>
+        public bool LastTakeOffPopped { get; private set; }
+        /// <summary>Take-off speed upwards of the last flight (m/s).</summary>
+        public float LastLaunchVelocity { get; private set; }
+        /// <summary>Last landing: speed into the surface (m/s), how hard it was (0 soft .. 1 hard), forward speed it cost
+        /// (m/s; ramp flights only), and whether it ended a big-air flight.</summary>
+        public float LastLandingImpact { get; private set; }
+        public float LastLandingHardness { get; private set; }
+        public float LastLandingSpeedLoss { get; private set; }
+        public bool LastLandingBig { get; private set; }
+        /// <summary>Landings so far (never reset; the camera watches it for the landing dip).</summary>
+        public int Landings { get; private set; }
+
+        float _pitch, _pitchVel, _crouch, _crouchVel, _lastSlope, _footSpeed, _speedBeforeLanding, _surgeUntil = -1f;
+        bool _hadSlope, _onSlope, _popQueued;
 
         readonly Collider[] _hits = new Collider[32];
         bool _running;
@@ -118,6 +146,7 @@ namespace CityScooter.Gameplay
         {
             if (model == null) model = PlaceholderTrack.CreateRiderModel(transform).transform;
             _modelBasePos = model.localPosition;
+            _modelBaseScale = model.localScale;
         }
 
         public void ResetRider(Vector3 start)
@@ -141,6 +170,7 @@ namespace CityScooter.Gameplay
             {
                 model.localRotation = Quaternion.Euler(track != null ? track.SurfacePitchAt(start.z) : 0f, 0f, 0f);
                 model.localPosition = _modelBasePos;
+                model.localScale = _modelBaseScale;
             }
             SetSpeedLevel(0);
         }
@@ -156,6 +186,11 @@ namespace CityScooter.Gameplay
             _fallTime = 0f;
             AirTime = 0f;
             TrickPose = Quaternion.identity;
+            // Ramp feel
+            _pitch = _pitchVel = _crouch = _crouchVel = _lastSlope = _footSpeed = _speedBeforeLanding = 0f;
+            _surgeUntil = -1f;
+            _hadSlope = _onSlope = _popQueued = false;
+            LastTakeOffPopped = false;
         }
 
         public void Begin()
@@ -188,7 +223,8 @@ namespace CityScooter.Gameplay
             Braking = input.Brake || HoldBrake;
             if (Braking) Speed = Mathf.Max(BrakeFloor >= 0f ? BrakeFloor : T.brakeMinSpeed, Speed - T.brakeDeceleration * dt);
             else if (boosting) Speed = Mathf.MoveTowards(Speed, target * T.boostFactor, T.acceleration * 4f * dt);
-            else Speed = Mathf.MoveTowards(Speed, target, T.acceleration * (Speed > target ? 2f : 1f) * dt);
+            else if (_onSlope || (Airborne && BigAir)) { } // Ramp feel: on a ramp's slope and in a ramp flight, gravity and drag (below), not the motor
+            else Speed = Mathf.MoveTowards(Speed, target, T.acceleration * (Speed > target ? (Time.time < _surgeUntil ? 0.35f : 2f) : 1f) * dt);
 
             // Sideways: eased towards the steer input, clamped to the lane.
             Vector3 from=transform.position;
@@ -205,13 +241,18 @@ namespace CityScooter.Gameplay
             float ground = GroundAt(x, nextZ, road, dt, out Ramp ramp);
 
             // Jump arc (also from a ramp top: then it floats like a ramp flight).
-            if (input.Jump && !Airborne && _runTime >= T.jumpLockAtStart)
+            bool jump = input.Jump && !Airborne && _runTime >= T.jumpLockAtStart;
+            // Ramp feel: A just before the lip lines up a pop (the rider pops off the lip, higher); earlier it is a normal jump.
+            if (jump && _onRamp != null && InPopWindow(_onRamp, x, road, nextZ)) { _popQueued = true; jump = false; }
+            if (jump)
                 TakeOff(T.jumpVelocity, _onRamp != null ? HangOf(_onRamp) : 1f, false, from.z);
             else if (!Airborne && _onRamp != null && PastLip(_onRamp, x, road, nextZ))
             {
                 // Rode off the lip: fly, whatever comes after it (the road, a gap, or a deck coming back down).
+                // Take-off speed upwards comes from the speed at the lip (the climb has cost some: RampFlight).
                 Ramp was = _onRamp;
-                TakeOff(Mathf.Min(Speed * was.Slope * was.launch * T.rampLaunch, T.rampMaxLaunchVelocity), HangOf(was), true, from.z);
+                bool pop = _popQueued;
+                TakeOff(RampFlight.LaunchVelocity(was, Speed, T) + (pop ? T.rampPopVelocity : 0f), HangOf(was), true, from.z, pop);
             }
             else if (!Airborne && _groundH > 0.02f && _groundH - ground > Speed * dt * 0.7f + 0.05f)
             {
@@ -223,6 +264,8 @@ namespace CityScooter.Gameplay
             if (Airborne)
             {
                 AirTime += dt;
+                // Ramp feel: a little air drag in a ramp flight (normal jumps keep their speed, as before).
+                if (BigAir && !Braking && !boosting) Speed *= Mathf.Exp(-T.rampAirDrag * dt);
                 _vy -= T.gravity * _gravityScale * dt;
                 _y += _vy * dt;
                 // Crossing a curb in mid-air must not lift the entire jump by the curb height.
@@ -231,14 +274,20 @@ namespace CityScooter.Gameplay
                 {
                     RoadGap gap = ground <= 0.01f ? RoadGap.At(x, nextZ, road) : null;
                     if (gap != null) { StartFall(gap); }
-                    else Land(ground, ramp, nextZ);
+                    else Land(ground, ramp, nextZ, x, road);
                 }
             }
             else
             {
+                // Ramp feel: riding up a ramp costs speed, riding down a deck gives some back (RampFlight.AfterClimb).
+                if (ramp != null && _onRamp == null) _footSpeed = Speed;
+                float climb = ground - _groundH;
+                _onSlope = (ramp != null || _onRamp != null) && Mathf.Abs(climb) > 1e-4f;
+                if (_onSlope) Speed = RampFlight.AfterClimb(Speed, climb, _footSpeed, target, T);
                 _y = ground;
                 _groundH = ground;
                 _onRamp = ramp;
+                if (ramp == null) _popQueued = false;
                 RoadGap gap = ground <= 0.01f ? RoadGap.At(x, nextZ, road) : null;
                 if (gap != null) StartFall(gap);
             }
@@ -248,7 +297,8 @@ namespace CityScooter.Gameplay
 
             float lean = -_vx / Mathf.Max(0.01f, T.lateralMaxSpeed) * T.maxLean - (turn != null ? turn.Amount * T.turnRiderLean : 0f);
             _twist = Mathf.MoveTowards(_twist, 0f, 110f * dt);
-            float pitch = (track != null ? track.SurfacePitchAt(nextZ) : 0f) + ExtraPitch();
+            UpdatePose(dt, x, road, nextZ);
+            float pitch = (track != null ? track.SurfacePitchAt(nextZ) : 0f) - _pitch;
             PoseModel(Quaternion.Euler(pitch, _twist, Mathf.Clamp(lean - _twist * 0.35f, -T.maxLean - T.turnRiderLean - 8f, T.maxLean + T.turnRiderLean + 8f)));
             SetSpeedLevel(Mathf.RoundToInt(Speed / Mathf.Max(0.01f, CurrentMaxSpeed) * Messages.MaxSpeedLevel));
             if (!Falling) Sweep(from, to);
@@ -274,7 +324,7 @@ namespace CityScooter.Gameplay
             return h;
         }
 
-        void TakeOff(float vy, float gravityScale, bool fromRampLip, float fromZ)
+        void TakeOff(float vy, float gravityScale, bool fromRampLip, float fromZ, bool pop = false)
         {
             Airborne = true;
             _vy = vy;
@@ -286,13 +336,34 @@ namespace CityScooter.Gameplay
             float g = Mathf.Max(0.1f, T.gravity * gravityScale);
             float predicted = (vy + Mathf.Sqrt(Mathf.Max(0f, vy * vy + 2f * g * Mathf.Max(0f, _y)))) / g;
             BigAir = fromRampLip || predicted >= T.airMessageMinSeconds;
+            // Ramp feel: the legs push off (stretch), more for a pop; a normal hop stretches half as much.
+            LastTakeOffPopped = pop;
+            LastLaunchVelocity = vy;
+            _popQueued = _onSlope = _hadSlope = false;
+            Kick(-Mathf.Max(0f, vy) * T.rampStretchPerLaunch * (BigAir ? 1f : 0.5f));
             if (BigAir) GameEvents.RaiseAirChanged(true);
             TookOff?.Invoke(BigAir);
         }
 
-        void Land(float ground, Ramp ramp, float z)
+        void Land(float ground, Ramp ramp, float z, float x, float road)
         {
             bool big = BigAir;
+            // Ramp feel: impact = speed into the surface (a deck coming down meets the flight: soft). A hard landing from a
+            // ramp flight costs speed (normal jumps: no), every landing makes the rider crouch.
+            float slope = GroundSlope(x, z, road);
+            float impact = Mathf.Max(0f, slope * Speed - _vy);
+            LastLandingImpact = impact;
+            LastLandingHardness = Mathf.InverseLerp(T.rampLandSoftImpact, Mathf.Max(T.rampLandSoftImpact + 0.1f, T.rampLandHardImpact), impact);
+            LastLandingBig = big;
+            _speedBeforeLanding = Speed;
+            LastLandingSpeedLoss = big ? Speed * T.rampLandMaxLoss * LastLandingHardness : 0f;
+            Speed -= LastLandingSpeedLoss;
+            _footSpeed = Speed;
+            Kick(impact * T.rampCrouchPerImpact);
+            _lastSlope = slope;
+            _hadSlope = true;
+            _onSlope = false;
+            Landings++;
             _y = ground;
             _vy = 0f;
             Airborne = false;
@@ -335,26 +406,106 @@ namespace CityScooter.Gameplay
             float x = p.x + _vx * dt;
             float road = track != null ? track.SurfaceHeightAt(x, z) : 0f;
             transform.position = new Vector3(x, road + _y, z);
+            StepSuspension(dt);
             PoseModel(Quaternion.Euler(Mathf.Min(70f, 20f + _fallTime * 90f), _twist, 0f));
             SetSpeedLevel(Mathf.RoundToInt(Speed / Mathf.Max(0.01f, CurrentMaxSpeed) * Messages.MaxSpeedLevel));
         }
 
-        // Nose up on a ramp's slope, and with the flight path in the air (comic: only part of the real angle).
-        float ExtraPitch()
+        // ---- Ramp feel (11/9): pop, pose and suspension
+
+        /// <summary>Landed clean after a trick (RiderActions): the landing costs no speed, and a little extra for a moment.</summary>
+        public void Stomp()
         {
-            if (Airborne) return BigAir ? -Mathf.Atan2(_vy, Mathf.Max(4f, Speed)) * Mathf.Rad2Deg * 0.6f : 0f;
-            if (_onRamp == null) return 0f;
-            float lz = _onRamp.transform.InverseTransformPoint(transform.position).z;
-            float dir = _onRamp.transform.forward.z >= 0f ? 1f : -1f; // nose down on a deck coming back down
-            return lz < _onRamp.rise ? -Mathf.Atan(_onRamp.Slope) * Mathf.Rad2Deg * dir : 0f;
+            if (!_running || Airborne) return;
+            Speed = Mathf.Max(Speed, _speedBeforeLanding) * (1f + T.rampStompBoost);
+            LastLandingSpeedLoss = 0f;
+            _surgeUntil = Time.time + 0.8f;
+        }
+
+        // On a ramp that faces the way the rider goes, at most rampPopWindow seconds before its lip.
+        bool InPopWindow(Ramp r, float x, float road, float z)
+        {
+            if (r.transform.forward.z <= 0.5f) return false;
+            float toLip = r.Length - r.transform.InverseTransformPoint(new Vector3(x, road, z)).z;
+            return toLip >= -0.05f && toLip <= Mathf.Max(0.5f, Speed) * T.rampPopWindow;
+        }
+
+        // Slope of the ground (height above the road per metre forward) under the wheels, one wheelbase apart.
+        float GroundSlope(float x, float z, float road)
+        {
+            float half = Mathf.Max(0.05f, T.rampWheelbase * 0.5f);
+            return (SurfaceAt(x, z + half, road) - SurfaceAt(x, z - half, road)) / (2f * half);
+        }
+
+        // Height above the road under one wheel: the highest ramp there. Past the lip of the ramp being ridden the front
+        // wheel is already over the edge, but the rider still stands on the ramp: the ramp's last stretch carries on (the
+        // slope of a kicker, the flat top of a platform), so the nose does not dip at the lip.
+        float SurfaceAt(float x, float z, float road)
+        {
+            float h = Ramp.HighestAt(x, z, road, out _, out _);
+            Ramp r = _onRamp;
+            if (!Airborne && r != null && r.transform.forward.z > 0.5f && z > r.LipZ)
+            {
+                float lip = r.WorldHeightAt(x, r.LipZ - 0.02f, road, out _);
+                h = Mathf.Max(h, lip + (r.top > 0.01f ? 0f : r.Slope * (z - r.LipZ)));
+            }
+            return h;
+        }
+
+        // Pitch: with the ground under both wheels (tips up at a ramp's foot, stays up over the lip), with the flight path in
+        // the air (nose up rising, level at the top, nose down falling), smoothed. The ground bending up under the wheels
+        // (a ramp's foot) makes the rider crouch; bending down (a crest) lightens them.
+        void UpdatePose(float dt, float x, float road, float z)
+        {
+            float target;
+            if (Airborne)
+            {
+                float follow = T.rampAirPitchFollow * (BigAir ? 1f : 0.5f);
+                target = Mathf.Clamp(Mathf.Atan2(_vy, Mathf.Max(4f, Speed)) * Mathf.Rad2Deg * follow, -T.rampAirPitchMax, T.rampAirPitchMax);
+                _hadSlope = false;
+            }
+            else
+            {
+                float slope = GroundSlope(x, z, road);
+                if (_hadSlope) Kick((slope - _lastSlope) * Speed * T.rampCrouchPerBump);
+                _lastSlope = slope;
+                _hadSlope = true;
+                target = Mathf.Atan(slope) * Mathf.Rad2Deg;
+            }
+            _pitch = Mathf.SmoothDamp(_pitch, target, ref _pitchVel, Mathf.Max(0.01f, Airborne ? T.rampPitchSmoothAir : T.rampPitchSmoothGround), Mathf.Infinity, dt);
+            StepSuspension(dt);
+        }
+
+        float SpringOmega => 2f * Mathf.PI * Mathf.Max(0.5f, T.rampSuspensionHz);
+
+        // A push on the suspension: about this much crouch at its deepest (negative: stretch).
+        void Kick(float crouch) => _crouchVel += crouch * SpringOmega * 1.4f;
+
+        void StepSuspension(float dt)
+        {
+            float w = SpringOmega, d = T.rampSuspensionDamping;
+            int n = Mathf.Clamp(Mathf.CeilToInt(dt / 0.008f), 1, 25);
+            float h = dt / n;
+            for (int i = 0; i < n; i++)
+            {
+                _crouchVel += (-w * w * _crouch - 2f * d * w * _crouchVel) * h;
+                _crouch += _crouchVel * h;
+            }
+            if (_crouch > 1f) { _crouch = 1f; _crouchVel = Mathf.Min(_crouchVel, 0f); }
+            if (_crouch < -0.6f) { _crouch = -0.6f; _crouchVel = Mathf.Max(_crouchVel, 0f); }
         }
 
         void PoseModel(Quaternion baseRotation)
         {
             if (model == null) return;
+            // Squash and stretch about the feet (the riding model is one mesh): crouched = lower and a little wider.
+            float s = _crouch * T.rampSquash;
+            Vector3 squash = new Vector3(1f + s * 0.5f, 1f - s, 1f + s * 0.5f);
+            model.localScale = Vector3.Scale(_modelBaseScale, squash);
             Quaternion trick = TrickPose;
+            Vector3 pivot = Vector3.Scale(TrickPivot, squash);
             model.localRotation = baseRotation * trick;
-            model.localPosition = _modelBasePos + baseRotation * (TrickPivot - trick * TrickPivot);
+            model.localPosition = _modelBasePos + baseRotation * (pivot - trick * pivot);
         }
 
         void Sweep(Vector3 from, Vector3 to)
