@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Rockingham
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: rockingham
+  displayName: ROCKINGHAM
+  order: 140
+  length: {x: 360, y: 440}
+  chunks:
+  - {fileID: 4490940160401212600, guid: 85deadfea542bc142a1f32ea1dca72b5, type: 3}
+  - {fileID: 3982738270347189257, guid: 1cdfdcd5c39cba84da2c1f5c796d2fc7, type: 3}
+  - {fileID: 5228227591347099116, guid: 81574223f060d0540a32ad13934311b1, type: 3}
+  - {fileID: 863854385182725082, guid: 6bb00a0fe6409c743892cf7c459315ee, type: 3}
+  - {fileID: 3208741745864916457, guid: 101ddb8823d3c564fb1a96756b3e45d1, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 3891705169912771905, guid: 23020c1499a8f7840baa8feaf7137f74, type: 3}
+  exit: {fileID: 6335254512625729561, guid: 9d506043c04f7f847b31e601af42ee22, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 3165231013031548799, guid: bfcc7259f9800f04da40b2226364c283, type: 3}
+  - {fileID: 1030960037132592480, guid: 9d30242b165027c4dbdb7b225c12d76a, type: 3}
+  - {fileID: 1089340404415204334, guid: 9bbe6f584655e344bba30ac858df81ec, type: 3}
+  - {fileID: 7185797750747572894, guid: 48c5f5510d909954a9245f231070fb8d, type: 3}
+  - {fileID: 2820610760180964935, guid: 0518b47b56c5b6f438e25b62e52fa2e7, type: 3}
+  jumpObstacles:
+  - {fileID: 7185797750747572894, guid: 48c5f5510d909954a9245f231070fb8d, type: 3}
+  - {fileID: 3165231013031548799, guid: bfcc7259f9800f04da40b2226364c283, type: 3}
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 416bace6f208e294a813b975b4690f17, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  pedestrians:
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 8436716989706877074, guid: ca222d417e2556b468bd9338f8d65e09, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 1036303239612383499, guid: 8e9809eee542be54dbb9f901b9443560, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 1556135349953718603, guid: 81b8d80796792e24d9a158684a7e6a47, type: 3}
+  - {fileID: 1556135349953718603, guid: 81b8d80796792e24d9a158684a7e6a47, type: 3}
+  - {fileID: 2394471887890864931, guid: 7c5d754a99c72714abfdba68d7a2cb18, type: 3}
+  - {fileID: 5243769048306609106, guid: 997c6ddf766c4384d884ae376814730d, type: 3}
+  - {fileID: 5243769048306609106, guid: 997c6ddf766c4384d884ae376814730d, type: 3}
+  ramps:
+  - {fileID: 8143428608239775342, guid: 1b3bd987290c1874f9df8e980f2c6ce4, type: 3}
+  rampFrequency: 1.2
+  blendMeters: 150
+  fogColor: {r: 0.74, g: 0.87, b: 0.95, a: 1}
+  skyTint: {r: 0.98, g: 1, b: 1, a: 1}
+  ambientSky: {r: 0.7, g: 0.86, b: 1, a: 1}
+  ambientEquator: {r: 0.9, g: 0.9, b: 0.86, a: 1}
+  ambientGround: {r: 0.8, g: 0.74, b: 0.62, a: 1}
+  sunColor: {r: 1, g: 0.97, b: 0.9, a: 1}
+  sunIntensity: 1.5
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 5845537423148387345, guid: e11eb0d19ffcbe641a82c839301e17c5, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35

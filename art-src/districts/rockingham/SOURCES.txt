@@ -1,0 +1,45 @@
+ROCKINGHAM (district id rockingham, order 140) - 参考资料和用到了什么
+===================================================================
+
+参考帧只用来看（YouTube storyboard），存放在仓库外 D:\CityScooter-refs\rockingham\<video>\。游戏里没有任何参考图：
+所有几何都由 Assets/_Project/Scripts/Editor/Districts/RockinghamBuilder.cs 用漫画库生成（ComicPalette.mat + ComicInk.mat，
+顶点色，水面是顶点色平板）。没有商标和品牌字，咖啡馆、救援站都是无名造型。
+
+视频（-f sb0 storyboard）
+- Exploring Perth Australia: Walking Tour of Rockingham Beach 2025
+  https://www.youtube.com/watch?v=4oo2KqpzPPg  (封面 https://i.ytimg.com/vi/4oo2KqpzPPg/maxresdefault.jpg)
+  用到的：
+  - 海滨步道和人行道：浅灰铺装带深灰斜条纹（D3CFC6 / A9A59C），白色石灰岩路缘。
+  - Norfolk 松：高、直、深绿（2C5A36 / 3B6F42），一层一层水平的枝，下部树干光秃；沿着草坪成排。
+  - 草坪和海滩之间低矮的石灰岩块墙（E2D2A6，墙顶 F0E6CA），白色的沙（F2E9CF），浅处碧绿色的水（47C4C2）、远处蓝（2E9CC2）。
+  - 海边一排两层的白色咖啡馆和餐厅：山墙朝外的橙红瓦屋顶（D45A3A）、白色阳台和玻璃栏杆、一楼落地玻璃、蓝色雨篷。
+  - 彩色遮阳伞和遮阳帆（红、橙、黄、粉、青绿），户外桌椅。
+  - 海边的白色两层建筑（海上救援站一类）：一楼蓝色帆布遮阳顶，二楼一圈深色玻璃的瞭望室，屋顶天线。
+  - 栈桥：长而低的木栈桥伸进海里，两边一排细灯杆。
+  - Village Green 一带青绿色的高雕塑（细杆顶上张开成喇叭形），条纹铺装的共享街道。
+  - 白色高灯杆，横臂上两个灯头；野餐亭、游乐场和遮阳帆。
+  - 远处海平线上长而低的 Garden Island，海上的船。
+- Rockingham Western Australia in 4K | Foreshore, Coastal Drive & Point Peron Cinematic Views
+  https://www.youtube.com/watch?v=DE9XelRZhr4
+  用到的：Point Peron 低矮的石灰岩岬角和灌木、Garden Island 在海平线上的轮廓（远景），海滨咖啡馆一排红屋顶，
+  海滨的独栋房子（白墙、红瓦），路边单棵 Norfolk 松。
+- POV: Drive to Rockingham Beach Road, Perth
+  https://www.youtube.com/watch?v=5IJO_3HPXak
+  用到的：Rockingham Beach Rd 是普通的双车道路（中间双黄线），路边低矮的店铺和公寓。
+- 搜过没细看：NZ4sr73uCME, 3evDog5PEDQ, UiJPosD1f6g, yznb6k70x0Q, cB8uwbVkQOc。
+
+地标（只是装饰，没有碰撞体，不能撞、不能打）
+- 海军纪念公园（Playground 路段左侧）：砂岩纪念墙和铜牌、石台上的大黑锚、白色桅杆（横桁、信号旗）、两根旗杆。
+  只做背景：没有 Obstacle、没有碰撞体，放在人行道外的草坪上。
+- 海上救援站（VillageGreen 路段右侧，在沙滩上的石灰岩平台上）。
+- 青绿雕塑（VillageGreen）。
+- 栈桥（Jetty 路段）：路面变成木栈桥伸到水上，尽头一个木跳台（Ramp），然后 6 m 水面（RoadGap，SPLASH），再上岸。
+
+远景 FAR_Rockingham_CockburnSound（跟着骑手，没有碰撞体）
+- 右边：Cockburn Sound，近处碧绿、越远越淡（空气透视混向 C3DCE8），帆船、海豚。
+- Garden Island：右边长而低的岛，浅色石灰岩岸和灰绿灌木；Penguin Island（石灰岩崖、平顶）和 Point Peron 岬角在右前方。
+- 左边：一排排红瓦和 Colorbond 屋顶的房子、Norfolk 松、一线树林，最远处淡蓝灰的 Darling 山脉。
+- 整张远景按本场景坡度剪切，和路段里的海水高度对齐。南线不显示珀斯 CBD 天际线（skyline = 0）。
+
+动物：鹈鹕（照 MountsBayBuilder 的造型重做）、银鸥（照 QuayBuilder）。都是 animal、Person、不能打。
+障碍：海滩垃圾桶（木条围）、自行车架、条纹沙滩伞（带毛巾和包）、红色冰箱 esky、咖啡馆 A 字黑板。
