@@ -53,7 +53,7 @@ namespace CityScooter.EditorTools.Districts
         // ---- Kwinana palette (sRGB; sources in art-src/districts/kwinana/SOURCES.txt)
         static readonly Color RedEarth = H("B5603A"), RedEarthDark = H("96492B"), Gravel = H("C2AE8A"), Scrub = H("A9A472"),
             FenceGrey = H("9AA3AA"), FenceDark = H("5E676F"), Wire = H("7F8A93"), Concrete = H("C9C4B8"), KerbCap = H("E9E2CF");
-        static readonly Color TankWhite = H("EEF0EB"), TankBand = H("8DB3A4"), Steel = H("A9B2B9"), SteelDark = H("5D666E"),
+        static readonly Color TankWhite = H("EEF0EB"), TankBand = H("8DB3A4"), TankGreen = H("B9CDB4"), TankCream = H("E9DDBF"), Steel = H("A9B2B9"), SteelDark = H("5D666E"),
             PipeSilver = H("CBD1D6"), PipeYellow = H("E8C24A"), PipeGreen = H("6E9E6A"), PipeRed = H("B54A3A");
         static readonly Color FlareRed = H("D9442E"), FlareWhite = H("F2F0EA"), Flame = H("FF8A2A"), FlameCore = H("FFE066"), Smoke = H("E4E1DA");
         static readonly Color SiloWhite = H("EDEFEA"), SiloShade = H("D3D8D6"), TerminalBlue = H("2F5FA8"), TerminalBlueDark = H("22477F");
@@ -546,7 +546,7 @@ namespace CityScooter.EditorTools.Districts
                 ChainFence(d, s, 21, 40, K.Edge + .6f, s > 0);
             }
             Tank(d.Frontage, V(-22f, d.Base(33f), 33f), 6f, 9f, TankWhite, TankBand, true, 1);
-            Tank(d.Frontage, V(21f, d.Base(34f), 34f), 5f, 7f, TankWhite, H("C9B583"), true, -1);
+            Tank(d.Frontage, V(21f, d.Base(34f), 34f), 5f, 7f, TankCream, H("B5603A"), true, -1);
             Column(d.Deep, V(-40f, d.Base(30f), 30f), 2f, 26f, 2);
             Chimney(d.Deep, V(46f, d.Base(36f), 36f), 44f, 1.8f, true);
             K.Lamp(d.Props, d.Collisions, -1, d.Ground(30f), 30f);
@@ -594,12 +594,12 @@ namespace CityScooter.EditorTools.Districts
             FlareStack(d.Landmark, V(-40f, d.Base(32f), 32f), 40f);
             // right: tanks, an LPG sphere, a low pipe manifold
             Tank(d.Frontage, V(20f, d.Base(10f), 10f), 7f, 10f, TankWhite, TankBand, true, -1);
-            Tank(d.Frontage, V(22f, d.Base(31f), 31f), 6f, 12f, TankWhite, H("C9B583"), true, -1);
+            Tank(d.Frontage, V(22f, d.Base(31f), 31f), 6f, 12f, TankGreen, H("F2F0EA"), true, -1);
             Sphere(d.Frontage, V(35f, d.Base(20f), 20f), 4.5f);
             PipeRack(d.SlopedFrontage, 1, 2, 38, K.Edge + 3.2f, 1.6f);
             Chimney(d.Deep, V(-58f, d.Base(12f), 12f), 62f, 2.2f, true);
             Tank(d.Deep, V(48f, d.Base(6f), 6f), 9f, 11f, TankWhite, TankBand, false);
-            Tank(d.Deep, V(52f, d.Base(30f), 30f), 8f, 10f, TankWhite, TankBand, false);
+            Tank(d.Deep, V(52f, d.Base(30f), 30f), 8f, 10f, TankGreen, TankWhite, false);
             IndustrialLamps(d);
             d.StandardSlots();
             return d;
@@ -640,10 +640,10 @@ namespace CityScooter.EditorTools.Districts
                 Patches(d, s, 0, 40, 5f, 60f, K.Kerb, RedEarth, RedEarthDark, 6, 51 + s);
             }
             Tank(d.Frontage, V(-21f, d.Base(9f), 9f), 7f, 9f, TankWhite, TankBand, true, 1);
-            Tank(d.Frontage, V(-35f, d.Base(24f), 24f), 9f, 12f, TankWhite, H("C9B583"), false);
-            Tank(d.Frontage, V(-19f, d.Base(31f), 31f), 5.5f, 8f, TankWhite, TankBand, true, 1);
+            Tank(d.Frontage, V(-35f, d.Base(24f), 24f), 9f, 12f, TankGreen, H("F2F0EA"), false);
+            Tank(d.Frontage, V(-19f, d.Base(31f), 31f), 5.5f, 8f, TankCream, TankBand, true, 1);
             Tank(d.Frontage, V(22f, d.Base(26f), 26f), 8f, 11f, TankWhite, TankBand, true, -1);
-            Tank(d.Frontage, V(39f, d.Base(10f), 10f), 7f, 9f, TankWhite, H("C9B583"), false);
+            Tank(d.Frontage, V(39f, d.Base(10f), 10f), 7f, 9f, TankCream, H("B5603A"), false);
             // tanker loading bay on the right: a canopy on posts with a parked tanker trailer under it
             ComicMesh m = d.Frontage;
             float b = d.Base(9f);
