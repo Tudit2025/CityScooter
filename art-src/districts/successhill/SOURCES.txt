@@ -1,0 +1,70 @@
+SUCCESS HILL (district id successhill, order 300, 东线) - 参考资料和用到了什么
+====================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\successhill\。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East4SuccessHill.cs（公用部分在 East4Kit.cs、East4Builder.cs）用漫画库生成
+（ComicPalette.mat + ComicInk.mat，顶点色，水面是顶点色平板）。没有商标和品牌字，牌子只写地名。
+
+整段是铁路边的共享车道（Principal Shared Path，RoadType.PedestrianMall，没有汽车）：红色沥青、白色中线和边线，
+两边是割过的草。往东骑（+Z），铁路在右边，保护区和 Swan River 在左边。
+
+Success Hill 站（Station 路段右侧）
+- Commons: File:Success Hill railway station, April 2026.jpg
+  https://commons.wikimedia.org/wiki/File:Success_Hill_railway_station,_April_2026.jpg
+  用到的：从天桥上看的全景：红色地面白边的站台、站台上一间红色小候车棚、过轨的钢天桥和很长的坡道（黄色扶手）、
+  桥下的彩色壁画、架空线的单柱和横臂、镀锌围栏、两边高大的桉树、铁路在浅浅的切口里。
+  （真实的站台是岛式的；这里为了和前后路段的轨道对齐，做成靠车道一侧的侧式站台。）
+- Commons: File:Transperth Success Hill Train Station.jpg、
+  File:Success Hill Station, Western Australia, December 2022 11.jpg / 03.jpg
+  https://commons.wikimedia.org/wiki/Category:Success_Hill_railway_station
+  用到的：站名牌（深蓝底白字，这里写 SUCCESS HILL）、站台的灯柱和售票机、候车棚的样子。
+- 车站对面的 Federation 老房子（红砖或木板墙、带花格的前廊、铁皮屋顶、砖烟囱、白色尖桩篱笆、玫瑰）：
+  Commons: File:Houses in Success Hill on the Swan River, seen from the Fishmarket Reserve, Guildford, August 2026 01.jpg
+  和 Guildford / East Guildford 的同类房子（见那两个场景的 SOURCES.txt）。
+
+Success Hill Reserve（Reserve、Lookout 路段左侧）
+- inHerit（西澳遗产名录）Success Hill Reserve
+  https://inherit.dplh.wa.gov.au/public/inventory/details/f5d4aa9a-c9d6-4c94-9e7a-ab48bb6ca662
+  用到的：保护区在 Swan River 和 Bennett Brook 汇合处的高河岸上；对 Noongar 人来说，这里在欧洲人到来之前和之后
+  都是聚会的地方和圣地，直到 1950 年代还在这里举行 corroboree；Noongar 人相信 Waugal 在 Bennett Brook 入河的地方。
+  1827 年 Stirling 在这里上岸的说法并不准确。
+- Town of Bassendean 的本地历史页、Out and About 的 "Stories from Success Hill"
+  https://www.bassendean.wa.gov.au/our-town/about-bassendean/history-heritage.aspx
+  https://www.outandaboutfnc.com/post/stories-from-success-hill
+  用到的：保护区里有几块说明牌（历史、Aboriginal 文化、野花）；河岸很陡，保护区在高处，能看到远处的山；
+  有烧烤、野餐设施、游乐场；2012 年修了浮动码头和小路，做了河岸修复。
+- Explore Parks WA: Success Hill
+  https://exploreparks.dbca.wa.gov.au/site/success-hill
+- 怎么表现这个地方（任务书：做得庄重，一块说明牌和一圈石头即可，不做人物像）：
+  草地上一圈低矮的砂岩石块围着一片赭色砂砾地，旁边一块立石；一块斜面的说明牌，牌面上只有一条河湾的线和几行"字"。
+  没有人物、没有图腾、没有仿 Aboriginal 绘画的图案，也没有编造的 Noongar 词语。它们只是背景：没有碰撞体，不能撞、不能打。
+- 大红桉 / flooded gum（river red gum, Eucalyptus rudis 一类）：粗壮分叉的浅色光滑树干、基部一段深色粗皮，
+  开阔的橄榄绿树冠一簇一簇，枝干从中间露出来。野餐亭（四根木柱、深绿铁皮四坡顶、桌凳、砖砌烧烤台）。
+
+河和浮动码头（Lookout 路段）
+- Commons: File:Success Hill Fishing Platform on the Swan River, seen from Fishmarket Reserve, Guildford, August 2026 01.jpg
+  https://commons.wikimedia.org/wiki/File:Success_Hill_Fishing_Platform_on_the_Swan_River,_seen_from_Fishmarket_Reserve,_Guildford,_August_2026_01.jpg
+  用到的：上游的 Swan River 很窄，水是茶色发绿的（5F8272）；陡的黏土河岸（B89C70），岸上是桉树和灌木；
+  浮动的钓鱼平台：木板浮台夹在两根白帽的黑色高桩之间，一条长栈桥通到岸上；水边的枯树桩和芦苇。
+- 对岸的树带中间开一个口子，是 Bennett Brook 的河口（只在远处，示意）。水面上有黑天鹅（Swan River 的名字来源）。
+
+木栈道和缺口（Boardwalk 路段）
+- 任务书："缺口：河岸的木栈道"。车道在一条小溪入河的地方变成木栈道，尽头一个木跳台（Ramp：坡 6 m、高 1.4 m、平台 3 m），
+  然后是 6 m 宽的水面（RoadGap，横跨整条路，SPLASH），再上岸。铁路在旁边用一段钢梁桥跨过小溪。
+
+过河的桥（RiverBridge 路段）
+- 真实的 Midland 线在 Success Hill 和 Guildford 之间跨过 Swan River（铁路桥和 Guildford Rd 公路桥并排）。
+  Commons 分类 Guildford bridges  https://commons.wikimedia.org/wiki/Category:Guildford_bridges
+  用到的：低矮的梁桥、混凝土桥墩；这里做成共享车道自己的小桥（混凝土桥面、钢栏杆、路灯）和旁边的铁路钢梁桥，
+  桥上有一列电车。河从左边绕过岬角流到桥下，两岸是桉树和芦苇。
+
+远景 FAR_Successhill_SwanRiver（跟着骑手，没有碰撞体；这一段天上看不到珀斯 CBD）
+- 左边：对岸的树带、河的一段弯道、Swan Valley 的浅色草地和最早的几块葡萄园，最远是 Darling Scarp（一长条蓝绿色山脊）。
+- 右边：Bassendean / Guildford 的屋顶和桉树，更远处也是 Darling Scarp。
+- 整张远景按本场景坡度剪切。
+
+动物：太平洋黑鸭一家（一只大鸭带三只小鸭，一起走）、澳洲白鹮 ibis。都是 animal、Person、不能打。
+障碍：车道上的白色路桩（红反光带）、掉下来的桉树枝、木条围的公园垃圾桶、共享车道标志牌（可以打飞）。
+骑车的人：用 Mounts Bay Rd 现成的 PED_MountsBay_Cyclist（只读引用）。
+跳台：路段里的木栈道跳台；District.ramps 里的 RMP_Successhill_Boardwalk（木板小坡）。
+火车：B 系列样式的电车（白色车身、绿色腰线、深色窗带、黄色车门条），没有标志；只是风景，没有碰撞体。

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_Eastguildford_Birds
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 438650948263710881, guid: 3d3b5070b925c11488552d43ae4441bb, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -1.2
+    z: 20
+    yaw: 0
+  - prefab: {fileID: 6280831562564656603, guid: 23982d0885b3f6540b0c7dba4585c0db, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 1.8
+    z: 26
+    yaw: 0
+  length: 40
+  minLevel: 0
+  weight: 0.7
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 30
+  roadHalfWidth: 4
