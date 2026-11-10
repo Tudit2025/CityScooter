@@ -73,8 +73,17 @@ namespace CityScooter.Gameplay
         // ride it happens at once (the program just started), between rides the caption says it is for every ride.
         void OnOpening(string deviceId, string name, int value)
         {
-            if (RaceDirector.On) return; // ---- Radio race (v0.4): the same road for everyone (no caption: it comes every second)
             string key = deviceId ?? "?";
+            if (RaceDirector.On && !RaceAllows(name))
+            {
+                // ---- Radio race: the same road for everyone. It comes every second, so the caption shows now and then.
+                if (!_raceCaptionAt.TryGetValue(name, out float last) || Time.unscaledTime - last > 8f)
+                {
+                    _raceCaptionAt[name] = Time.unscaledTime;
+                    Caption(key, Label(name, value) + ": not in race mode");
+                }
+                return;
+            }
             Open o = _opening.Find(x => x.Device == key && x.Name == name);
             if (o != null && o.Value == value) { o.Heard = DeviceHub.Now; return; }
             if (o == null)
@@ -103,13 +112,21 @@ namespace CityScooter.Gameplay
             return hub == null || !hub.Devices.TryGetValue(device, out DeviceInfo d) || d.Connected;
         }
 
+        // ---- Item race (v0.5, docs/item-race.md): in race mode (the lobby too) the police events still work, they only
+        // change things for the rider who asked: chase, stars:N, heli, calm. Events that change the road (turn, car,
+        // slowcar, roadworks, police stop, crossing, manhole, ramp) stay ignored: everyone must get the same road.
+        public static bool RaceAllows(string name) =>
+            name == Messages.DoChase || name == Messages.DoStars || name == Messages.DoHeli || name == Messages.DoCalm;
+
+        readonly Dictionary<string, float> _raceCaptionAt = new Dictionary<string, float>();
+
         void OnTrigger(string deviceId, string name, int value)
         {
-            if (RaceDirector.On)
+            if (RaceDirector.On && !RaceAllows(name))
             {
                 // ---- Radio race (v0.4): everyone gets the same road, so programs cannot change it in race mode.
                 Dropped++;
-                _queue.Clear();
+                _queue.RemoveAll(q => !RaceAllows(q.Name));
                 Caption(deviceId ?? "?", Label(name, value) + ": not in race mode");
                 return;
             }
@@ -132,9 +149,10 @@ namespace CityScooter.Gameplay
         void OnRunStarted()
         {
             _next.Clear();
-            if (RaceDirector.On) _queue.Clear(); // ---- Radio race (v0.4): events kept from before race mode do not happen in a race
+            // ---- Radio race: road events kept from before race mode do not happen in a race (police events do, v0.5)
+            if (RaceDirector.On) _queue.RemoveAll(q => !RaceAllows(q.Name));
             ForgetOldOpenings();
-            bool opening = !RaceDirector.On && _opening.Count > 0;
+            bool opening = _opening.Exists(o => !RaceDirector.On || RaceAllows(o.Name));
             _runQueueAt = _queue.Count > 0 || opening ? Time.time + queuedDelay : -1f;
         }
 
@@ -143,12 +161,13 @@ namespace CityScooter.Gameplay
             if (_runQueueAt < 0f || Time.time < _runQueueAt || rider == null || !rider.Running) return;
             _runQueueAt = -1f;
             // Every ride's events first, then the ones sent since the last ride (so a "do:" sent between rides wins this ride).
-            if (!RaceDirector.On)
-                foreach (Open o in _opening.ToArray())
-                    if (Present(o.Device)) Run(o.Device, o.Name, o.Value);
+            bool race = RaceDirector.On;
+            foreach (Open o in _opening.ToArray())
+                if (Present(o.Device) && (!race || RaceAllows(o.Name))) Run(o.Device, o.Name, o.Value);
             var pending = new List<Pending>(_queue);
             _queue.Clear();
-            foreach (Pending p in pending) Run(p.Device, p.Name, p.Value);
+            foreach (Pending p in pending)
+                if (!race || RaceAllows(p.Name)) Run(p.Device, p.Name, p.Value);
         }
 
         bool Run(string device, string name, int value)

@@ -106,13 +106,22 @@ namespace CityScooter.Gameplay
         static readonly Color PoliceRed = new Color(1f, 0.25f, 0.2f, 1f);
 
         /// <summary>A short title in the upper middle of the screen while the ride goes on ("LOST THEM!").</summary>
-        public void Flash(string title, string sub = null, float seconds = 2.2f)
+        public void Flash(string title, string sub = null, float seconds = 2.2f) => Flash(title, sub, seconds, StarOn);
+
+        /// <summary>The same, in a colour of its own (item race: red for a rocket, cyan for the shield ...).</summary>
+        public void Flash(string title, string sub, float seconds, Color colour)
         {
             if (_flash == null) return;
             _flash.text = title;
             _flashSub.text = sub ?? "";
             _flashUntil = Time.unscaledTime + seconds;
+            _flashColour = colour;
         }
+
+        Color _flashColour = StarOn;
+        /// <summary>The flash title and its second line shown now ("" when none; tests).</summary>
+        public string FlashText => _flash != null && Time.unscaledTime < _flashUntil ? _flash.text : "";
+        public string FlashSubText => _flashSub != null && Time.unscaledTime < _flashUntil ? _flashSub.text : "";
 
         // A comic star: white fill with a dark ink edge (tinted yellow or grey by the Image colour).
         static Sprite StarSprite()
@@ -173,6 +182,9 @@ namespace CityScooter.Gameplay
             int wanted = chase != null ? chase.Wanted : 0;
             if (wanted != _shownWanted) { _starPulse = Time.unscaledTime; _shownWanted = wanted; }
             float pulse = 1f + 0.35f * Mathf.Clamp01(1f - (Time.unscaledTime - _starPulse) / 0.35f);
+            // Item race (v0.5): police in a race. The race bar has the top of the screen, so the stars sit under it, smaller.
+            bool underBar = (_barRoot != null && _barRoot.gameObject.activeInHierarchy) || (_raceBanner != null && _raceBanner.gameObject.activeInHierarchy);
+            float starY = underBar ? -148f : -28f, starSize = underBar ? 0.72f : 1f;
             for (int i = 0; i < _stars.Length; i++)
             {
                 bool show = wanted > 0;
@@ -180,8 +192,10 @@ namespace CityScooter.Gameplay
                 if (!show) continue;
                 bool on = i < wanted;
                 _stars[i].color = on ? StarOn : StarOff;
-                _stars[i].rectTransform.localScale = Vector3.one * (on && i == wanted - 1 ? pulse : 1f);
+                _stars[i].rectTransform.localScale = Vector3.one * (starSize * (on && i == wanted - 1 ? pulse : 1f));
+                _stars[i].rectTransform.anchoredPosition = new Vector2((i - 2) * 62f * starSize, starY);
             }
+            _wantedLabel.rectTransform.anchoredPosition = new Vector2(0f, underBar ? -192f : -88f);
             if (_wantedLabel.gameObject.activeSelf != wanted > 0) _wantedLabel.gameObject.SetActive(wanted > 0);
             bool cop = chase != null && chase.Chasing && chase.CopOnRoad && chase.CopGap > -4f && g.State == RunState.Running;
             _police.text = cop ? (chase.CopDanger ? "POLICE!" : "POLICE  " + Mathf.Max(0, Mathf.RoundToInt(chase.CopGap)) + " m") : "";
@@ -194,7 +208,7 @@ namespace CityScooter.Gameplay
             float left = _flashUntil - Time.unscaledTime;
             if (left <= 0f) { if (_flash.text.Length > 0) { _flash.text = ""; _flashSub.text = ""; } return; }
             float a = Mathf.Clamp01(left / 0.4f);
-            _flash.color = new Color(StarOn.r, StarOn.g, StarOn.b, a);
+            _flash.color = new Color(_flashColour.r, _flashColour.g, _flashColour.b, a);
             _flashSub.color = new Color(1f, 1f, 1f, a);
         }
 

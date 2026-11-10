@@ -52,7 +52,46 @@ namespace CityScooter.Gameplay
         public void PunchTwist(float side) => _twist = Mathf.Sign(side) * 22f;
 
         float _boostUntil = -1f, _boostReadyAt;
-        public bool Boosting => _running && Time.time < _boostUntil;
+        public bool Boosting => _running && (Time.time < _boostUntil || Time.time < _itemBoostUntil);
+
+        // ---- Item race (v0.5): RaceItems drives these (docs/item-race.md)
+        float _itemBoostUntil = -1f, _itemBoostFactor = 1f, _slowUntil = -1f, _slowFactor = 1f, _recoverUntil = -1f;
+        /// <summary>The item boost is on (stronger than "bo", no cooldown).</summary>
+        public bool ItemBoosting => _running && Time.time < _itemBoostUntil;
+        /// <summary>Slowed by oil or a bolt right now.</summary>
+        public bool ItemSlowed => Time.time < _slowUntil;
+        /// <summary>Seconds of slow-down left (0 when not slowed).</summary>
+        public float ItemSlowLeft => Mathf.Max(0f, _slowUntil - Time.time);
+        public float ItemBoostLeft => Mathf.Max(0f, _itemBoostUntil - Time.time);
+
+        /// <summary>The boost item: the speed limit times <paramref name="factor"/> for <paramref name="seconds"/>.</summary>
+        public void ItemBoost(float seconds, float factor)
+        {
+            _itemBoostUntil = Time.time + Mathf.Max(0f, seconds);
+            _itemBoostFactor = Mathf.Max(1f, factor);
+        }
+
+        /// <summary>Oil, bolt: the speed drops to <paramref name="factor"/> of what it would be for <paramref name="seconds"/>
+        /// (quickly), then comes back faster than normal. A stronger or longer slow-down replaces a weaker one.</summary>
+        public void ItemSlow(float seconds, float factor)
+        {
+            factor = Mathf.Clamp(factor, 0.05f, 1f);
+            if (Time.time < _slowUntil) factor = Mathf.Min(factor, _slowFactor);
+            _slowFactor = factor;
+            _slowUntil = Mathf.Max(_slowUntil, Time.time + Mathf.Max(0f, seconds));
+            _recoverUntil = _slowUntil + 1.5f;
+        }
+
+        /// <summary>No item boost or slow-down any more (a new ride, a respawn).</summary>
+        public void ClearItemEffects()
+        {
+            _itemBoostUntil = _slowUntil = _recoverUntil = -1f;
+            _itemBoostFactor = _slowFactor = 1f;
+        }
+
+        /// <summary>Asked just before a crash into an obstacle: true = something (the shield) took it, the rider rides on.</summary>
+        public Func<Obstacle, bool> CrashGuard { get; set; }
+        // ---- end Item race (v0.5)
         public bool BoostReady => Time.time >= _boostReadyAt;
 
         /// <summary>A short burst above the speed limit; false while it recharges.</summary>
@@ -163,6 +202,7 @@ namespace CityScooter.Gameplay
             _twist = 0f;
             _boostUntil = -1f;
             _boostReadyAt = 0f;
+            ClearItemEffects(); // ---- Item race (v0.5)
             BrakeFloor = -1f;
             HoldBrake = false;
             ClearAir();
@@ -219,10 +259,18 @@ namespace CityScooter.Gameplay
 
             // Forward speed: ramps with distance, brake pulls it down, then it recovers.
             float target = Mathf.Lerp(T.startSpeed, CurrentMaxSpeed, T.Difficulty01(Distance));
-            bool boosting = Time.time < _boostUntil;
+            // ---- Item race (v0.5): oil and bolts pull the speed down fast, the item boost is stronger than "bo".
+            bool itemBoost = Time.time < _itemBoostUntil, slowed = Time.time < _slowUntil;
+            if (slowed) target *= _slowFactor;
+            bool boosting = Time.time < _boostUntil || itemBoost;
+            float boostFactor = itemBoost ? Mathf.Max(_itemBoostFactor, Time.time < _boostUntil ? T.boostFactor : 1f) : T.boostFactor;
             Braking = input.Brake || HoldBrake;
             if (Braking) Speed = Mathf.Max(BrakeFloor >= 0f ? BrakeFloor : T.brakeMinSpeed, Speed - T.brakeDeceleration * dt);
-            else if (boosting) Speed = Mathf.MoveTowards(Speed, target * T.boostFactor, T.acceleration * 4f * dt);
+            else if (slowed && Speed > target * (boosting ? boostFactor : 1f))
+                Speed = Mathf.MoveTowards(Speed, target * (boosting ? boostFactor : 1f), Mathf.Max(24f, Speed * 2f) * dt);
+            else if (boosting) Speed = Mathf.MoveTowards(Speed, target * boostFactor, T.acceleration * (itemBoost ? 8f : 4f) * dt);
+            else if (!slowed && Time.time < _recoverUntil && Speed < target && !(_onSlope || (Airborne && BigAir)))
+                Speed = Mathf.MoveTowards(Speed, target, T.acceleration * 4f * dt);
             else if (_onSlope || (Airborne && BigAir)) { } // Ramp feel: on a ramp's slope and in a ramp flight, gravity and drag (below), not the motor
             else Speed = Mathf.MoveTowards(Speed, target, T.acceleration * (Speed > target ? (Time.time < _surgeUntil ? 0.35f : 2f) : 1f) * dt);
 
@@ -536,6 +584,8 @@ namespace CityScooter.Gameplay
                     BouncedPerson?.Invoke(obstacle);
                     continue;
                 }
+                // ---- Item race (v0.5): the shield takes the crash; the rider goes through whatever it was.
+                if (CrashGuard != null && CrashGuard(obstacle)) { PassThroughUntil = Time.time + 1f; return; }
                 HitObstacle?.Invoke(obstacle);
                 return;
             }
@@ -571,6 +621,7 @@ namespace CityScooter.Gameplay
             HoldBrake = false;
             BrakeFloor = -1f;
             _twist = 0f;
+            ClearItemEffects(); // ---- Item race (v0.5)
             ClearAir();
             if (model != null)
             {

@@ -132,7 +132,7 @@ namespace CityScooter.Gameplay
         public bool ReportAttack(Obstacle target)
         {
             if (!Running || target == null || !target.police) return false;
-            if (RaceDirector.On) return false; // ---- Radio race (v0.4): no police in race mode
+            if (!AllowedNow) return false; // ---- Item race (v0.5): not after the finish line of a race
             if (Time.time - _lastAttack < Tune.policeAttackCooldown) return false;
             _lastAttack = Time.time;
             int before = Wanted;
@@ -148,7 +148,7 @@ namespace CityScooter.Gameplay
         public void SetWanted(int stars)
         {
             if (!Running) return;
-            if (RaceDirector.On && stars > 0) return; // ---- Radio race (v0.4): no police in race mode
+            if (!AllowedNow && stars > 0) return; // ---- Item race (v0.5): not after the finish line of a race
             stars = Mathf.Clamp(stars, 0, MaxStars);
             if (stars == Wanted)
             {
@@ -159,6 +159,29 @@ namespace CityScooter.Gameplay
             ChangeWanted(stars);
             if (stars == 0) EndChase();
             else if (start) StartChase();
+        }
+
+        // ---- Item race (v0.5, docs/item-race.md): the police work in race mode too (a program's own do:chase /
+        // do:stars:N / do:heli / do:calm, attacking police, and the police item another rider sends). Being arrested or
+        // busted there is not the end of the ride: RaceDirector makes it a 3 s stop like any crash, and the wanted level
+        // goes back to 0 (the boards hear wanted:0 and chase:0, then crash and arrested / busted as usual).
+
+        /// <summary>Police may come now: always in normal play; in race mode during a practice ride and the race itself,
+        /// not once the rider is over the finish line.</summary>
+        static bool AllowedNow => !RaceDirector.On || RaceDirector.Instance.PoliceAllowed;
+
+        /// <summary>The rider crossed the finish line of a race (RaceDirector): the police go home.</summary>
+        internal void RaceOver()
+        {
+            if (Wanted != 0) ChangeWanted(0);
+            EndChase();
+        }
+
+        // A stop in a race (crash, arrest, bust): the wanted level is 0 afterwards. Call before EndChase, so the
+        // boards hear wanted:0 before chase:0.
+        void ClearWantedInRace()
+        {
+            if (RaceDirector.On && Wanted != 0) ChangeWanted(0);
         }
 
         void ChangeWanted(int stars)
@@ -233,6 +256,7 @@ namespace CityScooter.Gameplay
             // GameController has already ended the ride ("BUSTED!" comes from RiderActions.EndTitle).
             if (!Chasing) return;
             bool busted = IsChaseCar(o);
+            ClearWantedInRace();
             EndChase();
             if (busted) GameEvents.RaiseBusted();
         }
@@ -244,6 +268,7 @@ namespace CityScooter.Gameplay
             if (CopOnRoad && Mode == CopMode.Escort) _copSpeed = Mathf.Min(_copSpeed, rider.Speed);
             game.EndRun("ARRESTED!", false);
             Actions?.Cue("VEH_Horn_02", rider.transform.position);
+            ClearWantedInRace();
             EndChase();
             GameEvents.RaiseArrested(); // DeviceFeedback sends "crash" first, then "arrested"
         }
@@ -255,6 +280,7 @@ namespace CityScooter.Gameplay
             if (game == null || game.State != RunState.Running) return;
             game.EndRun("ARRESTED!", false);
             Actions?.Netted(at);
+            ClearWantedInRace();
             EndChase();
             GameEvents.RaiseArrested(); // DeviceFeedback sends "crash" first, then "arrested"
         }
@@ -266,6 +292,7 @@ namespace CityScooter.Gameplay
             if (game == null || game.State != RunState.Running) return;
             game.EndRun("BUSTED!", true);
             Actions?.Shot(at);
+            ClearWantedInRace();
             EndChase();
             GameEvents.RaiseBusted();
         }
@@ -287,6 +314,7 @@ namespace CityScooter.Gameplay
             RiderInput input = RiderInputSource.Read();
             if (!Running || !rider.Running)
             {
+                if (Running) ClearWantedInRace(); // ---- Item race (v0.5): stopped in a race (any crash): the police leave
                 if (Chasing) EndChase();
                 Coast(dt);
                 return;

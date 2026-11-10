@@ -184,10 +184,13 @@ namespace CityScooter.Gameplay
         }
 
         /// <summary>A crash in race mode: the ride goes on after a 3 s stop.</summary>
-        public void RaceCrash(string title)
+        public void RaceCrash(string title, float seconds = RaceDirector.CrashPenaltySeconds)
         {
-            Flash(string.IsNullOrEmpty(title) ? "CRASH!" : title, "+3 s  ·  back on the scooter in 3 s", 2.6f);
+            string s = Short(seconds);
+            Flash(string.IsNullOrEmpty(title) ? "CRASH!" : title, "+" + s + " s  ·  back on the scooter in " + s + " s", Mathf.Max(1.2f, seconds - 0.4f));
         }
+
+        static string Short(float seconds) => seconds.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
         static void Show(Component c, bool on) { if (c != null && c.gameObject.activeSelf != on) c.gameObject.SetActive(on); }
         static void Set(Text t, string s) { if (t != null && t.text != s) t.text = s; }
@@ -282,7 +285,7 @@ namespace CityScooter.Gameplay
                     int place = race.MyPlace(out int count);
                     Set(_racePlace, RaceDirector.Ordinal(place) + " / " + count);
                     Set(_raceClock, Seconds(race.RaceTime) + "  ·  " + Mathf.Clamp(Mathf.FloorToInt(race.rider != null ? race.rider.Distance : 0f), 0, race.Metres) + " / " + race.Metres + " m");
-                    Set(_racePenalty, race.PenaltyLeft > 0f ? "+3 s  (" + Mathf.CeilToInt(race.PenaltyLeft) + ")" : "");
+                    Set(_racePenalty, race.PenaltyLeft > 0f ? "+" + Short(race.PenaltySeconds) + " s  (" + Mathf.CeilToInt(race.PenaltyLeft) + ")" : "");
                     if (s == RaceState.Racing)
                     {
                         _raceBig.color = new Color(0.45f, 1f, 0.45f);

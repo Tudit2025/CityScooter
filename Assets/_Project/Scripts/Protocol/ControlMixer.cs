@@ -22,6 +22,7 @@ namespace CityScooter.Protocol
         int _pendingBoosts;
         int _pendingSurrenders;
         int _pendingTricks; // ---- Ramps and air (v0.3)
+        int _pendingUses; // ---- Item race (v0.5)
 
         /// <summary>v1 cartoon mode: the last "toon:" any device sent (off until a program turns it on).</summary>
         public bool Toon { get; private set; }
@@ -60,6 +61,9 @@ namespace CityScooter.Protocol
                     break;
                 case CommandKind.Trick: // ---- Ramps and air (v0.3)
                     _pendingTricks++;
+                    break;
+                case CommandKind.Use: // ---- Item race (v0.5)
+                    _pendingUses++;
                     break;
             }
         }
@@ -125,8 +129,18 @@ namespace CityScooter.Protocol
             return n;
         }
 
+        // ---- Item race (v0.5)
+        /// <summary>True if "use" arrived since the last call; clears the request (one item per frame is plenty).</summary>
+        public bool ConsumeUse()
+        {
+            if (_pendingUses <= 0) return false;
+            _pendingUses = 0;
+            return true;
+        }
+
         public void Reset()
         {
+            _pendingUses = 0;
             _pendingTricks = 0;
             Toon = false;
             _pendingPunches = 0;

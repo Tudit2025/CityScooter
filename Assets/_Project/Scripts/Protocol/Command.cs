@@ -40,6 +40,8 @@ namespace CityScooter.Protocol
         /// events as "do:"; Text = event name, Value = stars 0..5 or turn -1/1). Programs say it again about once a
         /// second, like "start:".</summary>
         Opening,
+        /// <summary>v0.5 item race: "use" use the item in hand (docs/item-race.md).</summary>
+        Use,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

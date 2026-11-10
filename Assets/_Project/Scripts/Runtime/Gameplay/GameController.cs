@@ -118,6 +118,10 @@ namespace CityScooter.Gameplay
             _race = GetComponent<RaceDirector>();
             if (_race == null && rider != null && track != null) _race = gameObject.AddComponent<RaceDirector>();
             if (_race != null) { if (_race.rider == null) _race.rider = rider; if (_race.track == null) _race.track = track; if (_race.hud == null) _race.hud = hud; }
+            // ---- Item race (v0.5): item boxes on the race road, items and what they do; nothing runs outside race mode.
+            var items = GetComponent<RaceItems>();
+            if (items == null && _race != null) items = gameObject.AddComponent<RaceItems>();
+            if (items != null) { if (items.race == null) items.race = _race; if (items.rider == null) items.rider = rider; if (items.track == null) items.track = track; if (items.hud == null) items.hud = hud; }
             EnterReady();
             Camera cam = Camera.main;
             if (cam != null && rider != null)
