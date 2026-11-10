@@ -1,0 +1,82 @@
+MCIVER (order 210) - references used by East1Builder (East1Mciver.cs, East1Rail.cs)
+Researched 2026-11-10. Nothing from these pages is in the repository or the game: links and notes only.
+"photo" = seen in the linked picture; "text" = stated on the page.
+
+LAYOUT IN THE GAME
+Wellington St runs east with the railway on the left (north) and the hospital, Wellington Square and the Mint on the
+right. Real distances are squeezed: the Mint (Hay St) and the heritage hospital buildings (Murray St) are a block south
+of Wellington St in reality and stand on the street here.
+
+McIver station
+1. https://en.wikipedia.org/wiki/McIver_railway_station
+   text: four tracks, two side platforms and an island (platforms 2/3); ground level; access by an underpass at the east
+   end; the Moore St level crossing at the west end closed in 2026 -> the platform layout of CHN_Mciver_Station, the
+   "WAY OUT" ramp down to the underpass, and the reason for the road works chunk (the crossing's removal).
+2. https://www.transperth.wa.gov.au/Using-Transperth/Station-Facilities/Stations-Maps?sid=2
+   text: "steep ramp", no parking, one ticket machine -> the walled ramp at the platform end.
+3. https://commons.wikimedia.org/wiki/File:McIver_railway_station.jpg
+   photo: small barrel-vault shelters of off-white corrugated sheet on dark posts with branching struts, white tiled
+   screen walls with poster cases, red-brown paved platforms with a yellow tactile strip, bright green validator poles
+   with white bands, an A-series set, the city towers behind -> BarrelShelter, Platform, ValidatorPoles, the A-series
+   at platform 1.
+4. https://commons.wikimedia.org/wiki/File:McIver_railway_station_platforms.jpg
+   photo: grey concrete platform faces, light grey ballast, galvanised masts and portal frames, grey palisade fence, a
+   dark-glass office block and low grey sheds to the north -> Platform faces, Portal, Palisade, MBackdrop.
+5. https://commons.wikimedia.org/wiki/File:Transperth_McIver_Train_Station.jpg
+   photo: shelter structure (posts, struts, hanging black platform-number signs with white numerals).
+6. https://commons.wikimedia.org/wiki/File:Transperth_Sets.JPG
+   photo: overhead wiring, B-series livery.
+7. https://commons.wikimedia.org/wiki/File:East_Perth_rail_crossing_2012.jpg
+   photo: the former Moore St crossing: red-and-white boom gates, crossbuck, mesh fencing -> BoomGate (two folded-up
+   booms left standing beside the works).
+13. https://en.wikipedia.org/wiki/Transperth_B-series_train (and the A-series page)
+   text: A-series run as 2-car sets, B-series as 3-car sets -> the 2-car A-series sets (cars shortened to 19 m so a
+   set fits one 40 m chunk).
+
+Royal Perth Hospital
+8. https://inherit.dplh.wa.gov.au/Public/Inventory/PrintSingleRecord/41e08960-31aa-4c4b-9b9a-a80fc508aecc
+   text: Administration Building (1890s): four storeys, red face brick with roughcast, terracotta tiles, Federation
+   Queen Anne -> AdminBuilding (roughcast top storey, half-timbered gables, tall chimneys).
+9. https://commons.wikimedia.org/wiki/File:Royal_perth_hosp_01_gnangarra.JPG
+   photo: on Wellington St a tall tan/orange brick slab with continuous white-railed balconies on every floor; opposite
+   it North Block: horizontal bands of off-white precast and dark-blue ribbon glazing with a beige brick tower; an
+   enclosed link bridge across the street in the same white bands lettered "Royal Perth Hospital"; a bus shelter under
+   it -> WardBlock, NorthBlock, LinkBridge (the name in pixel letters), the bus shelter.
+10. https://commons.wikimedia.org/wiki/File:Royal_Perth_Hospital,_2023.jpg
+   photo: tan brick, small white-framed windows, a stepped top with a white glazed strip, roof plant and flues; palms in
+   front -> the ward block's top storey, flues and the palm.
+11. https://commons.wikimedia.org/wiki/File:Kirkman_House_and_Moreton_Bay_Fig_Tree,_Royal_Perth_Hospital,_January_2021_01.jpg
+   photo: Kirkman House: two storeys, red brick with cream bands, a round-arched arcade below, a white-balustraded
+   verandah above, tile roof; the huge Moreton Bay fig with buttress roots; a fence of cream rendered piers with white
+   iron railings -> KirkmanHouse, MoretonBayFig, PierFence.
+12. https://commons.wikimedia.org/wiki/File:RPH_helipad_from_east.jpg
+   photo: flat grey roof deck with a green pad -> the helipad disc and windsock on North Block.
+
+Wellington Square (Moort-ak Waadiny)
+15. https://inherit.dplh.wa.gov.au/public/inventory/printsinglerecord/409ae7e9-c78e-4585-bc37-3f75f1a0d3c2
+   text: open grass park with mature figs round the edge -> the lawn and the figs.
+16. https://commons.wikimedia.org/wiki/Category:Wellington_Square,_Perth
+   photos: flat lawn, curving dark asphalt paths with pale concrete edging, timber-slat benches on grey frames, mulched
+   beds of strappy grasses, slim path lights, tall floodlight masts; the playground's shade net of flat discs in red,
+   orange, yellow, ochre and tan with a few green -> SquarePath, Bench, GrassTuft, PathLight, YardLight,
+   SquarePlayground.
+17. https://buggybuddys.com.au/?p=87485
+   text: playground towers, slides, climbing nets, rubber mounds -> the timber tower, slide, net and mounds.
+18. https://visitperth.com/see-and-do/cultural-sites-and-memorials/venues/mia-mias-the-wellington-square-stolen-generations-artwork
+   text: Mia Mias (Sandra Hill): five open lattice mia-mia forms round a central beacon -> MiaMias: far back in the
+   lawn, simple frames and a beacon, background only (no figures, no colliders, no label).
+
+Perth Mint
+19. https://inherit.dplh.wa.gov.au/Public/Inventory/PrintSingleRecord/f51f68d8-f303-4978-88b0-e953661bac1b
+   text: 1899, George Temple Poole, limestone walls, terracotta tiles.
+20. https://commons.wikimedia.org/wiki/File:Perth_Mint,_WA,_2023.jpg (gate: File:Perth_Mint,_March_2022_01.jpg)
+   photo: two storeys of rock-faced cream limestone, orange-red hip roofs, red brick chimneys and one tall stack, a
+   central pavilion with an arched entrance and loggia, flanking round-arched arcades with white balustrades above,
+   green doors, lawn and clipped hedges; a limestone street wall with an arched gateway and black gates with gold
+   tips, white bollards -> PerthMint, MintForecourt. The sign says THE PERTH MINT (a public building's name).
+
+NOT VERIFIED / CHOICES
+- Wellington St's tree species: not found; London planes (the kit's street tree) are used.
+- North Block's exact storey count and which block carries the helipad: sources disagree.
+- St Mary's Cathedral and the Perth Girls School are outside the area modelled.
+- Animals: Australian white ibis and pigeons (common in Perth's inner-city parks); the ambulance carries no service name.

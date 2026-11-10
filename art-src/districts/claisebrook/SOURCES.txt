@@ -1,0 +1,68 @@
+CLAISEBROOK (order 220) - references used by East1Builder (East1Claisebrook.cs, East1Rail.cs)
+Researched 2026-11-10. Nothing from these pages is in the repository or the game: links and notes only.
+"photo" = seen in the linked picture; "text" = stated on the page.
+
+LAYOUT IN THE GAME
+The station and depot are on the left; Royal St and the cove follow (the railway goes under a road bridge first). In
+reality the cove is a few hundred metres east of the line; here it is the next block.
+
+Station and depot
+1. https://en.wikipedia.org/wiki/Claisebrook_railway_station
+   text: four platforms (an island and two sides), ground level, rebuilt 2002-03 with new shelters and a footbridge, the
+   depot right beside it -> CHN_Claisebrook_Station.
+2. https://commons.wikimedia.org/wiki/File:Claisebrook_Station_%26_railway_depot_aerial_shot.jpg
+   photo: red-brown platforms with pale edges, one flat grey canopy on posts each, no station building; long enclosed
+   white ramps and a white footbridge with window strips on white columns; a long white-walled shed with a dark brown
+   low-pitch roof and one with a blue fascia; a fan of sidings behind black palisade fencing -> FlatCanopy, Footbridge
+   (lift towers, glazed span, one long enclosed ramp), DepotShed (white walls, brown roof, blue fascia), Palisade.
+3. https://en.wikipedia.org/wiki/Claisebrook_railcar_depot
+   text: 18 roads, workshops, storage roads for 25-30 sets; A-series and some B-series stabled -> the storage roads with
+   A-series and B-series sets, train noses in the shed doors.
+4. https://commons.wikimedia.org/wiki/File:Panorama_View_Of_Transperth%27s_Claisebrook_Railcar_Depot.jpg
+   photo: tall floodlight poles with clustered lamps, catenary masts, grey ballast -> YardLight, Portal, Ballast.
+5. https://pta.wa.gov.au/our-system/our-fleet
+   text: cars per set (A 2, B 3, C 6).
+6. https://commons.wikimedia.org/wiki/File:TransperthTrains-Aseries1Gen-Front.JPG
+   photo: A-series: boxy flat front, white cab end, black windscreen surround, a red band under it, ribbed stainless
+   sides, a thin green strip above the windows -> TrainLook ASeries.
+7. https://commons.wikimedia.org/wiki/File:Transperth_B-series_train_at_Thornlie_Station,_September_2026_(cropped).jpg
+   photo: B-series: raked white nose with a black mask, green swoosh on the cab side, red-orange skirt, green roof edge,
+   yellow door edges -> TrainLook BSeries.
+8. https://commons.wikimedia.org/wiki/File:Transperth_C-series_train_and_A-series_train_between_Burswood_and_Stadium_stations,_February_2023.jpg
+   photo: A-series beside a C-series (C-series are not modelled: they do not run on this line).
+
+Claisebrook Cove
+9. https://trailswa.com.au/storage/media/n0742ope5dzx/Claisebrook-Cove-Village-Art-Trail.pdf
+   text and photos: the cove's shape (a narrow mouth on the Swan between two grassy headlands, Victoria Gardens to the
+   south; the channel ends near a small round lake); the Victoria Gardens Shelter with its red-and-white striped wavy
+   roof on steel arches; the Impossible Triangle (13.5 m) at the gateway to East Perth -> RoundLake, the canal chunk,
+   VictoriaShelter; the triangle stands in EAST PERTH's entry chunk.
+10. https://scoopwebsite.blob.core.windows.net/userfiles/file/EPRA%20Claisebrook%20Brochure%20Web.pdf
+   text and photos: an inlet made from the old city drain, with moorings and jetties; pale limestone block walls, cream
+   paving, tapered pale bollards with inset lights, timber boardwalks for alfresco dining, black lamp posts, white
+   cafe umbrellas; small motor cruisers and dinghies; two and three storey townhouses in cream, ochre, peach and
+   terracotta render (the odd teal one), terracotta or dark grey tiled gables, arched windows, black metal balconies;
+   four and five storey cream apartment blocks with glass balconies near the mouth; "deciduous trees line the streets"
+   -> CoveSide, CoveBollard, CoveJetty, Cruiser, Boardwalk, TownhouseRow / Townhouse, CoveApartments, plane trees.
+11. https://yoursay.perth.wa.gov.au/trafalgar-bridge-rejuvenation-project
+   text: Trafalgar Bridge, built 1994, timber deck (re-decked 2020).
+12. https://commons.wikimedia.org/wiki/File:Claisebrook_Cove,_East_Perth,_January_2021_08.jpg
+   photo: Trafalgar Bridge: two towers, each a pair of dark cylindrical masts with cross-braces; straight white stays
+   fanning to a slender level deck; a white balustrade; a Norfolk Island pine beside it -> TrafalgarBridge, the pine
+   on the far side.
+13. https://inherit.dplh.wa.gov.au/Public/Inventory/PrintSingleRecord/ecdaed3e-9a7a-421d-81f9-34106f840cc4
+   text: the former factory/warehouse at Saunders and Glyde St (1910-20): brick walls, corrugated iron roof, now
+   apartments -> Warehouse (red brick, pale sills, loading door and hoist, saw-tooth roof, added balconies). No name on
+   it (the old department store's name is a brand).
+14. https://en.wikipedia.org/wiki/List_of_public_art_in_Western_Australia
+   text: Impossible Triangle at the East Parade roundabout.
+15. https://mail.perthwalkabout.com/Local-Area-Guide/claisebrook-cove-east-perth
+   text: Royal St is the shop and cafe street.
+
+NOT VERIFIED / CHOICES
+- Curved corrugated roofs on some townhouses and on the apartments' lift core: one curved-roof building shows in the
+  aerial; used as one of three roof types.
+- The three white needle masts near the footbridge in photo 4 could not be identified and are left out.
+- The canal crossing: the real promenade crosses the canal on a small footbridge; the missing middle (SPLASH) is the game's.
+- Trafalgar Bridge's length and height were not found; it spans the 40 m cove of the chunk.
+- Animals: Pacific black ducks and a pied cormorant (both common on the cove).

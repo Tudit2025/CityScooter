@@ -1,0 +1,85 @@
+EAST PERTH (order 230) - references used by East1Builder (East1EastPerth.cs, East1Rail.cs)
+Researched 2026-11-10. Nothing from these pages is in the repository or the game: links and notes only.
+
+LAYOUT IN THE GAME
+The shared path beside East Parade, railway on the left: the suburban island platform, then the standard gauge track
+and the long terminal platform, the Public Transport Centre behind. The river opens on the right; the path goes under
+the two river bridges to the power station. Optus Stadium, Matagarup Bridge, Gloucester Park and the WACA are really
+1-2 km to the south-east: the stadium and the bridge are brought to the foreshore chunk at reduced size (forced
+perspective), the others are left out.
+
+Station and Public Transport Centre
+1. https://en.wikipedia.org/wiki/East_Perth_railway_station
+   one suburban island platform (two tracks) on the East Parade side; a very long terminal side platform (about 650 m)
+   west of it; shelters, lifts and walkways -> the track and platform layout (ES1 / island / ES2 / standard gauge /
+   terminal platform), FlatCanopy, StationFootbridge.
+2. https://en.wikipedia.org/wiki/Public_Transport_Centre
+   opened 1976 as the Westrail Centre, Brutalist; built above and beside the terminal platform; coaches at the north
+   end; a newer control centre to the north -> TransportCentre behind the platform, the coach bays in the Platforms chunk.
+3. https://www.vincent.wa.gov.au/documents/2605/p8769-east-perth-railway-station-116-west-pde-perth
+   "large footprint five storey office block"; dark brown face brick, off-form concrete and glass; angled vertical piers
+   over the windows; corrugated metal roof; the terminal platform covered for its whole length; a footbridge to the
+   suburban platform; covered parking at the south end -> TransportCentre (long and low, concrete bands, glass ribbons,
+   angled brick fins, low metal roof), LongCanopy, ParkingDeck. The name PUBLIC TRANSPORT CENTRE is on the top band.
+4. https://inherit.dplh.wa.gov.au/Public/Inventory/Details/a412e083-ef3c-4144-a33e-0a211b5e015f
+   the same physical description (State heritage record).
+
+Trains and coaches
+5. https://en.wikipedia.org/wiki/Indian_Pacific
+   hauled by NR class locomotives; stainless steel carriages; terminates at East Perth -> the train at the terminal
+   platform across the Terminal and Concourse chunks.
+15. https://en.wikipedia.org/wiki/National_Rail_NR_class
+   single-cab hood unit, 22 m long, 4.25 m high -> Locomotive (cab behind a low nose, long hood, roof fans).
+16. https://www.railtram.com.au/the-indian-pacific-today
+   blue and yellow locomotives -> the blue hood, yellow nose and sill stripe (no emblem or lettering).
+17. https://en.wikipedia.org/wiki/Commonwealth_Railways_stainless_steel_carriage_stock
+   stainless steel carriages -> LongDistanceCar (fluted panels, small windows; the plain navy board is where a name would be).
+6. https://en.wikipedia.org/wiki/Transwa_WDA/WDB/WDC_class and 18. https://www.railtram.com.au/prospector
+   the Prospector: stainless railcars in 2-car sets with a yellow cab front -> TrainLook Prospector.
+7. https://en.wikipedia.org/wiki/Transwa and 20. https://commons.wikimedia.org/wiki/Category:Transwa_buses_in_Western_Australia
+   long-distance road coaches -> Coach (generic white coach with a navy skirt: no livery copied, no brand).
+Transperth A-series: see art-src/districts/claisebrook/SOURCES.txt (6).
+
+Across the river
+21. https://architectureau.com/articles/optus-stadium-park/
+   Optus Stadium: a broad elliptical bowl on a masonry plinth; horizontally layered bronze aluminium strips in several
+   tones; a white fabric "halo" roof on triangulated white trusses that appears to float above the wrap -> Stadium
+   (plinth, three bronze tones in bands, a dark recess, the white halo with a triangulated edge).
+22. https://en.wikipedia.org/wiki/Perth_Stadium
+   the roof covers most of the seats; the size of the bowl.
+10. https://en.wikipedia.org/wiki/Matagarup_Bridge and 23. https://www.designboom.com/architecture/perth-matagarup-bridge-parry-rosenthal-architects-07-17-2018/
+   a three-span cable-stayed footbridge hung from arches; the central arch is two "wishbones" 72 m high over a 160 m
+   span, said to look like two swans; 370 m long -> Matagarup (three arches, each a pair of tubes leaning across each
+   other, cables to a slim curved deck).
+24. https://www.westernaustralia.com/au/attraction/matagarup-bridge/61f33a2d194f0b4e2bd5400d
+   "black and white swans" -> one tube of each pair is black and one white.
+25. https://www.makmax.com.au/project/matagarup-bridge-soffit/ and 26. https://parryandrosenthal.com.au/projects/swan-river-pedestrian-bridge-western-australia/
+   exposed curved steel; lands on the East Perth bank.
+
+Bridges and power station
+8. https://en.wikipedia.org/wiki/Windan_Bridge
+   six-lane freeway bridge, 403 m, twin prestressed concrete box girders on two rows of piers, a shared path beneath.
+9. https://en.wikipedia.org/wiki/Goongoongup_Bridge
+   double-track concrete rail bridge, 407 m, parallel and 2 m away -> RiverBridges (the lower rail bridge with gantries
+   and a train, the freeway deck on twin girders, rows of piers into the river; the path goes under both).
+27. https://www.vincent.wa.gov.au/documents/2348/p3318-east-perth-power-station-11-summers-st-east-perth
+   the Summers St front: a two-storey Art Deco office block of rendered brick with a band of red face brick at the upper
+   windows and a tall square corner tower with glass-block windows; behind it the main hall in yellow and pale red
+   stucco, stepped roof heights, tall multi-paned windows between stuccoed piers, corrugated roofs; skeletal steel shed
+   frames on the freeway side -> PowerAdmin, PowerHall, SteelFrames.
+28. https://en.wikipedia.org/wiki/East_Perth_Power_Station and 30. https://developmentwa.com.au/projects/residential/east-perth-power-station
+   bounded by East Parade, Summers St, the river and the freeway; closed 1981, vacant.
+29. https://inherit.dplh.wa.gov.au/admin/api/file/bd6d2cb0-c9d1-46d3-8c26-99474877ee93
+   the chimneys were removed; the building was re-roofed and reglazed in 2004-06 -> no chimneys, sound roofs and glazing.
+Public art: https://en.wikipedia.org/wiki/List_of_public_art_in_Western_Australia and the art trail PDF in
+   art-src/districts/claisebrook/SOURCES.txt (9): the Impossible Triangle, 13.5 m, East Parade roundabout ->
+   ImpossibleTriangle in the entry chunk.
+
+NOT VERIFIED / CHOICES
+- Matagarup's colours: sources conflict (some say white arches); one black and one white tube per arch is used.
+- The Indian Pacific carriages' fluted sides and the coach livery are not confirmed by a text source.
+- The cooling-water channel across the path (the SPLASH gap) is the game's: the power station did draw river water, but
+  no channel crosses the shared path today.
+- The graffiti noise wall behind the tracks is typical of the line, not a record of a particular wall (shapes only, no words).
+- The steam locomotive in the centre's forecourt and the carriage inside are on the West Parade side and are not modelled.
+- Animals: black swans and magpies. Jacarandas are in flower (November).
