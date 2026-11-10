@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Ashfield
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: ashfield
+  displayName: ASHFIELD
+  order: 280
+  line: 
+  length: {x: 250, y: 280}
+  chunks:
+  - {fileID: 3671616741923055589, guid: 5d2cadc3ab12a3042b61b197140ccfe6, type: 3}
+  - {fileID: 6528438063200360787, guid: 97828c2a05783954ea6715da763e052a, type: 3}
+  - {fileID: 8501133022759844671, guid: 5820e5463867189468614ee25f98b9d6, type: 3}
+  - {fileID: 1937531903824895223, guid: b2a16b49da035364984f0ae790f2c765, type: 3}
+  - {fileID: 3151281825102338422, guid: a2182e747d415a54c984e1bbb137255a, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 8329084372320395526, guid: 0c9bc77ec420ad245b3cd6733f6ef736, type: 3}
+  exit: {fileID: 7146434053117733471, guid: f8814e7be108cc046bf71692b08e30e0, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 759709033314392771, guid: e429641f0b55c2a41a9069c278ccecea, type: 3}
+  - {fileID: 6148141294378158432, guid: 298babb5b07bc5041b55a897c2ed7a66, type: 3}
+  - {fileID: 369622725109688032, guid: 3af4685d47a9b874484d73c47734259d, type: 3}
+  - {fileID: 6473919861225010164, guid: 21cdbe6e5e3b8a345bc556e6c49c7b01, type: 3}
+  jumpObstacles:
+  - {fileID: 759709033314392771, guid: e429641f0b55c2a41a9069c278ccecea, type: 3}
+  - {fileID: 369622725109688032, guid: 3af4685d47a9b874484d73c47734259d, type: 3}
+  - {fileID: 6473919861225010164, guid: 21cdbe6e5e3b8a345bc556e6c49c7b01, type: 3}
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  pedestrians:
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 5269257977654849716, guid: b0829f5f782ffbf45b7b77bb8e0a3c56, type: 3}
+  - {fileID: 5398909825911874716, guid: 55fde7f05ae123b4690b5ed1d25bf2fd, type: 3}
+  - {fileID: 5398909825911874716, guid: 55fde7f05ae123b4690b5ed1d25bf2fd, type: 3}
+  - {fileID: 313263942822467830, guid: 19e5aa4eaf13ce44a997dcdb02293a7d, type: 3}
+  - {fileID: 313263942822467830, guid: 19e5aa4eaf13ce44a997dcdb02293a7d, type: 3}
+  - {fileID: 4590536470810622769, guid: e84e54675b5a4b145b35c86af7e1ed77, type: 3}
+  - {fileID: 4590536470810622769, guid: e84e54675b5a4b145b35c86af7e1ed77, type: 3}
+  ramps:
+  - {fileID: 5866836656611996001, guid: fd505edd6e5e5024ca7ef3dfee05253c, type: 3}
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.7, g: 0.82, b: 0.9, a: 1}
+  skyTint: {r: 0.99, g: 1, b: 1, a: 1}
+  ambientSky: {r: 0.7, g: 0.85, b: 0.95, a: 1}
+  ambientEquator: {r: 0.88, g: 0.9, b: 0.82, a: 1}
+  ambientGround: {r: 0.66, g: 0.66, b: 0.5, a: 1}
+  sunColor: {r: 1, g: 0.97, b: 0.88, a: 1}
+  sunIntensity: 1.4
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 29426205651090430, guid: 0f98afc70398a4540bb979a61ce5bb15, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35

@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Bassendean
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: bassendean
+  displayName: BASSENDEAN
+  order: 290
+  line: 
+  length: {x: 250, y: 280}
+  chunks:
+  - {fileID: 6905676566241336563, guid: 5b1ed43dba9d6b6428bdb044b18e341d, type: 3}
+  - {fileID: 7783900598469560636, guid: 1e6d2d8f140d833469c6be26845ca14f, type: 3}
+  - {fileID: 9206095323850782649, guid: 099dfcee56aa47c4796f3e7618bd67a5, type: 3}
+  - {fileID: 2804339337878023337, guid: d4ddaa7a5af46c14ca30c471e0210055, type: 3}
+  - {fileID: 6179606556929413219, guid: 21f035ab8bb49d84e8ac54aee976c24b, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 5189725786034215844, guid: 65c9461a187c57547ab04eba9499804d, type: 3}
+  exit: {fileID: 4484406283966544467, guid: 264c3523493013e49807991100dc65f5, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 5746794400638863987, guid: 12c63e3d04f1c6941883f77f78934675, type: 3}
+  - {fileID: 6943329288581113782, guid: 5882753ea3a38a5438123da6a87327ba, type: 3}
+  - {fileID: 3212630356238131184, guid: 534de2ef01a209d4996212fb160eccce, type: 3}
+  - {fileID: 7785238917868130214, guid: ddd884b443cd0e3478a0080d4d118357, type: 3}
+  jumpObstacles:
+  - {fileID: 3212630356238131184, guid: 534de2ef01a209d4996212fb160eccce, type: 3}
+  - {fileID: 6943329288581113782, guid: 5882753ea3a38a5438123da6a87327ba, type: 3}
+  - {fileID: 5746794400638863987, guid: 12c63e3d04f1c6941883f77f78934675, type: 3}
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 416bace6f208e294a813b975b4690f17, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  pedestrians:
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 1036303239612383499, guid: 8e9809eee542be54dbb9f901b9443560, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 2351666941225611062, guid: aa3f24a3d6c2e7f4e928dc036d4903ca, type: 3}
+  - {fileID: 2351666941225611062, guid: aa3f24a3d6c2e7f4e928dc036d4903ca, type: 3}
+  - {fileID: 6740795281105299584, guid: 8420245a3583d6149addfa4e7f7ded02, type: 3}
+  ramps:
+  - {fileID: 566444459963069406, guid: 06c6d4526fa923340bf5e39fa6f8a1a0, type: 3}
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.7, g: 0.8, b: 0.93, a: 1}
+  skyTint: {r: 1, g: 0.99, b: 0.97, a: 1}
+  ambientSky: {r: 0.7, g: 0.82, b: 0.97, a: 1}
+  ambientEquator: {r: 0.92, g: 0.88, b: 0.8, a: 1}
+  ambientGround: {r: 0.74, g: 0.62, b: 0.52, a: 1}
+  sunColor: {r: 1, g: 0.95, b: 0.85, a: 1}
+  sunIntensity: 1.45
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 7418529356159899106, guid: e7b788007b0d08342b8237b25af7a440, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
