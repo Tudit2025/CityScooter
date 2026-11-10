@@ -215,6 +215,79 @@ function installFakeSerial() {
   rlog = await logText();
   check("pos: printed by a board: hint that it comes FROM the game", rlog.some((x) => /cs-l-print/.test(x) && x.includes("pos:12:0") && /FROM the game/.test(x)));
   check("p: printed by a board: hint to use radio.send", rlog.some((x) => /cs-l-print/.test(x) && x.includes("p:AMY:12:0") && /radio\.send/.test(x)));
+
+  // ---- item race (11/10, docs/item-race.md): item:/hit:/blocked:/tx: from the game, "use" from the board, rx:i:…
+  {
+    const toBoard = (l) => ev((l) => window.CityScooterShell.sendToDevices("*", l), l);
+    // (old rows are marked, not counted: the monitor drops its oldest rows when it is full)
+    const markSeen = () => ev(() => document.querySelectorAll("#cs-log .cs-line").forEach((r) => { r.dataset.seen = "1"; }));
+    const fresh = () => ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-seen])")].map((r) => r.className + " :: " + r.textContent));
+    await markSeen();
+    const w1 = (await ev((i) => window.__serial.ports[i].written, p)).length;
+    await push(p, "use\n"); // before the game gave any item
+    await sleep(300);
+    let ilog = await fresh();
+    check("use with no item: a game-style note with a hint, not a student print",
+      ilog.some((x) => /cs-l-game/.test(x) && x.includes("usb1use: no item to use") && /item box/.test(x)) && !ilog.some((x) => /cs-l-print/.test(x)), ilog.join(" | "));
+    await toBoard("item:rocket");
+    for (let i = 0; i < 3; i++) { await toBoard("tx:i:AMY:rocket:BEN:3"); await sleep(150); } // the game says each tx: 3 times
+    await toBoard("hit:bolt"); await toBoard("hit:oil"); await toBoard("blocked:rocket");
+    await sleep(300);
+    const sent = (await ev((i) => window.__serial.ports[i].written, p)).slice(w1);
+    check("item:, tx: (all 3), hit: and blocked: are written to the board",
+      sent === "item:rocket\n" + "tx:i:AMY:rocket:BEN:3\n".repeat(3) + "hit:bolt\nhit:oil\nblocked:rocket\n", JSON.stringify(sent));
+    ilog = await fresh();
+    const gameLine = (text, hint) => ilog.filter((x) => /cs-l-game/.test(x) && x.includes("game" + text + "← ") && hint.test(x)).length;
+    check("item:rocket from the game: a game line that says nothing happens until the program says use", gameLine("item:rocket", /until your program says use/) === 1, ilog.join(" | "));
+    check("tx: said 3 times in 0.3 s is shown once, with what the board does with it", gameLine("tx:i:AMY:rocket:BEN:3", /sends this on by radio/) === 1,
+      ilog.filter((x) => /tx:/.test(x)).join(" | "));
+    check("hit: and blocked: from the game are game lines with a hint",
+      gameLine("hit:bolt", /hit you/) === 1 && gameLine("hit:oil", /rode over oil/) === 1 && gameLine("blocked:rocket", /shield stopped it/) === 1, ilog.join(" | "));
+    // the board uses it: one note, even when the program says use every loop
+    const u0 = await ev(() => window.__fakeUnity.total);
+    await push(p, "use\nuse\nUSE\n");
+    await sleep(300);
+    ilog = await fresh();
+    check("use reaches Unity", (await ev((n) => window.__fakeUnity.since(n), u0)).filter((x) => /^usb1\|use$/i.test(x)).length === 3);
+    check("use with an item: one game-style note that names the item", ilog.filter((x) => /cs-l-game/.test(x) && x.includes("usb1uses its item: rocket")).length === 1
+      && !ilog.some((x) => /cs-l-print/.test(x)), ilog.filter((x) => /use/.test(x)).join(" | "));
+    await markSeen();
+    await toBoard("item:none");
+    await push(p, "use\n"); // still holding the button just after the item went: no "no item" note
+    await sleep(300);
+    ilog = await fresh();
+    check("item:none from the game: you have no item now", ilog.some((x) => /cs-l-game/.test(x) && x.includes("gameitem:none") && /no item now/.test(x)), ilog.join(" | "));
+    check("use just after the item was used: no \"no item\" note", !ilog.some((x) => x.includes("no item to use")), ilog.join(" | "));
+    await sleep(2100);
+    await push(p, "use\nuse\n"); await sleep(300); await push(p, "use\n"); await sleep(300);
+    ilog = await fresh();
+    check("use later with no item: noted once", ilog.filter((x) => x.includes("usb1use: no item to use")).length === 1, ilog.join(" | "));
+    // rx:i:… = items the board heard by radio: counted in the summary, each one (sender + number) noted once
+    await markSeen();
+    const i0 = await ev(() => window.__fakeUnity.total);
+    await push(p, "rx:i:BEN:rocket:AMY:3\n".repeat(3) + "rx:i:BEN:oil:1234:-2:4\n".repeat(3) + "rx:i:CHLOE:bolt:5\nrx:i:BEN:police:CHLOE:6\nrx:i:BEN:banana:7\n");
+    await sleep(1300);
+    ilog = await fresh();
+    check("every rx:i: line reaches Unity", (await ev((n) => window.__fakeUnity.since(n), i0)).filter((x) => x.startsWith("usb1|rx:i:")).length === 9);
+    const radioLine = (text) => ilog.filter((x) => /cs-l-radio/.test(x) && x.includes("usb1radio: " + text)).length;
+    check("rx:i: rocket at this board's race name: noted once, \"that is you!\"", radioLine("BEN used rocket on AMY← that is you!") === 1, ilog.join(" | "));
+    check("rx:i: oil: where it was dropped", radioLine("BEN dropped oil at 1234 m") === 1 && !ilog.some((x) => /dropped oil.*that is you/.test(x)), ilog.join(" | "));
+    check("rx:i: bolt, and police at someone else", radioLine("CHLOE used bolt") === 1 && radioLine("BEN used police on CHLOE") === 1
+      && !ilog.some((x) => /used (bolt|police on CHLOE).*that is you/.test(x)), ilog.join(" | "));
+    const isum = ilog.filter((x) => /cs-l-radio/.test(x) && /messages\/s/.test(x));
+    check("rx:i: counts in the radio summary; one that is not an item message is the \"other\"", isum.length === 1
+      && /radio: 9 messages\/s from BEN, CHLOE · 1 other, e\.g\. "i:BEN:banana:7"← the game only reads p:, f:, go: and i: in rx:/.test(isum[0]), isum.join(" | "));
+    check("no rx:i: line by line in the monitor", !ilog.some((x) => / :: usb1rx:/.test(x)));
+    // printed the wrong way round: a hint
+    await markSeen();
+    await push(p, "item:rocket\nhit:rocket\nblocked:rocket\ntx:i:AMY:bolt:1\ni:AMY:rocket:BEN:3\n");
+    await sleep(400);
+    ilog = await fresh();
+    check("item: / hit: / blocked: / tx: printed by a board: hint that they come FROM the game, and how to use an item",
+      ["item:rocket", "hit:rocket", "blocked:rocket", "tx:i:AMY:bolt:1"].every((l) => ilog.some((x) => /cs-l-print/.test(x) && x.includes("usb1" + l + "← ") && /FROM the game/.test(x) && /print\("use"\)/.test(x))), ilog.join(" | "));
+    check("i: printed by a board: hint that it travels by radio (tx:, radio.send)", ilog.some((x) => /cs-l-print/.test(x) && x.includes("usb1i:AMY:rocket:BEN:3← ") && /radio\.send/.test(x) && /tx:/.test(x)), ilog.join(" | "));
+    await toBoard("item:none"); // (a board printing item: does not change what the game gave it)
+  }
   await page.screenshot({ path: path.join(OUT, "shell_usb.png") });
 
   // USB robustness (lesson 1, 11/9: boards dropped out until the page was refreshed)

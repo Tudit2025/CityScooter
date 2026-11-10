@@ -10,7 +10,8 @@ and the real official MicroPython simulator (needs internet). Screenshots go to 
     npm run blocks   # Blocks editor: generated MicroPython (CPython syntax check), runs in the simulator on V2 and forced V1
     npm run send     # "Send to micro:bit": Web Serial bridged to fake MicroPython boards (fake_repl_board.py, needs python)
     npm run race     # radio race: microbit/race.py and race_start.py compile and run in the simulator; robot racers;
-                     # the simulator's radio_input format (\x01\x00\x01 header)
+                     # the simulator's radio_input format (\x01\x00\x01 header); item race: A+B = use, tx: goes out
+                     # by radio, robots using a rocket or a bolt (the last check waits up to 45 s for one)
     npm run build    # a Unity Web build in Builds/Web: Unity loads, USB and Simulator rides, messages back to devices
                      # or: node build.test.js https://cityscooter.vercel.app ../labcheck/labcheck.py out
 

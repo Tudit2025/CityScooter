@@ -50,8 +50,12 @@ while True:
     if button_a.was_pressed():
         print("jp")
 
-    # Brake: send "br" every loop while B is held down.
-    if button_b.is_pressed():
+    # A and B together: use the item you picked up in the race.
+    # (An item is never used by itself: your program has to say "use".)
+    # B alone: brake. Send "br" every loop while B is held down.
+    if button_a.is_pressed() and button_b.is_pressed():
+        print("use")
+    elif button_b.is_pressed():
         print("br")
 
     # About once a second (20 loops x 50 ms): say hello, and that you want to race.
@@ -74,6 +78,10 @@ while True:
         elif msg.startswith("fin:"):
             # fin:72.35 = you crossed the finish line in 72.35 seconds.
             radio.send("f:" + NAME + ":" + msg[4:])
+        elif msg.startswith("tx:"):
+            # tx:i:AMY:rocket:BEN:3 = you used an item. The game wrote the
+            # radio message: send everything after "tx:" to your race.
+            radio.send(msg[3:])
 
     # Radio: pass everything you heard to the game, so it can draw the others.
     # Read until the queue is empty: if it fills up, new messages are lost.

@@ -2,7 +2,9 @@
  * Blocks send st:/jp/br (v1: pu/bl, police: sur) and react to the game's crash/gift/go/spd:N (v1: ko/warn:/turn:;
  * police 11/8: wanted:N, chase:, cop:N, heli:, inc:, arrested, busted, lost; v0.3 ramps: trick, do:ramp, air:, land:;
  * v0.3 districts: zone:, and start:<id> to pick where rides start; radio race 11/9: race:NAME:GROUP, pos:/fin: from
- * the game relayed by radio as p:/f:, rx:<what the radio heard>, go: from the host, see docs/radio-race.md).
+ * the game relayed by radio as p:/f:, rx:<what the radio heard>, go: from the host, see docs/radio-race.md;
+ * item race 11/10: item:<name> / hit:<name> from the game, "use", tx:<radio message> relayed by radio, see
+ * docs/item-race.md).
  * The generated message reader is the same buffered messages() as microbit/starter.py (uart.readline() can return
  * half a line).
  * A pack for another game copies this file's shape: blocks, generators, isHat, globals, helpers, loopTail,
@@ -45,6 +47,12 @@
     this.getField("NAME").setValidator((v) => raceName(v) || null); // "amy!" shows as AMY; an empty name is refused
   });
   const intField = (b, name, lo, hi) => String(Math.max(lo, Math.min(hi, Math.round(Number(b.getFieldValue(name)) || 0))));
+
+  // ---- Items (item race, 11/10; docs/item-race.md): in a race the game gives you an item (item:rocket) when you ride
+  // through an item box. Nothing happens until the program says "use". hit:<name> = an item hit you.
+  const ITEMS = ["boost", "shield", "oil", "rocket", "bolt", "police"];
+  // Student variables must not reuse these names (the same as the pack's `reserved` list below).
+  window.python.pythonGenerator.addReservedWords("my_item,hit_item");
 
   const BLOCKS = [
     { type: "cs_steer", message0: "steer %1", args0: [{ type: "input_value", name: "VALUE", check: "Number" }],
@@ -118,7 +126,7 @@
       previousStatement: null, nextStatement: null, style: "game_blocks", extensions: ["cs_race_name"],
       tooltip: "Put it in \"on start\". Your race number is your radio group (look at the card on your computer): only micro:bits in the same group hear each other. About once a second your program tells the game you want to race, with your name (1-5 letters or digits, everyone in a race needs a different one). Python: print(\"race:AMY:12\")" },
     { type: "cs_race_send", message0: "send my position by radio", previousStatement: null, nextStatement: null, style: "game_blocks",
-      tooltip: "Put it in \"on start\". In a race the game tells your micro:bit where you are 4 times a second (pos:1234:-2); this sends it by radio to everyone in your race (p:AMY:1234:-2). After the finish line it sends your time (f:AMY:72.35). Python: radio.send(\"p:\" + race_name + \":\" + msg[4:])" },
+      tooltip: "Put it in \"on start\". In a race the game tells your micro:bit where you are 4 times a second (pos:1234:-2); this sends it by radio to everyone in your race (p:AMY:1234:-2). After the finish line it sends your time (f:AMY:72.35). It also sends the items you use to the others: the game says tx:…, your micro:bit sends it by radio. Python: radio.send(\"p:\" + race_name + \":\" + msg[4:])" },
     { type: "cs_race_relay", message0: "pass radio messages to the game", previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "Put it in \"on start\". Every loop your program reads everything your micro:bit heard by radio and passes it on to the game (rx:p:BEN:1200:0), so the game can draw the other riders. Without it you race alone. Python: print(\"rx:\" + got_radio)" },
     { type: "cs_race_start", message0: "start a race from %1 for %2 m",
@@ -126,6 +134,25 @@
         { type: "field_number", name: "METRES", value: 2000, min: 300, max: 5000, precision: 1 }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "Put it inside \"when shaken\" (or a button you don't use for riding). Only the host of each race needs it. It sends go: by radio 5 times in half a second: every game in your race (yours too) counts down 3-2-1 and everyone rides the same road, from this place, this many metres (300-5000). Python: radio.send(\"go:4821:uwa:2000\")" },
+    // ---- Items (item race): two hats, three values and "use my item"
+    { type: "cs_on_item", message0: "when I get an item %1 %2",
+      args0: [{ type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "game_blocks",
+      tooltip: "Runs when you pick up an item from an item box in a race. The item is NOT used by itself: it waits until your program says \"use my item\" (for example when button B is pressed). \"my item\" tells you which one you got. The game sends item:rocket. Python: my_item = msg[5:]" },
+    { type: "cs_item", message0: "my item", output: "String", style: "game_blocks",
+      tooltip: "The item you hold in a race: boost, shield, oil, rocket, bolt or police. It is none when you have no item. Holding an item does nothing until your program says \"use my item\". Python: my_item" },
+    { type: "cs_item_is", message0: "my item is %1",
+      args0: [{ type: "field_dropdown", name: "ITEM", options: ITEMS.concat("none").map((i) => [i, i]) }],
+      output: "Boolean", style: "game_blocks",
+      tooltip: "True while you hold this item. Example: if my item is shield, keep it for later; else use my item. An item is only used when your program says \"use my item\". Python: my_item == \"rocket\"" },
+    { type: "cs_use", message0: "use my item", previousStatement: null, nextStatement: null, style: "game_blocks",
+      tooltip: "Use the item you hold in a race, for example inside \"when button B is pressed\". Items are never used by themselves: your program has to say use. With no item it does nothing. Python: print(\"use\")" },
+    { type: "cs_on_hit", message0: "when an item hits me %1 %2",
+      args0: [{ type: "input_dummy" }, { type: "input_statement", name: "DO" }],
+      style: "game_blocks",
+      tooltip: "Runs when an item hits you in a race: a rocket, a bolt, the police, or oil you rode over. \"item that hit me\" tells you which one. The game sends hit:rocket. Python: hit_item = msg[4:]" },
+    { type: "cs_hit_item", message0: "item that hit me", output: "String", style: "game_blocks",
+      tooltip: "The last item that hit you in a race: rocket, bolt, police or oil. It is none before the first hit. Python: hit_item" },
   ];
 
   // In "on start", "make the game start ..." and "set the wanted stars to ..." set up EVERY ride (11/9): "on start" runs
@@ -184,6 +211,14 @@
       g.definitions_.import_random = "import random";
       return 'start_race("' + b.getFieldValue("ZONE") + '", ' + intField(b, "METRES", 300, 5000) + ")\n";
     },
+    // ---- Items (item race). my_item follows every item: message (item:none too); hit_item every hit: message. The
+    // variables exist only when a block uses them, like wanted_level.
+    cs_on_item: (b) => { MB.setFlag("usesItem"); MB.addSection("msg:item", MB.statements(b, "DO")); return ""; },
+    cs_item: () => { MB.setFlag("usesItem"); return ["my_item", Order.ATOMIC]; },
+    cs_item_is: (b) => { MB.setFlag("usesItem"); return ['(my_item == "' + b.getFieldValue("ITEM") + '")', Order.ATOMIC]; },
+    cs_use: () => 'print("use")\n',
+    cs_on_hit: (b) => { MB.setFlag("usesHit"); MB.addSection("msg:hit", MB.statements(b, "DO")); return ""; },
+    cs_hit_item: () => { MB.setFlag("usesHit"); return ["hit_item", Order.ATOMIC]; },
   };
 
   // "start a race from … for … m": the same road for everyone (a random seed), sent 5 times because radio messages
@@ -226,7 +261,8 @@
     reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance,start_zone,"
       + "race_name,send_position,pass_radio,start_race,every_ride,ride_event,toon_mode",
     isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted"
-      || type === "cs_on_zone", // ---- Districts (v0.3)
+      || type === "cs_on_zone" // ---- Districts (v0.3)
+      || type === "cs_on_item" || type === "cs_on_hit", // ---- Items (item race)
     // wanted_level / police_distance (and the race variables) only when a block uses them, so Lesson 1 programs look
     // the same as before.
     globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
@@ -236,7 +272,9 @@
       ctx.flags.usesToon ? 'toon_mode = ""  # cartoon mode: "1" on, "0" off ("" = never set)' : null,
       ctx.flags.race || ctx.flags.raceSend ? 'race_name = ""  # your name in the race ("join race")' : null,
       ctx.flags.raceSend ? "send_position = False  # True: send where you are by radio" : null,
-      ctx.flags.raceRelay ? "pass_radio = False  # True: pass what the radio hears to the game" : null].filter(Boolean),
+      ctx.flags.raceRelay ? "pass_radio = False  # True: pass what the radio hears to the game" : null,
+      ctx.flags.usesItem ? 'my_item = "none"  # the item you hold in a race ("none": no item)' : null,
+      ctx.flags.usesHit ? 'hit_item = "none"  # the last item that hit you' : null].filter(Boolean),
     helpers: (ctx) => [MESSAGES_HELPER, ctx.flags.raceStart ? START_RACE_HELPER : null].filter(Boolean),
     // ---- Race: every radio message, when "pass radio messages to the game" is on (the generic loop reads them all)
     radioEach: (ctx) => (ctx.flags.raceRelay ? 'if pass_radio:\n    print("rx:" + got_radio)  # pass it on to the game\n' : ""),
@@ -264,6 +302,17 @@
       if (ctx.flags.raceSend) {
         branches.push('if send_position and msg.startswith("pos:"):\n    radio.send("p:" + race_name + ":" + msg[4:])  # tell the others where you are\n');
         branches.push('if send_position and msg.startswith("fin:"):\n    radio.send("f:" + race_name + ":" + msg[4:])  # you crossed the line: tell them your time\n');
+        // ---- Items: tx:<radio message> = the game asks the board to send this by radio (an item you used)
+        branches.push('if send_position and msg.startswith("tx:"):\n    radio.send(msg[3:])  # an item you used: the game wrote the radio message, you send it\n');
+      }
+      // ---- Items (item race): item:<name> = the item you hold now (item:none: used or lost); hit:<name> = it hit you
+      if (ctx.flags.usesItem) {
+        const got = section("msg:item");
+        branches.push('if msg.startswith("item:"):\n    my_item = msg[5:]  # "rocket", "shield", ... or "none" when it is gone\n'
+          + (got ? '    if my_item != "none":  # you picked one up\n' + indent(got, 4) : ""));
+      }
+      if (ctx.flags.usesHit) {
+        branches.push('if msg.startswith("hit:"):\n    hit_item = msg[4:]  # "rocket", "bolt", "police" or "oil"\n' + section("msg:hit"));
       }
       let out = "";
       if (branches.length) {
@@ -291,6 +340,9 @@
         // ---- Race (radio race v1): the slides use these four, in this order
         { kind: "label", text: "Race" },
         blk("cs_race_join"), blk("cs_race_send"), blk("cs_race_relay"), blk("cs_race_start", { fields: { ZONE: "uwa", METRES: 2000 } }),
+        // ---- Items (item race): the six blocks of docs/item-race.md, in that order
+        { kind: "label", text: "Items" },
+        blk("cs_on_item"), blk("cs_item"), blk("cs_item_is", { fields: { ITEM: "rocket" } }), blk("cs_use"), blk("cs_on_hit"), blk("cs_hit_item"),
       ],
     }],
     // The Lesson 1 starter (microbit/starter.py) as blocks.

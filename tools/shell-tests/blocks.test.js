@@ -113,6 +113,15 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   B("cs_on_message", { x: 2500, y: 420, fields: { MSG: "zone:quay" }, inputs: { DO: chain(B("mb_show_icon", { fields: { ICON: "HAPPY" } })) } }),
   // radio race (11/9): the host starts a race when the board is turned face up
   B("mb_on_gesture", { x: 2500, y: 520, fields: { GESTURE: "face up" }, inputs: { DO: chain(B("cs_race_start", { fields: { ZONE: "cbd", METRES: 3000 } })) } }),
+  // item race (11/10): keep a shield, use anything else at once; say what hit you
+  B("cs_on_item", { x: 2900, y: 10, inputs: { DO: chain(
+    B("mb_print", { inputs: { VALUE: val(B("text_join", { extraState: { itemCount: 2 }, inputs: { ADD0: t("item "), ADD1: val(B("cs_item")) } })) } }),
+    B("controls_if", { extraState: { hasElse: true }, inputs: {
+      IF0: val(B("cs_item_is", { fields: { ITEM: "shield" } })),
+      DO0: chain(B("mb_show_icon", { fields: { ICON: "DIAMOND" } })),
+      ELSE: chain(B("cs_use")) } })) } }),
+  B("cs_on_hit", { x: 2900, y: 260, inputs: { DO: chain(B("mb_print", { inputs: { VALUE: val(B("text_join", { extraState: { itemCount: 2 },
+    inputs: { ADD0: t("hit by "), ADD1: val(B("cs_hit_item")) } })) } })) } }),
   B("cs_on_speed", { x: 500, y: 540, inputs: { DO: chain(B("mb_clear"),
     B("controls_for", { fields: { VAR: { id: "v2" } }, inputs: { FROM: n(0), TO: n(4), BY: n(1), DO: chain(B("mb_plot", { inputs: {
       X: val(B("variables_get", { fields: { VAR: { id: "v2" } } })), Y: n(4), B: val(B("cs_speed")) } })) } }),
@@ -163,11 +172,27 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   // radio race (11/9): the lesson slides say where the race blocks are: end of CityScooter, after a "Race" label
   const csTail = await ev(() => {
     const cat = window.Blockly.getMainWorkspace().getToolbox().getToolboxItems().find((i) => i.getName && i.getName() === "CityScooter");
-    return cat.getContents().slice(-5).map((c) => (c.kind === "label" ? "label:" + c.text : c.type)).join(",");
+    return cat.getContents().slice(-12).map((c) => (c.kind === "label" ? "label:" + c.text : c.type + (c.fields && c.fields.ITEM ? "=" + c.fields.ITEM : ""))).join(",");
   });
-  check("toolbox: CityScooter ends with the Race label and the 4 race blocks in order", csTail === "label:Race,cs_race_join,cs_race_send,cs_race_relay,cs_race_start", csTail);
+  // item race (11/10): the six item blocks follow, under an "Items" label
+  check("toolbox: CityScooter ends with the Race label and the 4 race blocks, then the Items label and the 6 item blocks, in order",
+    csTail === "label:Race,cs_race_join,cs_race_send,cs_race_relay,cs_race_start,label:Items,cs_on_item,cs_item,cs_item_is=rocket,cs_use,cs_on_hit,cs_hit_item", csTail);
+  const itemTips = await ev(() => {
+    const ws = window.Blockly.getMainWorkspace(), tips = {};
+    for (const type of ["cs_on_item", "cs_item", "cs_item_is", "cs_use", "cs_on_hit", "cs_hit_item", "cs_race_send"]) { const b = ws.newBlock(type); tips[type] = b.getTooltip(); b.dispose(); }
+    tips.options = (() => { const b = ws.newBlock("cs_item_is"); const o = b.getField("ITEM").getOptions(false).map((x) => x[1]).join(","); b.dispose(); return o; })();
+    return tips;
+  });
+  check("item blocks: the tooltips say an item is not used until the program says use, and show the Python",
+    /NOT used by itself.*"use my item"/.test(itemTips.cs_on_item) && /does nothing until your program says "use my item"/.test(itemTips.cs_item)
+    && /only used when your program says "use my item"/.test(itemTips.cs_item_is) && /never used by themselves/.test(itemTips.cs_use)
+    && ["cs_on_item", "cs_item", "cs_item_is", "cs_use", "cs_on_hit", "cs_hit_item"].every((k) => /Python: /.test(itemTips[k]))
+    && itemTips.cs_use.endsWith('Python: print("use")') && itemTips.cs_item_is.endsWith('Python: my_item == "rocket"'), JSON.stringify(itemTips));
+  check("item blocks: \"my item is\" offers the 6 items and none", itemTips.options === "boost,shield,oil,rocket,bolt,police,none", itemTips.options);
+  check("\"send my position by radio\": the tooltip says it also sends your items on (tx:)", /items you use.*tx:/.test(itemTips.cs_race_send), itemTips.cs_race_send);
   const syn1 = pySyntax(starterPy, "starter");
   check("starter blocks: valid Python", !syn1, syn1);
+  check("starter blocks: no item variables and no tx: relay (only with the blocks that need them)", !/my_item|hit_item|tx:|item:|hit:/.test(starterPy));
   fs.writeFileSync(path.join(OUT, "blocks_starter.py"), starterPy);
   await page.screenshot({ path: path.join(OUT, "comic_blocks.png") });
 
@@ -211,6 +236,9 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     'print("sur")', 'msg == "chase:1"', 'msg == "inc:C"', 'msg == "busted"', 'wanted_level = int(msg[7:])', 'wanted_level = 0',
     'police_distance = int(msg[4:])', 'police_distance = 9', 'if police_distance < 2:',
     'msg == "air:1"', 'print("trick")', 'msg == "land:trick"', 'print("do:ramp")',
+    'my_item = "none"', 'hit_item = "none"', '        elif msg.startswith("item:"):\n            my_item = msg[5:]', '            if my_item != "none":  # you picked one up\n',
+    '                if (my_item == "shield"):', '                    print("use")', '        elif msg.startswith("hit:"):\n            hit_item = msg[4:]',
+    '        elif send_position and msg.startswith("tx:"):\n            radio.send(msg[3:])',
     'msg == "zone:kingspark"', 'msg == "zone:quay"', 'start_zone = ""', 'start_zone = "quay"', 'print("start:" + start_zone)', '    if start_zone:',
     "count = (count if type(count) in (int, float) else 0) + 1"]) {
     check("all blocks make: " + want, allPy.includes(want));
@@ -276,6 +304,22 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check(label + ": start rides in sends start:quay, and again about every second", starts >= 3, starts);
     // noted once when it changes (shell.test.js checks that exactly; this long run can trim it from the 300-line monitor)
     check(label + ": the monitor does not note the start district every second", noted <= 1, noted);
+    // item race (11/10): a shield is kept, anything else is used at once; what hit you; tx: goes out by radio as it is
+    const itemMark = await ev(() => { window.__radioOut.length = 0; return window.__fakeUnity.total; });
+    const say = async (...ms) => { for (const m of ms) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); } };
+    await say("item:none", "item:shield", "hit:oil");
+    const kept = await ev((n) => window.__fakeUnity.since(n), itemMark);
+    await say("item:rocket", "item:none", "hit:bolt", "tx:i:ZED:rocket:BEN:3");
+    await sleep(400);
+    const il = (await ev((n) => window.__fakeUnity.since(n), itemMark)).filter((l) => !/^sim\|(st:|v=)/.test(l));
+    check(label + ": item:shield runs \"when I get an item\", and the shield is kept (no use)", kept.includes("sim|item shield") && !kept.includes("sim|use"), il.join(" "));
+    check(label + ": item:none does not run \"when I get an item\"", !il.includes("sim|item none"), il.join(" "));
+    check(label + ": item:rocket is used at once (use)", il.includes("sim|item rocket") && il.filter((l) => l === "sim|use").length === 1, il.join(" "));
+    check(label + ": hit:oil and hit:bolt run \"when an item hits me\" with the item", kept.includes("sim|hit by oil") && il.includes("sim|hit by bolt"), il.join(" "));
+    const itemOut = await ev(() => window.__radioOut.slice());
+    check(label + ": tx: from the game goes out by radio as it is", itemOut.includes("i:ZED:rocket:BEN:3"), itemOut.join(" "));
+    const itemErrs = await ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].filter((r) => /cs-l-error/.test(r.className)).map((r) => r.textContent));
+    check(label + ": items: no Python error", itemErrs.length === 0, itemErrs.slice(0, 3).join(" | "));
     return lines;
   }
   const v2 = await runInSim(allPy, "all blocks on V2");
@@ -317,6 +361,10 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     check("race blocks make: " + want.split("\n").slice(-1)[0].trim(), racePy.includes(want));
   }
   check("race blocks: no radio_msg (only with \"when radio receives\")", !racePy.includes("radio_msg"));
+  // item race (11/10): "send my position by radio" also sends on what the game asks for (tx:); no item variables yet
+  check("race blocks make: the tx: relay next to pos: / fin:",
+    racePy.includes('        elif send_position and msg.startswith("tx:"):\n            radio.send(msg[3:])  # an item you used: the game wrote the radio message, you send it\n    loops += 1\n'));
+  check("race blocks: no item variables without item blocks", !/my_item|hit_item/.test(racePy));
   // In "forever" by mistake: the same assignments every loop, nothing printed or sent, the radio set up only once.
   const foreverPy = await ev(() => {
     const ws = window.Blockly.getMainWorkspace();
@@ -406,6 +454,128 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   check("race blocks forced V1: hi:v1", raceV1.includes("sim|hi:v1"));
   await page.click("#cs-bots"); // robots off
   await page.screenshot({ path: path.join(OUT, "race_blocks_sim.png") });
+
+  // ---- Item race (11/10, docs/item-race.md): the race program above plus the lesson's three item blocks:
+  //   when I get an item -> show icon happy;  when button B is pressed -> use my item;  when an item hits me -> show icon sad
+  // with prints, so the test can see them run, and "if my item is boost: use my item" (a boost is used at once).
+  await ev(() => document.querySelector('.cs-tabs button[data-view="blocks"]').click());
+  await sleep(300);
+  const itemPy = await ev(() => {
+    const ws = window.Blockly.getMainWorkspace();
+    const say = (text, value, next) => Object.assign({ type: "mb_print", inputs: { VALUE: { block: { type: "text_join", extraState: { itemCount: 2 },
+      inputs: { ADD0: { shadow: { type: "text", fields: { TEXT: text } } }, ADD1: { block: { type: value } } } } } } }, next ? { next: { block: next } } : {});
+    const add = (state) => window.Blockly.serialization.blocks.append(state, ws);
+    add({ type: "cs_on_item", x: 1100, y: 20, inputs: { DO: { block: { type: "mb_show_icon", fields: { ICON: "HAPPY" },
+      next: { block: say("got ", "cs_item", { type: "controls_if",
+        inputs: { IF0: { block: { type: "cs_item_is", fields: { ITEM: "boost" } } }, DO0: { block: { type: "cs_use" } } } }) } } } } });
+    add({ type: "mb_on_button", x: 1100, y: 320, fields: { BTN: "b" }, inputs: { DO: { block: { type: "cs_use" } } } });
+    add({ type: "cs_on_hit", x: 1100, y: 440, inputs: { DO: { block: { type: "mb_show_icon", fields: { ICON: "SAD" },
+      next: { block: say("hit by ", "cs_hit_item", say("holding ", "cs_item")) } } } } });
+    return window.MicrobitBlocks.generate(ws);
+  });
+  fs.writeFileSync(path.join(OUT, "blocks_items.py"), itemPy);
+  check("item blocks: valid Python", !pySyntax(itemPy, "items"), pySyntax(itemPy, "items"));
+  check("item blocks: no block in the program is disabled", (await ev(() => window.Blockly.getMainWorkspace().getAllBlocks(false).filter((b) => !b.isEnabled()).length)) === 0);
+  for (const want of ['my_item = "none"  # the item you hold in a race ("none": no item)\n', 'hit_item = "none"  # the last item that hit you\n',
+    '    if button_b.was_pressed():\n        print("use")\n',
+    '        elif send_position and msg.startswith("tx:"):\n            radio.send(msg[3:])  # an item you used: the game wrote the radio message, you send it\n',
+    '        elif msg.startswith("item:"):\n            my_item = msg[5:]  # "rocket", "shield", ... or "none" when it is gone\n            if my_item != "none":  # you picked one up\n                display.show(Image.HAPPY)\n',
+    '                if (my_item == "boost"):\n                    print("use")\n',
+    '        elif msg.startswith("hit:"):\n            hit_item = msg[4:]  # "rocket", "bolt", "police" or "oil"\n            display.show(Image.SAD)\n']) {
+    check("item blocks make: " + want.trim().split("\n").slice(-1)[0].trim(), itemPy.includes(want), itemPy.slice(itemPy.indexOf("# messages from the game")));
+  }
+  const imports = (py) => (py.match(/^(import|from) .*$/gm) || []).join(";");
+  check("item blocks: small enough for a V1: no new import, no f-string, under 1 KB more than the race program",
+    imports(itemPy) === imports(racePy) && !/\bf["']/.test(itemPy) && itemPy.length - racePy.length < 1000, imports(itemPy) + " +" + (itemPy.length - racePy.length) + " bytes, " + itemPy.length + " in all");
+  // The variables exist only when a block uses them ("use my item" alone needs none); a hat with nothing in it still
+  // keeps its variable up to date.
+  const small = await ev(() => {
+    const make = (blocks) => {
+      const ws = new window.Blockly.Workspace();
+      window.Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks } }, ws);
+      const py = window.MicrobitBlocks.generate(ws);
+      ws.dispose();
+      return py;
+    };
+    return {
+      use: make([{ type: "mb_on_button", x: 0, y: 0, fields: { BTN: "b" }, inputs: { DO: { block: { type: "cs_use" } } } }]),
+      value: make([{ type: "mb_forever", x: 0, y: 0, inputs: { DO: { block: { type: "mb_show", inputs: { VALUE: { block: { type: "cs_item" } } } } } } }]),
+      hit: make([{ type: "cs_on_hit", x: 0, y: 0, inputs: { DO: { block: { type: "mb_clear" } } } }]),
+    };
+  });
+  check("item blocks: \"use my item\" alone makes print(\"use\") and no item variable", small.use.includes('        print("use")\n') && !/my_item|hit_item|import radio/.test(small.use) && !pySyntax(small.use, "item_use"), small.use.slice(small.use.indexOf("while True:")));
+  check("item blocks: \"my item\" alone: my_item follows item: (no \"when I get an item\" needed), no hit_item, no radio",
+    small.value.includes('my_item = "none"') && small.value.includes('        if msg.startswith("item:"):\n            my_item = msg[5:]  # "rocket", "shield", ... or "none" when it is gone\n    loops += 1\n')
+    && small.value.includes("display.show(str(my_item), wait=False)") && !/hit_item|import radio/.test(small.value) && !pySyntax(small.value, "item_value"), small.value.slice(small.value.indexOf("while True:")));
+  check("item blocks: \"when an item hits me\" alone: hit_item only", small.hit.includes('hit_item = "none"') && small.hit.includes('        if msg.startswith("hit:"):\n            hit_item = msg[4:]')
+    && !/my_item|import radio/.test(small.hit) && !pySyntax(small.hit, "item_hit"), small.hit.slice(small.hit.indexOf("while True:")));
+
+  async function runItems(py, label, n) { // n: the number of the rocket AMY uses (the monitor notes a number once in 20 s)
+    const before = await ev(() => window.__fakeUnity.total);
+    await ev(() => { window.__radioOut.length = 0; window.__radioHeaders.length = 0; document.querySelectorAll("#cs-log .cs-line").forEach((r) => { r.dataset.old = "1"; }); });
+    await ev((code) => { document.querySelector('.cs-tabs button[data-view="python"]').click(); const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, py);
+    await page.click("#cs-run");
+    await page.waitForFunction((n) => window.__fakeUnity.since(n).includes("sim|race:AMY:12"), { timeout: 8000 }, before).catch(() => {});
+    const game = async (...ms) => { for (const m of ms) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), m); await sleep(350); } };
+    const heard = () => ev((n) => window.__fakeUnity.since(n).filter((l) => !/^sim\|(st:|rx:p:|hi:|race:)/.test(l)), before);
+    const monitor = () => ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].map((r) => r.className + " :: " + r.textContent));
+    // the game gives an item: the hat runs, and nothing is used
+    await game("item:none", "item:rocket");
+    await sleep(400);
+    let got = await heard();
+    check(label + ": item:rocket runs \"when I get an item\" with my item = rocket; item:none does not run it", got.includes("sim|got rocket") && !got.includes("sim|got none"), got.join(" "));
+    check(label + ": the rocket is not used until the program says so", !got.includes("sim|use"), got.join(" "));
+    await page.click(".cs-monitor-head strong");
+    await page.keyboard.press("b");
+    await sleep(600);
+    got = await heard();
+    check(label + ": button B -> \"use my item\": use reaches the game once", got.filter((l) => l === "sim|use").length === 1, got.join(" "));
+    let log = await monitor();
+    check(label + ": the monitor notes the use, game-style, with the item", log.filter((x) => /cs-l-game/.test(x) && x.includes("simuses its item: rocket")).length === 1
+      && !log.some((x) => /cs-l-print/.test(x) && / :: simuse$/.test(x)), log.filter((x) => /use/.test(x)).join(" | "));
+    // the game answers: the item is gone, and "please radio this" 3 times in 0.3 s
+    await game("item:none");
+    for (let i = 0; i < 3; i++) { await ev((l) => window.CityScooterShell.sendToDevices("*", l), "tx:i:AMY:rocket:BOT2:" + n); await sleep(150); }
+    await sleep(900);
+    const out = await ev(() => window.__radioOut.slice());
+    check(label + ": tx: from the game goes out as a radio packet, 3 times, as it is", out.filter((x) => x === "i:AMY:rocket:BOT2:" + n).length === 3
+      && (await ev(() => window.__radioHeaders.every((h) => h === "1,0,1"))), out.join(" "));
+    log = await monitor();
+    check(label + ": the monitor shows the tx: line once", log.filter((x) => /cs-l-game/.test(x) && x.includes("gametx:i:AMY:rocket:BOT2:" + n)).length === 1, log.filter((x) => /tx:/.test(x)).join(" | "));
+    check(label + ": the monitor notes \"radio: you used rocket on BOT2\" once", log.filter((x) => /cs-l-radio/.test(x) && x.includes("simradio: you used rocket on BOT2")).length === 1,
+      log.filter((x) => /radio/.test(x)).join(" | "));
+    // "if my item is boost: use my item"
+    await game("item:boost");
+    await sleep(300);
+    got = await heard();
+    check(label + ": \"my item is boost\" is true for a boost only: it is used at once", got.includes("sim|got boost") && got.filter((l) => l === "sim|use").length === 2, got.join(" "));
+    // hits, and "my item" after item:none
+    await game("item:shield", "hit:oil", "item:none", "hit:rocket");
+    await sleep(400);
+    got = await heard();
+    const at = (l) => got.indexOf(l);
+    check(label + ": \"when an item hits me\" runs with the item that hit me", at("sim|hit by oil") >= 0 && at("sim|hit by rocket") > at("sim|hit by oil"), got.join(" "));
+    check(label + ": \"my item\" follows every item: message, item:none too", got[at("sim|hit by oil") + 1] === "sim|holding shield" && got[at("sim|hit by rocket") + 1] === "sim|holding none", got.join(" "));
+    // a robot racer uses a rocket on AMY: 3 radio packets, passed to the game as rx:i:…
+    await ev(() => document.querySelectorAll("#cs-log .cs-line").forEach((r) => { r.dataset.old = "1"; }));
+    await page.click("#cs-bots");
+    await sleep(700);
+    const mark = await ev(() => window.__fakeUnity.total);
+    const sent = await ev(() => window.CityScooterShell.robotUseItem(1, "rocket"));
+    await sleep(1300);
+    const rx = await ev((n) => window.__fakeUnity.since(n).filter((l) => l.startsWith("sim|rx:i:")), mark);
+    check(label + ": a robot's rocket (i:BOT1:rocket:AMY:<n>, 3 packets) reaches the game as rx:i:…", /^i:BOT1:rocket:AMY:\d$/.test(sent) && rx.length === 3 && rx.every((l) => l === "sim|rx:" + sent), sent + " -> " + rx.join(" "));
+    log = await monitor();
+    check(label + ": the monitor notes the robot's rocket once: \"radio: BOT1 used rocket on AMY\", that is you",
+      log.filter((x) => /cs-l-radio/.test(x) && x.includes("simradio: BOT1 used rocket on AMY← that is you!")).length === 1 && !log.some((x) => /rx:i:/.test(x)), log.filter((x) => /BOT1 (used|sent)/.test(x)).join(" | "));
+    await page.click("#cs-bots"); // robots off
+    await sleep(300);
+    log = await monitor();
+    check(label + ": no Python error", !log.some((x) => /cs-l-error/.test(x)), log.filter((x) => /cs-l-error/.test(x)).slice(0, 4).join(" | "));
+  }
+  await runItems(itemPy, "item blocks on V2", 3);
+  await runItems(itemPy.replace("from microbit import microphone", "from microbit import microphone_not_on_v1"), "item blocks forced V1", 4);
+  await page.screenshot({ path: path.join(OUT, "item_blocks_sim.png") });
 
   // "when radio receives" alone (no race blocks): one message a loop as before, and a stray non-text packet is skipped
   const radioOnlyPy = await ev(() => {
