@@ -1285,10 +1285,43 @@
 
   // ------------------------------------------------------------------ simulator
   const sim = { frame: null, loaded: false, ready: false, activated: false, running: false, buf: "", accel: 0, keys: { left: false, right: false },
-    radioOn: false }; // radioOn: the program turned the radio on (state_change from the simulator)
+    radioOn: false, // radioOn: the program turned the radio on (state_change from the simulator)
+    flashSeq: 0, flashAck: 0, flashAt: 0, // has the simulator answered the last flash? (simStuck)
+    lastInputAt: 0, holdUntil: 0, held: [], releaseTimer: 0 };
+
+  // Serial input that a program has not read yet when it is stopped hangs the simulator for good (found 11/11 on
+  // the real game; see simStuck for the cure). To keep that rare: a flash, reset or stop waits until no line has
+  // gone in for a moment, so a program that reads its input has read it all; and the game's lines wait while the
+  // simulator restarts (they are passed on afterwards, in order).
+  const SIM_QUIET_MS = 150, SIM_SETTLE_MS = 800;
 
   function simPost(msg) {
-    if (sim.frame && sim.frame.contentWindow) sim.frame.contentWindow.postMessage(msg, SIM_ORIGIN);
+    if (!sim.frame || !sim.frame.contentWindow) return;
+    const frame = sim.frame;
+    const post = (m) => { if (sim.frame === frame && frame.contentWindow) frame.contentWindow.postMessage(m, SIM_ORIGIN); };
+    const t = now();
+    if (msg.kind === "serial_input") {
+      if (t < sim.holdUntil) {
+        sim.held.push(msg.data);
+        if (sim.held.length > 40) sim.held.shift();
+        return;
+      }
+      sim.lastInputAt = t;
+    } else if (msg.kind === "flash" || msg.kind === "reset" || msg.kind === "stop") {
+      const wait = Math.max(0, sim.lastInputAt + SIM_QUIET_MS - t);
+      sim.holdUntil = Math.max(sim.holdUntil, t + wait + SIM_SETTLE_MS);
+      if (msg.kind === "stop") sim.held.length = 0; // nobody to read them
+      clearTimeout(sim.releaseTimer);
+      sim.releaseTimer = setTimeout(simRelease, sim.holdUntil - t + 20);
+      if (wait > 0) { setTimeout(() => post(msg), wait); return; }
+    }
+    post(msg);
+  }
+
+  function simRelease() {
+    if (now() < sim.holdUntil) { sim.releaseTimer = setTimeout(simRelease, sim.holdUntil - now() + 20); return; }
+    const lines = sim.held.splice(0, sim.held.length);
+    if (lines.length && sim.running && shell.mode === "sim") simPost({ kind: "serial_input", data: lines.join("") });
   }
 
   function simSet(id, value) {
@@ -1360,6 +1393,10 @@
     const main = new TextEncoder().encode(currentCode());
     const flash = () => simPost({ kind: "flash", filesystem: { "main.py": main } });
     if (wait) setTimeout(flash, wait); else flash();
+    // The simulator answers a flash within a moment (state_change). Nothing at all means it is hung (see simStuck).
+    const seq = ++sim.flashSeq;
+    sim.flashAt = now() + wait;
+    setTimeout(() => { if (sim.flashSeq === seq && sim.flashAck !== seq && shell.mode === "sim" && sim.running) simStuck(); }, wait + SIM_ANSWER_MS);
     sim.running = true;
     sim.buf = "";
     const d = simDevice();
@@ -1373,9 +1410,29 @@
     renderChips();
   }
 
+  // Found 11/11 on the real game: when a program that never read what the game sent it (serial input left unread)
+  // is stopped, the simulator hangs for good. The next "Run my code" did nothing at all and only a page reload
+  // helped. A hung simulator answers nothing, so notice that and give it a new iframe; a new simulator needs one
+  // click on its own ▶ again (the browser's rule for sound).
+  const SIM_ANSWER_MS = 2500;
+
+  function simStuck() {
+    logLine("warn", "sim", "The simulator stopped answering, so it was started again.",
+      "click ▶ on the micro:bit. Tip: read the game's messages in your loop, like the starter does");
+    const d = simDevice();
+    d.connected = false;
+    sendStatus(d);
+    simLoad();
+    renderChips();
+  }
+
   function onSimMessage(e) {
     if (!sim.frame || e.source !== sim.frame.contentWindow) return;
     const m = e.data || {};
+    // Alive after the last flash: its own answer (state_change and log_delete, within about 0.1 s), or anything later
+    // (output in the first moment may still be the old program's).
+    const sinceFlash = now() - sim.flashAt;
+    if (sinceFlash >= 0 && (m.kind === "state_change" || m.kind === "log_delete" || sinceFlash > 300)) sim.flashAck = sim.flashSeq;
     switch (m.kind) {
       case "ready":
         sim.ready = true;

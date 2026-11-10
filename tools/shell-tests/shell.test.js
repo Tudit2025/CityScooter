@@ -84,7 +84,8 @@ function installFakeSerial() {
   page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
   page.on("console", (m) => { if (m.type() === "error") errors.push("console.error: " + m.text()); });
   await page.evaluateOnNewDocument(installFakeSerial);
-  await page.evaluateOnNewDocument(() => { try { localStorage.clear(); } catch (e) {} });
+  // Top document only: a new simulator iframe starts as about:blank on the page's own origin and would clear the page's storage too.
+  await page.evaluateOnNewDocument(() => { try { if (window.top === window) localStorage.clear(); } catch (e) {} });
 
   const URL = "http://127.0.0.1:8791/tools/shell-dev/";
   await page.goto(URL, { waitUntil: "load" });
@@ -413,6 +414,29 @@ function installFakeSerial() {
   check("Run re-flashes edited code after the first ▶", reflashed);
   await sleep(700);
 
+  // A hung simulator (found 11/11 on the real game): stopping a program that never read what the game sent it leaves
+  // the simulator hung, and the next Run did nothing until the page was reloaded. The shell notices that the
+  // simulator does not answer the flash, gives it a new iframe and asks for ▶ again.
+  {
+    for (let i = 0; i < 6; i++) { await ev((n) => window.CityScooterShell.sendToDevices("*", "spd:" + n), i); await sleep(100); } // st:42 never reads these
+    await ev(() => { const t = document.getElementById("cs-code"); t.value = 'from microbit import *\nwhile True:\n    print("st:43")\n    sleep(50)\n'; t.dispatchEvent(new Event("input")); });
+    await page.click("#cs-run");
+    const outcome = await page.waitForFunction(() => {
+      if (window.__fakeUnity.lines.slice(-5).includes("sim|st:43")) return "ran";
+      const h = document.getElementById("cs-sim-hint");
+      return !h.hidden && /Click/.test(h.textContent) && [...document.querySelectorAll("#cs-log .cs-l-warn")].some((r) => /simulator stopped answering/.test(r.textContent)) ? "restarted" : false;
+    }, { timeout: 15000, polling: 200 }).then((h) => h.jsonValue(), () => "nothing");
+    check("after a program that never read its input: the new code runs, or the hung simulator is started again", outcome !== "nothing", outcome);
+    if (outcome === "restarted") {
+      await sleep(2500);
+      const frame2 = page.frames().find((f) => f.url().includes("python-simulator.usermbit.org"));
+      await frame2.waitForSelector(".play-button", { timeout: 15000 });
+      for (let tries = 0; ; tries++) { try { await frame2.click(".play-button"); break; } catch (e) { if (tries >= 5) throw e; await sleep(1000); } }
+      check("▶ on the new simulator runs the code", await page.waitForFunction(() => window.__fakeUnity.lines.slice(-5).includes("sim|st:43"), { timeout: 15000 }).then(() => true, () => false));
+    }
+    await sleep(500);
+  }
+
   // leave sim mode
   await page.click('.cs-modes button[data-mode="keyboard"]');
   await sleep(300);
@@ -429,7 +453,8 @@ function installFakeSerial() {
   await page2.evaluateOnNewDocument(installFakeSerial);
   await page2.goto(URL, { waitUntil: "load" });
   await sleep(1500);
-  check("draft restored from localStorage", (await page2.evaluate(() => document.getElementById("cs-code").value)).includes("st:42"));
+  check("draft restored from localStorage", (await page2.evaluate(() => document.getElementById("cs-code").value)).includes("st:43"),
+    JSON.stringify((await page2.evaluate(() => document.getElementById("cs-code").value)).slice(0, 120)));
   check("last chosen mode remembered", (await page2.evaluate(() => document.body.dataset.mode)) === "keyboard");
   await page2.click("#cs-help-btn");
   await sleep(200);

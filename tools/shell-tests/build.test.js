@@ -163,7 +163,7 @@ function installFakeSerial() {
   // start with 5 stars, also the rides started with A after the police ended the one before (what the teacher saw
   // missing in class). With 5 stars a ride is over within seconds, so three rides fit in the test.
   {
-    const EVERY_RIDE = ["from microbit import *", "n = 0", "while True:", "    if button_a.was_pressed():", '        print("jp")', "    n += 1",
+    const EVERY_RIDE = ["from microbit import *", "n = 0", "while True:", "    if button_a.was_pressed():", '        print("jp")', "    n += 1", "    if uart.any():", "        uart.read()  # like every real program: read what the game sends",
       "    if n % 20 == 0:", '        print("hi:v2")', '        print("open:stars:5")', '    print("st:0")', "    sleep(50)", ""].join("\n");
     await ev((code) => { const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, EVERY_RIDE);
     await page.click("#cs-run");
@@ -184,7 +184,10 @@ function installFakeSerial() {
       await sleep(900);
     }
     const got = await rides();
-    check("every ride: open:stars:5 from the board gives 5 stars at the start of 3 rides in a row", got.length >= 3 && got.slice(0, 3).every(Boolean), JSON.stringify(got));
+    check("every ride: open:stars:5 from the board gives 5 stars at the start of 3 rides in a row", got.length >= 3 && got.slice(0, 3).every(Boolean), JSON.stringify(got)
+      + " sent: " + JSON.stringify(await ev((n) => window.__sent.slice(n).slice(-14), from))
+      + " toUnity: " + JSON.stringify(await ev(() => window.__toUnity.slice(-6).map((c) => c.slice(0, 90))))
+      + " monitor: " + JSON.stringify(await ev(() => [...document.querySelectorAll("#cs-log .cs-line")].slice(-12).map((r) => r.className.replace("cs-line ", "") + " " + r.textContent.slice(0, 110)))));
     // back to a program without it: the stars stop
     await ev((code) => { const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, LABCHECK);
     await page.click("#cs-run");
