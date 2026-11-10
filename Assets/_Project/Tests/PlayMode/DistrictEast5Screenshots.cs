@@ -202,6 +202,7 @@ namespace CityScooter.Tests
                 W("12-horizon-right.png", "Riverside", 2f, 26f, 55f, 0f, 3f),
                 W("13-creek-kicker.png", "Creek", 0f, -3f),
                 W("14-exit.png", "Exit", 0f, 4f),
+                W("15-horizon-ahead.png", "Riverside", 0f, 34f, 0f, -8f, 5f),
                 M("01-entry.png", "Entry", 0f, 4f),
                 M("02-highway-shops.png", "Highway", -1.5f, 0f),
                 M("03-shops-close.png", "Highway", -5.5f, 10f, -38f, 2f),
@@ -220,7 +221,8 @@ namespace CityScooter.Tests
                 M("16-workshops.png", "Workshops", 0f, -4f),
                 M("17-workshops-square.png", "Workshops", -3f, 25f, -35f, -6f),
                 M("18-exit.png", "Exit", 0f, 4f),
-                M("19-horizon-left.png", "Exit", -2f, 20f, -60f, -2f, 3f),
+                M("19-horizon-left.png", "Centrepoint", -2f, 30f, -60f, -2f, 3f),
+                M("20-horizon-right.png", "Station", 2f, 36f, 60f, -2f, 3f),
             });
         }
 

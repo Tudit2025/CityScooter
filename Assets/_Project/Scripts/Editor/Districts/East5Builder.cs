@@ -805,45 +805,166 @@ namespace CityScooter.EditorTools.Districts
         // Aerial perspective: further = closer to the haze colour.
         static Color Haze(Color c, float dist, Color haze) => Color.Lerp(c, haze, Mathf.Clamp01((Mathf.Abs(dist) - 60f) / 600f) * .7f);
 
-        /// <summary>A long ridge parallel to the road on side s: its foot at |x| = near(z), a steep face up to
-        /// height(z), a second, higher and hazier crest behind it. Split every 15 m so the curl bends it.</summary>
-        static void Scarp(ComicMesh m, int s, float z0, float z1, float baseY, Func<float, float> near, Func<float, float> height, float depth, Color foot, Color slope, Color crest)
+        // ---- the Darling Scarp: one ridge across the horizon
+        //
+        // The comic shader bends the far world (ComicWorldBend.hlsl): beyond 32 m ahead everything is lifted, beyond
+        // 180 m it is also squeezed towards the road's vanishing point, and the linear distance fog (120 to 310 m) turns
+        // anything far into the pale fog colour. So a hill placed far ahead ends as a pale point, and hills along the
+        // sides turn into two pale domes with a notch between them. The ridge is therefore built the other way round:
+        // every vertex is given where it should APPEAR from the chase camera (azimuth, elevation, range) and Unbend puts
+        // it where the shader will carry it there. It stands only about 120 m from the rider, in front of nearly all the
+        // fog, so it keeps a dark colour (FogProof pays for the little fog there is); as it follows the rider and
+        // nothing ever passes behind its skyline, it still reads as a ridge kilometres away. Over the road corridor its
+        // lower edge floats above everything that is still to come (chunks are built to 320 m ahead; nothing in these
+        // two districts stands higher than 24 m), and a pale wall behind (310 m, where the fog is complete) closes the gap:
+        // the road runs into haze at the foot of the hills and the skyline stays whole.
+
+        const float CamBack = 5.6f, CamUp = 3.38f, FogStart = 120f, FogEnd = 310f;
+
+        /// <summary>The far-scenery vertex (relative to the rider; NOT flat road space: add it after Shear) that the
+        /// shader shows at xa across, ya above the rider's ground, d ahead.</summary>
+        static Vector3 Unbend(float xa, float ya, float d)
         {
-            Vector3 toRoad = V(-s, 0, 0);
-            m.Surface = ComicSurface.Foliage;
-            for (float z = z0; z < z1 - .01f; z += 15f)
-            {
-                float za = z, zb = Mathf.Min(z1, z + 15f), ha = height(za), hb = height(zb), na = near(za), nb = near(zb);
-                Vector3 a0 = V(s * na, baseY, za), b0 = V(s * nb, baseY, zb);
-                Vector3 a1 = V(s * (na + depth * .16f), baseY + ha * .3f, za), b1 = V(s * (nb + depth * .16f), baseY + hb * .3f, zb);
-                Vector3 a2 = V(s * (na + depth * .5f), baseY + ha, za), b2 = V(s * (nb + depth * .5f), baseY + hb, zb);
-                Vector3 a3 = V(s * (na + depth), baseY + ha * 1.18f, za), b3 = V(s * (nb + depth), baseY + hb * 1.18f, zb);
-                K.Face(m, a0, b0, b1, a1, foot, (toRoad + Vector3.up * 2f).normalized, false);
-                K.Face(m, a1, b1, b2, a2, slope, (toRoad + Vector3.up).normalized, false);
-                K.Face(m, a2, b2, b3, a3, crest, (toRoad * .3f + Vector3.up).normalized, false);
-            }
+            ComicCityRecipe r = K.R;
+            float s = ComicCityProjection.Scale(r, d), w = r.downhillGrade, rise = ComicCityProjection.Rise(r, d);
+            return V(xa / s, (ya - rise + w * d) / s - w * d, d);
         }
 
-        /// <summary>Darker and lighter patches of forest lying on the scarp's main face (same numbers as
-        /// <see cref="Scarp"/>), so the wall reads as wooded hillside and not as one flat band.</summary>
-        static void ScarpPatches(ComicMesh m, int s, float z0, float z1, float baseY, Func<float, float> near, Func<float, float> height, float depth, Color dark, Color light, int seed)
+        /// <summary>The vertex seen from the chase camera at this azimuth (degrees, 0 = ahead, + = right) and elevation
+        /// (degrees above level), at this ground range from the rider.</summary>
+        static Vector3 Apparent(float azimuth, float elevation, float range)
+        {
+            float a = azimuth * Mathf.Deg2Rad, xa = range * Mathf.Sin(a), d = range * Mathf.Cos(a);
+            float rho = Mathf.Sqrt(xa * xa + (d + CamBack) * (d + CamBack));
+            return Unbend(xa, CamUp + rho * Mathf.Tan(elevation * Mathf.Deg2Rad), d);
+        }
+
+        /// <summary>The vertex colour that ends up as <paramref name="target"/> on screen after the sun (lit band) and
+        /// the linear fog at this view depth (it cannot be darker than the fog allows).</summary>
+        static Color FogProof(Color target, Color fog, float depth)
+        {
+            float f = Mathf.Min(.85f, Mathf.Clamp01((depth - FogStart) / (FogEnd - FogStart)));
+            Color t = target.linear, g = fog.linear;
+            var c = new Color(Mathf.Max(0f, (t.r - f * g.r) / (1f - f)) / 1.5f, Mathf.Max(0f, (t.g - f * g.g) / (1f - f)) / 1.3f, Mathf.Max(0f, (t.b - f * g.b) / (1f - f)) / .95f, 1f);
+            return c.gamma;
+        }
+
+        /// <summary>True when a far-scenery point stands in front of the ridge (inside its ring), or in the road corridor
+        /// ahead, where the ridge floats.</summary>
+        static bool InFrontOfScarp(float x, float z, Func<float, float> rangeAt) =>
+            Mathf.Sqrt(x * x + z * z) < rangeAt(Mathf.Atan2(x, z) * Mathf.Rad2Deg) - 14f || (Mathf.Abs(x) < 96f && z > 0f && z < 330f);
+
+        /// <summary>
+        /// The Darling Scarp: one long, level ridge right across the view ahead and round both sides (lower as it runs
+        /// away north and south), a dark eucalypt blue-green against the sky. Its top line is only gently uneven: low
+        /// knolls, two gullies and the shallow dip of the highway cutting a little right of the road. Three tones (dark
+        /// forest top, mid slope, paler dry foot fading into the haze), darker tree masses and lighter clearings on its face, pale quarry
+        /// scars, masts on the crest, an ink line along the skyline only. topDeg: the skyline's height above level
+        /// straight ahead, as seen from the camera; clearDeg: the height of its floating lower edge over the road
+        /// corridor (above everything still to come); haze: how far its colours go towards the fog (further away =
+        /// hazier); rangeAt: the ground range of its foot by azimuth. Add it AFTER the far scenery is sheared.
+        /// </summary>
+        static void ScarpRing(ComicMesh m, float topDeg, float clearDeg, Color fog, float haze, Func<float, float> rangeAt, int seed, int masts, bool highway)
         {
             var r = new System.Random(seed);
-            Vector3 P(float z, float t)
+            Color dark = Color.Lerp(K.Hex("2F5959"), fog, haze), mid = Color.Lerp(K.Hex("4F7A62"), fog, haze), foot = Color.Lerp(K.Hex("96A174"), fog, haze),
+                mass = Color.Lerp(K.Hex("21444A"), fog, haze), clearing = Color.Lerp(K.Hex("688C68"), fog, haze), quarry = Color.Lerp(K.Hex("DCC9A0"), fog, haze * .7f),
+                ink = Color.Lerp(K.Hex("14282C"), fog, haze * .6f);
+            float tan0 = Mathf.Tan(topDeg * Mathf.Deg2Rad);
+            float Top(float a)
             {
-                // t 0..1 up the main face (from depth * .16, height * .3 to depth * .5, height), lifted off it a little
-                return V(s * (near(z) + depth * (.16f + .34f * t) - 1.2f), baseY + height(z) * (.3f + .7f * t) + 1f, z);
+                // A level line on the screen needs tan(elevation) to fall with cos(azimuth); a little is kept back so
+                // the ridge still stands (lower) out to the sides.
+                float level = Mathf.Max(.3f, .25f + .75f * Mathf.Cos(a * Mathf.Deg2Rad));
+                float n = .022f * Mathf.Sin(a * .21f + 1.1f) + .014f * Mathf.Sin(a * .53f + 2.3f) + .008f * Mathf.Sin(a * 1.3f + .4f);
+                float knolls = .03f * Mathf.Exp(-Mathf.Pow((a + 14f) / 5f, 2f)) + .025f * Mathf.Exp(-Mathf.Pow((a - 30f) / 4f, 2f)) + .02f * Mathf.Exp(-Mathf.Pow((a + 52f) / 6f, 2f));
+                float saddle = .075f * Mathf.Exp(-Mathf.Pow((a - 5f) / 6f, 2f));
+                float gully = .03f * Mathf.Exp(-Mathf.Pow((a + 27f) / 3f, 2f)) + .028f * Mathf.Exp(-Mathf.Pow((a - 42f) / 2.5f, 2f));
+                return Mathf.Atan(tan0 * level * (1f + n + knolls - saddle - gully)) * Mathf.Rad2Deg;
             }
-            m.Surface = ComicSurface.Foliage;
-            for (float z = z0; z < z1 - 16f; z += 15f)
+            // The lower edge. Straight ahead it clears whatever is still to come (the tallest things, up to 24 m, stand
+            // within about 22 degrees of the road); further round only trees and roofs are left behind it, so it comes
+            // down, and from 44 degrees, where nothing is behind it any more, it runs down into the ground like a spur.
+            float Bottom(float a)
             {
-                for (int k = 0; k < 2; k++)
+                float aa = Mathf.Abs(a);
+                float e = aa <= 22f ? clearDeg : aa <= 34f ? Mathf.Lerp(clearDeg, clearDeg - 1.8f, (aa - 22f) / 12f) : aa <= 44f ? Mathf.Lerp(clearDeg - 1.8f, clearDeg - 3f, (aa - 34f) / 10f)
+                    : Mathf.Lerp(clearDeg - 3f, -4f, Mathf.SmoothStep(0f, 1f, (aa - 44f) / 24f));
+                return Mathf.Min(e, Top(a) * .72f);
+            }
+            // where the solid colour starts: the lower edge, plus the strip of haze where it floats
+            float Floor(float a) { float e = Bottom(a); return e > .5f ? e + Mathf.Min(1f, e) : e; }
+            float Level(float a, float t) => Mathf.Lerp(Floor(a), Top(a), t);                 // t: 0 = lowest forest, 1 = skyline
+            // The tones lie level along the ridge (fractions of the skyline's height that wander a little); the lower edge
+            // cuts through them, with a strip of haze along it where it floats.
+            float Tone(float a, int k) => k <= 0 ? -.3f : k == 1 ? .26f + .03f * Mathf.Sin(a * .61f + .3f) : k == 2 ? .5f + .035f * Mathf.Sin(a * .47f + 1.9f) : k == 3 ? .79f + .035f * Mathf.Sin(a * .39f + .6f) : 1f;
+            Vector3 P(float a, float e, float nearer = 0f) => Apparent(a, e, rangeAt(a) + .5f * Mathf.Max(0f, e) - nearer);
+            Vector3 Hint(float a) => V(-Mathf.Sin(a * Mathf.Deg2Rad), .9f, -Mathf.Cos(a * Mathf.Deg2Rad));
+            float Depth(float a) => Mathf.Max(0f, (rangeAt(a) + 8f) * Mathf.Cos(a * Mathf.Deg2Rad) + CamBack);
+            m.Surface = ComicSurface.Plain;
+            const float step = 2f;
+            Color[] tones = { Color.Lerp(foot, fog, .5f), foot, mid, dark };
+            for (float a = -128f; a < 127.9f; a += step)
+            {
+                float b = a + step, fa = Floor(a), fb = Floor(b), ta = Top(a), tb = Top(b);
+                Color cut = dark;
+                for (int k = 0; k < 4; k++)
                 {
-                    if (r.NextDouble() < .3) continue;
-                    float t0 = F(r, .04f, .7f), t1 = Mathf.Min(.97f, t0 + F(r, .14f, .3f)), skew = F(r, -.12f, .12f);
-                    Color c = r.NextDouble() < .6 ? dark : light;
-                    K.Face(m, P(z, t0), P(z + 15f, Mathf.Clamp01(t0 + skew)), P(z + 15f, Mathf.Clamp01(t1 + skew)), P(z, t1), c, (V(-s, 0, 0) + Vector3.up).normalized, false);
+                    float la = Mathf.Max(fa, ta * Tone(a, k)), lb = Mathf.Max(fb, tb * Tone(b, k)), ha = Mathf.Max(fa, ta * Tone(a, k + 1)), hb = Mathf.Max(fb, tb * Tone(b, k + 1));
+                    if (k == 0) { la = Mathf.Max(fa, -4f); lb = Mathf.Max(fb, -4f); }
+                    if (ha - la < .02f && hb - lb < .02f) continue;
+                    if (ha - la > .02f && la <= fa + .001f) cut = tones[k];
+                    K.Face(m, P(a, la), P(b, lb), P(b, hb), P(a, ha), FogProof(tones[k], fog, Depth(a + 1f)), Hint(a + 1f), false);
                 }
+                // haze along the floating lower edge
+                float ba = Bottom(a), bb = Bottom(b);
+                if (ba > .5f || bb > .5f)
+                    K.Face(m, P(a, ba), P(b, bb), P(b, fb), P(a, fa), FogProof(Color.Lerp(cut, fog, .55f), fog, Depth(a + 1f)), Hint(a + 1f), false);
+                // the ink line along the skyline
+                K.Face(m, P(a, ta), P(b, tb), P(b, tb + .2f), P(a, ta + .2f), FogProof(ink, fog, Depth(a + 1f)), Hint(a + 1f), false);
+            }
+            // tree masses (darker) high on the face, lighter clearings lower down: lens shapes, not boxes
+            for (int i = 0; i < 44; i++)
+            {
+                float a0 = Mathf.Round(F(r, -122f, 114f) / step) * step, w = step * r.Next(2, 6), t0 = F(r, .3f, .8f), t1 = Mathf.Min(.95f, t0 + F(r, .1f, .2f));
+                bool high = t0 > .6f;
+                for (float a = a0; a < a0 + w - .01f; a += step)
+                {
+                    float ea = Mathf.Sin(Mathf.PI * (a - a0) / w), eb = Mathf.Sin(Mathf.PI * (a + step - a0) / w), tm = (t0 + t1) * .5f, h = (t1 - t0) * .5f;
+                    K.Face(m, P(a, Level(a, tm - h * ea), 1f), P(a + step, Level(a + step, tm - h * eb), 1f), P(a + step, Level(a + step, tm + h * eb), 1f), P(a, Level(a, tm + h * ea), 1f),
+                        FogProof(high ? mass : clearing, fog, Depth(a + 1f)), Hint(a + 1f), false);
+                }
+            }
+            // quarry scars: pale, low on the slope
+            foreach ((float a0, float w, float t0, float t1) in new[] { (33f, 6f, .1f, .36f), (-64f, 8f, .14f, .34f), (76f, 6f, .2f, .4f) })
+                for (float a = a0; a < a0 + w - .01f; a += step)
+                {
+                    float ea = Mathf.Sin(Mathf.PI * (a - a0) / w), eb = Mathf.Sin(Mathf.PI * (a + step - a0) / w), tm = (t0 + t1) * .5f, h = (t1 - t0) * .5f;
+                    K.Face(m, P(a, Level(a, tm - h * ea), 1.4f), P(a + step, Level(a + step, tm - h * eb), 1.4f), P(a + step, Level(a + step, tm + h * eb * .6f), 1.4f), P(a, Level(a, tm + h * ea * .6f), 1.4f),
+                        FogProof(quarry, fog, Depth(a + 1f)), Hint(a + 1f), false);
+                }
+            // the highway climbing to its cutting: a thin pale line up to the dip in the skyline
+            if (highway)
+                for (int i = 0; i < 4; i++)
+                {
+                    float a = 12f - i * 1.6f, b = a - 1.6f, ta = .1f + i * .2f, tb = ta + .2f;
+                    K.Face(m, P(a, Level(a, ta), 1.6f), P(b, Level(b, tb), 1.6f), P(b, Level(b, tb) + .22f, 1.6f), P(a, Level(a, ta) + .22f, 1.6f), FogProof(quarry, fog, Depth(a)), Hint(a), false);
+                }
+            // masts on the crest: red and white
+            float[] mastAt = { 22f, -36f, 61f };
+            for (int i = 0; i < Mathf.Min(masts, mastAt.Length); i++)
+            {
+                float a = mastAt[i], t = Top(a);
+                K.Face(m, P(a - .1f, t), P(a + .1f, t), P(a + .06f, t + 1.1f), P(a - .06f, t + 1.1f), FogProof(K.Hex("C8372D"), fog, Depth(a)), Hint(a), false);
+                K.Face(m, P(a - .06f, t + 1.1f), P(a + .06f, t + 1.1f), P(a + .03f, t + 1.8f), P(a - .03f, t + 1.8f), FogProof(White, fog, Depth(a)), Hint(a), false);
+            }
+            // behind the corridor, where the fog is complete (so nothing is lost behind it): the pale haze the road runs
+            // into, under the floating ridge. At 310 m it still sinks with the rest when the scenery leaves at a boundary.
+            for (float a = -70f; a < 69.9f; a += 2f)
+            {
+                float b = a + 2f, da = FogEnd / Mathf.Cos(a * Mathf.Deg2Rad), db = FogEnd / Mathf.Cos(b * Mathf.Deg2Rad), ta = Bottom(a) + .8f, tb = Bottom(b) + .8f;
+                if (ta < 1.2f && tb < 1.2f) continue;
+                K.Face(m, Apparent(a, 0f, da), Apparent(b, 0f, db), Apparent(b, Mathf.Max(.2f, tb), db), Apparent(a, Mathf.Max(.2f, ta), da), foot, Vector3.back + Vector3.up, false);
             }
         }
 
