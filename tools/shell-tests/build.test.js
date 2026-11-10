@@ -38,6 +38,7 @@ function installFakeSerial() {
       this.writable = new WritableStream({ write: (chunk) => { this.written += dec.decode(chunk); } });
     }
     push(t) { this.ctl.enqueue(enc.encode(t)); }
+    async close() { this.readable = null; this.writable = null; }
   }
   const serial = {
     async requestPort() { const p = new FakePort(); ports.push(p); return p; },
