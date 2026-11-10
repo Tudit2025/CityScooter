@@ -158,6 +158,38 @@ function installFakeSerial() {
   check("sim: tilt keys steer the game", (await ev(() => window.__toUnity.filter((c) => /sim\|st:(9\d|100)/.test(c)).length)) > 0);
   await page.screenshot({ path: path.join(OUT, "real_sim.png") });
 
+  // Every ride (11/10): a program whose "on start" set 5 wanted stars says open:stars:5 once a second. Every ride must
+  // start with 5 stars, also the rides started with A after the police ended the one before (what the teacher saw
+  // missing in class). With 5 stars a ride is over within seconds, so three rides fit in the test.
+  {
+    const EVERY_RIDE = ["from microbit import *", "n = 0", "while True:", "    if button_a.was_pressed():", '        print("jp")', "    n += 1",
+      "    if n % 20 == 0:", '        print("hi:v2")', '        print("open:stars:5")', '    print("st:0")', "    sleep(50)", ""].join("\n");
+    await ev((code) => { const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, EVERY_RIDE);
+    await page.click("#cs-run");
+    await page.waitForFunction(() => window.__toUnity.some((c) => c.includes("sim|open:stars:5")), { timeout: 15000 }).catch(() => {});
+    await page.click(".cs-monitor-head strong");
+    const from = await ev(() => window.__sent.length);
+    const rides = () => ev((n) => {
+      // one entry per ride: did wanted:5 come after its go and before the next go?
+      const out = [];
+      for (const s of window.__sent.slice(n)) {
+        if (s === "*: go") out.push(false);
+        else if (s === "*: wanted:5" && out.length) out[out.length - 1] = true;
+      }
+      return out;
+    }, from);
+    for (const end = Date.now() + 150000; Date.now() < end && (await rides()).filter(Boolean).length < 3;) {
+      await page.keyboard.press("a"); // starts a ride from the start screen or after the ride ended; a jump during a ride
+      await sleep(900);
+    }
+    const got = await rides();
+    check("every ride: open:stars:5 from the board gives 5 stars at the start of 3 rides in a row", got.length >= 3 && got.slice(0, 3).every(Boolean), JSON.stringify(got));
+    // back to a program without it: the stars stop
+    await ev((code) => { const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, LABCHECK);
+    await page.click("#cs-run");
+    await sleep(4500);
+  }
+
   // Radio race (v0.4) on the real build, through the USB board: race: -> lobby (pos:0:0 once a second), then a go:
   // relayed by the board as rx:go -> countdown -> the race starts in Kings Park and pos: comes 4 times a second.
   await page.click('.cs-modes button[data-mode="usb"]');
