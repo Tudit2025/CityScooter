@@ -50,8 +50,16 @@ namespace CityScooter.EditorTools
             PlayerSettings.WebGL.template = "PROJECT:CityScooter";
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Brotli;
             PlayerSettings.WebGL.decompressionFallback = true; // works on any static host; Vercel adds headers for speed
-            PlayerSettings.WebGL.dataCaching = true;
+            // 11/10: build files are named by their content. A new build has new addresses, so a browser can never mix
+            // an old cached file with new ones (some lab computers could not load the game until the student changed
+            // browser), and the host can let browsers keep them for good (tools/deploy-web.mjs). The browser's own
+            // cache does the job then: Unity's second copy in IndexedDB is one more thing that can go wrong.
+            PlayerSettings.WebGL.nameFilesAsHashes = true;
+            PlayerSettings.WebGL.dataCaching = false;
             PlayerSettings.runInBackground = true;
+            // Hash-named files of earlier builds would pile up (and be deployed): start from an empty Build folder.
+            string buildFolder = Path.Combine(WebOutputPath, "Build");
+            if (Directory.Exists(buildFolder)) Directory.Delete(buildFolder, true);
 
             var options = new BuildPlayerOptions
             {

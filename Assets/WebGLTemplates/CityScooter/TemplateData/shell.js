@@ -26,6 +26,10 @@
   const KEY_BLOCKS = "cityscooter.blocks";
   const KEY_VIEW = "cityscooter.view";
   const KEY_PANEL = "cityscooter.panelWidth";
+  const KEY_USBLOG = "cityscooter.usbLog";
+  const KEY_LOADLOG = "cityscooter.loadLog";
+  const KEY_LOADTRY = "cityscooter.loadTry"; // sessionStorage: automatic reloads after a failed load
+  const OUTBOX_MAX = 400; // lines kept for Unity while it cannot take them (loading, the tab hidden): old input is stale
 
   const SILENT_TEXT = "Connected, but this micro:bit is not sending anything. Flash a program that prints, like the starter. "
     + "Code you only ran in the REPL is gone after unplugging.";
@@ -114,6 +118,7 @@
         <button type="button" class="cs-primary cs-big" id="cs-connect">Connect micro:bit</button>
         <div class="cs-usb-msg" id="cs-usb-msg" hidden></div>
         <div id="cs-boards"></div>
+        <button type="button" class="cs-small cs-report" id="cs-report" title="Boards dropping out, or the game not loading? Copy what happened and send it to your teacher.">Copy a report</button>
         <ol class="cs-steps cs-steps-row">
           <li>Click <b>Connect micro:bit</b> and pick it in the list.</li>
           <li>Make your code below and click <b>Send to micro:bit</b>. It restarts with your code.</li>
@@ -258,7 +263,10 @@
       case "bo": return { kind: "boost" };
       case "do": return /^(chase|heli|calm|car|slowcar|roadworks|police|crossing|manhole|ramp|stars\s*:\s*[0-5]|turn\s*:\s*(l|r|left|right|-1|1))$/i.test(arg)
         ? { kind: "trigger", value: arg.toLowerCase() } : { kind: "malformed" };
-      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo|jp|br|pu|bl|bo|toon|say|do|sur|trick|start)$/i.test(arg)
+      // 11/9: "open:stars:5": the same events, at the start of every ride ("on start" blocks say it every second)
+      case "open": return /^(chase|heli|calm|car|slowcar|roadworks|police|crossing|manhole|ramp|stars\s*:\s*[0-5]|turn\s*:\s*(l|r|left|right|-1|1))$/i.test(arg)
+        ? { kind: "opening", value: arg.toLowerCase().replace(/\s+/g, "") } : { kind: "malformed" };
+      case "say": return /^[A-Za-z0-9_!?-]{1,16}$/.test(arg) && !/^(go|crash|gift|ko|boing|tired|arrested|busted|lost|echo|jp|br|pu|bl|bo|toon|say|do|open|sur|trick|start)$/i.test(arg)
         ? { kind: "say", value: arg } : { kind: "malformed" };
       case "sur": return { kind: "surrender" };
       case "trick": return { kind: "trick" }; // v0.3 ramps: "trick:1" is forgiven like "jp:1"
@@ -333,17 +341,11 @@
     callUnity("OnDeviceStatus", [d.id, d.kind, isActive(d) ? "1" : "0", d.ver || ""].join("|"));
   }
 
-  // A new program is about to run on this board (Send, or Run in the simulator) while it stays connected: tell the game
-  // the old program has gone, like a re-plugged board, so the events it set up for the start of every ride
-  // ("on start" -> do:...) go with it. The caller sends the "connected" status again straight after.
-  function sendGone(d) {
-    if (isActive(d)) callUnity("OnDeviceStatus", [d.id, d.kind, "0", d.ver || ""].join("|"));
-  }
-
   function onDeviceLine(d, line) {
     const t = now();
     d.lastLineAt = t;
     if (d.silent) { d.silent = false; renderBoards(); }
+    if (d.reviveTries) { usbLog(d, "data again after opening the port again"); d.reviveTries = 0; }
     const c = classify(line);
     switch (c.kind) {
       case "steer":
@@ -397,6 +399,11 @@
       case "trigger":
         logLine("game", d.id, "asks the game for: " + c.value, "");
         break;
+      case "opening": // comes about once a second, so the monitor notes it only when it is new
+        d.opens = d.opens || {};
+        if (!d.opens[c.value] || t - d.opens[c.value] > 5000) logLine("game", d.id, "every ride starts with: " + c.value, "");
+        d.opens[c.value] = t;
+        break;
       case "surrender":
         d.surUntil = t + 600;
         break;
@@ -415,7 +422,7 @@
         logLine("warn", d.id, line, /^\s*toon/i.test(line) ? "toon: needs 1 (on) or 0 (off), e.g. toon:1"
           : /^\s*say/i.test(line) ? "say: one word of your own (letters, digits, _ - ! ?, up to 16), not a game word like crash"
           : /^\s*start/i.test(line) ? "start: a district id, e.g. start:kingspark or start:rockingham (" + Object.keys(ZONE_NAMES).join(", ") + ")"
-          : /^\s*do/i.test(line) ? "do: one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole, ramp"
+          : /^\s*(do|open)/i.test(line) ? "do: and open: need one of chase, heli, calm, stars:0-5, turn:L, turn:R, car, slowcar, roadworks, police, crossing, manhole, ramp"
           : /^\s*race/i.test(line) ? RACE_HINT
           : "st: needs a number, e.g. st:-35");
         break;
@@ -517,12 +524,19 @@
     try { shell.unity.SendMessage("DeviceBridge", method, arg); } catch (e) { console.warn("[CityScooter] SendMessage failed", e); }
   }
 
+  // Runs every frame for as long as the page lives: whatever goes wrong inside one frame, the next one is still asked
+  // for (one exception here used to stop the board's lines reaching the game until the page was refreshed).
   function pump() {
-    if (shell.unity && shell.unityReady && shell.outbox.length) {
-      const batch = shell.outbox.splice(0, shell.outbox.length).join("\n");
-      try { shell.unity.SendMessage("DeviceBridge", "OnDeviceLines", batch); } catch (e) { console.warn("[CityScooter] SendMessage failed", e); }
+    try {
+      if (shell.outbox.length > OUTBOX_MAX) shell.outbox.splice(0, shell.outbox.length - OUTBOX_MAX);
+      if (shell.unity && shell.unityReady && shell.outbox.length) {
+        const batch = shell.outbox.splice(0, shell.outbox.length).join("\n");
+        try { shell.unity.SendMessage("DeviceBridge", "OnDeviceLines", batch); } catch (e) { console.warn("[CityScooter] SendMessage failed", e); }
+      }
+      flushLog();
+    } catch (e) {
+      console.warn("[CityScooter] frame", e);
     }
-    flushLog();
     requestAnimationFrame(pump);
   }
 
@@ -701,11 +715,92 @@
   const usbErr = (e) => (e && e.name && e.name !== "Error" ? e.name + ": " : "") + errText(e);
 
   // USB events in the monitor (and in CityScooterShell.usbLog for the teacher): why a board dropped out.
+  // Kept in localStorage too, so it is still there after the page refresh a stuck board usually gets ("Copy a report").
   function usbLog(d, text) {
-    const entry = new Date().toLocaleTimeString() + " " + d.id + " " + text;
+    const entry = new Date().toLocaleTimeString() + " " + (d ? d.id + " " : "") + text;
     shell.usbLog.push(entry);
     if (shell.usbLog.length > 100) shell.usbLog.shift();
-    logLine("warn", d.id, "USB: " + text, "");
+    storeSet(KEY_USBLOG, JSON.stringify(shell.usbLog));
+    if (d) logLine("warn", d.id, "USB: " + text, "");
+  }
+
+  function loadUsbLog() {
+    try {
+      const old = JSON.parse(storeGet(KEY_USBLOG) || "[]");
+      if (Array.isArray(old)) for (const e of old.slice(-80)) shell.usbLog.push(String(e));
+    } catch (e) { /* unreadable: start again */ }
+    usbLog(null, "page opened (" + new Date().toLocaleDateString() + ")");
+  }
+
+  // ---- Watchdog (11/10). Lesson 2: boards stopped sending after a while and only a page refresh brought them back,
+  // again and again. No error and no disconnect event comes in that state: the port looks open and reads just wait
+  // (old DAPLink firmware, hubs and Windows power saving can all do it). A refresh closes the port and opens it
+  // again, so do exactly that ourselves when a board that should be talking goes quiet, or a write never finishes.
+  // Silence before each try; after the last one give up until the board talks again (it may just have no program).
+  const REVIVE_AFTER_MS = [4000, 8000, 16000, 32000];
+  const WRITE_STUCK_MS = 3000;
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
+
+  async function revive(d, why) {
+    if (d.reviving || d.opening || d.sending || !d.connected || d.kind !== "usb") return;
+    d.reviving = true;
+    d.reviveTries = (d.reviveTries || 0) + 1;
+    d.revives = (d.revives || 0) + 1;
+    usbLog(d, why + ": opening the port again (try " + d.reviveTries + ")");
+    const port = d.port;
+    d.connected = false; // stops the read loop and new writes. Unity is not told: the board is back in a moment
+    try {
+      if (d.reader) await withTimeout(d.reader.cancel().catch(() => { /* already broken */ }), 1000);
+      for (let i = 0; i < 20 && d.reader; i++) await sleepMs(25); // the read loop lets go of its lock
+      if (port.writable && !port.writable.locked) await withTimeout(port.writable.abort().catch(() => { /* fine */ }), 500);
+      let closed = false;
+      await withTimeout(port.close().then(() => { closed = true; }, (e) => { closed = true; usbLog(d, "closing: " + usbErr(e)); }), 2000);
+      if (!closed) usbLog(d, "the port did not close in 2 s");
+    } catch (e) {
+      usbLog(d, "reopening: " + usbErr(e));
+    }
+    d.reviving = false;
+    d.chain = null; // writes that were waiting belong to the old connection
+    if (d.gone || d.port !== port) return; // unplugged meanwhile: the disconnect event did the rest
+    await openBoard(d);
+    if (!d.connected) { sendStatus(d); renderChips(); renderBoards(); }
+  }
+
+  function watchBoards(t) {
+    for (const d of shell.devices.values()) {
+      if (d.kind !== "usb" || !d.connected || d.sending || d.reviving || d.opening) continue;
+      const tries = d.reviveTries || 0;
+      if (tries >= REVIVE_AFTER_MS.length) continue;
+      const quiet = t - Math.max(d.lastLineAt || 0, d.connectedAt || 0);
+      if (quiet > REVIVE_AFTER_MS[tries]) revive(d, "no data for " + Math.round(quiet / 1000) + " s");
+    }
+  }
+
+  // What the teacher needs to see when boards drop out or the game does not load: copied with one click.
+  function reportText() {
+    const lines = ["CityScooter report " + new Date().toLocaleString(), location.href, navigator.userAgent,
+      "memory: " + (navigator.deviceMemory || "?") + " GB, tab " + (document.visibilityState || "?")
+        + ", game " + (shell.unity ? (shell.unityReady ? "running" : "starting") : "not loaded")];
+    for (const d of shell.devices.values()) {
+      if (d.kind !== "usb") continue;
+      lines.push(d.id + " " + (d.ver || "v?") + (d.connected ? " connected" : " not connected")
+        + ", reopened " + (d.revives || 0) + ", reconnected " + (d.reconnects || 0) + ", read glitches " + (d.glitches || 0));
+    }
+    const fails = loadProblems();
+    if (fails.length) { lines.push("load problems:"); for (const f of fails) lines.push(f); }
+    lines.push("USB log:");
+    for (const e of shell.usbLog) lines.push(e);
+    return lines.join(String.fromCharCode(10));
+  }
+
+  async function copyReport() {
+    const text = reportText();
+    try {
+      await navigator.clipboard.writeText(text);
+      usbMsg("Report copied. Paste it into a message to your teacher.", "cs-good");
+    } catch (e) {
+      window.prompt("Copy this report for your teacher (Ctrl+C):", text);
+    }
   }
 
   async function openBoard(d) {
@@ -814,7 +909,17 @@
     const p = (d.chain || Promise.resolve()).then(async () => {
       if (!d.connected || !d.port.writable) throw new Error("unplugged");
       const w = d.port.writable.getWriter();
-      try { await w.write(bytes); } finally { w.releaseLock(); }
+      let timer = 0;
+      try {
+        // A write that never finishes would hold every later message back for ever (see the watchdog).
+        await Promise.race([w.write(bytes), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("stuck")), WRITE_STUCK_MS); })]);
+      } catch (e) {
+        if (errText(e) === "stuck") revive(d, "a message to the board got stuck");
+        throw e;
+      } finally {
+        clearTimeout(timer);
+        try { w.releaseLock(); } catch (e) { /* the stream broke */ }
+      }
     });
     d.chain = p.catch(() => { /* reported to the caller */ });
     return p;
@@ -852,6 +957,7 @@
   }
 
   function initSerial() {
+    loadUsbLog();
     if (!("serial" in navigator)) return;
     navigator.serial.addEventListener("connect", (e) => addPort(e.target)); // re-plug / re-flash
     navigator.serial.addEventListener("disconnect", (e) => {
@@ -861,6 +967,7 @@
         d.connected = false;
         d.gone = true;
         d.silent = false;
+        d.reviveTries = 0;
         // cancel() rejects when the stream already errored (it has, after an unplug): swallow it.
         if (d.reader) d.reader.cancel().catch(() => { /* gone */ });
         sendStatus(d);
@@ -937,6 +1044,7 @@
       if (silent !== d.silent) { d.silent = silent; changed = true; }
     }
     if (changed) { renderChips(); renderBoards(); }
+    watchBoards(t);
   }
 
   // ------------------------------------------------------------------ Send to micro:bit (main.py over the serial REPL)
@@ -1052,8 +1160,6 @@
     let wrote = false;
     try {
       await repl.enter();
-      sendGone(d); // the old program has stopped: the game forgets what it set up for every ride
-      sendStatus(d);
       await repl.exec("f=open('main.py','wb')\nw=f.write");
       wrote = true;
       for (let i = 0; i < bytes.length; i += SEND_PIECE) {
@@ -1075,6 +1181,7 @@
       d.rxBuf = "";
       d.sending = false;
       d.lastLineAt = now();
+      d.reviveTries = 0; // a new program: the watchdog starts again
       if (ok >= 0) feed(d, t.slice(ok + 2)); // the new program's first lines
       usbMsg("Sent! " + d.id + " is running your new code. Press A to ride.", "cs-good");
       logLine("game", d.id, "Sent! Your micro:bit restarted with your new code.", "");
@@ -1175,7 +1282,6 @@
     const d = simDevice();
     if (!d.ver) d.ver = "v2";
     d.race = ""; // a new program: note its race: again
-    sendGone(d); // the old program has gone (the new one is connected again just below)
     d.connected = true;
     d.connectedAt = now();
     sendStatus(d);
@@ -1564,6 +1670,7 @@
 
     document.querySelectorAll(".cs-modes button").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode, true)));
     $("cs-connect").addEventListener("click", connectClicked);
+    $("cs-report").addEventListener("click", copyReport);
     $("cs-pause").addEventListener("click", () => setPaused(!monitor.paused));
     $("cs-clear").addEventListener("click", () => { $("cs-log").textContent = ""; monitor.pending.length = 0; });
     $("cs-run").addEventListener("click", simFlash);
@@ -1600,6 +1707,129 @@
     window.addEventListener("message", onSimMessage);
   }
 
+  // ------------------------------------------------------------------ loading the game
+  // Lesson 2 (11/10): on some computers the game did not load (an error about "async ... wasm") until the student
+  // changed browser. That error is the browser failing to fetch or start the game's code: a download cut short, a bad
+  // copy in a cache, or no memory left in a tab that was refreshed many times. So: try again by ourselves, past every
+  // cache; if it still fails, say what to do, and keep the exact words for the teacher ("Copy a report").
+  const LOAD_RETRIES = 2;
+  const sessionGet = (k) => { try { return window.sessionStorage.getItem(k); } catch (e) { return null; } };
+  const sessionSet = (k, v) => {
+    try { if (v === null) window.sessionStorage.removeItem(k); else window.sessionStorage.setItem(k, v); } catch (e) { /* blocked */ }
+  };
+
+  function loadProblems() {
+    try {
+      const log = JSON.parse(storeGet(KEY_LOADLOG) || "[]");
+      return Array.isArray(log) ? log.map(String) : [];
+    } catch (e) { return []; }
+  }
+
+  function noteLoadProblem(text) {
+    const log = loadProblems();
+    log.push(new Date().toLocaleString() + " " + text);
+    storeSet(KEY_LOADLOG, JSON.stringify(log.slice(-12)));
+  }
+
+  // Unity may keep its own copy of the game's files (IndexedDB or Cache "UnityCache"): a bad copy survives a refresh.
+  function clearGameCaches() {
+    const jobs = [];
+    try {
+      if (window.caches) jobs.push(caches.keys().then((keys) => Promise.all(keys.filter((k) => /unity/i.test(k)).map((k) => caches.delete(k)))));
+    } catch (e) { /* not allowed here */ }
+    try {
+      if (window.indexedDB) jobs.push(new Promise((done) => { const q = indexedDB.deleteDatabase("UnityCache"); q.onsuccess = q.onerror = q.onblocked = () => done(); }));
+    } catch (e) { /* not allowed here */ }
+    return withTimeout(Promise.all(jobs).catch(() => { /* best effort */ }), 1500);
+  }
+
+  function loadGame(canvas, config) {
+    const tries = parseInt(sessionGet(KEY_LOADTRY) || "0", 10) || 0;
+    if (tries > 0) {
+      // A retry: new addresses, so no cache (the browser's, a proxy's) can hand back the copy that failed.
+      const bust = "retry=" + Date.now();
+      for (const k of ["dataUrl", "frameworkUrl", "codeUrl"]) if (config[k]) config[k] += (config[k].indexOf("?") < 0 ? "?" : "&") + bust;
+      config.cacheControl = () => "no-store";
+    }
+    let done = false, progress = 0, changed = now(), stall = 0;
+    const fail = (e) => {
+      if (done) return;
+      done = true;
+      clearInterval(stall);
+      loadFailed(errText(e), tries);
+    };
+    // The loader's own problems come here (without this it only writes them to the console).
+    config.showBanner = (msg, type) => { if (type === "error") fail(new Error(msg)); else console.warn("[CityScooter] " + msg); };
+    // A crash while the game runs: keep the words for the report; false = the loader still shows its own message.
+    config.errorHandler = (msg) => { noteLoadProblem("while running: " + String(msg).slice(0, 300)); return false; };
+    // A download that stops without an error (a dropped connection) never fails by itself. Starting the game after
+    // the downloads (90% and up) may take a while on a slow computer, so that part gets longer.
+    stall = setInterval(() => {
+      if (now() - changed > (progress < 0.9 ? 45000 : 120000)) fail(new Error("loading stopped at " + Math.round(progress * 100) + "%"));
+    }, 2000);
+    let starting;
+    try {
+      starting = createUnityInstance(canvas, config, (p) => {
+        if (p !== progress) { progress = p; changed = now(); }
+        if (done) return;
+        $("cs-progress").textContent = Math.round(p * 100) + "%";
+        $("cs-progressbar").style.width = Math.round(p * 100) + "%";
+      });
+    } catch (e) {
+      fail(e);
+      return;
+    }
+    starting.then((instance) => {
+      if (done) return; // gave up on it already: the page is reloading
+      done = true;
+      clearInterval(stall);
+      sessionSet(KEY_LOADTRY, null);
+      shell.unity = instance;
+      $("cs-loading").remove();
+      if (shell.mode !== "sim") canvas.focus();
+    }).catch(fail);
+    // Give the game's memory back when the page goes away: a tab refreshed many times can otherwise run out.
+    window.addEventListener("pagehide", (e) => {
+      if (e.persisted || !shell.unity || !shell.unity.Quit) return;
+      try { shell.unity.Quit().catch(() => { /* going away anyway */ }); } catch (err) { /* going away anyway */ }
+    });
+  }
+
+  function loadFailed(why, tries) {
+    console.error("[CityScooter] the game did not load: " + why);
+    noteLoadProblem("try " + (tries + 1) + ": " + why);
+    const box = $("cs-loading");
+    if (!box) return;
+    const memory = /memory|allocate|RangeError/i.test(why);
+    const next = String(tries + 1);
+    if (!memory && tries < LOAD_RETRIES) {
+      sessionSet(KEY_LOADTRY, next);
+      if (sessionGet(KEY_LOADTRY) === next) { // (without session storage we could not count: no automatic reload then)
+        box.textContent = "Loading did not work. Trying again… (" + (tries + 2) + " of " + (LOAD_RETRIES + 1) + ")";
+        clearGameCaches().then(() => setTimeout(() => location.reload(), 800));
+        return;
+      }
+    }
+    box.textContent = "";
+    box.classList.add("cs-load-failed");
+    const add = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; box.appendChild(e); return e; };
+    add("div", "", "The game could not load");
+    add("div", "cs-load-help", memory
+      ? "This tab has run out of memory. Close this tab and any other CityScooter tabs, then open the page again."
+      : "Check the internet connection, then click Try again. Still stuck? Close the browser completely, open it again and come back to this page.");
+    const again = add("button", "cs-primary cs-big", "Try again");
+    again.type = "button";
+    again.addEventListener("click", () => {
+      again.disabled = true;
+      sessionSet(KEY_LOADTRY, "1"); // keeps the next load past the caches, without more automatic reloads than one round
+      clearGameCaches().then(() => location.reload());
+    });
+    const report = add("button", "cs-small", "Copy a report for your teacher");
+    report.type = "button";
+    report.addEventListener("click", () => copyReport().then(() => { report.textContent = "Copied"; }));
+    add("div", "cs-load-why", "What the browser said: " + why.slice(0, 300));
+  }
+
   // ------------------------------------------------------------------ public API (docs/bridge.md)
   window.CityScooterShell = {
     boot(canvas, config, options) {
@@ -1625,16 +1855,7 @@
       setMode(storeGet(KEY_MODE) || (shell.keyboardAllowed ? "keyboard" : "usb"), false);
       requestAnimationFrame(pump);
 
-      createUnityInstance(canvas, config, (p) => {
-        $("cs-progress").textContent = Math.round(p * 100) + "%";
-        $("cs-progressbar").style.width = Math.round(p * 100) + "%";
-      }).then((instance) => {
-        shell.unity = instance;
-        $("cs-loading").remove();
-        if (shell.mode !== "sim") canvas.focus();
-      }).catch((e) => {
-        $("cs-loading").textContent = "The game failed to load: " + errText(e) + ". Try reloading the page in Chrome or Edge.";
-      });
+      loadGame(canvas, config);
     },
 
     /** USB events with times (open retries, glitches, reconnects); the teacher can copy it from the console. */

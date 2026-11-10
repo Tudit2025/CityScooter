@@ -202,7 +202,7 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
   check("no module MicroPython lacks (numbers)", !/import numbers|from numbers/.test(allPy));
   for (const want of ["import music", "import random", "(pin_logo.is_touched() if VERSION == \"v2\" else False)",
     "(microphone.sound_level() if VERSION == \"v2\" else 0)", "display.set_pixel(int(", "game_speed = int(msg[4:])", "count = None",
-    'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'print("toon:1")', 'print("toon:0")', 'msg == "boing"',
+    'print("pu")', 'print("bl")', 'accelerometer.was_gesture("shake")', 'msg == "warn:ped"', 'msg == "turn:-1"', 'toon_mode = "1"', 'toon_mode = "0"', 'print("toon:" + toon_mode)', 'if toon_mode:', 'msg == "boing"',
     'last_press_a = -1000', 'running_time() - last_press_a < 400', 'print("bo")', 'presses_a += 1', 'if presses_a == 3:', 'print("say:party")', 'msg == "party"', 'print("do:chase")', 'hits = (hits if type(hits) in (int, float) else 0) + 1', 'print("do:stars:" + str(max(0, min(5, int(2)))))',
     'broadcasts.append("party")', 'if got == "party":', 'import radio', 'radio_group = 1', 'radio.config(group=radio_group, queue=10)', "radio.send(str('gift!'))", 'got_radio = radio.receive()', 'del broadcasts[:]',
     'race_name = "ZED"', 'if radio_group != 14:', 'send_position = True', 'pass_radio = True', '        except ValueError:  # not text (e.g. sent by a MakeCode program): skip it\n            continue\n', '            print("rx:" + got_radio)',
@@ -436,6 +436,43 @@ const ALL = { blocks: { languageVersion: 0, blocks: [
     const L = await ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].map((r) => r.className + " :: " + r.textContent));
     check("when radio receives in the simulator: hears one and two, skips the non-text packet, no error",
       heard.join(",") === "sim|heard one,sim|heard two" && !L.some((x) => /cs-l-error/.test(x)), heard.join(",") + " " + L.filter((x) => /cs-l-error/.test(x)).slice(0, 2).join(" | "));
+  }
+
+  // ---- Every ride (11/9): game events in "on start" set up every ride: open:<event> at once and again with hi:
+  // (about once a second). The same blocks anywhere else stay do: (once).
+  {
+    const openPy = await ev(() => {
+      const ws = window.Blockly.getMainWorkspace();
+      ws.clear();
+      const n = (v) => ({ shadow: { type: "math_number", fields: { NUM: v } } });
+      window.Blockly.serialization.workspaces.load({ blocks: { languageVersion: 0, blocks: [
+        { type: "mb_on_start", x: 10, y: 10, inputs: { DO: { block: { type: "cs_stars", inputs: { N: n(5) },
+          next: { block: { type: "cs_do", fields: { EVENT: "turn:L" } } } } } } },
+        { type: "mb_on_button", x: 10, y: 260, fields: { BTN: "b" }, inputs: { DO: { block: { type: "cs_do", fields: { EVENT: "car" },
+          next: { block: { type: "cs_stars", inputs: { N: n(2) } } } } } } },
+      ] } }, ws);
+      return window.MicrobitBlocks.generate(ws);
+    });
+    fs.writeFileSync(path.join(OUT, "blocks_every_ride.py"), openPy);
+    check("every ride: valid Python", !pySyntax(openPy, "every_ride"), pySyntax(openPy, "every_ride"));
+    const onStart = openPy.slice(openPy.indexOf("# on start"), openPy.indexOf("while True:"));
+    check("every ride: on start remembers its game events and says open: at once",
+      openPy.includes('every_ride = []') && onStart.includes('every_ride.append("stars:" + str(max(0, min(5, int(5)))))\nprint("open:" + every_ride[-1])')
+      && onStart.includes('every_ride.append("turn:L")') && !onStart.includes('print("do:'), onStart);
+    check("every ride: says them again with hi: about once a second",
+      openPy.includes('        print("hi:" + VERSION)  # tell the game which micro:bit this is\n        for ride_event in every_ride:\n            print("open:" + ride_event)'));
+    check("every ride: the same blocks on a button stay do: (once)",
+      openPy.includes('print("do:car")') && openPy.includes('print("do:stars:" + str(max(0, min(5, int(2)))))'));
+    await ev(() => document.querySelectorAll("#cs-log .cs-line").forEach((r) => { r.dataset.old = "1"; }));
+    await ev((code) => { document.querySelector('.cs-tabs button[data-view="python"]').click(); const t = document.getElementById("cs-code"); t.value = code; t.dispatchEvent(new Event("input")); }, openPy);
+    const mark = await ev(() => window.__fakeUnity.total);
+    await page.click("#cs-run");
+    await sleep(3500);
+    const opens = await ev((n) => window.__fakeUnity.since(n).filter((l) => l === "sim|open:stars:5"), mark);
+    check("every ride: the game hears open:stars:5 at once and again every second", opens.length >= 3, opens.length);
+    const notes = await ev(() => [...document.querySelectorAll("#cs-log .cs-line:not([data-old])")].map((r) => r.textContent).filter((x) => /every ride starts with: stars:5/.test(x)));
+    check("every ride: the monitor notes it once, not every second", notes.length === 1, notes.length);
+    await ev(() => document.querySelector('.cs-tabs button[data-view="blocks"]').click());
   }
 
   // ---- Blocks <-> Python

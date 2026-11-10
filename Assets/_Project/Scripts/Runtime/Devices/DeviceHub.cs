@@ -104,6 +104,9 @@ namespace CityScooter.Devices
                 case CommandKind.Trigger:
                     Game.GameEvents.RaiseTriggerRequested(deviceId, cmd.Text, Mathf.RoundToInt(cmd.Value));
                     break;
+                case CommandKind.Opening:
+                    Game.GameEvents.RaiseOpeningRequested(deviceId, cmd.Text, Mathf.RoundToInt(cmd.Value));
+                    break;
                 case CommandKind.Say:
                     Game.GameEvents.RaiseBoardSaid(deviceId, cmd.Text);
                     break;
@@ -136,15 +139,12 @@ namespace CityScooter.Devices
         public void SetStatus(string deviceId, string kind, bool connected, string version = null)
         {
             DeviceInfo dev = GetOrAdd(deviceId);
-            // A board unplugged (or the next student's): cartoon mode does not carry over to whoever comes next,
-            // and neither do the events its program set up for the start of every ride.
-            bool left = dev.Connected && !connected;
-            if (left) Mixer.ClearToon();
+            // A board unplugged (or the next student's): cartoon mode does not carry over to whoever comes next.
+            if (dev.Connected && !connected) Mixer.ClearToon();
             if (!string.IsNullOrEmpty(kind)) dev.Kind = kind;
             if (!string.IsNullOrEmpty(version)) dev.Version = version;
             dev.Connected = connected;
             dev.LastSeen = Now;
-            if (left) Game.GameEvents.RaiseDeviceLeft(deviceId);
             DeviceChanged?.Invoke(dev);
         }
 

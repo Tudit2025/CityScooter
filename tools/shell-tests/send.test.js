@@ -95,7 +95,6 @@ function installBridgeSerial() {
   check("fake board connected and said hi:v2", hello, await ev(() => JSON.stringify(window.__fakeUnity.status)));
   const blocksCode = await ev(() => document.getElementById("cs-preview").textContent);
   const t0 = Date.now();
-  const callsBeforeSend = await ev(() => window.__fakeUnity.calls.length);
   await page.click("#cs-send");
   await sleep(300);
   check("button shows progress while sending", /Sending/.test(await ev(() => document.getElementById("cs-send").textContent)));
@@ -112,10 +111,6 @@ function installBridgeSerial() {
   check("game's crash was not typed into the REPL", boardLog("b0").includes("w(b'") && !/crash\\n/.test(boardLog("b0")));
   const newProg = await page.waitForFunction(() => window.__fakeUnity.lines.includes("usb1|st:7"), { timeout: 5000 }).then(() => true, () => false);
   check("board restarted with the new program and the game gets its lines", newProg);
-  // The game hears the old program go (it forgets the events that program set up for every ride), then the board is back.
-  const goneAndBack = await ev((n) => window.__fakeUnity.calls.slice(n).filter((c) => c.includes("OnDeviceStatus") && c.includes("usb1|")), callsBeforeSend);
-  check("Send tells the game the old program has gone, then that the board is connected",
-    goneAndBack.length === 2 && goneAndBack[0].includes("usb1|usb|0") && goneAndBack[1].includes("usb1|usb|1"), goneAndBack);
   check("button back to Send to micro:bit", (await ev(() => document.getElementById("cs-send").textContent)) === "Send to micro:bit");
   const logRows = await ev(() => [...document.querySelectorAll("#cs-log .cs-line")].map((r) => r.textContent).join("\n"));
   check("monitor says sending and sent", /Sending your code/.test(logRows) && /Sent!/.test(logRows));

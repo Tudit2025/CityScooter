@@ -225,6 +225,34 @@ namespace CityScooter.Tests
             Assert.AreEqual(CommandKind.Malformed, CommandParser.Parse(line).Kind);
         }
 
+        // 11/9: "open:" asks for the same events at the start of every ride.
+        [TestCase("open:stars:5", "stars", 5)]
+        [TestCase("OPEN : chase", "chase", 0)]
+        [TestCase("open:turn:L", "turn", -1)]
+        [TestCase("open:ramp", "ramp", 0)]
+        public void Open_IsAnEveryRideEvent(string line, string name, int value)
+        {
+            Command c = CommandParser.Parse(line);
+            Assert.AreEqual(CommandKind.Opening, c.Kind);
+            Assert.AreEqual(name, c.Text);
+            Assert.AreEqual(value, (int)c.Value);
+        }
+
+        [TestCase("open:")]
+        [TestCase("open:fireworks")]
+        [TestCase("open:stars:6")]
+        public void Open_RefusesUnknownEvents(string line)
+        {
+            Assert.AreEqual(CommandKind.Malformed, CommandParser.Parse(line).Kind);
+        }
+
+        [Test]
+        public void Open_IsAGameWordABoardCannotSay()
+        {
+            Assert.IsTrue(Messages.IsGameMessage("open"));
+            Assert.AreEqual(CommandKind.Malformed, CommandParser.Parse("say:open").Kind);
+        }
+
         [Test]
         public void V1_ToonModeIsLatchedUntilChanged()
         {

@@ -40,7 +40,8 @@ function installFakeSerial() {
       this.opts = opts;
       this.opened = true;
       this.readable = new ReadableStream({ start: (c) => { this.ctl = c; } });
-      this.writable = new WritableStream({ write: (chunk) => { this.written += dec.decode(chunk); } });
+      // stuckWrites: the write never finishes (seen as a board that stops reacting to the game)
+      this.writable = new WritableStream({ write: (chunk) => (this.stuckWrites ? new Promise(() => {}) : void (this.written += dec.decode(chunk))) });
     }
     async close() { this.opened = false; this.readable = null; this.writable = null; this.closes = (this.closes || 0) + 1; }
     push(text) { if (this.ctl) this.ctl.enqueue(enc.encode(text)); }
@@ -232,6 +233,34 @@ function installFakeSerial() {
     JSON.stringify(await ev(() => window.CityScooterShell.usbLog)));
   check("the monitor says it reconnected", (await logText()).some((x) => /broke without an unplug/.test(x)) && (await logText()).some((x) => /connected again/.test(x)));
 
+  // Watchdog (lesson 2, 11/10): boards went quiet with no error at all (reads just wait) until the page was refreshed.
+  // The shell now does what the refresh did: it closes the port and opens it again. The game is not told meanwhile.
+  {
+    const closes0 = await ev((i) => window.__serial.ports[i].closes, p);
+    const calls0 = (await calls()).length;
+    const reopened = await page.waitForFunction((i, n) => window.__serial.ports[i].closes > n && window.__serial.ports[i].opened, { timeout: 9000, polling: 100 }, p, closes0).then(() => true, () => false);
+    check("a board that goes quiet has its port opened again", reopened && (await ev(() => window.CityScooterShell.usbLog)).some((x) => /usb1 no data for \d+ s: opening the port again \(try 1\)/.test(x)),
+      JSON.stringify((await ev(() => window.CityScooterShell.usbLog)).slice(-4)));
+    check("the game is not told the board went away meanwhile", !(await calls()).slice(calls0).some((c) => c.includes("usb1|usb|0")));
+    await push(p, "st:14\n");
+    await sleep(300);
+    check("its lines reach the game again and the USB log says so", (await lines()).includes("usb1|st:14")
+      && (await ev(() => window.CityScooterShell.usbLog)).some((x) => /usb1 data again after opening the port again/.test(x)));
+    // A write that never finishes: the same cure.
+    const closes1 = await ev((i) => { window.__serial.ports[i].stuckWrites = true; return window.__serial.ports[i].closes; }, p);
+    await ev(() => window.CityScooterShell.sendToDevices("*", "gift"));
+    const keep = setInterval(() => push(p, "st:15\n").catch(() => {}), 200); // the board itself keeps talking
+    const unstuck = await page.waitForFunction((i, n) => window.__serial.ports[i].closes > n && window.__serial.ports[i].opened, { timeout: 7000, polling: 100 }, p, closes1).then(() => true, () => false);
+    await ev((i) => { window.__serial.ports[i].stuckWrites = false; }, p);
+    await sleep(300);
+    await ev(() => window.CityScooterShell.sendToDevices("*", "crash"));
+    await sleep(300);
+    clearInterval(keep);
+    check("a stuck write gets the port opened again, and later messages reach the board", unstuck && (await ev((i) => window.__serial.ports[i].written, p)).endsWith("crash\n"),
+      JSON.stringify((await ev(() => window.CityScooterShell.usbLog)).slice(-3)));
+    check("the report has the USB log", await ev(() => document.getElementById("cs-report") !== null));
+  }
+
   // silent board: second board sends nothing
   await page.click("#cs-connect");
   for (let i = 0; i < 19; i++) { await push(p, "st:-35\n"); await sleep(200); } // usb1 keeps sending like a real program
@@ -306,15 +335,9 @@ function installFakeSerial() {
   await page.keyboard.press("Tab");
   check("Tab inserts 4 spaces", (await ev(() => document.getElementById("cs-code").value)) === "x = 1\n    ");
   await ev(() => { const t = document.getElementById("cs-code"); t.value = 'from microbit import *\nwhile True:\n    print("st:42")\n    sleep(50)\n'; t.dispatchEvent(new Event("input")); });
-  const callsBeforeRun = (await calls()).length;
   await page.click("#cs-run");
   const reflashed = await page.waitForFunction(() => window.__fakeUnity.lines.slice(-5).includes("sim|st:42"), { timeout: 8000 }).then(() => true, () => false);
   check("Run re-flashes edited code after the first ▶", reflashed);
-  // Like a re-flashed USB board: the game hears the old program go (it forgets the events that program set up for
-  // every ride), then the new one arrive.
-  const restart = (await calls()).slice(callsBeforeRun).filter((c) => c.includes("OnDeviceStatus") && c.includes("sim|"));
-  check("Run tells the game the old program has gone, then that the new one runs",
-    restart.length === 2 && restart[0].includes("sim|sim|0") && restart[1].includes("sim|sim|1"), restart);
   await sleep(700);
 
   // leave sim mode
@@ -361,6 +384,42 @@ function installFakeSerial() {
   await sleep(300);
   check("no keyboard: still off after switching modes", (await calls3()).every((c) => c.includes('SetKeyboardEnabled("0")')), (await calls3()).join(" "));
   await page3.screenshot({ path: path.join(OUT, "shell_no_keyboard.png") });
+
+  // ---------------- The game does not load (lesson 2, 11/10: "async ... wasm failed" until the student changed browser)
+  {
+    const page4 = await browser.newPage();
+    await page4.setViewport({ width: 1366, height: 768 });
+    await page4.evaluateOnNewDocument(installFakeSerial);
+    await page4.goto(URL, { waitUntil: "load" });
+    await page4.evaluate(() => { localStorage.setItem("fakeUnity.failLoads", "2"); localStorage.setItem("fakeUnity.loads", "[]"); });
+    await page4.reload({ waitUntil: "load" });
+    // fails, reloads by itself, fails, reloads by itself, loads
+    const loaded = await page4.waitForFunction(() => !document.getElementById("cs-loading") && JSON.parse(localStorage.getItem("fakeUnity.loads") || "[]").length === 3,
+      { timeout: 20000, polling: 200 }).then(() => true, () => false);
+    const loads = await page4.evaluate(() => JSON.parse(localStorage.getItem("fakeUnity.loads") || "[]"));
+    check("a load that fails is tried again by itself, twice, past the caches", loaded && loads.length === 3 && !loads[0].fresh && loads[1].fresh && loads[2].fresh && !loads[2].failed, JSON.stringify(loads));
+    check("after it loads, the next visit is a normal load again", (await page4.evaluate(() => sessionStorage.getItem("cityscooter.loadTry"))) === null);
+    // keeps failing: after three tries, say what to do
+    await page4.evaluate(() => { localStorage.setItem("fakeUnity.failLoads", "99"); localStorage.setItem("fakeUnity.loads", "[]"); });
+    await page4.reload({ waitUntil: "load" });
+    const gaveUp = await page4.waitForFunction(() => { const b = document.getElementById("cs-loading"); return b && /could not load/.test(b.textContent) && !!b.querySelector("button"); },
+      { timeout: 20000, polling: 200 }).then(() => true, () => false);
+    const failText = await page4.evaluate(() => (document.getElementById("cs-loading") || {}).textContent || "");
+    const loads2 = await page4.evaluate(() => JSON.parse(localStorage.getItem("fakeUnity.loads") || "[]"));
+    check("a load that keeps failing stops after 3 tries and says what to do", gaveUp && loads2.length === 3 && /Try again/.test(failText) && /internet connection/.test(failText), failText.slice(0, 200));
+    check("it shows what the browser said", /What the browser said: .*async and sync fetching of the wasm failed/.test(failText));
+    await sleep(1500);
+    check("no more reloads after giving up", (await page4.evaluate(() => JSON.parse(localStorage.getItem("fakeUnity.loads") || "[]").length)) === 3);
+    const reportHas = await page4.evaluate(() => { let got = ""; navigator.clipboard.writeText = (t) => { got = t; return Promise.resolve(); };
+      [...document.querySelectorAll("#cs-loading button")].find((b) => /report/.test(b.textContent)).click(); return new Promise((r) => setTimeout(() => r(got), 200)); });
+    check("the report has the load problems and the USB log", /load problems:/.test(reportHas) && /wasm failed/.test(reportHas) && /USB log:/.test(reportHas), reportHas.slice(0, 300));
+    // Try again once the problem is over
+    await page4.evaluate(() => { localStorage.setItem("fakeUnity.failLoads", "0"); });
+    await page4.evaluate(() => [...document.querySelectorAll("#cs-loading button")].find((b) => /Try again/.test(b.textContent)).click());
+    const again = await page4.waitForFunction(() => !document.getElementById("cs-loading") && window.__fakeUnity && window.__fakeUnity.calls.length > 0, { timeout: 15000, polling: 200 }).then(() => true, () => false);
+    check("Try again loads the game", again);
+    await page4.close();
+  }
 
   check("no page errors", errors.length === 0, errors.slice(0, 5).join(" | "));
   console.log(failures ? failures + " FAILED" : "ALL PASSED");

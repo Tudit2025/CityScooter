@@ -36,6 +36,10 @@ namespace CityScooter.Protocol
         /// <summary>v0.4 radio race: "rx:p:BEN:120:-2" a radio message the board passed on (Text = the payload as it
         /// came; <see cref="RadioMessage.Parse"/> reads it, anything else in it is ignored).</summary>
         Radio,
+        /// <summary>11/9: "open:stars:5", "open:chase" ... start every ride with one of the game's own events (the same
+        /// events as "do:"; Text = event name, Value = stars 0..5 or turn -1/1). Programs say it again about once a
+        /// second, like "start:".</summary>
+        Opening,
     }
 
     /// <summary>One parsed line from a micro:bit (or the simulator, or a dev tool).</summary>

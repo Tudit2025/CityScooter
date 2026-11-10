@@ -64,8 +64,14 @@ fs.cpSync(buildDir, stageDir, { recursive: true });
 // Brotli files served with Content-Encoding so the browser decompresses natively (fast);
 // the loader's decompression fallback still covers hosts without these headers (e.g. GitHub Pages).
 const enc = (type) => [{ key: "Content-Encoding", value: "br" }, { key: "Content-Type", value: type }];
+// Build files are named by their content (BuildScript: nameFilesAsHashes), so a new build has new addresses and a
+// browser can never mix an old cached file with new ones. They never change: cache them for good, so the 30 MB is
+// downloaded once per computer and a refresh in class does not go back to the network.
+const hashed = fs.readdirSync(path.join(buildDir, "Build")).every((f) => /^[0-9a-f]{16,}\./.test(f));
+if (!hashed) console.warn("! Build/ files are not named by hash: build with the current BuildScript (no long-term caching this time).");
 const vercelJson = {
   headers: [
+    ...(hashed ? [{ source: "/Build/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] }] : []),
     { source: "/Build/(.*).wasm.unityweb", headers: enc("application/wasm") },
     { source: "/Build/(.*).js.unityweb", headers: enc("application/javascript") },
     { source: "/Build/(.*).data.unityweb", headers: enc("application/octet-stream") },

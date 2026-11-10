@@ -256,43 +256,71 @@ namespace CityScooter.Tests
         }
 
         [UnityTest]
-        public IEnumerator Do_InOnStart_HappensAtTheStartOfEveryRide_UntilTheBoardGetsANewProgram()
+        public IEnumerator Open_FromOnStart_HappensAtTheStartOfEveryRide()
         {
             yield return LoadMain();
             var hub = DeviceHub.Instance;
             var triggers = _game.GetComponent<ProgramTriggers>();
+            triggers.openingForgetSeconds = 0.5f; // quicker than in class (3 s)
             hub.SetStatus("usb1", "usb", true, "v2");
             hub.SetStatus("usb2", "usb", true, "v1");
-            hub.Receive("usb1", "do:stars:5"); // "on start": set the wanted stars to 5 (runs once, before the first ride)
-            hub.Receive("usb2", "do:turn:L");
+            // "on start: set the wanted stars to 5": the blocks say open:stars:5 about once a second
+            hub.Receive("usb1", "open:stars:5");
+            hub.Receive("usb2", "open:turn:L");
             yield return null;
-            Assert.AreEqual(2, triggers.Queued);
+            Assert.AreEqual(2, triggers.Opening);
+            Assert.AreEqual(0, triggers.Queued);
             for (int ride = 1; ride <= 3; ride++)
             {
+                int done = triggers.Done;
                 _game.StartRun(); // after a crash, A starts the next ride: the program's "on start" does not run again
+                hub.Receive("usb1", "open:stars:5"); // said again during the ride: nothing new happens
+                hub.Receive("usb2", "open:turn:L");
                 yield return new WaitForSeconds(0.6f);
                 Assert.AreEqual(5, PoliceChase.Instance.Wanted, "ride " + ride + " starts with 5 stars");
-                Assert.IsTrue(System.Linq.Enumerable.Any(FakeTurnDirector.Instance.Planned, t => t.Direction == -1), "ride " + ride + ": and the left turn");
-                Assert.AreEqual(2, triggers.Opening);
+                Assert.AreEqual(done + 2, triggers.Done, "ride " + ride + ": both every-ride events, once each");
                 _game.EndRun("CRASH!", true);
+                hub.Receive("usb1", "open:stars:5");
+                hub.Receive("usb2", "open:turn:L");
                 yield return null;
             }
-            hub.Receive("usb1", "do:stars:2"); // between rides the program changes its mind: the newest of a kind counts
+
+            // "Run my code" in the middle of a ride: the new program's on start says open:stars:2 -> at once, and every ride after.
             _game.StartRun();
             yield return new WaitForSeconds(0.6f);
-            Assert.AreEqual(2, PoliceChase.Instance.Wanted);
-            Assert.AreEqual(2, triggers.Opening);
+            Assert.AreEqual(5, PoliceChase.Instance.Wanted);
+            hub.Receive("usb1", "open:stars:2");
+            yield return null;
+            Assert.AreEqual(2, PoliceChase.Instance.Wanted, "a new every-ride event during a ride happens at once");
+            Assert.AreEqual(2, triggers.Opening, "the newest number of a kind replaces the old one");
+
+            // usb2's new program no longer says open:turn:L but keeps talking: forgotten. usb1 keeps saying its stars.
+            yield return new WaitForSeconds(0.7f);
+            hub.Receive("usb2", "st:0");
+            hub.Receive("usb1", "open:stars:2");
             _game.EndRun("CRASH!", true);
             yield return null;
-            // Re-flashed (the board drops off USB and comes back), or the simulator runs new code: that board's set-up
-            // goes with its old program; the other board's stays.
-            hub.SetStatus("usb1", "usb", false);
-            hub.SetStatus("usb1", "usb", true, "v2");
-            Assert.AreEqual(1, triggers.Opening);
             _game.StartRun();
             yield return new WaitForSeconds(0.6f);
-            Assert.AreEqual(0, PoliceChase.Instance.Wanted, "the old program's stars are gone");
-            Assert.IsTrue(System.Linq.Enumerable.Any(FakeTurnDirector.Instance.Planned, t => t.Direction == -1), "the other board's left turn stays");
+            Assert.AreEqual(1, triggers.Opening, "a program that stopped saying it loses it");
+            Assert.AreEqual(2, PoliceChase.Instance.Wanted, "the stars stay");
+
+            // A do: sent between rides is still for the next ride only, and wins that ride over the every-ride event.
+            _game.EndRun("CRASH!", true);
+            hub.Receive("usb1", "open:stars:2");
+            hub.Receive("usb1", "do:stars:4");
+            yield return null;
+            _game.StartRun();
+            hub.Receive("usb1", "open:stars:2");
+            yield return new WaitForSeconds(0.6f);
+            Assert.AreEqual(4, PoliceChase.Instance.Wanted, "do: between rides wins the next ride");
+            _game.EndRun("CRASH!", true);
+            hub.Receive("usb1", "open:stars:2");
+            yield return null;
+            _game.StartRun();
+            hub.Receive("usb1", "open:stars:2");
+            yield return new WaitForSeconds(0.6f);
+            Assert.AreEqual(2, PoliceChase.Instance.Wanted, "and only that ride");
         }
 
         [UnityTest]

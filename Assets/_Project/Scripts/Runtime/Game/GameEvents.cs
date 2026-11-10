@@ -38,6 +38,10 @@ namespace CityScooter.Game
         public static void RaiseTired() => Tired?.Invoke();
         public static void RaiseBoardSaid(string deviceId, string word) => BoardSaid?.Invoke(deviceId, word);
         public static void RaiseTriggerRequested(string deviceId, string name, int value) => TriggerRequested?.Invoke(deviceId, name, value);
+        /// <summary>A board asked for one of the game's events at the start of every ride ("open:stars:5"): (device id,
+        /// event name, number). Sent again about once a second.</summary>
+        public static event Action<string, string, int> OpeningRequested;
+        public static void RaiseOpeningRequested(string deviceId, string name, int value) => OpeningRequested?.Invoke(deviceId, name, value);
         public static void RaiseWarning(string message) => Warning?.Invoke(message);
         public static void RaiseTurnChanged(int direction) => TurnChanged?.Invoke(direction);
 
@@ -100,6 +104,7 @@ namespace CityScooter.Game
             Tired = null;
             BoardSaid = null;
             TriggerRequested = null;
+            OpeningRequested = null;
             Warning = null;
             TurnChanged = null;
             WantedChanged = null;
@@ -112,7 +117,6 @@ namespace CityScooter.Game
             LostPolice = null;
             AirChanged = null; // ---- Ramps and air (v0.3)
             Landed = null;
-            DeviceLeft = null;
         }
 
         // ---- Radio race (v0.4, RaceDirector)
@@ -126,10 +130,5 @@ namespace CityScooter.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetRaceStatics() { RaceRequested = null; RadioHeard = null; }
         // ---- end Radio race (v0.4)
-
-        /// <summary>A board went away (unplugged, re-flashed, or the simulator runs a new program): (device id).
-        /// Whatever its old program set up for every ride is forgotten.</summary>
-        public static event Action<string> DeviceLeft;
-        public static void RaiseDeviceLeft(string deviceId) => DeviceLeft?.Invoke(deviceId);
     }
 }

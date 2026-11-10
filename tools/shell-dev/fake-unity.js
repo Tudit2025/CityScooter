@@ -38,7 +38,22 @@
     for (const c of fake.calls.slice(-12)) { g.fillText(c.slice(0, 110), 20, y); y += 18; }
   }
 
-  window.createUnityInstance = (canvas, config, onProgress) => new Promise((resolve) => {
+  // Tests of a failing load: localStorage "fakeUnity.failLoads" = how many loads still fail (like a real loader whose
+  // code file did not arrive); "fakeUnity.loads" records each try and whether it went past the caches.
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+  window.createUnityInstance = (canvas, config, onProgress) => new Promise((resolve, reject) => {
+    const failLoads = parseInt(store.get("fakeUnity.failLoads") || "0", 10) || 0;
+    if (store.get("fakeUnity.loads") !== null || failLoads > 0) {
+      const loads = JSON.parse(store.get("fakeUnity.loads") || "[]");
+      loads.push({ fresh: !!(config && config.cacheControl && config.cacheControl("x") === "no-store"), failed: failLoads > 0 });
+      store.set("fakeUnity.loads", JSON.stringify(loads));
+    }
+    if (failLoads > 0) {
+      store.set("fakeUnity.failLoads", String(failLoads - 1));
+      setTimeout(() => reject(new Error("RuntimeError: Aborted(both async and sync fetching of the wasm failed)")), 150);
+      return;
+    }
     let p = 0;
     const t = setInterval(() => {
       p = Math.min(1, p + 0.2);

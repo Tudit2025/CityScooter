@@ -76,6 +76,9 @@ body[data-mode="keyboard"] .cs-splitter { visibility: hidden; }
   background: radial-gradient(rgba(255, 176, 41, 0.18) 1.4px, transparent 2px) 0 0 / 11px 11px, var(--navy); }
 .cs-progressbar { width: min(380px, 60%); height: 14px; border: 3px solid var(--ink); border-radius: 8px; background: var(--paper); overflow: hidden; }
 .cs-progressbar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.2s; }
+.cs-load-failed { gap: 14px; }
+.cs-load-help { font-family: system-ui, "Segoe UI", sans-serif; font-size: 17px; letter-spacing: 0; max-width: 560px; line-height: 1.4; }
+.cs-load-why { font-family: ui-monospace, Consolas, monospace; font-size: 12px; letter-spacing: 0; opacity: 0.75; max-width: 640px; word-break: break-word; }
 
 .cs-splitter { cursor: col-resize; position: relative; }
 .cs-splitter::after { content: ""; position: absolute; left: 4px; top: 50%; width: 6px; height: 48px; margin-top: -24px; border-radius: 3px;
@@ -133,6 +136,7 @@ body[data-mode="keyboard"] .cs-splitter { visibility: hidden; }
 .cs-usb-msg.cs-warn { background: #ffe9bd; }
 #cs-boards { display: flex; flex-direction: column; gap: 6px; }
 #cs-boards:empty { display: none; }
+.cs-report { align-self: flex-start; background: transparent; box-shadow: none; border-color: var(--muted-ink); color: var(--muted-ink); }
 .cs-board { padding: 6px 10px; border-radius: 8px; border: 2px solid var(--ink); border-left-width: 8px; background: #fff; }
 .cs-board.cs-ok { border-left-color: var(--green); }
 .cs-board.cs-off { border-left-color: var(--red); color: var(--muted-ink); }

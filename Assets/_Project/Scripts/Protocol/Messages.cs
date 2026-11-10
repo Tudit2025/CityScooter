@@ -37,6 +37,11 @@ namespace CityScooter.Protocol
         public const string DoChase = "chase", DoStars = "stars", DoHeli = "heli", DoCalm = "calm", DoTurn = "turn",
             DoCar = "car", DoSlowCar = "slowcar", DoRoadworks = "roadworks", DoPolice = "police", DoCrossing = "crossing", DoManhole = "manhole";
 
+        /// <summary>"open:event" (11/9): start every ride with this event (the same events as "do:"). "on start" runs once
+        /// but sets up every ride, so the blocks send it again about once a second, like "start:": the game hears it even
+        /// if it was not listening when the program started, or the program started in the middle of a ride.</summary>
+        public const string Open = "open";
+
         /// <summary>A word the game itself sends (crash, gift, ...): a board may not make the game say these.</summary>
         public static bool IsGameMessage(string word)
         {
@@ -46,7 +51,7 @@ namespace CityScooter.Protocol
                 case Go: case Crash: case Gift: case Ko: case Boing: case Tired:
                 case "arrested": case "busted": case "lost": case "echo":
                 // board commands too: a relayed "sur" or "jp" must not look like a command to an echoing program
-                case Jump: case Brake: case Punch: case Bell: case Boost: case Toon: case Say: case Do: case "sur":
+                case Jump: case Brake: case Punch: case Bell: case Boost: case Toon: case Say: case Do: case Open: case "sur":
                 case Trick: // ---- Ramps and air (v0.3)
                 case Start: // ---- Districts (v0.3)
                 case Race: case Radio: case "pos": case "fin": // ---- Radio race (v0.4)

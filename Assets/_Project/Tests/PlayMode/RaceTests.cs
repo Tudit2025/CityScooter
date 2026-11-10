@@ -274,9 +274,11 @@ namespace CityScooter.Tests
             Say("do:car");
             Say("start:uwa");
             Say("toon:1");
+            Say("open:chase"); // every-ride events too
             yield return Wait(0.3f);
             Assert.AreEqual(dropped + 2, triggers.Dropped, "do: events are ignored in a race");
             Assert.AreEqual(0, PoliceChase.Instance.Wanted, "no police");
+            Assert.AreEqual(0, triggers.Opening, "open: is ignored in a race");
             Assert.IsFalse(PoliceChase.Instance.Chasing);
             Assert.AreEqual("kingspark", _game.track.startDistrictOverride, "start: is ignored: the go: picked the start");
             Assert.IsFalse(RiderActions.CartoonMode, "no cartoon mode");

@@ -57,6 +57,10 @@
   - CityScooter 分类加了"做一个特技"（`print("trick")`）：从跳台飞起来以后才有用，第一次转体（SPIN），第二次后空翻（FLIP），轮流来；在地上什么也不做，一直狂发会"头晕"一会儿。
   - "当游戏说"里加了 `air:1`（飞起来了）、`air:0`（落地了）、`land:ok`（安全落地）、`land:trick`（做完特技落地）。工具箱里放了一个现成的"当游戏说 air:1"。
   - "让游戏开始"的下拉里加了"前面放一个跳台"（`do:ramp`）。
+- **"开始时"里的游戏设置，每一局都算数（11/10）。** 程序的"开始时"只在板子启动时跑一次，但撞车后按 A 是新的一局，页面刷新后游戏也忘了以前收到的东西。所以这几块积木放在"开始时"里时，生成的代码会把设置记在变量里，跟 `hi:` 一起大约每秒再发一次：
+  - "make the game start …" 和 "set the wanted stars to …"：在"开始时"里生成 `every_ride.append("stars:5")` 和 `print("open:" + every_ride[-1])`，主循环里 `for ride_event in every_ride: print("open:" + ride_event)`。游戏每一局开头都执行（协议里的 `open:`）。放在别的地方（按钮、收到消息时）还是 `do:`，只管一次。
+  - "cartoon mode on/off"：放在哪里都记进 `toon_mode`，每秒再发 `toon:`。
+  - "start rides in …"（`start_zone`）和 "join race …"（`race_name`）本来就是这样做的。
   - 例子：当游戏说 `air:1` → 做一个特技；当游戏说 `land:trick` → 让游戏开始"前面放一个跳台"。积木测试里用上了这两段，模拟器 V2 和 V1 上都跑过。
   - 这些只是多了几个 `if msg == ...` 分支和一行 `print`，没有新的全局变量，生成的程序几乎不变大（V1 内存）。
 - 场景（v0.3，UWA → 珀斯市中心）：

@@ -62,17 +62,17 @@
       tooltip: "Go 35% faster than the speed limit for 2 seconds. It recharges for 6 seconds: boosts sent before that are ignored. Python: print(\"bo\")" },
     { type: "cs_toon", message0: "cartoon mode %1", args0: [{ type: "field_dropdown", name: "ON", options: [["on", "1"], ["off", "0"]] }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
-      tooltip: "Cartoon mode on: people you bump into go flying (BOING!) and you only slow down. Off: bumping into someone ends the ride. The game remembers the last one you sent, so send it after the game has started (e.g. in forever, or on a button). Python: print(\"toon:1\")" },
+      tooltip: "Cartoon mode on: people you bump into go flying (BOING!) and you only slow down. Off: bumping into someone ends the ride. Works in \"on start\" too: your program says it again every second, so the game always knows. Python: print(\"toon:1\")" },
     { type: "cs_do", message0: "make the game start %1",
       args0: [{ type: "field_dropdown", name: "EVENT", options: [["a police chase", "chase"], ["the police helicopter (3 stars)", "heli"],
         ["calm: the police give up", "calm"], ["a turn to the left", "turn:L"], ["a turn to the right", "turn:R"], ["an oncoming car", "car"],
         ["a slow car ahead", "slowcar"], ["roadworks", "roadworks"], ["a police stop", "police"], ["people crossing", "crossing"], ["an open manhole", "manhole"],
         ["a ramp ahead", "ramp"]] }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
-      tooltip: "Your program makes one of the game's own events happen: e.g. count punches (\"ko\") in a variable and start a police chase after 3. During a ride: at once, one per second per micro:bit. In \"on start\" (or before a ride): at the start of every ride. Python: print(\"do:chase\")" },
+      tooltip: "Your program makes one of the game's own events happen: e.g. count punches (\"ko\") in a variable and start a police chase after 3. During a ride: at once, one per second per micro:bit. In \"on start\": at the start of every ride. Python: print(\"do:chase\"), every ride: print(\"open:chase\")" },
     { type: "cs_stars", message0: "set the wanted stars to %1", args0: [{ type: "input_value", name: "N", check: "Number" }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
-      tooltip: "0 to 5 police stars: 1 starts a chase, 3 brings the helicopter, 0 makes the police give up. In \"on start\": every ride starts with these stars. Python: print(\"do:stars:\" + str(n))" },
+      tooltip: "0 to 5 police stars: 1 starts a chase, 3 brings the helicopter, 0 makes the police give up. In \"on start\": every ride starts with these stars. Python: print(\"do:stars:\" + str(n)), every ride: print(\"open:stars:\" + str(n))" },
     { type: "cs_say", message0: "make the game say %1", args0: [{ type: "field_input", name: "WORD", text: "party" }],
       previousStatement: null, nextStatement: null, style: "game_blocks",
       tooltip: "The game repeats your word to EVERY connected micro:bit (this one too), and shows it on screen. Use \"when the game says word\" to react. One word: letters, digits, _ - ! ? (up to 16), not a game word like crash. At most 2 a second. Python: print(\"say:party\")" },
@@ -128,6 +128,15 @@
       tooltip: "Put it inside \"when shaken\" (or a button you don't use for riding). Only the host of each race needs it. It sends go: by radio 5 times in half a second: every game in your race (yours too) counts down 3-2-1 and everyone rides the same road, from this place, this many metres (300-5000). Python: radio.send(\"go:4821:uwa:2000\")" },
   ];
 
+  // In "on start", "make the game start ..." and "set the wanted stars to ..." set up EVERY ride (11/9): "on start" runs
+  // once, but A after a crash starts a new ride. The program says open:<event> at once and again about once a second
+  // (like start:), so the game also hears it when it was not listening yet or a ride was already going.
+  const inOnStart = (b) => { const root = b.getRootBlock(); return !!root && root.type === "mb_on_start"; };
+  const everyRide = (event) => {
+    MB.setFlag("usesOpening");
+    return "every_ride.append(" + event + ')\nprint("open:" + every_ride[-1])  # every ride starts with it\n';
+  };
+
   const GENERATORS = {
     cs_steer: (b, g) => 'print("st:" + str(int(' + (g.valueToCode(b, "VALUE", Order.NONE) || "0") + ")))\n",
     cs_jump: () => 'print("jp")\n',
@@ -135,11 +144,16 @@
     cs_punch: () => 'print("pu")\n',
     cs_bell: () => 'print("bl")\n',
     cs_boost: () => 'print("bo")\n',
-    cs_do: (b) => 'print("do:' + b.getFieldValue("EVENT") + '")\n',
-    cs_stars: (b, g) => 'print("do:stars:" + str(max(0, min(5, int(' + (g.valueToCode(b, "N", Order.NONE) || "0") + ")))))\n",
+    cs_do: (b) => (inOnStart(b) ? everyRide('"' + b.getFieldValue("EVENT") + '"') : 'print("do:' + b.getFieldValue("EVENT") + '")\n'),
+    cs_stars: (b, g) => {
+      const n = "str(max(0, min(5, int(" + (g.valueToCode(b, "N", Order.NONE) || "0") + "))))";
+      return inOnStart(b) ? everyRide('"stars:" + ' + n) : 'print("do:stars:" + ' + n + ")\n";
+    },
     cs_say: (b) => 'print("say:' + sayWord(b.getFieldValue("WORD")) + '")\n',
     cs_on_word: (b) => { MB.addSection("word:" + sayWord(b.getFieldValue("WORD")), MB.statements(b, "DO")); return ""; },
-    cs_toon: (b) => 'print("toon:' + b.getFieldValue("ON") + '")\n',
+    // Remembered and said again with hi: (about once a second): the game forgets cartoon mode when the page is
+    // refreshed or the board reconnects, and "on start" does not run again.
+    cs_toon: (b) => { MB.setFlag("usesToon"); return 'toon_mode = "' + b.getFieldValue("ON") + '"\nprint("toon:" + toon_mode)\n'; },
     cs_speed: () => { MB.setFlag("usesSpeed"); return ["game_speed", Order.ATOMIC]; },
     cs_on_message: (b) => { MB.addSection("msg:" + b.getFieldValue("MSG"), MB.statements(b, "DO")); return ""; },
     cs_on_speed: (b) => { MB.setFlag("usesSpeed"); MB.addSection("msg:spd", MB.statements(b, "DO")); return ""; },
@@ -210,7 +224,7 @@
     blocks: BLOCKS,
     generators: GENERATORS,
     reserved: "buffer,messages,msg,lines,line,data,loops,game_speed,wanted_level,police_distance,start_zone,"
-      + "race_name,send_position,pass_radio,start_race",
+      + "race_name,send_position,pass_radio,start_race,every_ride,ride_event,toon_mode",
     isHat: (type) => type === "cs_on_message" || type === "cs_on_word" || type === "cs_on_speed" || type === "cs_on_wanted"
       || type === "cs_on_zone", // ---- Districts (v0.3)
     // wanted_level / police_distance (and the race variables) only when a block uses them, so Lesson 1 programs look
@@ -218,6 +232,8 @@
     globals: (ctx) => ['buffer = ""', "loops = 0", "game_speed = 0",
       ctx.flags.usesWanted ? "wanted_level = 0" : null, ctx.flags.usesCop ? "police_distance = 9  # far away" : null,
       ctx.flags.usesStart ? 'start_zone = ""  # where rides start (the "start rides in" block)' : null,
+      ctx.flags.usesOpening ? 'every_ride = []  # game events for the start of every ride (set in "on start")' : null,
+      ctx.flags.usesToon ? 'toon_mode = ""  # cartoon mode: "1" on, "0" off ("" = never set)' : null,
       ctx.flags.race || ctx.flags.raceSend ? 'race_name = ""  # your name in the race ("join race")' : null,
       ctx.flags.raceSend ? "send_position = False  # True: send where you are by radio" : null,
       ctx.flags.raceRelay ? "pass_radio = False  # True: pass what the radio hears to the game" : null].filter(Boolean),
@@ -257,6 +273,8 @@
       }
       out += 'loops += 1\nif loops % 20 == 0:\n    print("hi:" + VERSION)  # tell the game which micro:bit this is\n';
       if (ctx.flags.usesStart) out += '    if start_zone:\n        print("start:" + start_zone)  # again, in case the game missed it\n';
+      if (ctx.flags.usesToon) out += '    if toon_mode:\n        print("toon:" + toon_mode)  # again, in case the game missed it\n';
+      if (ctx.flags.usesOpening) out += '    for ride_event in every_ride:\n        print("open:" + ride_event)  # again: the game starts every ride with it\n';
       if (ctx.flags.race) out += '    if race_name:\n        print("race:" + race_name + ":" + str(radio_group))  # I want to race, in this group\n';
       return out;
     },

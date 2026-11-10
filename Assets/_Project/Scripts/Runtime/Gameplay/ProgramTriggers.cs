@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CityScooter.Devices;
 using CityScooter.Game;
 using CityScooter.Protocol;
 using CityScooter.Track;
@@ -10,11 +11,12 @@ namespace CityScooter.Gameplay
     /// Students' programs trigger the game's own events with "do:..." (protocol v1): start a police chase, set the
     /// wanted stars, call the helicopter, order a turn, send traffic or roadworks. Example rule a student can build:
     /// count "ko" with a variable and after 3 punches send "do:chase". At most one trigger a second per board during a
-    /// ride. Triggers sent between rides (in "on start", on the start screen, on the crash screen) happen just after
-    /// the next ride starts, and again at the start of every ride after that: a program's "on start" runs once, but it
-    /// sets up every ride. They stop when the program sends that kind again (the last one counts) or the board goes
-    /// away (unplugged, re-flashed, the simulator runs new code). Hazards are placed out of sight ahead (never on a
-    /// boulevard transition), and the usual messages (chase:1, wanted:N, warn:car, turn:1 ...) follow as for any other event.
+    /// ride; triggers sent between rides (start screen, crash screen) wait and happen just after the next ride starts.
+    /// "open:..." (11/9) asks for the same events at the start of EVERY ride: "on start" runs once but sets up every ride.
+    /// Programs say it again about once a second (the blocks do), so it survives the game not listening yet, a program
+    /// started in the middle of a ride, and a USB hiccup; a new program that no longer says it loses it after a few seconds.
+    /// Hazards are placed out of sight ahead (never on a boulevard transition), and the usual messages (chase:1,
+    /// wanted:N, warn:car, turn:1 ...) follow as for any other event.
     /// </summary>
     public sealed class ProgramTriggers : MonoBehaviour
     {
@@ -27,17 +29,21 @@ namespace CityScooter.Gameplay
         /// <summary>For tests: triggers carried out, and ones dropped (too fast, nowhere to put it).</summary>
         public int Done { get; private set; }
         public int Dropped { get; private set; }
-        /// <summary>Triggers sent since the last ride started, waiting for the next ride.</summary>
+        /// <summary>Triggers waiting for the next ride.</summary>
         public int Queued => _queue.Count;
-        /// <summary>Triggers that happen at the start of every ride (sent between earlier rides).</summary>
+        /// <summary>Events boards asked for at the start of every ride ("open:..."), still being said.</summary>
         public int Opening => _opening.Count;
+        [Tooltip("An every-ride event (open:) is forgotten when its board has talked this many seconds without saying it again (a new program).")]
+        public float openingForgetSeconds = 3f;
 
         struct Pending { public string Device, Name; public int Value; }
         const int MaxQueued = 6;
         readonly List<Pending> _queue = new List<Pending>();
-        readonly List<Pending> _opening = new List<Pending>();
         readonly Dictionary<string, float> _next = new Dictionary<string, float>();
         float _runQueueAt = -1f;
+
+        sealed class Open { public string Device, Name; public int Value; public double Heard; }
+        readonly List<Open> _opening = new List<Open>();
 
         // Trigger name -> hazard pattern asset (theme.hazards) it places ahead.
         /// <summary>Hazard pattern asset names the triggers use (a test checks they exist in the theme).</summary>
@@ -52,15 +58,49 @@ namespace CityScooter.Gameplay
         void OnEnable()
         {
             GameEvents.TriggerRequested += OnTrigger;
+            GameEvents.OpeningRequested += OnOpening;
             GameEvents.RunStarted += OnRunStarted;
-            GameEvents.DeviceLeft += OnDeviceLeft;
         }
 
         void OnDisable()
         {
             GameEvents.TriggerRequested -= OnTrigger;
+            GameEvents.OpeningRequested -= OnOpening;
             GameEvents.RunStarted -= OnRunStarted;
-            GameEvents.DeviceLeft -= OnDeviceLeft;
+        }
+
+        // "open:stars:5": said about once a second. Only a new one (or a changed number) does something now: during a
+        // ride it happens at once (the program just started), between rides the caption says it is for every ride.
+        void OnOpening(string deviceId, string name, int value)
+        {
+            if (RaceDirector.On) return; // ---- Radio race (v0.4): the same road for everyone (no caption: it comes every second)
+            string key = deviceId ?? "?";
+            Open o = _opening.Find(x => x.Device == key && x.Name == name);
+            if (o != null && o.Value == value) { o.Heard = DeviceHub.Now; return; }
+            if (o == null)
+            {
+                o = new Open { Device = key, Name = name };
+                _opening.Add(o);
+            }
+            o.Value = value;
+            o.Heard = DeviceHub.Now;
+            if (rider != null && rider.Running) Run(key, name, value);
+            else Caption(key, Label(name, value) + " (every ride)");
+        }
+
+        // A program that stopped saying it (a new program without it) loses it; an unplugged board keeps it for when it
+        // comes back (its program may still be running), it just does not count while it is away.
+        void ForgetOldOpenings()
+        {
+            DeviceHub hub = DeviceHub.Instance;
+            if (hub == null) return;
+            _opening.RemoveAll(o => hub.Devices.TryGetValue(o.Device, out DeviceInfo d) && d.LastSeen - o.Heard > openingForgetSeconds);
+        }
+
+        static bool Present(string device)
+        {
+            DeviceHub hub = DeviceHub.Instance;
+            return hub == null || !hub.Devices.TryGetValue(device, out DeviceInfo d) || d.Connected;
         }
 
         void OnTrigger(string deviceId, string name, int value)
@@ -70,7 +110,6 @@ namespace CityScooter.Gameplay
                 // ---- Radio race (v0.4): everyone gets the same road, so programs cannot change it in race mode.
                 Dropped++;
                 _queue.Clear();
-                _opening.Clear();
                 Caption(deviceId ?? "?", Label(name, value) + ": not in race mode");
                 return;
             }
@@ -78,12 +117,12 @@ namespace CityScooter.Gameplay
             if (rider == null) { Dropped++; return; }
             if (!rider.Running)
             {
-                // Between rides: keep it for the start of the next ride, and of every ride after that. One of each
-                // kind is enough, so a program that sends it in a loop does not pile them up.
+                // Between rides: keep it for the start of the next ride. One of each kind is enough, so a program
+                // that sends it in a loop does not pile them up.
                 _queue.RemoveAll(q => q.Name == name);
                 if (_queue.Count >= MaxQueued) _queue.RemoveAt(0);
                 _queue.Add(new Pending { Device = key, Name = name, Value = value });
-                Caption(key, Label(name, value) + " (every ride)");
+                Caption(key, Label(name, value) + " (next ride)");
                 return;
             }
             if (_next.TryGetValue(key, out float next) && Time.time < next) { Dropped++; return; }
@@ -93,38 +132,23 @@ namespace CityScooter.Gameplay
         void OnRunStarted()
         {
             _next.Clear();
-            if (RaceDirector.On)
-            {
-                // ---- Radio race (v0.4): events kept from before race mode do not happen in a race
-                _queue.Clear();
-                _opening.Clear();
-                _runQueueAt = -1f;
-                return;
-            }
-            // What was sent since the last ride joins the rides' opening: same kind -> the newest one counts.
-            foreach (Pending q in _queue)
-            {
-                _opening.RemoveAll(o => o.Name == q.Name);
-                if (_opening.Count >= MaxQueued) _opening.RemoveAt(0);
-                _opening.Add(q);
-            }
-            _queue.Clear();
-            _runQueueAt = _opening.Count > 0 ? Time.time + queuedDelay : -1f;
-        }
-
-        // Unplugged, re-flashed, or the simulator runs new code: the old program's set-up goes with it.
-        void OnDeviceLeft(string deviceId)
-        {
-            string key = deviceId ?? "?";
-            _queue.RemoveAll(q => q.Device == key);
-            _opening.RemoveAll(o => o.Device == key);
+            if (RaceDirector.On) _queue.Clear(); // ---- Radio race (v0.4): events kept from before race mode do not happen in a race
+            ForgetOldOpenings();
+            bool opening = !RaceDirector.On && _opening.Count > 0;
+            _runQueueAt = _queue.Count > 0 || opening ? Time.time + queuedDelay : -1f;
         }
 
         void Update()
         {
             if (_runQueueAt < 0f || Time.time < _runQueueAt || rider == null || !rider.Running) return;
             _runQueueAt = -1f;
-            foreach (Pending p in _opening.ToArray()) Run(p.Device, p.Name, p.Value);
+            // Every ride's events first, then the ones sent since the last ride (so a "do:" sent between rides wins this ride).
+            if (!RaceDirector.On)
+                foreach (Open o in _opening.ToArray())
+                    if (Present(o.Device)) Run(o.Device, o.Name, o.Value);
+            var pending = new List<Pending>(_queue);
+            _queue.Clear();
+            foreach (Pending p in pending) Run(p.Device, p.Name, p.Value);
         }
 
         bool Run(string device, string name, int value)

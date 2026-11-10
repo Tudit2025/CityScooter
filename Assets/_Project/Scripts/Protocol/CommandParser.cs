@@ -84,6 +84,11 @@ namespace CityScooter.Protocol
                     return new Command(CommandKind.Boost);
                 case Messages.Do:
                     return ParseDo(arg, s);
+                case Messages.Open: // "open:stars:5": the same events as "do:", at the start of every ride
+                {
+                    Command c = ParseDo(arg, s);
+                    return c.Kind == CommandKind.Trigger ? new Command(CommandKind.Opening, c.Value, c.Text) : c;
+                }
                 case Messages.Say:
                     return Messages.IsSayWord(arg) ? new Command(CommandKind.Say, 0f, arg) : new Command(CommandKind.Malformed, 0f, s);
                 case Messages.Surrender:
