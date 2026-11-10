@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_Eastperth_Luggage
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 6277085300193224130, guid: 11c92daf24747e145809a3e97e9a9995, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -2.6
+    z: 20
+    yaw: 0
+  - prefab: {fileID: 8672993939947301173, guid: 5f542050db520034fbfa836d1162a7fb, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 0
+    z: 23
+    yaw: 0
+  - prefab: {fileID: 8672993939947301173, guid: 5f542050db520034fbfa836d1162a7fb, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 2.6
+    z: 27
+    yaw: 0
+  length: 45
+  minLevel: 0
+  weight: 0.9
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 30
+  roadHalfWidth: 4
