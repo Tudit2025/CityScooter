@@ -15,6 +15,7 @@ MonoBehaviour:
   id: mountsbay
   displayName: MOUNTS BAY RD
   order: 70
+  line: south
   length: {x: 440, y: 600}
   chunks:
   - {fileID: 3685712501179541834, guid: f9bdc372433651740bd5e9846c9dad42, type: 3}
@@ -57,6 +58,7 @@ MonoBehaviour:
   skyYaw: 180
   skySize: 0.95
   skyHeight: 0
+  skyline: 1
   farScenery: {fileID: 967322672613499864, guid: edb1b7d12405012499d6b9ff18c0f661, type: 3}
   gateway: {fileID: 7820402268018012388, guid: 020440784e2f3e4419065c53a0bb0b55, type: 3}
   ambience: {fileID: 0}

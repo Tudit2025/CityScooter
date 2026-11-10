@@ -15,6 +15,7 @@ MonoBehaviour:
   id: westperth
   displayName: WEST PERTH
   order: 40
+  line: 
   length: {x: 600, y: 800}
   chunks:
   - {fileID: 7381382107061198399, guid: cf4d439be31b83243b7cb266f8e1e89b, type: 3}

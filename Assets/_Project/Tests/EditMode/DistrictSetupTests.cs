@@ -46,6 +46,46 @@ namespace CityScooter.Tests
             Assert.IsEmpty(DistrictRoute.Sort(null));
         }
 
+        // v0.5: the route is a trunk with lines. After the last trunk district the ride takes one of the lines (the
+        // pick comes from the ride's seed), follows it to its end, then the trunk starts again.
+        [Test]
+        public void Route_AfterTheTrunk_TakesOneLine_ThenStartsAgain()
+        {
+            District uwa = D("uwa", 10), cbd = D("cbd", 50), quay = D("quay", 60), warnbro = D("warnbro", 150),
+                mciver = D("mciver", 210), midland = D("midland", 340);
+            quay.line = warnbro.line = "south";
+            mciver.line = midland.line = "east";
+            District[] route = DistrictRoute.Sort(new[] { midland, quay, uwa, mciver, cbd, warnbro });
+            CollectionAssert.AreEqual(new[] { "uwa", "cbd", "quay", "warnbro", "mciver", "midland" }, route.Select(d => d.id).ToArray());
+            CollectionAssert.AreEqual(new[] { 2, 4 }, DistrictRoute.Branches(route));
+            Assert.AreEqual(1, DistrictRoute.Next(route, 0, 0.9), "inside the trunk: the next one");
+            Assert.AreEqual(2, DistrictRoute.Next(route, 1, 0.0), "after the CBD: south ...");
+            Assert.AreEqual(2, DistrictRoute.Next(route, 1, 0.49));
+            Assert.AreEqual(4, DistrictRoute.Next(route, 1, 0.5), "... or east, by the pick");
+            Assert.AreEqual(4, DistrictRoute.Next(route, 1, 1.0));
+            Assert.AreEqual(3, DistrictRoute.Next(route, 2, 0.9), "inside a line: the next one");
+            Assert.AreEqual(0, DistrictRoute.Next(route, 3, 0.9), "the south line ends: back to UWA, not on to the east line");
+            Assert.AreEqual(5, DistrictRoute.Next(route, 4, 0.0));
+            Assert.AreEqual(0, DistrictRoute.Next(route, 5, 0.0), "the east line ends: back to UWA");
+            // No lines: the old loop.
+            District[] loop = DistrictRoute.Sort(new[] { D("a", 1), D("b", 2), D("c", 3) });
+            Assert.IsEmpty(DistrictRoute.Branches(loop));
+            Assert.AreEqual(1, DistrictRoute.Next(loop, 0, 0.7));
+            Assert.AreEqual(0, DistrictRoute.Next(loop, 2, 0.7));
+        }
+
+        [Test]
+        public void SouthAndEastLineIds_AreOnTheirLines()
+        {
+            Assert.AreEqual("", DistrictRoute.LineOf("cbd"));
+            Assert.AreEqual("south", DistrictRoute.LineOf("quay"));
+            Assert.AreEqual("south", DistrictRoute.LineOf("warnbro"));
+            Assert.AreEqual("east", DistrictRoute.LineOf("mciver"));
+            Assert.AreEqual("east", DistrictRoute.LineOf("midland"));
+            foreach (string id in DistrictRoute.EastLine)
+                Assert.LessOrEqual(("go:99999:" + id + ":5000").Length, 29, id + " fits in one radio message");
+        }
+
         [Test]
         public void ZoneMessage_IsLowerCaseLetters_AndAGameMessage()
         {

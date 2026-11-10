@@ -15,6 +15,7 @@ MonoBehaviour:
   id: warnbro
   displayName: WARNBRO
   order: 150
+  line: south
   length: {x: 320, y: 400}
   chunks:
   - {fileID: 3739275747700483938, guid: e9f863f594a874e44ad8c48549aca9b5, type: 3}

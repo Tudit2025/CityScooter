@@ -1164,6 +1164,10 @@ namespace CityScooter.Gameplay
         RoadChunk _forcedChunk;
         District _filling;
         System.Random _districtRng = new System.Random(1), _districtTurnRng = new System.Random(2);
+        // v0.5: where the road goes after the district being laid (the route branches after the trunk). Chosen when
+        // the district begins, from the ride's seed, so a race's games all take the same line.
+        System.Random _districtLineRng = new System.Random(3);
+        int _dNext;
         readonly List<DistrictSpan> _spans = new List<DistrictSpan>();
 
         /// <summary>Start district id chosen on the start screen (keys 1-7); null = GameTuning.startDistrict.</summary>
@@ -1296,6 +1300,7 @@ namespace CityScooter.Gameplay
             if (_route == null || _route.Length == 0) { _route = null; return; }
             _districtRng = new System.Random(_runSeed ^ 0x2c1b3c6d);
             _districtTurnRng = new System.Random(_runSeed ^ 0x7f4a7c15);
+            _districtLineRng = new System.Random(_runSeed ^ 0x51ed270b);
             int start = DistrictRoute.IndexOf(_route, !string.IsNullOrEmpty(startDistrictOverride) ? startDistrictOverride : T.startDistrict);
             if (start < 0) start = 0;
             StartDistrict = _route[start];
@@ -1308,6 +1313,7 @@ namespace CityScooter.Gameplay
         void BeginDistrict(int index, float z)
         {
             _dIndex = index;
+            _dNext = DistrictRoute.Next(_route, index, _districtLineRng.NextDouble());
             District d = _route[index];
             float min = Mathf.Max(40f, Mathf.Min(d.length.x, d.length.y)), max = Mathf.Max(min, Mathf.Max(d.length.x, d.length.y));
             _dEnd = z + Mathf.Lerp(min, max, (float)_districtRng.NextDouble());
@@ -1327,7 +1333,7 @@ namespace CityScooter.Gameplay
         float NextStartHalfWidth(District d)
         {
             if (d.exit != null) return d.exit.HalfWidthAt(0f);
-            District next = _route[(_dIndex + 1) % _route.Length];
+            District next = _route[_dNext];
             if (next.entry != null) return next.entry.HalfWidthAt(0f);
             return next.chunks != null && next.chunks.Length > 0 && next.chunks[0] != null ? next.chunks[0].HalfWidthAt(0f) : StreetHalfWidth;
         }
@@ -1347,7 +1353,7 @@ namespace CityScooter.Gameplay
                 switch (_dPhase)
                 {
                     case DistrictPhase.Leaving:
-                        BeginDistrict((_dIndex + 1) % _route.Length, _nextZ);
+                        BeginDistrict(_dNext, _nextZ);
                         continue;
                     case DistrictPhase.Entry:
                         _dPhase = DistrictPhase.Body;
@@ -1377,7 +1383,7 @@ namespace CityScooter.Gameplay
 
         void PlanBoundary(float z)
         {
-            int next = (_dIndex + 1) % _route.Length;
+            int next = _dNext;
             DistrictSpan last = _spans[_spans.Count - 1];
             last.EndZ = z;
             _spans[_spans.Count - 1] = last;

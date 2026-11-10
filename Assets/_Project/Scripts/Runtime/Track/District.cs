@@ -29,6 +29,11 @@ namespace CityScooter.Track
         [Tooltip("Position on the route loop (lower first). UWA 10, Matilda Bay 20, Kings Park 30, West Perth 40, " +
                  "Perth CBD 50, Elizabeth Quay 60, Mounts Bay Road 70.")]
         public int order;
+        [Tooltip("Which line of the route this district is on (v0.5). Empty = the trunk (UWA to Perth CBD). After the " +
+                 "last trunk district the ride turns onto one of the other lines (\"south\": Elizabeth Quay to Warnbro, " +
+                 "\"east\": McIver to Midland), follows it to its end, then starts the trunk again. Districts of one line " +
+                 "have consecutive orders.")]
+        public string line = "";
         [Tooltip("Metres of road this district lasts (random between x and y each time it comes round).")]
         public Vector2 length = new Vector2(450f, 650f);
 

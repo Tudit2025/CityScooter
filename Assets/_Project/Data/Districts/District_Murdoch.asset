@@ -15,6 +15,7 @@ MonoBehaviour:
   id: murdoch
   displayName: MURDOCH
   order: 90
+  line: south
   length: {x: 320, y: 440}
   chunks:
   - {fileID: 7051602621566032241, guid: c9ea6eab668683347a8363ca80c1d33a, type: 3}

@@ -38,6 +38,7 @@ namespace CityScooter.EditorTools
             if (theme == null) throw new InvalidOperationException("No theme at " + ComicCityBuilder.ThemePath + ": build the comic city first.");
             PrefabBuildUtility.EnsureFolder(DataFolder);
             EnsureWestPerth(theme);
+            ApplyLines(DataFolder);
             District[] route = Collect(DataFolder, out List<string> skipped);
             foreach (string s in skipped) Debug.LogWarning("[Districts] skipped " + s);
             BuildGateways(route);
@@ -52,6 +53,19 @@ namespace CityScooter.EditorTools
         {
             try { Apply(); EditorApplication.Exit(0); }
             catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
+        }
+
+        // ---- v0.5: the route is a trunk (UWA to Perth CBD, line "") with lines after it. District.line belongs to the
+        // system: written here from the id (DistrictRoute.LineOf), so the art builders never need to know about it.
+        static void ApplyLines(string folder)
+        {
+            foreach (District d in LoadAll(folder))
+            {
+                string line = DistrictRoute.LineOf(d.id);
+                if ((d.line ?? "") == line) continue;
+                d.line = line;
+                EditorUtility.SetDirty(d);
+            }
         }
 
         /// <summary>All usable District assets under a folder (recursively), in route order. Unusable ones (no chunks,

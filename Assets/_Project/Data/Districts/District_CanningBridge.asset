@@ -15,6 +15,7 @@ MonoBehaviour:
   id: canningbridge
   displayName: CANNING BRIDGE
   order: 80
+  line: south
   length: {x: 320, y: 440}
   chunks:
   - {fileID: 4568812674813765590, guid: 4fcda8ef989b2f84798d9a505bd2f558, type: 3}

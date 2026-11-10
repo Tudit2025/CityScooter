@@ -15,6 +15,7 @@ MonoBehaviour:
   id: aubingrove
   displayName: AUBIN GROVE
   order: 110
+  line: south
   length: {x: 360, y: 440}
   chunks:
   - {fileID: 3375204258217968758, guid: f76de07da79165f469f24b1f94078d22, type: 3}
