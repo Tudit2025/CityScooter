@@ -459,6 +459,15 @@ namespace CityScooter.EditorTools.Districts
             d.Gaps.Add(new CqGapSpec { Name = "TraverserPit", Z = lip, Length = PitGap, Width = 0f, Word = "WHOOPS", Water = false });
             var deck = new ComicMesh();
             K.RampMesh(deck, spec, Steel, SteelDark, true, pitY);
+            // yellow chevrons painted up the slope, so it reads as a ramp from the rider's low view
+            deck.Surface = ComicSurface.Plain;
+            float SlopeY(float z) => PitHeight * (z - ramp) / PitRise + .015f;
+            for (int k = 0; k < 3; k++)
+            {
+                float zc = ramp + .5f + k * 1.7f;
+                foreach (int sd in new[] { -1, 1 })
+                    K.Face(deck, V(0f, SlopeY(zc + 1.2f), zc + 1.2f), V(0f, SlopeY(zc + 1.75f), zc + 1.75f), V(sd * 2.6f, SlopeY(zc + .55f), zc + .55f), V(sd * 2.6f, SlopeY(zc), zc), Yellow, Vector3.up, false);
+            }
             deck.Surface = ComicSurface.PaintedMetal;
             foreach (int sd in new[] { -1, 1 })
             {
@@ -491,7 +500,7 @@ namespace CityScooter.EditorTools.Districts
                     WallLamp(d.Props, V(sd * (K.Edge + 2.2f), d.Ground(z) + 4.6f, z), sd);
                 }
             Chimney(d.Deep, V(-(K.Edge + 30f), d.Ground(36f) - .5f, 38f), 34f);
-            Hospital(d.Deep, V(-(K.Edge + 52f), d.Ground(30f) - .5f, 22f));
+            Hospital(d.Deep, V(-(K.Edge + 56f), d.Ground(30f) - .5f, 30f), 1);
             Gum(d.Props, V(-(K.Edge + 5f), d.Ground(29f), 29f), 9f, 371);
             Bench(d.Props, V(-(K.Edge + 4f), d.Ground(36f), 36f), -90f);
             d.GiftSlots.Add(new Vector2(0f, 31f));
@@ -1492,9 +1501,12 @@ namespace CityScooter.EditorTools.Districts
         }
 
         /// <summary>The hospital behind the Workshops (background): a white ward block with uneven vertical window
-        /// slots on a red-brick and charcoal podium, rooftop plant. Its long side faces the road (-X).</summary>
-        static void Hospital(ComicMesh m, Vector3 p)
+        /// slots on a red-brick and charcoal podium, rooftop plant. Its long windowed side faces -X (a building on the
+        /// right of the road) or, with face = 1, +X (one on the left).</summary>
+        static void Hospital(ComicMesh m, Vector3 p, int face = -1)
         {
+            float wx = face < 0 ? p.x - 6.02f : p.x + 14.02f, px2 = face < 0 ? p.x - 9.02f : p.x + 13.02f;
+            Vector3 wn = face < 0 ? Vector3.left : Vector3.right;
             Color white = K.Hex("EEEDE8");
             m.Surface = ComicSurface.Brick;
             m.Box(p + V(2f, 3f, -8f), V(22f, 8f, 26f), Brick);
@@ -1511,7 +1523,7 @@ namespace CityScooter.EditorTools.Districts
                 for (float z = -18f; z < 22f; z += F(r, 1.6f, 3.4f))
                 {
                     float w = F(r, .6f, 1.3f), y = p.y + 8.6f + fl * 3.3f;
-                    K.Face(m, V(p.x - 6.02f, y, p.z + z), V(p.x - 6.02f, y, p.z + z + w), V(p.x - 6.02f, y + 2.3f, p.z + z + w), V(p.x - 6.02f, y + 2.3f, p.z + z), GlassDark, Vector3.left, false);
+                    K.Face(m, V(wx, y, p.z + z), V(wx, y, p.z + z + w), V(wx, y + 2.3f, p.z + z + w), V(wx, y + 2.3f, p.z + z), GlassDark, wn, false);
                 }
             for (int fl = 0; fl < 5; fl++)
                 for (float x = -4f; x < 12f; x += F(r, 1.8f, 3.2f))
@@ -1520,7 +1532,7 @@ namespace CityScooter.EditorTools.Districts
                     K.Face(m, V(p.x + x, y, p.z - 20.02f), V(p.x + x + w, y, p.z - 20.02f), V(p.x + x + w, y + 2.3f, p.z - 20.02f), V(p.x + x, y + 2.3f, p.z - 20.02f), GlassDark, Vector3.back, false);
                 }
             for (float z = -19f; z < 4f; z += 2.6f)
-                K.Face(m, V(p.x - 9.02f, p.y + 1.6f, p.z + z), V(p.x - 9.02f, p.y + 1.6f, p.z + z + 1.5f), V(p.x - 9.02f, p.y + 5.4f, p.z + z + 1.5f), V(p.x - 9.02f, p.y + 5.4f, p.z + z), GlassDark, Vector3.left, false);
+                K.Face(m, V(px2, p.y + 1.6f, p.z + z), V(px2, p.y + 1.6f, p.z + z + 1.5f), V(px2, p.y + 5.4f, p.z + z + 1.5f), V(px2, p.y + 5.4f, p.z + z), GlassDark, wn, false);
         }
 
         // ---------------------------------------------------------------- Midland obstacles and animals
@@ -1679,9 +1691,10 @@ namespace CityScooter.EditorTools.Districts
             Color[] walls = { Cream, White, Butter, K.Hex("D9CBB0"), K.Hex("C9B08A"), K.Hex("B98A6A") };
             Color[] roofs = { RedOxide, IronRoof, GreenRoof, K.Hex("8A8F94"), IronRoofDark };
             foreach (int s in new[] { -1, 1 })
-                for (float z = z0; z < z1; z += F(r, 10f, 15f))
+                for (float z = z0; z < z1; z += F(r, 14f, 20f))
                     for (int row = 0; row < 3; row++)
                     {
+                        if (row == 2 && (z < -60f || z > 520f)) continue;      // the third row only where it can be seen
                         float x = s * (76f + row * 30f + F(r, 0f, 14f)), dist = Mathf.Sqrt(x * x + z * z);
                         if (s < 0 && row == 0 && r.NextDouble() < .5)
                         {

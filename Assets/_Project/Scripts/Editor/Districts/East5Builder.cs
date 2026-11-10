@@ -563,17 +563,17 @@ namespace CityScooter.EditorTools.Districts
             for (int i = 0; i < tips.Count; i++)
             {
                 float s = h * F(r, .34f, .46f);
-                Blob(m, tips[i] + V(0, s * .18f, 0), V(s, s * .6f, s * F(r, .8f, 1f)), i % 2 == 0 ? Leaf : LeafDark, bs, 3);
+                Blob(m, tips[i] + V(0, s * .2f, 0), V(s, s * .78f, s * F(r, .82f, 1f)), i % 2 == 0 ? Leaf : LeafDark, bs, far ? 3 : 4);
                 // a small clump hanging lower on the limb
-                if (!far) Blob(m, Vector3.Lerp(fork, tips[i], .62f) + V(F(r, -.05f, .05f) * h, -h * .02f, F(r, -.05f, .05f) * h), V(s * .55f, s * .34f, s * .5f), LeafDark, 5, 3);
+                if (!far) Blob(m, Vector3.Lerp(fork, tips[i], .62f) + V(F(r, -.05f, .05f) * h, -h * .02f, F(r, -.05f, .05f) * h), V(s * .55f, s * .42f, s * .5f), LeafDark, 5, 3);
             }
             // the top of the crown: lighter clumps above and between the limbs
             Vector3 mid = Vector3.zero;
             foreach (Vector3 t in tips) mid += t;
             mid /= tips.Count;
             float ts = h * F(r, .4f, .5f);
-            Blob(m, mid + V(0, h * .16f, 0), V(ts, ts * .6f, ts), LeafLight, bs, 3);
-            if (!far) Blob(m, Vector3.Lerp(mid, tips[0], .7f) + V(0, h * .2f, 0), V(ts * .6f, ts * .42f, ts * .6f), Color.Lerp(LeafLight, Leaf, .4f), 5, 3);
+            Blob(m, mid + V(0, h * .17f, 0), V(ts, ts * .74f, ts), LeafLight, bs, far ? 3 : 4);
+            if (!far) Blob(m, Vector3.Lerp(mid, tips[0], .7f) + V(0, h * .2f, 0), V(ts * .6f, ts * .5f, ts * .6f), Color.Lerp(LeafLight, Leaf, .4f), 5, 3);
         }
 
         /// <summary>A jacaranda in flower (November): dark forked trunk, a broad crown of purple clumps.</summary>
