@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Woodbridge
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: woodbridge
+  displayName: WOODBRIDGE
+  order: 330
+  line: 
+  length: {x: 280, y: 280}
+  chunks:
+  - {fileID: 3614764337696148724, guid: 4388203bb0749e242b6f95d3930a5fcd, type: 3}
+  - {fileID: 847822345853762067, guid: 02c5856b6ac2a1f4da163df37a7d589b, type: 3}
+  - {fileID: 656009478240871527, guid: 8eefabe50d698814ea3cb06c73e16770, type: 3}
+  - {fileID: 1315289743289717176, guid: 9545eb08052004b4bac2bbb370b47e6b, type: 3}
+  - {fileID: 7961733422869300016, guid: dc0f0a3e9fde30f49a5c4c0033877dcc, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 6947202493505955512, guid: e377be043c0f29a4082b1d1cf9a442af, type: 3}
+  exit: {fileID: 2242452742438302202, guid: 915c69a003725e34286bb6a835bfc707, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 3369661200866087068, guid: 84b151b6b26a5a34f883dfd025f7cb00, type: 3}
+  - {fileID: 735191577353083786, guid: a5294f0f0fc45be4792f9e9ee187c2cd, type: 3}
+  - {fileID: 755507496236561677, guid: 33bfeb086dc4ec94ca607197044af35d, type: 3}
+  - {fileID: 1929791298330682763, guid: b100fa079b4a4af409d9ab7a59b65a2a, type: 3}
+  jumpObstacles:
+  - {fileID: 735191577353083786, guid: a5294f0f0fc45be4792f9e9ee187c2cd, type: 3}
+  - {fileID: 755507496236561677, guid: 33bfeb086dc4ec94ca607197044af35d, type: 3}
+  - {fileID: 3369661200866087068, guid: 84b151b6b26a5a34f883dfd025f7cb00, type: 3}
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  pedestrians:
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 4609771741538606160, guid: 3caa27b26ee637648a6ad72b2b320831, type: 3}
+  - {fileID: 4609771741538606160, guid: 3caa27b26ee637648a6ad72b2b320831, type: 3}
+  - {fileID: 4731694546029307687, guid: 44229b05135fe184bb03ef4a54630cad, type: 3}
+  - {fileID: 3113502041211156482, guid: 20a1b9308b3601543b77124916639750, type: 3}
+  ramps:
+  - {fileID: 1519531671504485925, guid: 5fc58bbc7281c784b9fbfd0758abe4f4, type: 3}
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.8, g: 0.87, b: 0.86, a: 1}
+  skyTint: {r: 1, g: 0.99, b: 0.96, a: 1}
+  ambientSky: {r: 0.7, g: 0.84, b: 0.95, a: 1}
+  ambientEquator: {r: 0.88, g: 0.88, b: 0.78, a: 1}
+  ambientGround: {r: 0.62, g: 0.64, b: 0.46, a: 1}
+  sunColor: {r: 1, g: 0.95, b: 0.84, a: 1}
+  sunIntensity: 1.4
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 7003882711213157847, guid: 4afde9f3e417e37449b21f9f8e03eff2, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35
