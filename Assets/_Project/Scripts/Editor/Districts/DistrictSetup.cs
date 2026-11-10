@@ -62,10 +62,34 @@ namespace CityScooter.EditorTools
             foreach (District d in LoadAll(folder))
             {
                 string line = DistrictRoute.LineOf(d.id);
-                if ((d.line ?? "") == line) continue;
-                d.line = line;
-                EditorUtility.SetDirty(d);
+                if ((d.line ?? "") != line)
+                {
+                    d.line = line;
+                    EditorUtility.SetDirty(d);
+                }
+                if (line == "east") ApplyEastSky(d);
             }
+        }
+
+        // The east line rides away from the city: the Perth skyline is behind the rider (yaw 180). The first three
+        // districts are right next to the CBD, so it still stands there, smaller each time; from Mt Lawley on it has
+        // set below the horizon and the district's own farScenery (river, tree lines, the Darling Scarp) is the horizon.
+        static void ApplyEastSky(District d)
+        {
+            float size = 1f, skyline = 0f;
+            switch (d.id)
+            {
+                case "mciver": size = 1.3f; skyline = 1f; break;
+                case "claisebrook": size = 1.1f; skyline = 1f; break;
+                case "eastperth": size = 0.9f; skyline = 1f; break;
+            }
+            if (Mathf.Approximately(d.skyYaw, 180f) && Mathf.Approximately(d.skySize, size) && Mathf.Approximately(d.skyHeight, 0f)
+                && Mathf.Approximately(d.skyline, skyline)) return;
+            d.skyYaw = 180f;
+            d.skySize = size;
+            d.skyHeight = 0f;
+            d.skyline = skyline;
+            EditorUtility.SetDirty(d);
         }
 
         /// <summary>All usable District assets under a folder (recursively), in route order. Unusable ones (no chunks,
