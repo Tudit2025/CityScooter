@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Meltham
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: meltham
+  displayName: MELTHAM
+  order: 260
+  line: 
+  length: {x: 250, y: 275}
+  chunks:
+  - {fileID: 8041073070362474220, guid: da06a58aaf32c834db5ebd18971cbb95, type: 3}
+  - {fileID: 7304980317956237755, guid: 3b7e789b8d1d39a4da04bab65c83c240, type: 3}
+  - {fileID: 280663506900587090, guid: e160e47728a725f40a54be33581f9933, type: 3}
+  - {fileID: 1462039260113389297, guid: aef58af8fbe781345b7d13bd4eee94bd, type: 3}
+  - {fileID: 6242427099830424016, guid: fa97158a95f4f1d48a14c791b93a08d9, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 5339311308908183387, guid: 4f85bc9dca6b8f74f8837cad6843554a, type: 3}
+  exit: {fileID: 4912814834040136469, guid: 2e17cc0ac8627a64eb8ce62482297739, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 1928720637018777973, guid: a1ba2cedf09297e4ebb9a528b9aeda38, type: 3}
+  - {fileID: 7577941501310410440, guid: baa7e01b00b32af4f8e48a834e8ce13d, type: 3}
+  - {fileID: 7698984056523090362, guid: b71c0b9a8d082a444b5f286ed4a952de, type: 3}
+  - {fileID: 8048768474294761429, guid: c8b9b230d2e97d041b801eec25dd554e, type: 3}
+  jumpObstacles:
+  - {fileID: 7577941501310410440, guid: baa7e01b00b32af4f8e48a834e8ce13d, type: 3}
+  - {fileID: 1928720637018777973, guid: a1ba2cedf09297e4ebb9a528b9aeda38, type: 3}
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  pedestrians:
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 8687303010537512674, guid: afca44129964a964f83b03f3626c115b, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 8802789694425196935, guid: f1ddd3797e64475459b92f6519ebb4f9, type: 3}
+  - {fileID: 5269257977654849716, guid: b0829f5f782ffbf45b7b77bb8e0a3c56, type: 3}
+  - {fileID: 7560054955168101544, guid: 99a04e98df5eff84dada69e98fdb283b, type: 3}
+  - {fileID: 9175844340893811257, guid: 0bc7c011cbcc5b543a0aa7c6d5513bc2, type: 3}
+  - {fileID: 1607306622309483745, guid: cb738b83f022a36449c237cb94d1d52f, type: 3}
+  ramps:
+  - {fileID: 4953968522008891093, guid: c731c2584fcf8e143974bf88bd350ea0, type: 3}
+  rampFrequency: 0.8
+  blendMeters: 150
+  fogColor: {r: 0.74, g: 0.82, b: 0.9, a: 1}
+  skyTint: {r: 1, g: 1, b: 0.99, a: 1}
+  ambientSky: {r: 0.72, g: 0.84, b: 0.97, a: 1}
+  ambientEquator: {r: 0.9, g: 0.88, b: 0.8, a: 1}
+  ambientGround: {r: 0.68, g: 0.62, b: 0.5, a: 1}
+  sunColor: {r: 1, g: 0.96, b: 0.86, a: 1}
+  sunIntensity: 1.5
+  skyYaw: 180
+  skySize: 1
+  skyHeight: 0
+  skyline: 0
+  farScenery: {fileID: 5233935048513674809, guid: d6069b6300335af4184bd35e5706bc60, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35

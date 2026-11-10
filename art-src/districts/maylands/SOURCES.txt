@@ -1,0 +1,85 @@
+MAYLANDS (district id maylands, order 250, east line) - 参考资料和用到了什么
+=========================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\east2\。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East2Builder.cs / East2Maylands.cs 用漫画库生成（ComicPalette.mat + ComicInk.mat，
+顶点色，水面是顶点色平板）。没有商标和品牌字：只写地名和公共建筑名（MAYLANDS、SEVENTH AVE、EIGHTH AVE、PENINSULA HOTEL、
+THE RISE、LIBRARY、MAYLANDS BRICKWORKS、SWAN RIVER、BOARDWALK）。Peninsula Hotel 现在里面的连锁咖啡馆的招牌没有做。
+
+照片（Wikimedia Commons）
+- Maylands Station, Western Australia, January 2023 01 / 05 / 08.jpg
+  https://commons.wikimedia.org/wiki/File:Maylands_Station,_Western_Australia,_January_2023_01.jpg
+  https://commons.wikimedia.org/wiki/File:Maylands_Station,_Western_Australia,_January_2023_05.jpg
+  https://commons.wikimedia.org/wiki/File:Maylands_Station,_Western_Australia,_January_2023_08.jpg
+  用到的：
+  - 站台雨棚：成对的蓝灰色圆钢柱、白色桁架、缓坡波纹板屋顶和采光带；通往地下通道的楼梯（灰色网板围栏、黄色扶手）。
+  - 老站房（Maylands Parcel Office）：红色铁皮人字屋顶，宽大的挑檐由木斜撑托着，白色封檐板。
+  - 站台灯：灰杆上白色的扁圆锥灯罩。
+  - 站东头跨过铁路的公路桥（Seventh Avenue 桥），桥后是 Railway Parade 一排高大的 Norfolk 松和榕树。
+  - 铁路：道砟、混凝土轨枕、每侧一根立柱加悬臂的架空线；B 系列电车（白色车头、黑色前窗罩、车身银灰、顶边绿条）
+    和黄色车头的长途列车。游戏里的电车是风格化的，没有任何标志。
+- Peninsula Hotel, Maylands, 2023, 01.jpg
+  https://commons.wikimedia.org/wiki/File:Peninsula_Hotel,_Maylands,_2023,_01.jpg
+  用到的：两层红砖加米色抹灰横带和转角石；中间一段抹灰的突出开间；上下两层的廊（绿色铁柱、米色铁花托架和栏板）；
+  街角的塔楼：砖身、抹灰的观景层带小山花、锌皮的钟形穹顶和风向标；赤陶瓦屋顶、屋脊花饰、高烟囱；米色尖桩篱笆。
+- Eighth Avenue viewed from Maylands Station, September 2021.jpg
+  https://commons.wikimedia.org/wiki/File:Eighth_Avenue_viewed_from_Maylands_Station,_September_2021.jpg
+  用到的：Eighth Ave 发红的沥青路面，黑色的花式路灯（两个弯臂、顶上一把扇形装饰），蓝色和红色的路桩，
+  两侧带女儿墙和悬挑雨棚的老店面（米黄、浅灰），街角的壁画墙。
+- Three Shops 178-182 Whatley Crescent Maylands, April 2021.jpg
+  https://commons.wikimedia.org/wiki/File:Three_Shops_178-182_Whatley_Crescent_Maylands,_April_2021.jpg
+  用到的：米黄色的联邦式单层店面：女儿墙、壁柱顶上的球形装饰、中间的山花、用拉杆吊着的悬挑雨棚；
+  老店面背后新盖的深色公寓楼（白色楼板边、长条窗）。
+- The RISE, November 2021 01 / 03.jpg
+  https://commons.wikimedia.org/wiki/File:The_RISE,_November_2021_01.jpg
+  用到的：The RISE（社区中心和图书馆）：两层玻璃立面、白色柱子、带玻璃栏板的阳台、女儿墙上一排彩色板块、
+  入口上方的弧形屋顶、黄色和红色的墙面、红砖拱廊加米色上部和四坡顶的小塔（柱子上竖写 Library），草地上的小桉树和彩色书箱。
+- Maylands Brickworks, September 2021 01 / 05 / 10.jpg
+  https://commons.wikimedia.org/wiki/File:Maylands_Brickworks,_September_2021_01.jpg
+  https://commons.wikimedia.org/wiki/File:Maylands_Brickworks,_September_2021_05.jpg
+  https://commons.wikimedia.org/wiki/File:Maylands_Brickworks,_September_2021_10.jpg
+  用到的：
+  - 烟囱：方形、向上收分的深红砖烟囱，一圈圈钢箍，顶部以下一段米黄色，顶上深色帽。
+  - Hoffman 窑：长条形、两端是圆的；下半截墙向外斜（收分）并有斜的砖扶壁，底部一排拱形窑门；
+    砖墩托着一个出檐很大的缓坡铁皮屋顶。
+  - 门口：红砖门柱、暗红色的铁栏杆围墙、门上的 MAYLANDS BRICKWORKS 字样；门边红砖赤陶瓦四坡顶的小门房。
+  - Pug mill：很高的银色波纹铁皮棚，人字顶，侧面一个披檐；旁边低矮的木结构晾砖棚。
+- Swan River and Maylands seen from Belmont, Western Australia, October 2023 01.jpg
+  https://commons.wikimedia.org/wiki/File:Swan_River_and_Maylands_seen_from_Belmont,_Western_Australia,_October_2023_01.jpg
+  用到的：宽阔的蓝色河面、沙岸、岸边的木麻黄（sheoak）和芦苇、对岸的树带和几栋浅色公寓楼。
+
+文字资料
+- Maylands railway station（Wikipedia） https://en.wikipedia.org/wiki/Maylands_railway_station
+  岛式站台；西端的行人地下通道（2001 年取代了天桥）；站房（Parcel Office）1900 年启用，砖墙铁皮顶，1982 年停用，
+  1999 年列入州遗产名录；南边是 Whatley Crescent，北边是 Railway Parade，Eighth Ave 是镇中心的商店街。
+- inHerit（西澳遗产名录）Maylands Parcels Office
+  https://inherit.dplh.wa.gov.au/Public/Inventory/Details/af06bb24-76a2-41a8-be75-d8d500755f1d
+  单层砖和铁皮的站房兼包裹房，清水砖墙（后来刷过漆），人字铁皮屋顶一直伸到站台上方。游戏里按老师给的要点做成红砖。
+- Maylands Brickworks（Wikipedia） https://en.wikipedia.org/wiki/Maylands_Brickworks
+  1927 年开工，1983 年停产；原有两座 Hoffman 窑，一座在 1968 年 Meckering 地震后拆除；有晾砖棚和木结构铁皮的 pug mill；
+  两个取土坑后来成了人工湖（Lake Bungana、Lake Brearley）；1996 年列入州遗产名录。
+- inHerit: Maylands Brickworks
+  https://inherit.dplh.wa.gov.au/Public/Inventory/Details/e292627c-91b1-44bd-82d0-67814fd54a25
+  Hoffman 窑和 34 m 高的烟囱是半岛上的地标；州里仅存的一座 Hoffman 窑。
+
+路段（entry + 5 + exit，各 40 m；District.length 250-275 m，每种路段每次只出现一遍）
+- Entry：安静的一端，然后 Whatley Crescent：左边铁路（两条线为前面的岛式站台分开），右边两间米黄和浅灰的老店面。
+- Station：左边岛式站台上的老站房（红砖、红铁皮顶、MAYLANDS 站牌）、钢柱雨棚、地下通道楼梯、停着的电车；
+  Railway Parade 的 Norfolk 松；右边 Peninsula Hotel；尽头 Seventh Ave 公路桥从头顶跨过（铁路从这里离开）。
+- EighthAve：红色路面的 Eighth Ave：左边四间老店面，右边 The RISE；黑色花式路灯、蓝红路桩、咖啡桌。
+- Brickworks：半岛上的砖厂：右边大门、门房、Hoffman 窑和烟囱；左边 pug mill、晾砖棚和取土坑变成的湖。
+- River（共享车道）：右边 Swan River（黑天鹅、划艇、芦苇、木麻黄、野餐亭），左边半岛高尔夫球场（果岭和旗、沙坑、球车）。
+- Boardwalk（共享车道）：车道变成盐沼（samphire）上的木栈道；中间缺了一跨：木跳台（Ramp，全宽，坡长 6、高 1.4、平台 3）
+  加 6 m 的水面缺口（RoadGap，SPLASH）。
+- Exit：河和球场再走一段，然后安静下来。
+
+障碍、动物、跳台
+- OBS_Maylands_BrickPallet（一托盘红砖，可跳，不能打）、OBS_Maylands_PathBollard（车道路桩，不能跳）、
+  OBS_Maylands_FruitCrates（果蔬箱，可跳）、OBS_Maylands_GolfBag（高尔夫球包，不能跳）。
+- ANM_Maylands_BlackSwan / BlackSwanResting（黑天鹅：红嘴白带、白色翼尖）、ANM_Maylands_Duck（太平洋黑鸭）：animal，不能打。
+  水面上的黑天鹅和岸边的白鹭只是装饰。
+- RMP_Maylands_Boardwalk：木栈道小跳台。
+
+远景 FAR_Maylands_Horizon（跟着骑手，没有碰撞体）
+- 右（南）：Swan River（从路段自己的水面往外接出去），帆船，对岸的桉树带和浅色公寓楼，再远是蓝色的 Darling Scarp。
+- 左（北）：铁路对面 Maylands 的屋顶和树、Norfolk 松、一座水塔，远处也是 Scarp。
