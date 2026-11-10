@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eastperth
   displayName: EAST PERTH
   order: 230
-  line: 
+  line: east
   length: {x: 360, y: 440}
   chunks:
   - {fileID: 2788187901433930859, guid: 64fd06aa8f1c6c64fb851965f4136e1b, type: 3}
@@ -71,11 +71,11 @@ MonoBehaviour:
   ambientGround: {r: 0.68, g: 0.64, b: 0.54, a: 1}
   sunColor: {r: 1, g: 0.97, b: 0.89, a: 1}
   sunIntensity: 1.45
-  skyYaw: 0
-  skySize: 1
+  skyYaw: 180
+  skySize: 0.9
   skyHeight: 0
   skyline: 1
   farScenery: {fileID: 1473242079132990012, guid: 281b84e5d39021a4c916463b37698f66, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 8997696293492985801, guid: 3e9ae35102729f64991d9e5daaa2a32f, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

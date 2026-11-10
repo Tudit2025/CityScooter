@@ -15,7 +15,7 @@ MonoBehaviour:
   id: bayswater
   displayName: BAYSWATER
   order: 270
-  line: 
+  line: east
   length: {x: 250, y: 280}
   chunks:
   - {fileID: 5848908747107524439, guid: 40fc60a6b39db3744a941bec804b2ee0, type: 3}
@@ -72,10 +72,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.96, b: 0.88, a: 1}
   sunIntensity: 1.45
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 7910269536999158250, guid: 21c9ffc2d8dbdcf41819e0f29e04c450, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 6333215732979552512, guid: b2f0dda710b70d746b40444bdc5b0401, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

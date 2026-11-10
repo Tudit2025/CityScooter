@@ -15,7 +15,7 @@ MonoBehaviour:
   id: midland
   displayName: MIDLAND
   order: 340
-  line: 
+  line: east
   length: {x: 320, y: 320}
   chunks:
   - {fileID: 7842455522844087616, guid: a0ac6bfae8a428b4b82acbadc0896bb1, type: 3}
@@ -75,10 +75,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.94, b: 0.83, a: 1}
   sunIntensity: 1.45
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 2615870661046668062, guid: 1fa075347bae7bb49a348849216fd9d1, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 1355398536825404198, guid: 8f48ac4609f02f1479a508820c52fc1f, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

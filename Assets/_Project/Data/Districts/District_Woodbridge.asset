@@ -15,7 +15,7 @@ MonoBehaviour:
   id: woodbridge
   displayName: WOODBRIDGE
   order: 330
-  line: 
+  line: east
   length: {x: 280, y: 280}
   chunks:
   - {fileID: 3614764337696148724, guid: 4388203bb0749e242b6f95d3930a5fcd, type: 3}
@@ -69,10 +69,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.95, b: 0.84, a: 1}
   sunIntensity: 1.4
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 7003882711213157847, guid: 4afde9f3e417e37449b21f9f8e03eff2, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 3791727675167597191, guid: e9cd0aa2b05e4da4bab08721f9581849, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

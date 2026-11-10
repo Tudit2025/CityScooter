@@ -90,7 +90,10 @@ namespace CityScooter.Protocol
         /// <summary>District ids in route order (blocks, the web shell and docs list the same): UWA -> Perth CBD -> Mounts
         /// Bay Rd, then the south line (v0.4) down the Kwinana Freeway to Rockingham and Warnbro; then back to UWA.</summary>
         public static readonly string[] ZoneIds = { "uwa", "matilda", "kingspark", "westperth", "cbd", "quay", "mountsbay",
-            "canningbridge", "murdoch", "cockburn", "aubingrove", "kwinana", "wellard", "rockingham", "warnbro" };
+            "canningbridge", "murdoch", "cockburn", "aubingrove", "kwinana", "wellard", "rockingham", "warnbro",
+            // v0.5 east line: the Midland train line (after Perth CBD the ride takes the south or the east line)
+            "mciver", "claisebrook", "eastperth", "mtlawley", "maylands", "meltham", "bayswater", "ashfield", "bassendean",
+            "successhill", "guildford", "eastguildford", "woodbridge", "midland" };
         /// <summary>"zone:&lt;id&gt;": lower case letters only, at most 16 (anything else is dropped from the id).</summary>
         public static string Zone(string districtId)
         {

@@ -312,7 +312,11 @@
     cbd: "Perth CBD", quay: "Elizabeth Quay", mountsbay: "Mounts Bay Road",
     // v0.4 south line
     canningbridge: "Canning Bridge", murdoch: "Murdoch", cockburn: "Cockburn Central", aubingrove: "Aubin Grove",
-    kwinana: "Kwinana", wellard: "Wellard", rockingham: "Rockingham", warnbro: "Warnbro" };
+    kwinana: "Kwinana", wellard: "Wellard", rockingham: "Rockingham", warnbro: "Warnbro",
+    // v0.5 east line
+    mciver: "McIver", claisebrook: "Claisebrook", eastperth: "East Perth", mtlawley: "Mt Lawley", maylands: "Maylands",
+    meltham: "Meltham", bayswater: "Bayswater", ashfield: "Ashfield", bassendean: "Bassendean", successhill: "Success Hill",
+    guildford: "Guildford", eastguildford: "East Guildford", woodbridge: "Woodbridge", midland: "Midland" };
   const zoneHint = (line) => {
     const m = /^zone:([a-z]+)$/.exec(line);
     return m ? "entering " + (ZONE_NAMES[m[1]] || m[1]) : "";

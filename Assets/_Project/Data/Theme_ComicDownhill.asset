@@ -123,6 +123,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 08870b97dd6a6aa47a941a01775e905e, type: 2}
   - {fileID: 11400000, guid: b6c75a787d992484fa1de205cbb32e84, type: 2}
   - {fileID: 11400000, guid: f1541badd4dfbb34c9012da42c795c20, type: 2}
+  - {fileID: 11400000, guid: aeb300d21451ab2439f8997f48ba664d, type: 2}
+  - {fileID: 11400000, guid: 42b81e5f2db3b144aa4c3ad3dfc50fd3, type: 2}
+  - {fileID: 11400000, guid: 1819aff997e17544f8641a4e36e69cb7, type: 2}
+  - {fileID: 11400000, guid: e2f7ecc00e2acb14490165e540988e12, type: 2}
+  - {fileID: 11400000, guid: e49de064a8f8c4f44a608581ed75a4a0, type: 2}
+  - {fileID: 11400000, guid: e473169ad0204204ca224de9418f232e, type: 2}
+  - {fileID: 11400000, guid: 22fa3968bc1a28e4c96f1d4d360f6c89, type: 2}
+  - {fileID: 11400000, guid: aa1dcc49a9b74524c91ebb443e09f6e6, type: 2}
+  - {fileID: 11400000, guid: a472c41b9f31fd240a611223fc89cdbe, type: 2}
+  - {fileID: 11400000, guid: 602c495ad56264242b8d350f7abcbba8, type: 2}
+  - {fileID: 11400000, guid: 8661d8f45f24f6e4f9222c1b69e44e1d, type: 2}
   ramps:
   - {fileID: 6008180276453059417, guid: da5a276b28583f546b8236833ae9c102, type: 3}
   - {fileID: 1138295221086410786, guid: 1155d2a9ad4829143a5273b528387d70, type: 3}

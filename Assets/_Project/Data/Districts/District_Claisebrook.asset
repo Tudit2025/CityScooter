@@ -15,7 +15,7 @@ MonoBehaviour:
   id: claisebrook
   displayName: CLAISEBROOK
   order: 220
-  line: 
+  line: east
   length: {x: 360, y: 440}
   chunks:
   - {fileID: 2171990257670277530, guid: c985125619986d84a8794fb0927ba2e5, type: 3}
@@ -73,11 +73,11 @@ MonoBehaviour:
   ambientGround: {r: 0.72, g: 0.64, b: 0.52, a: 1}
   sunColor: {r: 1, g: 0.96, b: 0.87, a: 1}
   sunIntensity: 1.45
-  skyYaw: 0
-  skySize: 1
+  skyYaw: 180
+  skySize: 1.1
   skyHeight: 0
   skyline: 1
   farScenery: {fileID: 4679250819315311257, guid: 3835e59e0f6c3414090bfc19ba67d13b, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 2344625220962625801, guid: 265d6c30e3283ea45a6d6e996b754b40, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

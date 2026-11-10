@@ -33,7 +33,12 @@
     ["Perth CBD", "cbd"], ["Elizabeth Quay", "quay"], ["Mounts Bay Road", "mountsbay"],
     // v0.4 south line: down the Kwinana Freeway to Rockingham
     ["Canning Bridge", "canningbridge"], ["Murdoch", "murdoch"], ["Cockburn Central", "cockburn"], ["Aubin Grove", "aubingrove"],
-    ["Kwinana", "kwinana"], ["Wellard", "wellard"], ["Rockingham", "rockingham"], ["Warnbro", "warnbro"]];
+    ["Kwinana", "kwinana"], ["Wellard", "wellard"], ["Rockingham", "rockingham"], ["Warnbro", "warnbro"],
+    // v0.5 east line: along the Midland train line (after Perth CBD a ride takes the south line or this one)
+    ["McIver", "mciver"], ["Claisebrook", "claisebrook"], ["East Perth", "eastperth"], ["Mt Lawley", "mtlawley"],
+    ["Maylands", "maylands"], ["Meltham", "meltham"], ["Bayswater", "bayswater"], ["Ashfield", "ashfield"],
+    ["Bassendean", "bassendean"], ["Success Hill", "successhill"], ["Guildford", "guildford"],
+    ["East Guildford", "eastguildford"], ["Woodbridge", "woodbridge"], ["Midland", "midland"]];
   for (const [name, id] of DISTRICTS) MESSAGE_OPTIONS.push(["zone:" + id + " (entering " + name + ")", "zone:" + id]);
   // ---- end Districts (v0.3)
 

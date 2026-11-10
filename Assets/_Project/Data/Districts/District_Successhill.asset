@@ -15,7 +15,7 @@ MonoBehaviour:
   id: successhill
   displayName: SUCCESS HILL
   order: 300
-  line: 
+  line: east
   length: {x: 250, y: 275}
   chunks:
   - {fileID: 3958738790701647019, guid: e8d1b200b180c5140b447eaabeb1a3ef, type: 3}
@@ -69,10 +69,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.96, b: 0.86, a: 1}
   sunIntensity: 1.4
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 3695540211920120792, guid: cd89197a3d1605b4aba3658f87c494b7, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 6931300838635888074, guid: e45ac192a08376d4fa530f8ccf256e03, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

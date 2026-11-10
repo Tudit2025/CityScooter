@@ -15,7 +15,7 @@ MonoBehaviour:
   id: bassendean
   displayName: BASSENDEAN
   order: 290
-  line: 
+  line: east
   length: {x: 250, y: 280}
   chunks:
   - {fileID: 6905676566241336563, guid: 5b1ed43dba9d6b6428bdb044b18e341d, type: 3}
@@ -71,10 +71,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.95, b: 0.85, a: 1}
   sunIntensity: 1.45
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 7418529356159899106, guid: e7b788007b0d08342b8237b25af7a440, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 3368736474320239706, guid: b502c6a364e860542a694eb4a7c53786, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

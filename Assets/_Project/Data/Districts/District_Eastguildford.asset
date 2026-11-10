@@ -15,7 +15,7 @@ MonoBehaviour:
   id: eastguildford
   displayName: EAST GUILDFORD
   order: 320
-  line: 
+  line: east
   length: {x: 250, y: 275}
   chunks:
   - {fileID: 5853542421056916790, guid: 412d1e6d040c2eb479438cf7a0774f23, type: 3}
@@ -71,10 +71,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.96, b: 0.87, a: 1}
   sunIntensity: 1.45
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 2745210289265894322, guid: 35de816aafd96614fa7ee8fee357bc40, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 1425634809094278941, guid: ac9450de2b7b972498666e30f0571449, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

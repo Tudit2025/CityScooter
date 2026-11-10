@@ -15,7 +15,7 @@ MonoBehaviour:
   id: ashfield
   displayName: ASHFIELD
   order: 280
-  line: 
+  line: east
   length: {x: 250, y: 280}
   chunks:
   - {fileID: 3671616741923055589, guid: 5d2cadc3ab12a3042b61b197140ccfe6, type: 3}
@@ -70,10 +70,10 @@ MonoBehaviour:
   sunColor: {r: 1, g: 0.97, b: 0.88, a: 1}
   sunIntensity: 1.4
   skyYaw: 180
-  skySize: 0.6
-  skyHeight: -12
+  skySize: 1
+  skyHeight: 0
   skyline: 0
   farScenery: {fileID: 29426205651090430, guid: 0f98afc70398a4540bb979a61ce5bb15, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 2486042643780460798, guid: 5ff62d8584bec1045889e8bb649bdbda, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35
