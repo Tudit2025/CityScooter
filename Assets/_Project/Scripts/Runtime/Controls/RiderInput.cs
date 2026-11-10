@@ -22,6 +22,8 @@ namespace CityScooter.Controls
         public bool Surrender;
         /// <summary>v0.3 ramps: tricks requested this frame ("trick" lines from boards, Q on the keyboard).</summary>
         public int Trick;
+        /// <summary>v0.5 item race: true on the frame "use" arrived from a board (or E was pressed while holding an item).</summary>
+        public bool Use;
         /// <summary>A micro:bit / simulator is steering right now (for the HUD).</summary>
         public bool DeviceSteering;
     }
@@ -64,7 +66,11 @@ namespace CityScooter.Controls
             input.Brake = (keyboard && KeyboardControls.BrakeHeld()) || (hub != null && hub.Mixer.Braking(now));
             input.Punch = (keyboard && KeyboardControls.PunchPressed()) | (hub != null && hub.Mixer.ConsumePunch());
             input.Bell = (keyboard && KeyboardControls.BellPressed()) | (hub != null && hub.Mixer.ConsumeBell());
-            input.Boost = (keyboard && KeyboardControls.BoostPressed()) | (hub != null && hub.Mixer.ConsumeBoost());
+            // v0.5 item race: E uses the item in hand; with empty hands (and outside race mode) E is the boost, as before.
+            bool eKey = keyboard && KeyboardControls.BoostPressed();
+            bool useKey = eKey && ItemInHand != null && ItemInHand();
+            input.Boost = (eKey && !useKey) | (hub != null && hub.Mixer.ConsumeBoost());
+            input.Use = useKey | (hub != null && hub.Mixer.ConsumeUse());
             input.Surrender = hub != null && hub.Mixer.ConsumeSurrender(); // keyboard players hold S to pull over
             input.Trick = (keyboard && KeyboardControls.TrickPressed() ? 1 : 0) + (hub != null ? hub.Mixer.ConsumeTricks() : 0); // v0.3 ramps
 
@@ -72,9 +78,13 @@ namespace CityScooter.Controls
             return input;
         }
 
+        /// <summary>v0.5 item race: set by RaceItems; true while the rider holds an item (then the E key means "use").</summary>
+        public static System.Func<bool> ItemInHand;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
+            ItemInHand = null;
             _frame = -1;
             _last = default;
         }

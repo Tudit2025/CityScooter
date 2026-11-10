@@ -51,6 +51,7 @@ namespace CityScooter.Protocol
             if (lower == Messages.Boost) return new Command(CommandKind.Boost);
             if (lower == Messages.Surrender) return new Command(CommandKind.Surrender);
             if (lower == Messages.Trick) return new Command(CommandKind.Trick); // ---- Ramps and air (v0.3)
+            if (lower == Messages.Use) return new Command(CommandKind.Use); // ---- Item race (v0.5)
 
             int colon = lower.IndexOf(':');
             if (colon <= 0) return new Command(CommandKind.Unknown, 0f, s);
@@ -95,6 +96,8 @@ namespace CityScooter.Protocol
                     return new Command(CommandKind.Surrender);
                 case Messages.Trick: // ---- Ramps and air (v0.3): "trick:1" is forgiven like "jp:1"
                     return new Command(CommandKind.Trick);
+                case Messages.Use: // ---- Item race (v0.5): "use:1" is forgiven like "jp:1"
+                    return new Command(CommandKind.Use);
                 case Messages.Start: // ---- Districts (v0.3): "start:kingspark"; the game ignores ids not on its route
                 {
                     string id = Messages.DistrictId(arg);

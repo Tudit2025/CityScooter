@@ -254,8 +254,10 @@ namespace CityScooter.Tests
             Assert.AreEqual(42, _game.track.seed);
         }
 
+        // v0.4: no do: events at all in a race. v0.5 (docs/item-race.md): events that change the road are still ignored
+        // (everyone must get the same road); police events only change things for the rider who asked, so they work.
         [UnityTest]
-        public IEnumerator InARace_GoIsIgnored_DoAndStartAndToonAreOff()
+        public IEnumerator InARace_GoIsIgnored_RoadEventsStartAndToonAreOff_PoliceEventsWork()
         {
             var triggers = _game.GetComponent<ProgramTriggers>();
             Say("do:car"); // normal play, between rides: kept for the next ride ...
@@ -270,18 +272,29 @@ namespace CityScooter.Tests
             Assert.AreEqual(4821, _race.Seed);
             Assert.AreEqual(RaceState.Racing, _race.State);
             int dropped = triggers.Dropped;
-            Say("do:chase");
             Say("do:car");
+            Say("do:turn:L");
             Say("start:uwa");
             Say("toon:1");
-            Say("open:chase"); // every-ride events too
+            Say("open:roadworks"); // every-ride events too
             yield return Wait(0.3f);
-            Assert.AreEqual(dropped + 2, triggers.Dropped, "do: events are ignored in a race");
-            Assert.AreEqual(0, PoliceChase.Instance.Wanted, "no police");
-            Assert.AreEqual(0, triggers.Opening, "open: is ignored in a race");
+            Assert.AreEqual(dropped + 2, triggers.Dropped, "do: events that change the road are ignored in a race");
+            Assert.AreEqual(0, triggers.Done);
+            Assert.AreEqual(0, triggers.Opening, "open: road events are ignored in a race");
+            Assert.AreEqual(0, PoliceChase.Instance.Wanted, "nothing asked for the police yet");
             Assert.IsFalse(PoliceChase.Instance.Chasing);
             Assert.AreEqual("kingspark", _game.track.startDistrictOverride, "start: is ignored: the go: picked the start");
             Assert.IsFalse(RiderActions.CartoonMode, "no cartoon mode");
+
+            // The police come when the rider's own program asks for them (it makes the race harder for that rider only).
+            Say("do:chase");
+            Say("open:chase");
+            yield return Wait(0.3f);
+            Assert.AreEqual(2, triggers.Done, "do:chase and open:chase happen in a race");
+            Assert.AreEqual(1, triggers.Opening);
+            Assert.AreEqual(1, PoliceChase.Instance.Wanted, "the police work in a race (v0.5)");
+            Assert.IsTrue(PoliceChase.Instance.Chasing);
+            Assert.IsTrue(_sent.Any(s => s.line == "wanted:1") && _sent.Any(s => s.line == "chase:1"), "with the usual messages");
             _hub.Mixer.Reset();
         }
 

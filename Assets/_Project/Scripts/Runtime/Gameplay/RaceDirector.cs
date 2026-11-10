@@ -33,8 +33,11 @@ namespace CityScooter.Gameplay
     /// Everyone gets the same road from the same seed: TrackGenerator.seed, the start district and FakeTurnDirector all
     /// use the go:'s seed, and speed-dependent planning is fixed (fixedPlanning). Other riders are ghosts: copies of the
     /// rider model in their own colour, placed at their distance and lane, moved on between packets (dead reckoning),
-    /// never in the way. In race mode: no police, no cartoon mode, no "do:" events, "start:" is ignored; a crash is a
-    /// 3 s stop and the ride goes on from the same spot.
+    /// never in the way. In race mode: no cartoon mode, "start:" is ignored, "do:" / "open:" events that change the road
+    /// are ignored; a crash is a 3 s stop and the ride goes on from the same spot.
+    /// v0.5 item race (11/10, docs/item-race.md): the police work in race mode (a program's own "do:chase" /
+    /// "do:stars:N" / "do:heli" / "do:calm", and the police item); ARRESTED and BUSTED are the same 3 s stop, then the
+    /// wanted level is 0 again. Items are in <see cref="RaceItems"/>.
     /// GameController adds it at runtime (no scene changes). Without "race:" nothing here runs.
     /// </summary>
     [DefaultExecutionOrder(60)] // after the rider, the track and the districts moved this frame; LateUpdate after the camera
@@ -63,7 +66,7 @@ namespace CityScooter.Gameplay
         public const float ExtrapolateSeconds = 0.75f;
 
         public static RaceDirector Instance { get; private set; }
-        /// <summary>True in race mode (any state but Off): no police, no cartoon mode, no do:, no start:.</summary>
+        /// <summary>True in race mode (any state but Off): no cartoon mode, no start:, no road-changing do: events.</summary>
         public static bool On => Instance != null && Instance.State != RaceState.Off;
 
         public RiderController rider;
@@ -141,6 +144,14 @@ namespace CityScooter.Gameplay
         public int Crashes { get; private set; }
         /// <summary>Seconds left of the current crash stop (0 when riding).</summary>
         public float PenaltyLeft => _penaltyUntil > 0d ? Mathf.Max(0f, (float)(_penaltyUntil - Now)) : 0f;
+        /// <summary>How long the current (or last) stop is: 3 s for a crash, an arrest or a bust, 1.5 s for a rocket.</summary>
+        public float PenaltySeconds { get; private set; } = CrashPenaltySeconds;
+        /// <summary>v0.5: the police may come now (a practice ride in the lobby, or the race itself; not after the finish line).</summary>
+        public bool PoliceAllowed => State == RaceState.Lobby || State == RaceState.Racing;
+        /// <summary>v0.5: item boxes, items and what they do are on (the lobby with its practice rides, the countdown, the race).</summary>
+        public bool ItemsOn => State == RaceState.Lobby || State == RaceState.Countdown || State == RaceState.Racing;
+        /// <summary>Metres from the start line to my rider (0 before the start).</summary>
+        public float MyDistance => rider != null ? Mathf.Max(0f, rider.Distance) : 0f;
         /// <summary>Seconds since the finish line (Finished and Results).</summary>
         public float SinceFinish => _finishedAt > 0d ? (float)(Now - _finishedAt) : 0f;
         public IReadOnlyList<Rival> Rivals => _rivals;
@@ -462,6 +473,9 @@ namespace CityScooter.Gameplay
             State = RaceState.Finished;
             _finishedAt = now;
             _nextFin = now;
+            // v0.5: the police stop at the line (before the brake below: ending a chase lets go of the brake).
+            PoliceChase police = PoliceChase.Instance;
+            if (police != null && (police.Wanted > 0 || police.Chasing)) police.RaceOver();
             // Past the line: nothing can be hit any more, and the scooter rolls to a stop.
             rider.PassThroughUntil = Time.time + 1e6f;
             rider.BrakeFloor = 0f;
@@ -496,11 +510,30 @@ namespace CityScooter.Gameplay
             GameController g = Game;
             if (crash && g != null && g.crashEffect != null) Destroy(Instantiate(g.crashEffect, rider.transform.position, Quaternion.identity), 4f);
             if (crash) GameEvents.RaiseCrashed();
-            _respawnX = rider.transform.position.x;
-            _penaltyUntil = Now + CrashPenaltySeconds;
+            Stopped(title, CrashPenaltySeconds);
             if (State == RaceState.Racing) Crashes++;
-            if (hud != null) hud.RaceCrash(title);
             return true;
+        }
+
+        /// <summary>
+        /// v0.5 item race: an item (the rocket) knocks the rider off for <paramref name="seconds"/>, then the ride goes on
+        /// from the same spot. Not a crash: no "crash" to the boards (RaceItems sends "hit:rocket") and it does not count
+        /// in <see cref="Crashes"/>. False when there is nobody riding to stop.
+        /// </summary>
+        public bool TakeItemStop(string title, float seconds)
+        {
+            if (State == RaceState.Off || rider == null || !rider.Running) return false;
+            rider.Stop();
+            Stopped(title, seconds);
+            return true;
+        }
+
+        void Stopped(string title, float seconds)
+        {
+            _respawnX = rider.transform.position.x;
+            PenaltySeconds = seconds;
+            _penaltyUntil = Now + seconds;
+            if (hud != null) hud.RaceCrash(title, seconds);
         }
 
         void UpdatePenalty(double now)

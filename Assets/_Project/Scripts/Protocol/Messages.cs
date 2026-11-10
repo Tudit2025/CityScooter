@@ -11,6 +11,8 @@ namespace CityScooter.Protocol
     /// keep coming) and "rx:&lt;payload&gt;" (a radio message passed on as it is: "p:NAME:DIST:LANE", "f:NAME:SECONDS",
     /// "go:SEED:START:METRES", see <see cref="RadioMessage"/>); game → micro:bit "pos:DIST:LANE" (4 Hz in a race,
     /// "pos:0:0" once a second in the lobby) and "fin:SECONDS" (every 0.5 s for 10 s after the finish line).
+    /// v0.5 item race (11/10, docs/item-race.md) adds micro:bit → game "use"; game → micro:bit "item:NAME" / "item:none",
+    /// "tx:&lt;payload&gt;" (send this by radio), "hit:NAME", "blocked:NAME"; and the radio message "i:..." inside "rx:".
     /// v0 boards keep working: v1 only adds messages (student code skips lines it does not know).
     /// Any other line (student prints, Python tracebacks) is shown in the serial monitor, never an error.
     /// </summary>
@@ -55,6 +57,7 @@ namespace CityScooter.Protocol
                 case Trick: // ---- Ramps and air (v0.3)
                 case Start: // ---- Districts (v0.3)
                 case Race: case Radio: case "pos": case "fin": // ---- Radio race (v0.4)
+                case Use: case "item": case "hit": case "blocked": case "tx": // ---- Item race (v0.5)
                     return true;
             }
             return w.IndexOf(':') >= 0;
@@ -190,6 +193,34 @@ namespace CityScooter.Protocol
         public static string Finish(float seconds) =>
             FinishPrefix + (seconds < 0f ? 0f : seconds > 99999f ? 99999f : seconds).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
         // ---- end Radio race (v0.4)
+
+        // ---- Item race (v0.5, 11/10, docs/item-race.md): items picked up from boxes on the race road
+        // micro:bit -> game
+        /// <summary>"use": use the item I am holding (nothing happens with empty hands).</summary>
+        public const string Use = "use";
+        // The six items, as the boards and the radio name them.
+        public const string ItemBoost = "boost", ItemShield = "shield", ItemOil = "oil", ItemRocket = "rocket", ItemBolt = "bolt", ItemPolice = "police";
+        /// <summary>No item in hand ("item:none").</summary>
+        public const string ItemNothing = "none";
+        public static readonly string[] ItemNames = { ItemBoost, ItemShield, ItemOil, ItemRocket, ItemBolt, ItemPolice };
+        /// <summary>One of the six item names (lower case).</summary>
+        public static bool IsItem(string name) => System.Array.IndexOf(ItemNames, name) >= 0;
+        // game -> micro:bit
+        public const string ItemPrefix = "item:";
+        public const string ItemNone = "item:none";
+        /// <summary>"item:rocket": you picked this up; "item:none" once it is used or lost.</summary>
+        public static string Item(string name) => IsItem(name) ? ItemPrefix + name : ItemNone;
+        public const string TransmitPrefix = "tx:";
+        /// <summary>"tx:&lt;payload&gt;": please send the payload by radio as it is (the opposite of "rx:").</summary>
+        public static string Transmit(string payload) => TransmitPrefix + payload;
+        public const string HitPrefix = "hit:";
+        /// <summary>"hit:rocket": this item hit you ("hit:oil" when you ride onto the oil).</summary>
+        public static string Hit(string name) => HitPrefix + name;
+        public const string BlockedPrefix = "blocked:";
+        /// <summary>"blocked:rocket": your shield stopped it ("blocked:crash" when it saved you from a crash).</summary>
+        public static string Blocked(string name) => BlockedPrefix + name;
+        public const string BlockedCrash = "crash";
+        // ---- end Item race (v0.5)
 
         static int Clamp(int v, int min, int max) => v < min ? min : v > max ? max : v;
     }
