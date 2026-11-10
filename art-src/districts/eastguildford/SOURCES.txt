@@ -1,0 +1,80 @@
+EAST GUILDFORD (district id eastguildford, order 320, 东线) - 参考资料和用到了什么
+==========================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\eastguildford\。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East4EastGuildford.cs（公用部分在 East4Kit.cs、East4Builder.cs）用漫画库生成
+（ComicPalette.mat + ComicInk.mat，顶点色）。没有商标、校徽和品牌字；牌子只写地名和学校的名字。
+
+重要更正（和任务书不一样的地方）
+- 任务书写礼拜堂是"红砖配浅色石材"。查到的照片和资料都说明：礼拜堂通体是 Donnybrook 砂岩（浅蜜色、略带粉的米黄），
+  不是红砖；红砖的是它旁边的校舍。按"以查到的参考资料为准"，礼拜堂做成砂岩，红砖做在校舍上。
+
+礼拜堂 Chapel of St Mary and St George（本场景的主角，Chapel 路段）
+- Wikipedia: Guildford Grammar School Chapel
+  https://en.wikipedia.org/wiki/Guildford_Grammar_School_Chapel
+  用到的：Sir Walter Tapper 1912 年设计，1914 年祝圣；晚期哥特复兴（Perpendicular）；墙是 Donnybrook 石；
+  屋脊上有一个小钟塔（flèche）；州遗产名录 2487 号。
+- State Library of WA 的照片说明（"built from Donnybrook stone between 1912 and 1914"）
+  https://purl.slwa.wa.gov.au/slwa_b5577768
+- Sir Walter Tapper 的作品网站（建筑师、背景）
+  https://sir-walter-tapper-churches.co.uk/TapperBioGuildfordChapel.asp
+- Wikimedia Commons 分类 Guildford Grammar School Chapel（比例和细部全部照这些照片）
+  https://commons.wikimedia.org/wiki/Category:Guildford_Grammar_School_Chapel
+  - File:Guildford Grammar School Chapel, April 2021 01.jpg（西立面正面）
+    用到的：西立面的构成和比例。两个八角小塔带石头尖顶，立在层层收进的角扶壁上；中间是山墙；
+    山墙下一扇很大的尖拱花窗（四联窗、上部花格），窗下一条腰线，再下面三个壁龛（中间高）和一块石牌，
+    最下面是小小的尖拱木门（两层线脚）；角扶壁上有细长的十字形窄缝。
+    量出的比例：正面总宽约 14 m，到小塔底约 17 m，山墙尖约 20.6 m，塔尖约 25 m（高宽比约 1.23）。
+  - File:Guildford Grammar School Chapel 01-2026.jpg（西南斜角，最有名的角度）
+    用到的：正面和南侧一起看的体量：南侧六个开间，开间之间是很深的三级扶壁，扶壁顶上是山形小帽，高出女儿墙；
+    屋脊靠东有一个小钟塔；深灰色石板屋顶藏在女儿墙后面；旁边是红砖红瓦的校舍；草坪、白色矮桩。
+  - File:Guildford Grammar School Chapel, August 2026 01.jpg（南侧立面）
+    用到的：每个开间高处一扇两联尖拱窗，外面套一个浅的卸荷拱；窗台下一条腰线；第一开间低处一扇四联方窗；
+    靠东的开间地面上有一扇小尖拱门；墙脚有线脚。
+  - File:Guildford Grammar School Chapel, April 2021 06.jpg（角塔和开间的近景）
+    用到的：小塔是八角形的：鼓座、带尖拱洞的一层、檐口、分段的石头尖顶和小十字；角扶壁每一级的斜面收分。
+  - File:Ggs gnangarra 220315-103.jpg（条目主图）、File:GGS Chapel 1930s.JPEG（老照片）
+- 颜色：石头 F8DEBC（亮面）/ EBCBA2（暗处）/ FFEFD6（线脚），尖顶 E2CCA8，石板瓦 5C616B，彩色玻璃底色 2B4468，
+  木门 8A5A34。草坪上的白桩和黑铁链、红砖小路都照照片。
+
+校舍、校名墙、球场（School、Ovals、Station 路段）
+- Commons 分类 Guildford Grammar School
+  https://commons.wikimedia.org/wiki/Category:Guildford_Grammar_School
+  - File:Guildford Grammar School, April 2021 01.jpg
+    用到的：联邦时期（Federation）的红砖房：白色木廊和花格、灰色波纹铁皮或红瓦屋顶、带陶罐的高砖烟囱；
+    旁边有围着高铁丝网的网球场（蓝绿色硬地）和灯柱；大桉树。
+  - File:Guildford Grammar School sign, August 2026.jpg
+    用到的：校门口的矮墙：红砖、米色压顶，墙上一块米色的牌子，黑字 GUILDFORD GRAMMAR（下面的 SCHOOL 省掉了，
+    任务书指定写 GUILDFORD GRAMMAR）。
+- 学校官网（校园、礼拜堂在学校生活里的位置；只看了文字）
+  https://www.ggs.wa.edu.au/our-difference/anglican-ethos/
+- 校舍 SchoolHouse 是按上面这些照片和 Federation 学校建筑的常见做法综合出来的：两层红砖、米色腰线、
+  两端山墙翼楼（成对的白色多格窗、半木构山墙）、中间一层砖拱廊、二层白色木阳台、红陶瓦四坡顶、高烟囱、屋脊通风塔。
+  它不是某一栋楼的复制品。
+- 球场：割草条纹的草地、白色尖桩篱笆、板球场地和三柱门、白色挡板（sight screen）、澳式足球四根门柱、
+  红砖带钟的小看台（pavilion）、记分牌（HOME / AWAY，不写队名）。远处河边的白色船库（学校有赛艇）。
+
+East Guildford 站（Station 路段）
+- Commons 分类 East Guildford railway station（2022 年 12 月的一组照片）
+  https://commons.wikimedia.org/wiki/Category:East_Guildford_railway_station
+  - File:East Guildford Station, Western Australia, December 2022 05.jpg
+    用到的：站台上的小候车棚：白色砖墙、深绿色钢柱、波纹铁皮顶、不锈钢长椅；站台边红色地面、黄色盲道线。
+  - File:East Guildford Station, Western Australia, December 2022 20.jpg
+    用到的：过轨的行人通道：黄色扶手的之字形栏杆、镀锌网围栏、限速牌；架空线的支柱；站台的坡道；高高的双头灯柱。
+- 跳台"站前坡道"：共享车道在站前升到站台的高度（坡 6 m、高 1 m、平台 5 m），到头落回车道。两边是黄色扶手。
+
+马厩和围场（Stables 路段）
+- 任务书："河边的大桉树和白马厩"。East Guildford 在 Swan River 的河湾里，河边一带养马（马场、马球场）。
+  Commons: Category:Perth Polo Club（Guildford）https://commons.wikimedia.org/wiki/Category:Perth_Polo_Club
+  用到的：白色的木栏围场、白墙绿门的一排马房、河边的大桉树。马厩的造型（上下两截的绿色马房门、
+  中间带吊梁的草料阁楼山墙、屋顶通风小亭和风向标）是按澳洲常见的老马厩综合出来的，不是某一栋的复制品。
+
+远景 FAR_Eastguildford_RiverAndScarp（跟着骑手，没有碰撞体；东线这一段天上看不到珀斯 CBD）
+- 左边：学校操场后面的 Swan River 和两岸的桉树带，再远是 Swan Valley 的平地和一块块葡萄园，
+  最远是 Darling Scarp：离得近了，做成前后两道山脊，比 Guildford 更高。
+- 右边：铁路那边的屋顶和树、Helena River 的树带、Darling Scarp。
+
+动物：喜鹊（黑白，走动）、笑翠鸟 kookaburra（站着）。都是 animal、Person、不能打。
+障碍：干草捆、板球装备包、橄榄球训练沙包（立着，可以打飞）、训练用的小圆锥。
+跳台：路段里的"站前坡道"；District.ramps 里的 RMP_Eastguildford_PlatformRamp（混凝土小坡，黄黑警示条）。
+火车：B 系列样式的电车（白色车身、绿色腰线、深色窗带、黄色车门条），没有标志；只是风景，没有碰撞体。

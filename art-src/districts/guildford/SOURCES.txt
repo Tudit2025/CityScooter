@@ -1,0 +1,82 @@
+GUILDFORD (district id guildford, order 310, 东线) - 参考资料和用到了什么
+==================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\guildford\。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East4Guildford.cs（公用部分在 East4Kit.cs、East4Builder.cs）用漫画库生成
+（ComicPalette.mat + ComicInk.mat，顶点色）。没有商标和商业品牌。店铺只写行当（ANTIQUES、BOOKS、CURIOS、TEA ROOMS）。
+两家老酒店的女儿墙上写了它们的名字（GUILDFORD HOTEL、ROSE AND CROWN）：真实建筑的女儿墙上就有这几个字，
+它们是遗产建筑的名字。如果不想要，把 East4Guildford.cs 里的 HotelNames 改成 false 再重建，牌子就是空的。
+
+布局：真实的 James St 紧贴着铁路的北侧，车站在路南、Guildford Hotel 在路北正对着车站。
+游戏里往东骑（+Z），铁路和车站在右边，老镇在左边。Stirling Square、邮局实际在铁路南侧，这里都放到了左边，
+按沿路的先后顺序排（风格化，不是地图）。
+
+Guildford Hotel（Station 路段左侧）
+- Commons: File:The Guildford Hotel, Guildford, Western Australia, 2026 (01).jpg
+  https://commons.wikimedia.org/wiki/File:The_Guildford_Hotel,_Guildford,_Western_Australia,_2026_(01).jpg
+  用到的：街角的两层白色抹灰建筑；一、二层都是带横条纹（rustication）方柱的柱廊，一层墙上是圆拱窗；
+  二层柱间是实心栏板；檐口上面是栏杆式女儿墙，有三角山花，街角一跨是弧形山花，下面的牌子写 GUILDFORD HOTEL，
+  柱墩顶上有圆球；屋顶后面是观景亭（belvedere）：八角木亭、很宽的平檐、锌皮的钟形圆顶、长尖顶。
+- Commons: File:Guildford Hotel, Western Australia, April 2021 01.jpg、
+  File:Rebuilt Guildford Hotel road fronting James Street, Guildford, Western Australia.jpg
+  用到的：沿 James St 的长立面；2008 年大火后修复的样子（白色、屋顶和观景亭重建）。
+
+Rose and Crown（RoseAndCrown 路段左侧）
+- Commons 分类 Rose and Crown Hotel, Guildford
+  https://commons.wikimedia.org/wiki/Category:Rose_and_Crown_Hotel,_Guildford
+  - File:Rose and Crown Hotel, Guildford, April 2021.jpg
+    用到的：和任务书写的"白墙两层"不完全一样，按照片做：
+    前面是一层的酒吧侧翼：下面是刷白的砖墙（门窗边是红砖）、上面一大条灰色抹灰女儿墙，白字 ROSE & CROWN HOTEL
+    （这里写成 ROSE AND CROWN），转角有低矮的山花，木柱撑着的波纹铁皮单坡雨棚；
+    后面是两层的红砖主楼：四坡波纹铁皮顶、很高的砖烟囱、两层木廊，二层是白色铸铁花栏杆，楼板下有木格栅。
+    门前是草地、红砖小路、白色矮桩，木柱上挂着招牌。
+- 1841 年开业，西澳现存最老的酒店（任务书）。
+
+Stirling Square 和 St Matthew's（StirlingSquare 路段左侧）
+- Commons: File:St Matthew's Church, Guildford, August 2026 01.jpg、File:St Matthews Church, Guildford, Western Australia.jpg
+  https://commons.wikimedia.org/wiki/File:St_Matthew%27s_Church,_Guildford,_August_2026_01.jpg
+  用到的：橙红色的砖（C96A3E）、墙脚刷成三文鱼粉色（DE8E78）；很陡的陶瓦屋顶，石头压顶；
+  层层收进的扶壁，顶上是石头斜面；米色边框的尖拱窗（单扇和三联）；西门是刷白的尖拱、深色木门、门前台阶和矮墩；
+  山墙尖上有个小钟亭和十字；侧面有横向的山墙（耳堂）。旁边有加那利海枣（棕榈）。
+- Commons: File:Stirling Square gates Guildford March 2013.jpg、File:Rotunda in Stirling Square, Guildford, Western Australia, August 2026.jpg
+  用到的：广场的纪念大门（红砖门柱、石帽、铁拱；只做背景）；大草地、白色矮桩和铁链、高大的松树（Norfolk 松）。
+
+邮局和老法院（PostOffice 路段左侧）
+- Commons: File:Guildford Post Office, August 2026.jpg、File:Guildford Post Office, April 2021 01.jpg
+  https://commons.wikimedia.org/wiki/File:Guildford_Post_Office,_August_2026.jpg
+  用到的：米色抹灰的两层意大利式建筑；一层圆拱窗和拱门，二层带窗楣的直窗；两层之间的檐带上写 POST OFFICE；
+  红陶瓦四坡顶；街角是四层的钟楼：下面两层和主楼一样，第三层成对的小拱窗，第四层四面是钟，
+  顶上是栏杆、角墩和旗杆；门前白色尖桩篱笆；红色邮筒。
+- 老法院 / 老监狱（Guildford Courthouse and Gaol，1841-1866，殖民时期）：按殖民时期砖房的常见样子综合：
+  软红砖、很陡的木瓦四坡顶一直盖到前廊、白色木柱、十二格的窗、高砖烟囱。牌子写 OLD COURTHOUSE。
+
+James St 的古董店（JamesSt 路段左侧）
+- Commons: File:Shops 147-149A James Street, Guildford, August 2026.jpg、File:Shops 167 & 171 James Street Guildford, April 2021.jpg
+  https://commons.wikimedia.org/wiki/File:Shops_147-149A_James_Street,_Guildford,_August_2026.jpg
+  用到的：一层的老店面，女儿墙是阶梯形或弧形山花；人行道上方的柱廊雨棚（柱子在路缘一侧），雨棚边上是招牌板；
+  遗产色（深绿、酒红、米色）；红砖铺的人行道。另有一栋两层带铸铁花阳台的 Federation 店铺。
+- 跳台"古董店的拖车"：左车道上停着运家具的平板拖车，木跳板搭到车板上（坡 4 m、高 0.9 m、车板 4.5 m），从车头落下。
+
+车站（Station 路段右侧）
+- Commons 分类 Guildford railway station, Western Australia（2022 年 12 月的一组照片）
+  https://commons.wikimedia.org/wiki/Category:Guildford_railway_station,_Western_Australia
+  - File:Guildford Station, Western Australia, December 2022 12.jpg
+    用到的：老站房：深红色的漆面砖墙（8B2F2A）、米色腰线和窗楣、深绿色墙脚；深绿色铁托架撑着的雨棚。
+  - File:Guildford railway station platforms.jpg
+    用到的：站台（红色地面、白边）、四坡铁皮顶和砖烟囱的站房、架空线。
+  站台背面的白色尖桩篱笆是加的遗产小镇味道。
+
+蓝花楹（11 月）
+- 任务书：Guildford 的老街上蓝花楹很多，11 月正开。做成深色分叉树干、宽而低的紫色树冠（三种紫），地上有落花。
+
+葡萄园（Exit 路段、远景）
+- 任务书：Swan Valley 的葡萄园从 Guildford 开始。出镇的一段左边是几排葡萄架和酒窖铁皮棚，牌子写 SWAN VALLEY。
+
+远景 FAR_Guildford_SwanValley（跟着骑手，没有碰撞体；这一段天上看不到珀斯 CBD）
+- 两边：老镇的屋顶（红瓦、铁皮）、桉树带、屋顶间的蓝花楹；左边远处是 Swan Valley 的平地和成块的葡萄园（一排排条纹）、
+  一座水塔；最远是 Darling Scarp，比 Success Hill 更近更高。
+
+动物：喜鹊（走动）、粉红凤头鹦鹉 galah（站着）。都是 animal、Person、不能打。
+障碍：酒桶（Swan Valley）、古董店 A 字牌（OPEN）、茶叶箱、老式衣帽架（可以打飞）。
+跳台：路段里的拖车；District.ramps 里的 RMP_Guildford_DrayRamp（木板小坡）。
+火车：B 系列样式的电车，没有标志；只是风景，没有碰撞体。

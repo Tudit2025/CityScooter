@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf0eac4f4616f424fa55f01815db1d92, type: 3}
+  m_Name: HZ_Guildford_Barrels
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.HazardPattern
+  entries:
+  - prefab: {fileID: 2567402136962353152, guid: 5e19264f55cb9564192f13c41b9d41d1, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: -2.6
+    z: 18
+    yaw: 0
+  - prefab: {fileID: 2567402136962353152, guid: 5e19264f55cb9564192f13c41b9d41d1, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 0
+    z: 22
+    yaw: 0
+  - prefab: {fileID: 8757178693431896955, guid: c196a1f674a994347918dfb0652dbc58, type: 3}
+    mirrorPrefab: {fileID: 0}
+    x: 2.6
+    z: 27
+    yaw: 10
+  length: 40
+  minLevel: 0
+  weight: 0.8
+  allowMirror: 1
+  turnDirection: 0
+  turnAtZ: 0
+  turnStrength: 0.8
+  turnSeconds: 4
+  meetAtZ: 30
+  roadHalfWidth: 4
