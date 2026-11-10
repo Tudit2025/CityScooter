@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mtlawley
   displayName: MT LAWLEY
   order: 240
-  line: 
+  line: east
   length: {x: 250, y: 275}
   chunks:
   - {fileID: 2629058909997548451, guid: 5a8f96948b96f1d4dba6e914ec4c92fc, type: 3}
@@ -73,6 +73,6 @@ MonoBehaviour:
   skyHeight: 0
   skyline: 0
   farScenery: {fileID: 1854522868410137907, guid: 80148ac2cecd46244905ba6edee0d8b3, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 6414679028524496324, guid: 50d843453c09860498b83d2f9b542929, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

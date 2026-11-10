@@ -15,7 +15,7 @@ MonoBehaviour:
   id: meltham
   displayName: MELTHAM
   order: 260
-  line: 
+  line: east
   length: {x: 250, y: 275}
   chunks:
   - {fileID: 8041073070362474220, guid: da06a58aaf32c834db5ebd18971cbb95, type: 3}
@@ -72,6 +72,6 @@ MonoBehaviour:
   skyHeight: 0
   skyline: 0
   farScenery: {fileID: 5233935048513674809, guid: d6069b6300335af4184bd35e5706bc60, type: 3}
-  gateway: {fileID: 0}
+  gateway: {fileID: 3322610293504784628, guid: 1ae39ce711e3e024490d853615cb95b8, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35
