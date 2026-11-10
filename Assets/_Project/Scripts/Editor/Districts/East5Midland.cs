@@ -90,7 +90,7 @@ namespace CityScooter.EditorTools.Districts
                 ("FederationShopC", null, Shown(FedShop(13f, BrickDark, K.Hex("2F4E6E"), 2, true).M)),
                 ("CarPark", null, Shown(CarPark(30f).M)),
                 ("WaterTank", null, Make(m => WaterTank(m, Vector3.zero))),
-                ("Chimney", null, Make(m => Chimney(m, Vector3.zero, 30f))),
+                ("Chimney", null, Make(m => Chimney(m, Vector3.zero, 24f))),
                 ("Hospital", null, Shown(Make(m => Hospital(m, Vector3.zero)))),
                 ("Bus", null, Make(m => Bus(m, Vector3.zero, 0f))),
                 ("BusShelter", null, Shown(Make(m => BusCanopy(m, Vector3.zero, 12f, 1)))),
@@ -253,7 +253,7 @@ namespace CityScooter.EditorTools.Districts
             var d = new CqChunkDraft("Midland_TownHall", MidDrop);
             MidStreet(d);
             YardSide(d, 0, 40, 343);
-            AddSheared(d, d.Deep, m => Chimney(m, V(ShopsX + 9f, 0f, 9f), 34f));
+            AddSheared(d, d.Deep, m => Chimney(m, V(ShopsX + 9f, 0f, 9f), 24f));
             Ground(d, -1, 0, 40, 0f, 60f, K.Kerb + .02f, BrickPaving, ComicSurface.Paving);
             Vector3 p = V(-(K.Edge + 4.6f), d.Ground(16f), 5f);
             Put(d.Landmark, TownHall(), p, -90f);
@@ -499,7 +499,7 @@ namespace CityScooter.EditorTools.Districts
                     if (z > lip - 1f && z < far + 1f) continue;
                     WallLamp(d.Props, V(sd * (K.Edge + 2.2f), d.Ground(z) + 4.6f, z), sd);
                 }
-            Chimney(d.Deep, V(-(K.Edge + 30f), d.Ground(36f) - .5f, 38f), 34f);
+            Chimney(d.Deep, V(-(K.Edge + 30f), d.Ground(36f) - .5f, 38f), 24f);
             Hospital(d.Deep, V(-(K.Edge + 56f), d.Ground(30f) - .5f, 30f), 1);
             Gum(d.Props, V(-(K.Edge + 5f), d.Ground(29f), 29f), 9f, 371);
             Bench(d.Props, V(-(K.Edge + 4f), d.Ground(36f), 36f), -90f);
@@ -1500,7 +1500,7 @@ namespace CityScooter.EditorTools.Districts
             m.Cylinder(p + V(0, h + .1f, 0), 1.4f, .2f, StoneShade, 8);
         }
 
-        /// <summary>The hospital behind the Workshops (background): a white ward block with uneven vertical window
+        /// <summary>The hospital behind the Workshops (background; under 24 m like everything here: see ScarpRing): a white ward block with uneven vertical window
         /// slots on a red-brick and charcoal podium, rooftop plant. Its long windowed side faces -X (a building on the
         /// right of the road) or, with face = 1, +X (one on the left).</summary>
         static void Hospital(ComicMesh m, Vector3 p, int face = -1)
@@ -1513,19 +1513,19 @@ namespace CityScooter.EditorTools.Districts
             m.Surface = ComicSurface.PaintedMetal;
             m.Box(p + V(2f, 3f, 16f), V(22f, 8f, 22f), Charcoal);
             m.Surface = ComicSurface.Plaster;
-            m.Box(p + V(4f, 16f, 2f), V(20f, 18f, 44f), white);
-            m.Box(p + V(4f, 25.3f, 2f), V(20.6f, .6f, 44.6f), K.Hex("D9D7D0"));
+            m.Box(p + V(4f, 14.2f, 2f), V(20f, 14.4f, 44f), white);
+            m.Box(p + V(4f, 21.7f, 2f), V(20.6f, .6f, 44.6f), K.Hex("D9D7D0"));
             m.Surface = ComicSurface.Metal;
-            m.Box(p + V(6f, 27f, -6f), V(10f, 3f, 12f), K.Hex("C9CDD1"));
+            m.Box(p + V(6f, 22.9f, -6f), V(10f, 1.8f, 12f), K.Hex("C9CDD1"));
             m.Surface = ComicSurface.Glass;
             var r = new System.Random(77);
-            for (int fl = 0; fl < 5; fl++)
+            for (int fl = 0; fl < 4; fl++)
                 for (float z = -18f; z < 22f; z += F(r, 1.6f, 3.4f))
                 {
                     float w = F(r, .6f, 1.3f), y = p.y + 8.6f + fl * 3.3f;
                     K.Face(m, V(wx, y, p.z + z), V(wx, y, p.z + z + w), V(wx, y + 2.3f, p.z + z + w), V(wx, y + 2.3f, p.z + z), GlassDark, wn, false);
                 }
-            for (int fl = 0; fl < 5; fl++)
+            for (int fl = 0; fl < 4; fl++)
                 for (float x = -4f; x < 12f; x += F(r, 1.8f, 3.2f))
                 {
                     float w = F(r, .6f, 1.2f), y = p.y + 8.6f + fl * 3.3f;
@@ -1670,17 +1670,19 @@ namespace CityScooter.EditorTools.Districts
         // ---------------------------------------------------------------- Midland far scenery
 
         /// <summary>
-        /// The whole horizon round the rider at the foot of the hills. The Darling Scarp is close and high: a forested
-        /// wall on both sides that closes in over the road ahead (patches of darker and lighter forest on its face, a
-        /// lower foothill in front of it, two masts on the crest). In front of it on the right, over the yard, the roofs and gums
-        /// of the flats; on the left the roofs of the town and a line of trees. Sheared with the road's grade. No colliders.
+        /// The whole horizon round the rider at the foot of the hills. The Darling Scarp is close and high: one long, level,
+        /// dark blue-green ridge right across the view ahead and round both sides (ScarpRing: three tones, tree masses,
+        /// quarry scars, the highway climbing to its cutting, two masts). In front of it on the right, over the yard, the
+        /// roofs and gums of the flats; on the left the roofs of the town and a line of trees. The ground and the roofs
+        /// are sheared with the road's grade. No colliders.
         /// </summary>
         static ComicMesh MidFar(float grade)
         {
             var m = new ComicMesh();
             var r = new System.Random(340);
             Color haze = K.Hex("C6D4E0");
-            const float z0 = -220f, z1 = 820f;
+            const float z0 = -220f, z1 = 430f;
+            Func<float, float> ring = a => 120f;                 // the ridge's foot: 120 m from the rider all round
             FarStrip(m, K.Edge, 68f, 330f, z1, K.Kerb - .03f, Color.Lerp(DryGrass, Ballast, .35f));
             FarStrip(m, -K.Edge, -68f, 330f, z1, K.Kerb - .03f, K.Hex("A39E92"));
             FarStrip(m, 68f, 220f, z0, z1, -.25f, Haze(K.Hex("A3A56C"), 140f, haze));
@@ -1694,8 +1696,8 @@ namespace CityScooter.EditorTools.Districts
                 for (float z = z0; z < z1; z += F(r, 14f, 20f))
                     for (int row = 0; row < 3; row++)
                     {
-                        if (row == 2 && (z < -60f || z > 520f)) continue;      // the third row only where it can be seen
                         float x = s * (76f + row * 30f + F(r, 0f, 14f)), dist = Mathf.Sqrt(x * x + z * z);
+                        if (!InFrontOfScarp(x, z, ring)) { r.Next(); r.Next(); continue; }
                         if (s < 0 && row == 0 && r.NextDouble() < .5)
                         {
                             float w = F(r, 12f, 20f), h = F(r, 6f, 11f);
@@ -1708,37 +1710,16 @@ namespace CityScooter.EditorTools.Districts
             foreach (int s in new[] { -1, 1 })
                 for (float z = z0; z < z1; z += F(r, 12f, 20f))
                 {
-                    float x = s * F(r, 72f, 210f), h = F(r, 13f, 22f);
+                    float x = s * F(r, 72f, 110f), h = F(r, 12f, 18f);
+                    if (!InFrontOfScarp(x, z, ring)) continue;
                     m.Surface = ComicSurface.Wood;
                     m.Cylinder(V(x, h * .3f, z), .45f, h * .6f, Haze(Bark, x, haze), 4, .6f);
                     m.Surface = ComicSurface.Foliage;
                     Blob(m, V(x, h * .75f, z), V(F(r, 8f, 13f), h * .5f, F(r, 8f, 12f)), Haze(Color.Lerp(LeafDark, LeafLight, F(r, 0f, 1f)), x, haze), 5, 3);
                 }
-            // the scarp: both sides swing in towards the road ahead and rise
-            Func<float, float> swing = z => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-120f, 430f, z));
-            Func<float, float> hR = z => 62f + 44f * swing(z) + 8f * Mathf.Sin(z * .011f + .6f) + 4f * Mathf.Sin(z * .037f);
-            Func<float, float> hL = z => 54f + 46f * swing(z) + 7f * Mathf.Sin(z * .013f + 2.1f) + 4f * Mathf.Sin(z * .031f + 1f);
-            Func<float, float> nR = z => Mathf.Lerp(300f, 110f, swing(z));
-            Func<float, float> nL = z => Mathf.Lerp(340f, 116f, swing(z));
-            Color foot = Haze(K.Hex("86A064"), 240f, haze), slope = Haze(K.Hex("587A5C"), 330f, haze), crest = Haze(K.Hex("6F8E96"), 620f, haze);
-            Scarp(m, 1, z0, z1, -.4f, nR, hR, 200f, foot, slope, crest);
-            Scarp(m, -1, z0, z1, -.4f, nL, hL, 210f, foot, Haze(K.Hex("5E8062"), 360f, haze), crest);
-            // the wooded face: darker and lighter patches of forest, and a lower foothill standing in front of each wall
-            ScarpPatches(m, 1, z0, z1, -.4f, nR, hR, 200f, Haze(K.Hex("46664E"), 330f, haze), Haze(K.Hex("6E8E66"), 330f, haze), 341);
-            ScarpPatches(m, -1, z0, z1, -.4f, nL, hL, 210f, Haze(K.Hex("4A6A50"), 360f, haze), Haze(K.Hex("72906A"), 360f, haze), 342);
-            Scarp(m, 1, z0, z1, -.35f, z => Mathf.Max(96f, nR(z) - 60f), z => hR(z) * (.3f + .08f * Mathf.Sin(z * .021f)), 90f,
-                Haze(K.Hex("8FA667"), 200f, haze), Haze(K.Hex("6A8A56"), 240f, haze), Haze(K.Hex("7C9A64"), 300f, haze));
-            Scarp(m, -1, z0, z1, -.35f, z => Mathf.Max(100f, nL(z) - 70f), z => hL(z) * (.28f + .08f * Mathf.Sin(z * .017f + 1f)), 100f,
-                Haze(K.Hex("8FA667"), 200f, haze), Haze(K.Hex("6E8C5A"), 240f, haze), Haze(K.Hex("7C9A64"), 300f, haze));
-            // two masts on the crest
-            foreach ((float z, int s) in new[] { (250f, 1), (330f, -1) })
-            {
-                float near = s > 0 ? nR(z) : nL(z), h = s > 0 ? hR(z) : hL(z);
-                Vector3 p = V(s * (near + 104f), -.4f + h, z);
-                m.Surface = ComicSurface.PaintedMetal;
-                m.Cylinder(p + V(0, 13f, 0), .4f, 26f, Haze(K.Hex("D8382E"), 300f, haze), 4, .3f);
-            }
             m.Shear(grade);
+            // the scarp: a wall across the whole horizon, close and high (added after the shear: it is placed by what the camera sees)
+            ScarpRing(m, 18.5f, 12.2f, new Color(.80f, .85f, .90f), 0f, ring, 341, 2, true);
             return m;
         }
     }

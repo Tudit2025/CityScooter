@@ -1258,16 +1258,19 @@ namespace CityScooter.EditorTools.Districts
 
         /// <summary>
         /// The whole horizon round the rider (the CBD panorama is hidden out here): on the left the Swan, green-brown and
-        /// wide, its far bank of river gums, the vineyard rows and sheds of the Swan Valley behind and a long low range;
-        /// on the right, over the railway, tin roofs between gums and the Darling Scarp, which swings in towards the road
-        /// ahead (Midland lies at its foot). Sheared with the road's grade so it meets the chunks' ground. No colliders.
+        /// wide, and its far bank of river gums; on the right, over the
+        /// railway, tin roofs between gums; and right across the view ahead and round both sides the Darling Scarp, one
+        /// long level ridge (ScarpRing), lower and hazier than at Midland, which lies at its foot. The ground and what
+        /// stands on it are sheared with the road's grade so they meet the chunks' ground. No colliders.
         /// </summary>
         static ComicMesh WoodFar(float grade)
         {
             var m = new ComicMesh();
             var r = new System.Random(330);
             Color haze = K.Hex("C9DAD8");
-            const float z0 = -220f, z1 = 820f;
+            const float z0 = -220f, z1 = 430f;
+            // the ridge's foot: 120 m from the rider ahead and on the right, 200 m on the left, beyond the river and its far bank
+            Func<float, float> ring = a => Mathf.Lerp(120f, 200f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-25f, -60f, a)));
             // the ground ahead of the built chunks and beside them, the river band on the left
             FarStrip(m, K.Edge, 68f, 330f, z1, K.Kerb - .03f, Color.Lerp(DryGrass, Lawn, .5f));
             FarStrip(m, -K.Edge, -24f, 330f, z1, K.Kerb - .03f, Lawn);
@@ -1283,7 +1286,7 @@ namespace CityScooter.EditorTools.Districts
                 float x = -F(r, 70f, 146f), z = F(r, -180f, 780f), len = F(r, 2f, 6f), y = River - .04f;
                 K.Face(m, V(x, y, z), V(x, y, z + .5f), V(x + len, y, z + .5f), V(x + len, y, z), Haze(RiverLight, x, haze), Vector3.up, false);
             }
-            // the far bank: a mud edge, river gums and casuarinas, then vineyard rows
+            // the far bank: a mud edge, river gums and casuarinas
             for (float z = z0; z < z1; z += 15f)
             {
                 K.Face(m, V(-148f, River - .06f, z), V(-148f, River - .06f, z + 15f), V(-153f, .6f, z + 15f), V(-153f, .6f, z), Haze(Mud, 150f, haze), V(1, 2, 0), false);
@@ -1291,20 +1294,11 @@ namespace CityScooter.EditorTools.Districts
             for (float z = z0 + 4f; z < z1; z += F(r, 9f, 16f))
             {
                 float x = -F(r, 154f, 176f), h = F(r, 11f, 18f);
+                if (!InFrontOfScarp(x, z, ring)) continue;
                 m.Surface = ComicSurface.Wood;
                 m.Cylinder(V(x, h * .3f, z), .5f, h * .6f, Haze(BarkShade, x, haze), 4, .6f);
                 m.Surface = ComicSurface.Foliage;
                 Blob(m, V(x, h * .72f, z), V(F(r, 9f, 14f), h * .55f, F(r, 9f, 13f)), Haze(Color.Lerp(LeafDark, Leaf, F(r, 0f, 1f)), 170f, haze), 5, 3);
-            }
-            Color vine = Haze(K.Hex("6F9A45"), 260f, haze), soil = Haze(K.Hex("B89B6C"), 260f, haze);
-            for (float zb = z0 + 30f; zb < z1 - 60f; zb += 150f)
-            {
-                FarStrip(m, -190f, -320f, zb, zb + 100f, .1f, soil);
-                m.Surface = ComicSurface.Foliage;
-                for (float z = zb + 3f; z < zb + 98f; z += 6f) K.MinMaxBox(m, V(-194f, .1f, z), V(-316f, 1.9f, z + 1.6f), vine);
-                m.Surface = ComicSurface.Metal;
-                m.Box(V(-200f, 3f, zb + 122f), V(22f, 6f, 14f), Haze(K.Hex("D9D2C2"), 220f, haze));
-                m.Cylinder(V(-200f, 6.8f, zb + 122f), 15f, 2.6f, Haze(RedOxide, 220f, haze), 4, .2f, Quaternion.Euler(0, 45, 0));
             }
             // tin roofs and gums behind the railway on the right, and behind the back gardens on the left
             Color[] walls = { Cream, White, Butter, K.Hex("D9CBB0") };
@@ -1313,27 +1307,21 @@ namespace CityScooter.EditorTools.Districts
                 for (int row = 0; row < 3; row++)
                 {
                     float x = 74f + row * 28f + F(r, 0f, 12f), dist = Mathf.Sqrt(x * x + z * z);
+                    if (!InFrontOfScarp(x, z, ring)) { r.Next(); r.Next(); continue; }
                     FarHouse(m, V(x, 0f, z), F(r, 9f, 13f), F(r, 3.2f, 5.5f), Haze(walls[r.Next(walls.Length)], dist, haze), Haze(roofs[r.Next(roofs.Length)], dist, haze));
                 }
             for (float z = z0; z < z1; z += F(r, 13f, 22f))
             {
-                float x = F(r, 70f, 190f), h = F(r, 13f, 22f);
+                float x = F(r, 70f, 110f), h = F(r, 12f, 18f);
+                if (!InFrontOfScarp(x, z, ring)) continue;
                 m.Surface = ComicSurface.Wood;
                 m.Cylinder(V(x, h * .3f, z), .45f, h * .6f, Haze(Bark, x, haze), 4, .6f);
                 m.Surface = ComicSurface.Foliage;
                 Blob(m, V(x, h * .75f, z), V(F(r, 8f, 13f), h * .5f, F(r, 8f, 12f)), Haze(Color.Lerp(LeafDark, LeafLight, F(r, 0f, 1f)), x, haze), 5, 3);
             }
-            // the Darling Scarp: on the right it swings in towards the road ahead; a lower range closes the left
-            Scarp(m, 1, z0, z1, -.4f, z => Mathf.Lerp(430f, 150f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-100f, 520f, z))),
-                z => 46f + 26f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-100f, 480f, z)) + 6f * Mathf.Sin(z * .012f + 1f) + 3f * Mathf.Sin(z * .041f),
-                190f, Haze(K.Hex("7C9A62"), 300f, haze), Haze(K.Hex("5F8068"), 420f, haze), Haze(K.Hex("7893A0"), 700f, haze));
-            Scarp(m, -1, z0, z1, -.4f, z => Mathf.Lerp(520f, 330f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-100f, 560f, z))),
-                z => 26f + 22f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, 520f, z)) + 5f * Mathf.Sin(z * .01f + 2f) + 3f * Mathf.Sin(z * .033f),
-                200f, Haze(K.Hex("86A26A"), 420f, haze), Haze(K.Hex("6C8C78"), 560f, haze), Haze(K.Hex("86A0AC"), 800f, haze));
-            ScarpPatches(m, 1, z0, z1, -.4f, z => Mathf.Lerp(430f, 150f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-100f, 520f, z))),
-                z => 46f + 26f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-100f, 480f, z)) + 6f * Mathf.Sin(z * .012f + 1f) + 3f * Mathf.Sin(z * .041f),
-                190f, Haze(K.Hex("4C6C56"), 420f, haze), Haze(K.Hex("74926E"), 420f, haze), 331);
             m.Shear(grade);
+            // the scarp: the same ridge as at Midland, further off: lower and hazier (added after the shear)
+            ScarpRing(m, 16f, 11.4f, new Color(.80f, .87f, .86f), .24f, ring, 331, 1, false);
             return m;
         }
     }
