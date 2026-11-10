@@ -5,7 +5,7 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 
 - Unity 侧：`Assets/_Project/Scripts/Runtime/Devices/DeviceHub.cs`、`WebShellBridge.cs`、`Assets/_Project/Plugins/WebGL/CityScooterBridge.jslib`
 - 外壳侧：`Assets/WebGLTemplates/CityScooter/`（`index.html` + `TemplateData/`）。11/6 起是完整版，由 Claude 按 `docs/tasks/gpt1-web-shell.md` 完成，包括 USB、模拟器模式、串口监视器和帮助面板。11/7 起加了积木编程（积木生成 MicroPython），并换成漫画风，见 `docs/blocks.md`。页面结构由 `TemplateData/shell.js` 生成；模拟器模式预填 `TemplateData/starter.py`，它是 `microbit/starter.py` 的副本，改 starter 时两边要一起改。
-- 不用 Unity 也能开发外壳：在仓库根目录运行 `python -m http.server 8000`，打开 http://localhost:8000/tools/shell-dev/ 。这个页面用的是同一份 `shell.js`，配一个假的 Unity，还有按钮可以模拟游戏发 go/crash/gift/spd。
+- 不用 Unity 也能开发外壳：在仓库根目录运行 `python -m http.server 8000`，打开 http://localhost:8000/tools/shell-dev/ 。这个页面用的是同一份 `shell.js`，配一个假的 Unity，还有按钮可以模拟游戏发 go/crash/gift/spd，以及竞速和道具赛的 pos/fin/item/hit/tx。
 
 ## 设备 ID
 
@@ -28,7 +28,7 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 | 函数 | 说明 |
 |---|---|
 | `CityScooterShell.onUnityReady(protocolVersion)` | DeviceBridge 就绪，可以开始 SendMessage。当前协议版本是 `"0"` |
-| `CityScooterShell.sendToDevices(target, line)` | 把游戏消息（`go`、`crash`、`gift`、`spd:N`）发给设备；`target` 是设备 ID 或 `"*"`（全部）。外壳负责加 `\n`，USB 设备写串口，`sim` 设备发 `serial_input`。无线竞速的 `pos:` / `fin:` 也走这里，照常发给设备，只是串口监视器每秒只显示最新一条 |
+| `CityScooterShell.sendToDevices(target, line)` | 把游戏消息（`go`、`crash`、`gift`、`spd:N`）发给设备；`target` 是设备 ID 或 `"*"`（全部）。外壳负责加 `\n`，USB 设备写串口，`sim` 设备发 `serial_input`。无线竞速的 `pos:` / `fin:` 也走这里，照常发给设备，只是串口监视器每秒只显示最新一条。道具赛的 `item:` / `hit:` / `blocked:` / `tx:` 也走这里；`tx:` 游戏连发 3 次，3 次都发给设备，监视器只显示一次 |
 
 **课堂版只用 micro:bit**（2026-11-09 起）：`index.html` 调用 `CityScooterShell.boot(..., { keyboard: false })`。
 - 页面上没有 Keyboard 模式按钮，也没有键位表。
@@ -117,3 +117,11 @@ Unity 的 Web 构建外面有一层网页外壳（HTML/JS），负责：用 Web 
 - 学生的转发代码把收到的打印成 `rx:p:BOT1:…`，外壳当作 `sim` 设备的行转给 Unity，游戏就能画出三个对手。
 - 状态行显示每个机器人骑到了哪；程序没开无线时提示 "your code has not turned the radio on (join race)"，这时什么也不喂。
 - 只在模拟器模式、代码在运行、无线开着的时候喂。切到别的模式就停。
+- **机器人用道具（道具赛，11/10，见 `docs/item-race.md`）**：Robot racers 开着时，每个机器人每隔 20～40 秒（各自随机）对你用一次 `rocket` 或 `bolt`，这样没有板子的同学也能测 "when an item hits me"。
+  - 往 `radio_input` 喂 `i:BOT1:rocket:<你的名字>:<序号>` 或 `i:BOT1:bolt:<序号>`，0.3 秒内 3 次（和游戏的 `tx:` 一样），带同样的 3 字节头。序号每个机器人自己数，0～9 循环。
+  - "你的名字"是模拟器里的程序发的 `race:名字:组号` 里的名字。程序没发过 `race:` 时不知道该打谁，只用 `bolt`。
+  - 串口监视器记一行 "BOT1 sent i:BOT1:rocket:AMY:3 by radio: a rocket for you"。学生的程序把它转成 `rx:i:…` 以后，监视器再记一行 "radio: BOT1 used rocket on AMY"，真的游戏随后发 `hit:rocket`（或者 `blocked:rocket`）。开发页的假 Unity 不会回 `hit:`，用工具栏的 hit 按钮。
+  - 打开开关和 Send go 都会重新计时（Send go 是倒数结束后 20～40 秒）。
+  - "有包在排队时不能停程序"的规则不变：外壳一停喂，没发完的那两次重复也不再发，然后照常等 0.25 秒再 flash 或 stop。
+  - 测试和控制台可以让机器人马上用一次：`CityScooterShell.robotUseItem(1, "rocket")`（机器人 1～3，`"rocket"` 或 `"bolt"`），返回发出的无线消息；机器人没开、或者喂不了时返回空字符串。
+- 模拟器的 `radio_output` 是 `i:` 时（学生的程序转发了游戏的 `tx:`），监视器记一行 "radio: you used rocket on BOT2"，同一个序号 20 秒内只记一次。

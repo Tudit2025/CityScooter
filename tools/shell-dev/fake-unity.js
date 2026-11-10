@@ -79,7 +79,7 @@
   // Dev toolbar: pretend to be the game sending events to the micro:bits.
   window.addEventListener("DOMContentLoaded", () => {
     const bar = document.getElementById("dev-tools");
-    let spd = 0, dist = 0;
+    let spd = 0, dist = 0, items = 0;
     const send = (line) => window.CityScooterShell.sendToDevices("*", line);
     for (const [label, fn] of [
       ["go", () => send("go")],
@@ -88,6 +88,10 @@
       ["spd +1", () => { spd = (spd + 1) % 10; send("spd:" + spd); }],
       ["pos +50", () => { dist += 50; send("pos:" + dist + ":0"); }], // radio race: the relay sends p:NAME:<dist>:0
       ["fin", () => send("fin:72.35")],
+      // item race (docs/item-race.md): you got a rocket, one hit you, and "please radio this" (3 times, like the game)
+      ["item", () => send("item:rocket")],
+      ["hit", () => send("hit:rocket")],
+      ["tx", () => { const tx = "tx:i:AMY:rocket:BOT2:" + (items = (items + 1) % 10); for (let i = 0; i < 3; i++) setTimeout(() => send(tx), i * 150); }],
     ]) {
       const b = document.createElement("button");
       b.type = "button";

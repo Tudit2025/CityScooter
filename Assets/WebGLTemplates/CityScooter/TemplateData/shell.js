@@ -141,7 +141,7 @@
       </div>
       <div class="cs-bots">
         <button type="button" class="cs-small" id="cs-bots" aria-pressed="false"
-          title="3 robot riders send p:BOT1:… to your virtual micro:bit by radio, 4 times a second, like real micro:bits in your race">Robot racers</button>
+          title="3 robot riders send p:BOT1:… to your virtual micro:bit by radio, 4 times a second, like real micro:bits in your race. Now and then one uses a rocket or a bolt on you (i:BOT1:rocket:…)">Robot racers</button>
         <button type="button" class="cs-small" id="cs-bots-go" title="Start a race: sends go:…:uwa:2000 to your virtual micro:bit by radio">Send go</button>
         <span class="cs-bots-note" id="cs-bots-note">No micro:bits to race? Turn on robots that race you by radio.</span>
       </div>
@@ -223,6 +223,7 @@
     if (lower === "bo") return { kind: "boost" };
     if (lower === "sur") return { kind: "surrender" };
     if (lower === "trick") return { kind: "trick" }; // v0.3 ramps
+    if (lower === "use") return { kind: "use" }; // ---- Items (item race): use the item you hold
     const colon = lower.indexOf(":");
     if (colon <= 0) return { kind: "unknown" };
     const key = lower.slice(0, colon).trim();
@@ -236,9 +237,12 @@
         const group = m ? parseInt(m[2], 10) : -1;
         return name && group <= 255 ? { kind: "race", name, group } : { kind: "malformed" };
       }
-      case "rx": return { kind: "rx", value: arg }; // what the board heard by radio; the game reads p:, f: and go: in it
+      case "rx": return { kind: "rx", value: arg }; // what the board heard by radio; the game reads p:, f:, go: and i: (items) in it
       case "pos": case "fin": return { kind: "gameword", hint: RACE_WORD_HINT };
       case "p": case "f": case "go": return { kind: "radioword" };
+      // ---- Items (item race, docs/item-race.md): item:, hit:, blocked: and tx: come FROM the game; i: travels by radio
+      case "item": case "hit": case "blocked": case "tx": return { kind: "gameword", hint: ITEM_WORD_HINT };
+      case "i": return { kind: "radioword", hint: ITEM_RADIO_HINT };
       case "start": { // ---- Districts (v0.3): "start:kingspark" (spaces and capitals dropped, like CommandParser)
         const id = arg.toLowerCase().replace(/[^a-z]/g, "").slice(0, 16);
         return ZONE_NAMES[id] ? { kind: "start", value: id } : { kind: "malformed" };
@@ -312,6 +316,10 @@
   const RACE_WORD_HINT = "pos: and fin: are messages FROM the game (where you are in a race, your time). \"send my position by radio\" sends them on as p: and f:";
   const RADIO_WORD_HINT = "p:, f: and go: travel by radio: use radio.send(). The game reads what your micro:bit heard as rx:… (\"pass radio messages to the game\")";
   const RACE_HINT = "race: needs your name and race number, e.g. race:AMY:12 (name: 1-5 letters or digits; race number = radio group, 0-255)";
+  // ---- Items (item race, docs/item-race.md): hints for item messages printed the wrong way round
+  const ITEM_WORD_HINT = "item:, hit:, blocked: and tx: are messages FROM the game (items in a race). To use your item: print(\"use\")";
+  const ITEM_RADIO_HINT = "i: (an item) travels by radio. The game writes it for you: it says tx:i:… and \"send my position by radio\" sends that on with radio.send()";
+  const NO_ITEM_HINT = "you have no item: ride through an item box in a race first (the game then says item:rocket)";
 
   // ------------------------------------------------------------------ devices
   function getDevice(id, kind) {
@@ -390,7 +398,18 @@
         noteRx(d, c.value);
         break;
       case "radioword":
-        logLine("print", d.id, line, RADIO_WORD_HINT);
+        logLine("print", d.id, line, c.hint || RADIO_WORD_HINT);
+        break;
+      // ---- Items (item race): "use" uses the item the game gave this board (item:…). A program may say it every loop
+      // while a button is down, so: one note a second, and "no item" once (not straight after the item was used).
+      case "use":
+        if (d.item) {
+          if (t - (d.useAt || 0) > 1000) logLine("game", d.id, "uses its item: " + d.item, "");
+          d.useAt = t;
+        } else if (!d.noItemNoted && t - (d.itemGoneAt || 0) > 2000) {
+          d.noItemNoted = true;
+          logLine("game", d.id, "use: no item to use", NO_ITEM_HINT);
+        }
         break;
       case "say":
         break; // the game repeats it to every board; the monitor shows that as a game line
@@ -458,6 +477,14 @@
       }
       return;
     }
+    const item = itemRadio(payload); // ---- Items: i:AMY:rocket:BEN:3 comes 3 times: counted each time, noted once
+    if (item) {
+      if (!r.names.includes(item.from) && r.names.length < 12) r.names.push(item.from);
+      if (itemIsNew(d.id + "<" + item.from + ":" + item.n)) {
+        logLine("radio", d.id, "radio: " + item.from + " " + item.did, item.to && item.to === String(d.race || "").split(":")[0] ? "that is you!" : "");
+      }
+      return;
+    }
     r.other++;
     r.example = payload.slice(0, 40);
   }
@@ -466,6 +493,58 @@
     const r = d.tx || (d.tx = { n: 0, last: "" });
     r.n++;
     r.last = text.slice(0, 40);
+    const item = itemRadio(text); // ---- Items: the program sent an item on by radio (tx: from the game): noted once
+    if (item && itemIsNew(d.id + ">" + item.from + ":" + item.n)) logLine("radio", d.id, "radio: you " + item.did, "");
+  }
+
+  // ---- Items (item race, docs/item-race.md). An item on the radio: i:AMY:rocket:BEN:3 (AMY's rocket at BEN),
+  // i:AMY:police:BEN:4, i:AMY:bolt:5 (everyone else), i:AMY:oil:1234:-2:6 (a puddle at 1234 m, lane -2). The last
+  // number counts AMY's items (0-9). Each one is sent 3 times, so the monitor (like the game) takes the same sender
+  // and number once in 20 seconds.
+  const ITEM_RADIO = /^i:([A-Za-z0-9]{1,5}):(?:(rocket|police):([A-Za-z0-9]{1,5})|(bolt)|(oil):(-?\d+(?:\.\d+)?):-?\d+(?:\.\d+)?):(\d{1,3})$/;
+  const seenItems = {}; // device + sender + number -> when it was noted
+
+  function itemRadio(payload) {
+    const m = ITEM_RADIO.exec(payload);
+    if (!m) return null;
+    const from = m[1].toUpperCase(), to = (m[3] || "").toUpperCase();
+    const did = m[5] ? "dropped oil at " + Math.round(parseFloat(m[6])) + " m" : "used " + (m[2] || m[4]) + (to ? " on " + to : "");
+    return { from, to, n: m[7], did };
+  }
+
+  function itemIsNew(key) {
+    const t = now();
+    if (seenItems[key] && t - seenItems[key] < 20000) return false;
+    seenItems[key] = t;
+    return true;
+  }
+
+  // Item lines the game sends to a board: item:rocket (you hold it now; item:none = used or lost), hit:rocket,
+  // blocked:rocket, tx:<radio message>. Returns the monitor's hint for the line ("" = not an item line), or null for a
+  // line that should not be shown again: the game says each tx: 3 times in 0.3 s.
+  const lastTx = { line: "", at: 0 };
+
+  function itemFromGame(target, line) {
+    const m = /^(item|hit|blocked|tx):(.+)$/.exec(line);
+    if (!m) return "";
+    const t = now();
+    switch (m[1]) {
+      case "tx":
+        if (lastTx.line === target + line && t - lastTx.at < 1000) return null;
+        lastTx.line = target + line;
+        lastTx.at = t;
+        return "your micro:bit sends this on by radio (\"send my position by radio\")";
+      case "item":
+        for (const d of shell.devices.values()) {
+          if (!isActive(d) || (target !== "*" && target !== d.id)) continue;
+          d.item = m[2] === "none" ? "" : m[2]; // what "use" would use
+          d.noItemNoted = false;
+          if (!d.item) d.itemGoneAt = t;
+        }
+        return m[2] === "none" ? "you have no item now (used or lost)" : "you got an item: nothing happens until your program says use";
+      case "hit": return m[2] === "oil" ? "you rode over oil" : "this item hit you";
+      default: return "your shield stopped it";
+    }
   }
 
   function radioSummary() {
@@ -476,7 +555,7 @@
         let text = "radio: " + plural(r.n, "message") + "/s";
         if (r.names.length) text += " from " + r.names.join(", ");
         if (r.other) text += (r.names.length ? " · " + plural(r.other, "other") : "") + ", e.g. \"" + r.example + "\"";
-        logLine("radio", d.id, text, r.other ? "the game only reads p:, f: and go: in rx:" : "");
+        logLine("radio", d.id, text, r.other ? "the game only reads p:, f:, go: and i: in rx:" : "");
         d.rx = radioCount();
       }
       if (d.tx && d.tx.n) {
@@ -1236,7 +1315,9 @@
   // (radio.receive() raises ValueError without that header). Checked 11/9 against micropython-microbit-v2-simulator
   // (board/radio.ts) and in the embedded simulator. The simulator ignores the group (it assumes "your group").
   const BOT_SPEEDS = [13, 15, 17]; // m/s; the game's top speed is about 22, so they look honest to its "?" check
-  const bots = { on: false, t0: 0, metres: 2000, finished: [], tick: 0 };
+  const bots = { on: false, t0: 0, metres: 2000, finished: [], tick: 0, itemAt: [], itemN: [] };
+  // ---- Items (item race): now and then (20-40 s, each robot by itself) a robot uses a rocket or a bolt on the student
+  const BOT_ITEM_MS = [20000, 40000];
 
   function simRadioSend(text) {
     // The simulator throws inside the iframe if the radio is off, so only send while the program has it on.
@@ -1258,6 +1339,24 @@
     bots.t0 = now() + delayMs;
     bots.metres = metres;
     bots.finished = BOT_SPEEDS.map(() => 0);
+    bots.itemAt = BOT_SPEEDS.map(() => bots.t0 + BOT_ITEM_MS[0] + Math.random() * (BOT_ITEM_MS[1] - BOT_ITEM_MS[0]));
+  }
+
+  // ---- Items (item race): robot i (0-2) uses a rocket (at the student: the name in the program's race:NAME:GROUP) or
+  // a bolt (at everyone). Like the game, it sends the same i: message 3 times, 0.15 s apart, in case one gets lost.
+  // The program passes it on as rx:i:…, and the real game then says hit:rocket ("when an item hits me").
+  function botUseItem(i, item) {
+    bots.itemAt[i] = now() + BOT_ITEM_MS[0] + Math.random() * (BOT_ITEM_MS[1] - BOT_ITEM_MS[0]);
+    const you = String(simDevice().race || "").split(":")[0];
+    if (item !== "rocket" || !you) item = "bolt"; // a rocket needs a name to aim at
+    const name = "BOT" + (i + 1);
+    bots.itemN[i] = ((bots.itemN[i] || 0) + 1) % 10;
+    const msg = "i:" + name + ":" + item + (item === "rocket" ? ":" + you : "") + ":" + bots.itemN[i];
+    if (!simRadioSend(msg)) return ""; // no program running, or its radio is off
+    setTimeout(() => simRadioSend(msg), 150);
+    setTimeout(() => simRadioSend(msg), 300);
+    logLine("game", "sim", name + " sent " + msg + " by radio: " + (item === "rocket" ? "a rocket for you" : "a bolt for everyone"), "");
+    return msg;
   }
 
   // Every 250 ms: riding (p: 4 a second), finished (f: twice a second for 10 s), then waiting (p:…:0:0 once a second),
@@ -1296,6 +1395,7 @@
       }
     });
     botsNote(shown.join(" · "));
+    BOT_SPEEDS.forEach((v, i) => { if (now() >= bots.itemAt[i]) botUseItem(i, Math.random() < 0.5 ? "rocket" : "bolt"); }); // ---- Items
   }
 
   function botsToggle() {
@@ -1640,6 +1740,10 @@
     /** USB events with times (open retries, glitches, reconnects); the teacher can copy it from the console. */
     get usbLog() { return shell.usbLog.slice(); },
 
+    /** Item race, for tests and the console: robot racer 1-3 uses "rocket" or "bolt" on the simulator's micro:bit now.
+     *  Returns the radio message it sent (e.g. "i:BOT1:rocket:AMY:4"), or "" when the robots cannot send. */
+    robotUseItem(robot, item) { return bots.on && robot >= 1 && robot <= BOT_SPEEDS.length ? botUseItem(robot - 1, item) : ""; },
+
     onUnityReady(version) {
       shell.unityReady = true;
       for (const p of pendingCalls.splice(0)) callUnity(p.method, p.arg);
@@ -1657,7 +1761,8 @@
       if (!sent) return;
       // ---- Race: pos: comes 4 times a second (fin: twice), so the monitor shows the latest once a second
       if (/^(pos|fin):/.test(line)) { raceOut.n++; raceOut.last = line; return; }
-      logLine("game", "game", line, zoneHint(line));
+      const item = itemFromGame(target, line); // ---- Items: item:/hit:/blocked:/tx: get a hint; a repeated tx: is null
+      if (item !== null) logLine("game", "game", line, item || zoneHint(line));
     },
   };
 })();

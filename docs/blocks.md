@@ -141,6 +141,70 @@
     - 只用 "when radio receives a message"（不用竞速积木）时也一样包住，这一轮就当没收到。
     - `microbit/race.py` 用的是同样的写法。学生自己写的代码没处理时程序会停，串口监视器对这一行有提示（"换一个组号"）。
 
+- 道具赛（11/10，方案见 `docs/item-race.md`，消息见 `docs/protocol.md` 的"道具赛"）：
+  - CityScooter 分类里，Race 的 4 块后面多了标签 **Items**，下面按顺序是 6 块：
+
+    | 积木 | 类型 | 生成的代码 |
+    |---|---|---|
+    | "when I get an item" | 帽子 | 主循环里 `elif msg.startswith("item:"):`，先 `my_item = msg[5:]`，再 `if my_item != "none":`，里面是积木的内容。`item:none` 只更新变量，不触发 |
+    | "my item" | 值（文字） | `my_item`，手里没有道具时是 `"none"` |
+    | "my item is [rocket ▾]" | 值（真假） | `(my_item == "rocket")`。下拉框：boost、shield、oil、rocket、bolt、police、none |
+    | "use my item" | 语句 | `print("use")` |
+    | "when an item hits me" | 帽子 | 主循环里 `elif msg.startswith("hit:"):`，先 `hit_item = msg[4:]`，再是积木的内容 |
+    | "item that hit me" | 值（文字） | `hit_item`，还没被打中过时是 `"none"` |
+
+  - **道具不会自己用。** 拿到道具（`item:rocket`）以后什么也不发生，程序发了 `use` 才用。这就是这一课要写的代码。"when I get an item"、"my item"、"my item is"、"use my item" 四块的提示文字里都写了这句话；六块的提示文字都带对应的 Python。
+  - `my_item` 在收到任何 `item:` 时都更新（包括 `item:none`），所以 "my item" 随时是对的；只用 "my item" 或 "my item is"、不用帽子积木时，主循环里也有 `my_item = msg[5:]` 这一段。
+  - 用到才生成：`my_item` 只在用了 "when I get an item"、"my item"、"my item is" 时才有，`hit_item` 只在用了 "when an item hits me"、"item that hit me" 时才有。"use my item" 不需要变量。第一课的程序和 11/9 的竞速程序都不多出变量。
+  - `tx:` 的转发不用新积木，跟着 "send my position by radio" 一起生成（见下面代码里 `tx:` 那个 `elif`）。它的提示文字加了一句：它也负责把你用的道具发给大家。所以竞速程序重新发一次才能用道具攻击别人。
+  - 课件里的例子（第一课 starter + 三块竞速积木 + 这三段）：
+
+    ```
+    when I get an item        → show icon [happy]
+    when button B is pressed  → use my item
+    when an item hits me      → show icon [sad]
+    ```
+
+    生成的代码比竞速程序多出这些（完整代码见积木测试的输出 `blocks_items.py`，约 4.2 KB，比竞速程序多 0.7 KB，没有新的 import）：
+
+    ```python
+    my_item = "none"  # the item you hold in a race ("none": no item)
+    hit_item = "none"  # the last item that hit you
+    ...
+    while True:
+        ...
+        if button_b.was_pressed():
+            print("use")
+        ...
+        for msg in messages():
+            ...
+            elif send_position and msg.startswith("fin:"):
+                radio.send("f:" + race_name + ":" + msg[4:])  # you crossed the line: tell them your time
+            elif send_position and msg.startswith("tx:"):
+                radio.send(msg[3:])  # an item you used: the game wrote the radio message, you send it
+            elif msg.startswith("item:"):
+                my_item = msg[5:]  # "rocket", "shield", ... or "none" when it is gone
+                if my_item != "none":  # you picked one up
+                    display.show(Image.HAPPY)
+            elif msg.startswith("hit:"):
+                hit_item = msg[4:]  # "rocket", "bolt", "police" or "oil"
+                display.show(Image.SAD)
+    ```
+  - 进阶写法：`if my item is [shield] … else use my item`（护盾留着，别的马上用）；`when the game says [warn:car] → if my item is [boost] → use my item`。
+  - 注意：第一课的 starter 里 B 按住是刹车。"when button B is pressed → use my item" 和它不冲突，但按 B 用道具时也会刹一下。想分开，可以改用 "when button A is pressed 2 times in a row" 或 "when shaken"。
+  - 生成的代码在模拟器的 V2 和模拟 V1 上跑过：`item:rocket` 触发帽子积木但不发 `use`，按 B 才发；`tx:` 3 次变成 3 个无线包；`hit:` 触发帽子积木；机器人对手的 rocket 变成 `rx:i:BOT1:rocket:AMY:1` 到了游戏。真的 V1 上还没试过内存。
+  - `microbit/race.py` 也加了两处：A 和 B 一起按是 `use`（B 单独按还是刹车），收到 `tx:` 就 `radio.send(msg[3:])`。`race_start.py` 没改。
+  - **实现时定的**（方案没写、或者有两种读法的地方，都取了最简单的）：
+    1. `hit_item` 开始是 `"none"`，和 `my_item` 一样（方案没写初始值）。
+    2. `blocked:` 没有积木：方案的表里只有六块。监视器会显示它；想用它的学生在 Python 里写 `msg.startswith("blocked:")`。
+    3. `my_item` 只跟着 `item:` 变，收到 `go` 不清空。所以游戏要在道具没了的每一种情况下都发 `item:none`：用掉、丢了、新的一场比赛开始、离开比赛模式。
+    4. `race.py` 用 A+B：B 在那个程序里已经是刹车（方案的第二个选择）。两个键都按着时每一轮都发 `use`，不发 `br`；游戏对没有道具时的 `use` 不理，所以多发没关系。A 先按下的那一下还是会跳。
+    5. "手里没有道具，监视器提示一次"在网页这边做：外壳记住游戏最后发给这块板的 `item:`，游戏不用为这个提示发任何消息。监视器只认 `use` 这一个词（不分大小写），`use:1` 在监视器里是普通的 print（游戏认不认由游戏那边定）。
+    6. 监视器里 `tx:` 的去重是"同一行 1 秒内只显示一次"；`rx:i:` 和游戏一样按（发的人，序号）20 秒去重。监视器对序号放宽到 0～999，对油的坐标接受小数，其他格式不对的 `i:` 算进 "other"。
+    7. 机器人对手只在给模拟器喂数据时用道具（代码在跑、无线开着）。rocket 的目标是程序发的 `race:` 里的名字；程序没发过 `race:` 就只用 `bolt`。Send go 以后重新计时。
+    8. "my item is" 下拉框的顺序按方案里的道具表，工具箱里默认选 rocket。
+    9. 方案里 `police` 这个词有两个意思：道具 `police`（让警察去追领先的人）和 `do:police`（警察拦路，比赛里不理）。积木和监视器没有混用，写文档和课件时要说清楚。
+
 Blockly 约 800 KB，只有进入 **micro:bit (USB)** 或 **Simulator** 模式时才加载，纯键盘模式的玩家不会下载它。
 
 ## 生成的程序长什么样
@@ -236,16 +300,23 @@ USB 模式下代码区有 **Send to micro:bit** 按钮（模拟器模式里不�
      - 机器人对手发着的时候喂一个不是文字的包（不带 3 字节头）：程序不停，`rx:` 照常往下走；只用 "when radio receives" 的程序也一样（收到 one、two，跳过中间那个坏包）；
      - 竞速积木误放进 "forever"：只设变量，不打印、不发无线；
      - 全部积木的程序里也加了竞速积木（和 Radio 分类的积木一起用）；
+   - 道具赛（11/10）：
+     - 工具箱里 Race 的 4 块后面是 Items 标签和 6 块道具积木，顺序不变；提示文字里有"道具不会自己用"和对应的 Python；"my item is" 的下拉框是 6 个道具加 none；
+     - 第一课 starter 和竞速程序里没有 `my_item`、`hit_item`；竞速程序里有 `tx:` 的转发；只用 "use my item"、只用 "my item"、只用 "when an item hits me" 的三个小程序各自只生成用到的变量；
+     - 课件的例子（上面那三段，加上 "if my item is boost → use my item"）：生成的关键代码逐行核对，CPython 语法检查，没有新的 import，没有 f-string，比竞速程序多不到 1 KB；
+     - 在模拟器的 V2 和模拟 V1 上运行：`item:none` 不触发帽子积木，`item:rocket` 触发但不发 `use`，按 B 才发一次 `use`，监视器记一行 "uses its item: rocket"；`tx:i:AMY:rocket:BOT2:3` 来 3 次，模拟器发出 3 个同样的无线包，监视器里 `tx:` 和 "radio: you used rocket on BOT2" 各一行；`item:boost` 马上用掉；`hit:oil`、`hit:rocket` 触发帽子积木，"my item" 在 `item:none` 以后是 none；机器人的 rocket 变成 3 条 `rx:i:BOT1:rocket:AMY:<序号>` 到了游戏，监视器只记一行；
+     - 全部积木的程序里也加了道具积木（护盾留着，别的马上用）；
    - 引脚 0 加声音时会出警告；
    - 积木和 Python 的切换规则；
    - 分隔条能拖动；
    - 刷新后积木、视图和模式都能恢复；
    - 页面不向外网发任何请求。
-2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板；监视器里 `zone:` 的说明（v0.3）；无线竞速（11/9）的 `race:`（只记一次，格式不对有提示）、`rx:` 每秒一行汇总、`go:` 和 `f:` 各记一次、游戏发的 `pos:` / `fin:` 照常写进板子但每秒最多显示一行、板子自己打印 `pos:` / `p:` 时的提示。
+2. **外壳测试**：USB 模式（用模拟的 Web Serial）、模拟器模式、串口监视器、帮助面板；监视器里 `zone:` 的说明（v0.3）；无线竞速（11/9）的 `race:`（只记一次，格式不对有提示）、`rx:` 每秒一行汇总、`go:` 和 `f:` 各记一次、游戏发的 `pos:` / `fin:` 照常写进板子但每秒最多显示一行、板子自己打印 `pos:` / `p:` 时的提示；道具赛（11/10）的 `item:` / `hit:` / `blocked:`（游戏的行，带说明）、`tx:`（3 次都写进板子，只显示一次）、`use`（有道具时记一行，没有时提示一次，刚用掉时不提示）、`rx:i:…`（算进汇总，每个道具记一行，目标是自己时标 "that is you!"）、板子自己打印这些消息时的提示。
 5. **竞速程序测试**（`race.test.js`，11/9）：
    - `microbit/race.py`、`microbit/race_start.py` 用 CPython 检查语法（`python -I`，不写任何文件）；
    - 先验证模拟器的无线格式：`radio_input` 带 `\x01\x00\x01` 头才是文字，不带头 `radio.receive()` 报 ValueError，超过 29 个字符会被截断；
    - `race.py` 在 V2 和模拟 V1 上跑：机器人对手的 `rx:p:` 到了游戏，喂一个不是文字的包以后照常转发、没有报错，`pos:` / `fin:` 变成无线的 `p:AMY:…` / `f:AMY:…`；
+   - 道具赛（11/10），也是 `race.py` 在 V2 和模拟 V1 上：A 和 B 一起按发 `use`、不发 `br`，B 单独按还是 `br`；`tx:i:AMY:bolt:5` 来 3 次，发出 3 个无线包，监视器记一行 "radio: you used bolt"；机器人 2 用 rocket、机器人 3 用 bolt（`CityScooterShell.robotUseItem`），各有 3 条 `rx:i:…` 到了游戏，监视器各记一行；最后等机器人自己用一次道具（发令后 20～40 秒），3 个包也都转给了游戏；
    - `race_start.py`：开机在 11 组，B 换到 12 组，A 倒数 3 秒后发 5 次同一个 `go:…:uwa:2000`，A+B 依次在 11～15 组各发 5 次（同一个种子）再回到 12 组，B 在 15 组之后是决赛 20 组。
 3. **真实网页包测试**：用真的 Unity 网页包，USB 和模拟器两条路都能开一局，游戏消息能发回设备。
 4. **发送测试**（`send.test.js`）：页面的 Web Serial 接到用 CPython 模拟的 MicroPython 板子（`fake_repl_board.py`，原始 REPL 的每条命令都真的执行）：
