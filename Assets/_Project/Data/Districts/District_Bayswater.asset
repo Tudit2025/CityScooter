@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 198b9f1e922443c45bcbbc17f06f42e2, type: 3}
+  m_Name: District_Bayswater
+  m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.District
+  id: bayswater
+  displayName: BAYSWATER
+  order: 270
+  line: 
+  length: {x: 250, y: 280}
+  chunks:
+  - {fileID: 5848908747107524439, guid: 40fc60a6b39db3744a941bec804b2ee0, type: 3}
+  - {fileID: 8225586515637556861, guid: 1ca646fbfc72c9c45bdd5ccd814f6e77, type: 3}
+  - {fileID: 219616712572868964, guid: 83897e3be2c36244d8771e35699037a5, type: 3}
+  - {fileID: 5030645454470685205, guid: 219de27a7fc98984cb483a5c9224be1f, type: 3}
+  - {fileID: 3685334443264652835, guid: 5dd1dc1cce0ef0b439c2b139f9fc68c8, type: 3}
+  orderedChunks: 1
+  entry: {fileID: 8313260499487911641, guid: 1d679386e241f51499726e087ae36c89, type: 3}
+  exit: {fileID: 4331654471354679362, guid: c6e55d4b3ea6c494b875c987a0b5d0db, type: 3}
+  allowBoulevard: 0
+  obstacles:
+  - {fileID: 7889573470267233928, guid: 3fc63f8adf5db7f4f959031e297874ee, type: 3}
+  - {fileID: 5691051330968527772, guid: 21fb2565b2366e8428938676528ade3b, type: 3}
+  - {fileID: 5803501431796172177, guid: da9313d85dc683a4699f634150e5e189, type: 3}
+  - {fileID: 4062291666700378310, guid: c15c7bf3d3f9a3242b9d9cb4c0dd6575, type: 3}
+  - {fileID: 2618521395377079220, guid: 32a19cfd11f67724581a86800be11ea8, type: 3}
+  jumpObstacles:
+  - {fileID: 5691051330968527772, guid: 21fb2565b2366e8428938676528ade3b, type: 3}
+  - {fileID: 5803501431796172177, guid: da9313d85dc683a4699f634150e5e189, type: 3}
+  - {fileID: 7889573470267233928, guid: 3fc63f8adf5db7f4f959031e297874ee, type: 3}
+  gifts: []
+  hazards:
+  - {fileID: 11400000, guid: d86873a73bed0464788935581e454183, type: 2}
+  - {fileID: 11400000, guid: c2d894bf91fea2d4fa9a741ffbde0ecc, type: 2}
+  - {fileID: 11400000, guid: 416bace6f208e294a813b975b4690f17, type: 2}
+  - {fileID: 11400000, guid: 2fcd3e899e27dcc4291f8a4166d2059f, type: 2}
+  - {fileID: 11400000, guid: b44e8e9120f2ba547afe612562572111, type: 2}
+  - {fileID: 11400000, guid: 03ab2dff8340a2248b4a14f7396071d3, type: 2}
+  - {fileID: 11400000, guid: 672a11ca7c53c9642bbf6e2615a48e84, type: 2}
+  pedestrians:
+  - {fileID: 8227921598042654091, guid: 064971c07f452884687053bd332fcb05, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 8397568498526244082, guid: f7a05036a7999c0448e3fc7494402f21, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 6910947516956790039, guid: 9a4cf8e16043e6149b2bf268bbccdb20, type: 3}
+  - {fileID: 2935356931606532680, guid: fabbb42b8b6e0a841818982196298848, type: 3}
+  - {fileID: 8382819757369761305, guid: 537a473976f6205488d44c3871ee3be7, type: 3}
+  - {fileID: 5269257977654849716, guid: b0829f5f782ffbf45b7b77bb8e0a3c56, type: 3}
+  - {fileID: 1036303239612383499, guid: 8e9809eee542be54dbb9f901b9443560, type: 3}
+  - {fileID: 7224849866637621607, guid: 06766c254444d754ab1230ce090eaa8d, type: 3}
+  - {fileID: 3720205041065978833, guid: 5debe052c9dd49e46b32c65f1ce30b2f, type: 3}
+  - {fileID: 4652078273499136610, guid: dd46c49e251ec3f4da60b6dc4f14bf9c, type: 3}
+  - {fileID: 4652078273499136610, guid: dd46c49e251ec3f4da60b6dc4f14bf9c, type: 3}
+  ramps:
+  - {fileID: 6469068771044171594, guid: b99f16500834b9c49b7097a003cc87d6, type: 3}
+  rampFrequency: 1
+  blendMeters: 150
+  fogColor: {r: 0.69, g: 0.8, b: 0.93, a: 1}
+  skyTint: {r: 1, g: 1, b: 0.99, a: 1}
+  ambientSky: {r: 0.7, g: 0.83, b: 0.97, a: 1}
+  ambientEquator: {r: 0.9, g: 0.88, b: 0.82, a: 1}
+  ambientGround: {r: 0.72, g: 0.64, b: 0.54, a: 1}
+  sunColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  sunIntensity: 1.45
+  skyYaw: 180
+  skySize: 0.6
+  skyHeight: -12
+  skyline: 0
+  farScenery: {fileID: 7910269536999158250, guid: 21c9ffc2d8dbdcf41819e0f29e04c450, type: 3}
+  gateway: {fileID: 0}
+  ambience: {fileID: 0}
+  ambienceVolume: 0.35

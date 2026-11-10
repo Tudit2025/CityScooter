@@ -1,0 +1,63 @@
+ASHFIELD (district id ashfield, order 280, 东线) - 参考资料和用到了什么
+===================================================================
+
+参考照片只用来看（Wikimedia Commons 和政府 / 社区网站，存在仓库外的临时目录里）。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East3Builder.cs + East3Ashfield.cs 用漫画库生成（ComicPalette.mat + ComicInk.mat，
+顶点色，水面是顶点色平板）。没有商标和品牌字；牌子上只有站名 ASHFIELD。
+
+方向：骑手向东，沿铁路南侧的红色共享车道（PedestrianMall，没有汽车）。左（北）：铁路、Railway Parade 和轻工业区；
+右（南）：Ashfield Reserve、住宅，然后是 Ashfield Flats 和 Swan River。
+（查资料时发现：轻工业区在铁路北侧的 Railway Pde 一边，不在铁路和河之间。河一侧的顺序是：铁路、Guildford Rd、
+Ashfield Reserve、住宅、Ashfield Flats、Swan River。游戏里把 Guildford Rd 省掉了，车道直接挨着保护区和湿地。）
+
+网页
+- https://en.wikipedia.org/wiki/Ashfield_railway_station,_Perth
+  用到的：一座窄的岛式站台夹在两条轨道中间；过街天桥；2020 年建的 83 个车位停车场。
+- https://commons.wikimedia.org/wiki/Category:Ashfield_railway_station,_Perth （看了照片）
+  用到的：站台是红褐色砖铺面、黄色盲道边，站台侧面是灰色混凝土板；只有一个小雨棚：浅拱形的白 / 米色铁皮顶，
+  栗色柱子，下面是米色砌块小屋和玻璃挡风板，栗色 / 粉色的立牌；天桥连着长长的镀锌灰色坡道（灰网栏杆、黄色扶手）。
+  Railway Pde 一侧：停车场紧贴轨道，后面是厂房。Guildford Rd 一侧：黑色栅栏、红色沥青的共享车道、绿色站牌，
+  然后是 Ashfield Reserve 的草地和很大的深色榕树。
+  -> AshStation()：岛式站台、StationShelter()（Maroon 8A2F45）、Footbridge()、GradeRail()（黑色栅栏、两条轨道、
+  镀锌门架）、SharedPath()（PathRed 9C5647，白色中线和边线）、Fig()。
+- https://commons.wikimedia.org/wiki/Category:Ashfield,_Western_Australia 、
+  Town of Bassendean Built Form and Character Study 2020（PDF）
+  用到的：约 400 栋 1950 年代末到 60 年代初的 State Housing 住宅：单层，护墙板、纤维水泥板（fibro）或清水砖，
+  四坡和山墙屋顶；退后 5–7 m，没有或只有很矮的前院围墙，宽草坪路肩；架空电线，高低不平的地面，零散的大桉树。
+  -> StateHouse()（fibro 压条、瓦顶、小门廊）、HillsHoist()、PowerPole() + PowerLines()、Gum()。
+  工业区：车站对面一长排低矮的米色厂房，连续的钢框窗带，缓坡屋顶；周围是灰色和绿色的钢板棚，院子里堆着混凝土制品；
+  Commons 上还有一张 Bassendean 集装箱堆场的照片。
+  -> Industry() / Factory()（长厂房、灰棚、绿棚）、PaverStack()、Forklift()、ContainerStack()。
+  没有核实锯齿屋顶、储罐、烟囱：只在远处放了两个没有标志的水罐和一根烟囱当天际线。
+- https://www.dbca.wa.gov.au/sites/default/files/2022-07/Ashfield%20Flats%20Summary%20Information.pdf
+  用到的：约 64 公顷的河漫滩，冬春被水淹；盐沼（samphire）水文；几条明渠：Chapman St、Kitchener Rd、Woolcock Ct。
+- https://bushlandperth.org.au/treasures/ashfield-flats/ （照片、地图牌、鸟类说明）
+  用到的：samphire 盐沼是低矮的一片，锈褐、橄榄绿、暗红（6b5a3a / 7a4a3a），低光下偏粉红；浅水塘淡蓝灰色，边上是
+  鲜绿的莎草、灯心草（Juncus）和香蒲（Typha）；歪斜的白皮白千层（Melaleuca）成片成"隧道"；零散的白色枯树；
+  栗色边框的解说牌。
+  -> Flats()（Terrain 小格子的 samphire 色块、Pool()、Sedge()、Bulrush()、SamphireClump()、Paperbark()、DeadTree()）、
+  InterpretiveSign()、AshPaperbarks()（白千层隧道）。
+- https://www.bassendean.wa.gov.au/news/ashfield-flats-boardwalk/896 、Ashfield Flats master plan implementation 页面
+  用到的：跨 Chapman St 水渠的 jarrah 木栈道约 107 m，两边有栏杆；沥青的两用小路；盐沼周围新的围栏；水渠是 2–3 m 宽
+  的直土渠，茶褐色的水，草岸，头顶是拱过来的白千层；Roy Hookway 观景平台（从 Ashfield Pde 下台阶）。
+  -> AshDrain()：Boardwalk() + 木跳台 + 6 m 宽的水渠缺口（SPLASH）、岸上的白千层和香蒲、水里的鸭子；ViewingPlatform()。
+  （真实水渠 2–3 m 宽，游戏里为了玩法做成 6 m。）
+- https://www.bassendean.wa.gov.au/lookout-qr-wild-things.aspx 、https://www.birdingplaces.eu/birdingplaces/australia/ashfield-flats
+  用到的：鸟类名单：大白鹭和小白鹭、白脸鹭、黄嘴琵鹭、圣鹮和蓑颈鹮、黑天鹅、鹈鹕、太平洋黑鸭、灰鸭、高跷鹬、
+  水鸡、鸬鹚等；没有观鸟屋。
+  -> 路上的动物（Obstacle.animal）：ANM_Ashfield_Egret（大白鹭）、ANM_Ashfield_Ducks（黑鸭带两只小鸭）、
+  ANM_Ashfield_Ibis（白鹮）；水塘里的布景：白鹭、黄嘴琵鹭、黑天鹅、鸭子。
+- 河对岸：Ron Courtney Island 和 Garvey Park（Belmont）看上去是连续的一条桉树线；河水深褐色。-> 远景 AshFar()。
+- CSBP / Cuming Smith 化肥厂的历史只看了搜索摘要：1910 年起在铁路北侧，1970 年代迁到 Kwinana，所以不做化肥厂。
+
+没能核实、按风格处理的
+- 车站有没有平交道口 / 迷宫门（只做了天桥）；住宅屋顶的材料（做成瓦）；flooded gum 这个树种名。
+- 天桥的坡道真实坡度很缓、很长，这里折成两段贴着车道一侧，再加一段下到站台的楼梯。
+- 远景：右边湿地一直延伸到 Swan River、对岸树线、平原和 Darling Scarp；左边厂房屋顶、一根高烟囱和一座水塔。
+
+配色（sRGB）
+- 车道红 9C5647，路肩草 8FA05C / 6FA646，栗色 8A2F45 / C4577A，站台砖 A8553F。
+- samphire 7D7044 / 86573F / 6F7D46 / A2665A，泥 8F8869，水塘 86AFC2 / B4D2DC，茶色渠水 7A5E3C。
+- 白千层树干 EDE6D6、叶 6F8F5A；榕树叶 2F5E3A；jarrah 木 8E5A45 / B07A5C。
+- 厂房米色 E4DAB8，棚绿 7E9A86，棚灰 A9B0B4；fibro DDE3DA / BFD3D9 / E6CDBE。
+- 雾 (.70, .82, .90)，阳光 (1, .97, .88) × 1.4。

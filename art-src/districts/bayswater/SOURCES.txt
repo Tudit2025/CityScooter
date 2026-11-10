@@ -1,0 +1,82 @@
+BAYSWATER (district id bayswater, order 270, 东线) - 参考资料和用到了什么
+=====================================================================
+
+参考照片只用来看（Wikimedia Commons，存在仓库外的临时目录里）。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East3Builder.cs + East3Bayswater.cs 用漫画库生成（ComicPalette.mat + ComicInk.mat，
+顶点色）。没有商标和品牌字；牌子上只有地名和公共设施的名字（BAYSWATER、BAYSWATER STATION、POST OFFICE、HOTEL、
+MIDLAND / AIRPORT / ELLENBROOK 三条线的指路牌）。
+
+方向：骑手向东，铁路在左（北），Whatley Crescent 的老店面在右（南）。
+
+网页
+- https://en.wikipedia.org/wiki/Bayswater_railway_station,_Perth
+  用到的：新高架站（2023 年 10 月第一阶段、2024 年启用）；两座岛式站台、四条轨道，跨在 King William St / Coode St 上；
+  站台 150 m 以上；桥下净空至少 4.8 m（旧桥 3.8 m）；桥下东西两个入口（都有楼梯和电梯，东口有上行扶梯）；
+  Coode St 桥下 2 个公交站位；26 个桥墩、52 根梁；Midland 和 Airport 线走外侧两条轨道，Ellenbrook 线走内侧两条。
+  -> 高架桥 26 m 宽（x -13..-39）、桥下净高 5.5 m、两个站台各一条顶棚、每 20 m 一排桥墩、桥下的大厅和东口扶梯、公交站。
+- https://commons.wikimedia.org/wiki/Category:Bayswater_railway_station,_Perth_(2023) （看了约 20 张照片）
+  用到的：
+  - 高架桥朝街的边：约 2 m 高的米白色竖向凹槽铝板带，下缘向内卷成圆角；上面是灰色的竖杆栏杆。
+    -> FluteCream F7EBC4 / FluteShade D6C28C 的竖条纹带、下缘一条深一点的圆角、白色压顶、镀锌栏杆。
+  - 桥墩：米白色预制混凝土，矩形带竖槽，向上平滑张开成锤头形盖梁。-> Pier()：柱、两段张开、盖梁、竖槽。
+  - 站台顶棚：薄而平的板，两端圆角，白色檐口，底面是暖铜色金属板；中间一排深灰圆柱；站台上的设备间和电梯间是
+    宝蓝色（不锈钢门），铜色带上有白色 "Bayswater"。-> Canopy()、LiftPod()（Copper C97B3C、RoyalBlue 2456B4）。
+  - 站台：灰色铺装、黄色盲道边。桥下大厅：铜色格栅吊顶、深灰墙板带一条铜色线、下部白瓷砖、朝 Whatley Cres 的玻璃店面；
+    白底黑字 "BAYSWATER STATION" 牌子带蓝色 "Trains" 牌。-> Concourse()。
+  - 地面：浅黄砖铺装和浅色露骨料混凝土；马路是红褐色沥青。木条长椅配深灰架子。公交亭深灰、圆角、铜色底面，
+    旁边白色高立牌上下两段绿色。-> BuffPaver DBC9A4、RedAsphalt 7F4C42、BusShelter()、Bench()。
+  - 绿化：小桉树、草树（grass tree）、带状叶的本地植物，种在覆盖树皮的花池里；一侧桥台上有蓝色波浪 "河流" 壁画。
+    -> PlazaPlanting()、RiverMural()。
+  - B 系列电车：不锈钢车身、深灰窗带、车顶下一条亮绿色带、黄色门框、白绿色斜车头。-> Train(series 1)。
+- https://commons.wikimedia.org/wiki/Category:Bayswater,_Western_Australia （分类下的子目录：道口/立交、酒店、旧桥、
+  高架桥、街道、邮局、河边栈桥、A 系列电车，看了约 16 张）
+  用到的：
+  - 立交（车站东边）：四条轨道里中间两条沿灰色混凝土槽下降进隧道（Airport 线），洞口上方是浅灰色平顶百叶箱形建筑；
+    Ellenbrook 线爬上北侧的灰色混凝土高架（单柱、柱头张开、镀锌网栏杆），墙上有橙色 / 赭色的 numbat（袋食蚁兽）壁画；
+    接触网是没上漆的镀锌门架。-> BayJunction()：窄的 Midland 高架、AirportPortal()、EllenbrookViaduct()、Gantry()、
+    NumbatMural()（画在出口段的挡土墙上）。
+  - 镇中心（Whatley Cres / King William St）：联邦时期和两次大战之间的一、二层店面，贴着人行道，女儿墙高低不齐，
+    盒式悬挑雨棚；白色抹灰的两层街角楼（线脚女儿墙、蓝色转角雨棚）；米黄砖、赤陶色抹灰、深灰新店面；红铁皮和
+    赤陶瓦屋顶。-> CornerShop()、ParapetShop()（BoxAwning 带拉杆、Parapet 五种山花）。
+  - 酒店：两层、白墙、通长的两层木廊（细柱、深色栏杆）、棕色赤陶瓦四坡顶，屋顶架子上立着红色大字；旁边是白色
+    山墙朝街的侧翼，红色收边。-> VerandahHotel(brick: false)（只写 HOTEL）、GabledWing()。
+  - 老邮局：单层、米色抹灰、简化古典式的平女儿墙上刻字、三扇高窗、白烟囱；坐在石灰岩挡墙上面，墙头是彩色壁画矮栏。
+    -> PostOffice()。
+  - 街道家具：黑色天鹅颈双头路灯（带蓝色挂旗）、黑色圆头路桩、石灰岩矮墙；路边圆球形的常绿行道树，天际线上有
+    Norfolk 松和棕榈，铁路边是高桉树。-> SwanNeckLamp()、Bollard()、StreetTree()、Gum()、DeepSuburb()。
+  - A 系列电车：两节一组、带凹槽的不锈钢车身、深色窗带、较平的白色车头。-> Train(series 0)（在 Ashfield 用）。
+  - 河边（Riverside Gardens）：草地、芦苇、白千层和桉树，木栈桥头上有白色六角顶凉亭；河面宽，灰蓝色。
+    -> 远景 BayFar() 里河边的六角亭和栈桥。
+- https://en.wikipedia.org/wiki/Bayswater_Bridge 、 https://en.wikipedia.org/wiki/Bayswater_Subway
+  用到的：旧桥净空 3.8 m，2014–2019 年 5 月记录了 36 次被撞；2014 年 9 月加了闪灯警示牌；2023 年 4 月 14–17 日拆除。
+  旧桥的样子（2020 年 8 月的照片）：米色桥台、米色梁面上有浅蓝色长方形块和白条、下缘一条红白相间的条纹带、
+  正中白牌 "LOW CLEARANCE 3.8 m"、桥墩上红白警示板、石灰岩块挡墙。
+  -> 彩蛋 OldBridgeMemorial()：车站前留着一段旧桥梁（米色、浅蓝块、红白条纹、LOW CLEARANCE 3.8 M 牌），旁边一块
+  记分牌 "BRIDGE 74  TRUCKS 0"；新桥边上是黄色的 "CLEARANCE 4.8 M" 牌，King William St 两侧桥墩上有红白警示板。
+- http://howmanydayssincebayswaterbridgehasbeenhit.com/index.html
+  用到的：网站记了 74 次事故，最后一条是 2023 年 4 月 15 日 "Vale, Baysie Bridge!"。-> 记分牌上的 74。
+- https://soperth.com.au/perthnews/many-days-since-bayswater-bridge-hit-18724 ：同上（计数器和"耻辱墙"的说法）。
+- https://en.wikipedia.org/wiki/Ellenbrook_line ：内侧轨道、850 m 高架跨过东行的 Midland 线、进 Tonkin Hwy 中间的隧道。
+- https://en.wikipedia.org/wiki/Airport_line,_Perth ：750 m 的下降段在 Midland 两条轨道之间，然后是双洞隧道；B 系列电车。
+- https://en.wikipedia.org/wiki/Transperth_B-series_train ：三节一组、不锈钢车身。
+- https://inherit.dplh.wa.gov.au/Public/Inventory/Details/50164f91-b6d7-499f-a7b6-29f755aa8803 ：镇中心店面的年代、
+  层数、女儿墙和雨棚。
+- https://www.wa.gov.au/government/media-statements/McGowan%20Labor%20Government/New-Bayswater-Station-designs-to-reflect-community-feedback-20201008
+  用到的：凹槽和"河水波纹"的设计意图、扶梯。
+- 只看了搜索摘要、没打开的：metronet.wa.gov.au（证书错误打不开）："26 个米色带槽桥墩"、"200 m / 2600 m² 铝板"、
+  "顶棚覆盖站台约 70%"。
+
+没能核实、按风格处理的
+- 桥墩间距（照片上看约 20–25 m，用了 20 m）、轨面和顶棚的高度（估计值：轨面 6.7 m、顶棚 11.4 m）。
+- 三条线在指路牌上的颜色（紫、青绿、红）是自己定的。
+- 行道树的树种（做成修剪过的常绿圆冠）；蓝花楹只在照片远处见到一棵，放在住宅段。
+- Ellenbrook 高架和隧道口的位置按游戏视角压缩在一个 40 m 路段里；Midland 线在这一段画成单独的窄高架，
+  这样能从桥下看到后面的隧道口和 Ellenbrook 高架。
+- 远景里右边的 Swan River、对岸的树线、平原和 Darling Scarp（淡蓝色长山脊）是概括画法；雾色偏蓝，山脊在 310 m 以外，
+  只剩轮廓。
+
+配色（sRGB）
+- 铝板带 F7EBC4 / D6C28C，桥墩 F0E2BA，混凝土 BDBFBC，桥底 A4A7A5，铜色 C97B3C / 9C5A2A，宝蓝 2456B4，白瓷砖 F2F1EA。
+- 壁画：蓝 2F7FC0 / 7FC3E6 / 1F5C96，numbat 橙 D9812E、赭 E2A64A。旧桥：米色 E8DDB8、浅蓝 9CC3E0。
+- 路面红褐沥青 7F4C42，浅黄铺装 DBC9A4；电车不锈钢 CDD2D7、绿 35A852、门框黄 F2C230。
+- 雾 (.69, .80, .93)，阳光 (1, .96, .88) × 1.45。

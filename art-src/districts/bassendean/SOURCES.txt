@@ -1,0 +1,76 @@
+BASSENDEAN (district id bassendean, order 290, 东线) - 参考资料和用到了什么
+=======================================================================
+
+参考照片只用来看（Wikimedia Commons、遗产名录和市政网站，存在仓库外的临时目录里）。游戏里没有任何参考图：所有几何
+都由 Assets/_Project/Scripts/Editor/Districts/East3Builder.cs + East3Bassendean.cs 用漫画库生成（ComicPalette.mat +
+ComicInk.mat，顶点色）。没有商标和品牌字；牌子上只有地名和公共设施的名字（BASSENDEAN、RAILWAY MUSEUM、LIBRARY、
+HOTEL、BASSENDEAN RECREATION RESERVE、1929、1918、机车编号 W 953、记分牌 HOME / VISITORS）。
+
+方向：骑手向东。前两段在铁路边（车站、铁路博物馆在左），后面三段是 Old Perth Road 的镇中心（两边店面）、
+BIC Reserve 的战争纪念碑（左）和 Bassendean Oval（右）。真实的 Old Perth Rd 从车站向南到河边，博物馆在铁路北侧
+的 Railway Pde；游戏里把它们排在一条直路上。
+
+网页
+- https://en.wikipedia.org/wiki/Bassendean_railway_station 、Transperth 车站设施页（sid=26）
+  用到的：岛式站台；2004 年的带顶过街天桥；四个公交站位；469 个车位；电梯。
+- https://commons.wikimedia.org/wiki/Category:Bassendean_railway_station （照片）
+  用到的：天桥是藏青 / 深灰色钢架、米色底面、玻璃和网的栏杆，带玻璃的电梯塔配灰色板，楼梯和坡道；站房是灰色
+  劈裂面混凝土砌块；站台红砖铺面，藏青色框的平顶雨棚。
+  -> BasStation()：Overpass()（NavyFrame 2B3550、电梯塔、沿人行道下来的楼梯）、平顶雨棚、砌块小屋、站名牌。
+- https://inherit.dplh.wa.gov.au （Old Perth Road Commercial Precinct、Bassendean Hotel 条目）、
+  Town of Bassendean Built Form and Character Study 2020（PDF）、
+  https://commons.wikimedia.org/wiki/Category:Bassendean,_Western_Australia （照片）
+  用到的：
+  - Old Perth Rd：路面是红褐色沥青（8a4a3a），人行道是人字纹红砖；店面大多是单层砖房，米 / 白色粉刷的女儿墙、
+    带帽的壁柱、钢拉杆吊着的平悬挑雨棚，没有柱子；Padbury's Buildings 是两层、白色粉刷、弧形山花上写着 1918；
+    车站对面有一栋涂成黑色、带城垛女儿墙的单层街角楼；行道树是白千层（在中间绿岛里），蓝花楹只记载在附近的
+    住宅街上；路灯是黑色弯臂杆。
+    -> ParapetShop()（五种山花，包括城垛）、TwoStoreyShop("1918")、PaperbarkStreet()、BasLamp()。
+  - 酒店：街角的两层楼，转角切角入口；底层红色清水砖，上面是白 / 米色粉刷的女儿墙，转角处山花抬高；两层木廊
+    （深灰柱子和栏杆）沿两个街面转过来；前面有青绿色遮阳伞。
+    -> VerandahHotel(brick: true)（只写 HOTEL）、青绿色咖啡伞。
+  - 图书馆（46 Old Perth Rd）：红砖和米色砖相间的横带，青绿色玻璃，单层。-> Library()。
+  - 住宅：联邦时期和两次大战之间的平房，护墙板或红砖，瓦楞铁皮的四坡 / 山墙屋顶。-> Bungalow()（三种）。
+- https://monumentaustralia.org.au （条目 60073、103772）、library.bassendean.wa.gov.au（战争纪念碑新闻页和 2015 年小册子）
+  用到的：纪念碑是细长的毛面浅灰花岗岩方尖碑，四块逐渐收小的石块叠起来，约 5 m 高；下面是磨光的花岗岩檐口、
+  带铭文板的方形基座、宽的台阶底座；2014 年迁到 BIC Reserve（Guildford Rd 和 Wilson St 路口），周围是草地、
+  混凝土小路、修剪的矮绿篱和白色的矮石墩；后面是约 1.8 m 高的弧形白色石板纪念墙，带长凳；铺地里嵌着一个圆形水池；
+  照片里有一根白色旗杆。
+  -> BasMemorial()：WarMemorial()、MemorialWall()、圆水池 Pool()、Flagpole()、白石墩、绿篱、蓝花楹。
+  全部是背景：放在 Landmark 网格里，没有 Obstacle，不能撞也不能打；人行道外有边界碰撞体挡住行人。
+- https://en.wikipedia.org/wiki/Bassendean_Oval 、inherit 条目（MacDonald 和 Bill Walker 看台、Bassendean Oval）、
+  Commons 的 Bassendean Oval 分类（大门、看台的照片）、Bassendean Oval Lights FAQ
+  用到的：两座并排的遗产看台（Bill Walker 1932、R.A. McDonald 1938），两三层高，米 / 浅黄色护墙板（e3cf7a），
+  镀锌铝屋顶伸出到朝球场的敞开面外，檐下有百叶通风口，两端有外挂钢楼梯；四根 42 m 高的镀锌灯塔，一根在两座
+  看台之间；球场一圈矮白栅栏，草坡，外围铁丝网；入口大门（1929）：约 3 m 高的米黄色粉刷墙，壁柱，中间弧形山花，
+  凸字 "BASSENDEAN RECREATION RESERVE"，四个门洞配灰色钢条门，售票窗；记分牌在南侧。
+  -> BasOval()：OvalGate()、PicketFence()、Grandstand() × 2（StandCream E6D487）、LightTower()、GoalPosts()、
+  Scoreboard()、场地条纹和白线、草地上的粉红凤头鹦鹉（galah）。
+  澳式足球每端四根门柱（两高两矮，白色）和俱乐部的黑白两色来自常识，没有查到出处；门柱脚下的护垫和看台前沿的
+  黑白块按这个配色。
+- https://www.railheritagewa.org.au/museum/pages/exhibits.php 、inherit 的 Rail Transport Museum 条目、
+  Commons 的 Western Australian Rail Transport Museum 分类
+  用到的：主楼是仿车站式的护墙板房，低矮的山墙屋顶伸出成外廊，中间双开门；小方形护墙板信号楼，陡山墙屋顶；
+  砖砌展厅、铁皮棚；机车停在敞开的长钢棚下（红漆的柱子和桁架），地面是碎石；蒸汽机车是黑色，红色缓冲梁，
+  黄色编号（P508、Pr521、W953、V1220、Fs460、O218 等）；另有暗红色和深绿色（带红、米色带）的车。
+  -> BasMuseum()：MuseumBuilding()（RAILWAY MUSEUM）、SignalBox()、MuseumCanopy()、SteamLoco()（W 953）、Semaphore()、
+  WaterColumn()、CrossingSign()、行李推车；后面没有描边的银色棚和一台绿色内燃机车；路上的枕木装卸坡道（跳台）。
+- https://commons.wikimedia.org/wiki/Category:Point_Reserve,_Bassendean
+  用到的：桉树荫下的路、褐色的河、对岸修剪过的草地和河边红桉。-> BasExit()（草地、河桉、绿篱）和远景的河岸。
+- 远景：Darling Scarp 在东边地平线上是一条低而平的淡蓝灰色带，刚高出树和屋顶；河对岸是连续的深橄榄色桉树线；
+  21 跑道的进近和 03 跑道的起飞航线从东边不远的 Guildford 上空经过（搜索摘要）。
+  -> BasFar() / EastFar()：河、对岸树线、屋顶、蓝色山脊（比 Bayswater 和 Ashfield 高）、一架进近中的客机、
+  球场的四根灯塔、蓝花楹、北边坡上的水塔。
+
+没能核实、按风格处理的
+- 博物馆从街上能看到什么（信号机、水鹤的位置是自己摆的）；记分牌的样子；教堂、水塔。
+- 酒店的转角切角没有做（地块是直的），只做了转角抬高的山花。
+- Old Perth Rd 的白千层放在人行道树池里（真实在中间绿岛里，游戏的路中间要骑车）。
+- 机车是 WAGR 蒸汽机车的概括造型（4 对动轮、煤水车），不是 W 级的精确模型。
+
+配色（sRGB）
+- 路面 7F4C42，人行道红砖 AC7A64；红砖 B5553C / 96442F，米色砖 E3CFA0，红铁皮 A8443A，镀锌 BFC6CB。
+- 机车黑 26292E、红 C4352C、黄 F2C230、黄铜 C9A24A；博物馆红 B43A32，护墙板 E6D7A0。
+- 花岗岩 B9BCC0 / 8F949A / D6D8DA，白石 F1EFE8；球场绿 5FA044 / 74B254，大门米黄 EADBB0，看台 E6D487。
+- 蓝花楹 8E6CC9 / A486DB / C4ADEB。
+- 雾 (.70, .80, .93)，阳光 (1, .95, .85) × 1.45。
