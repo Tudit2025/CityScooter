@@ -1,0 +1,60 @@
+MELTHAM (district id meltham, order 260, east line) - 参考资料和用到了什么
+=======================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\east2\。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East2Builder.cs / East2Meltham.cs 用漫画库生成（ComicPalette.mat + ComicInk.mat，
+顶点色）。没有商标和品牌字：只写地名（MELTHAM、MELTHAM STN、HOTHAM ST、WHATLEY CR）和通用的字（DELI、ICE、HUMP、LOOK、RESERVE）。
+
+照片（Wikimedia Commons）
+- Meltham railway station from footbridge 2.jpg（从东头的天桥往西看）
+  https://commons.wikimedia.org/wiki/File:Meltham_railway_station_from_footbridge_2.jpg
+  用到的：整个场景的布局就是这张照片：红色沥青的共享车道（Principal Shared Path：白色虚线中线、两条白色边线）紧挨着铁路，
+  中间一道铁丝网；道砟和两条线；岛式站台和上面那座长条的瓦顶站房；另一边是 Whatley Crescent 和一排赤陶瓦屋顶的平房、
+  修剪成球形的行道树；远处身后是 CBD（游戏里由系统沉到地平线下）。骑车往东时铁路在左边。
+- Meltham railway station western end.jpg
+  https://commons.wikimedia.org/wiki/File:Meltham_railway_station_western_end.jpg
+  用到的：站房：灰色刷漆的砖墙，赤陶瓦人字屋顶，两侧很宽的平底挑檐（白色）当站台雨棚；山墙两边挂着红 / 绿两色的站台牌
+  （Platform 2 to Midland / 1 to Perth，游戏里只写数字）；端墙上画成一扇红门的壁画；红砖人字铺的站台、灰色盲道带、黄线；
+  站台外的铁丝网和红色车道。
+- Meltham railway station northern side.jpg
+  https://commons.wikimedia.org/wiki/File:Meltham_railway_station_northern_side.jpg
+  用到的：站房长边墙上的公共艺术：青绿和深蓝底色上黑白的鱼（两块壁画板），中间红底白字的站名牌 Meltham。
+- Meltham railway station eastern end.jpg / Public art at Meltham railway station.jpg
+  https://commons.wikimedia.org/wiki/File:Meltham_railway_station_eastern_end.jpg
+  https://commons.wikimedia.org/wiki/File:Public_art_at_Meltham_railway_station.jpg
+  用到的：站台东头的坡道和栏杆，壁画的配色。
+- Transperth A-series approaching Kenwick railway station, Western Australia, October 2023 01.jpg
+  https://commons.wikimedia.org/wiki/File:Transperth_A-series_approaching_Kenwick_railway_station,_Western_Australia,_October_2023_01.jpg
+  用到的：A 系列电车的比例（两节一组、车头下半截的色块、车窗带）、行人平交道口的栏杆和警示灯、混凝土接触网立柱和悬臂、
+  站台边缘的做法；远处地平线上蓝绿色的 Darling Scarp（远景里的山脊）。
+
+文字资料
+- Meltham railway station（Wikipedia） https://en.wikipedia.org/wiki/Meltham_railway_station
+  岛式站台（约 98 m）；站台上一座大的砖房当候车棚；西端是行人平交道口，东端有天桥和坡道；2012 年整修时加了公共艺术，
+  2019 年加了自行车棚；南边 Whatley Crescent，北边 Railway Parade；Hotham Street 的公路桥在站东头跨过铁路；
+  1948 年开站；周围是一、两层的住宅。
+- 典型的珀斯郊区（凭常识，照片见上面车站那张的背景）：1940-60 年代的平房（砖墙瓦顶、石棉水泥板墙铁皮顶、米色砖），
+  车棚和两条水泥车辙的车道，Hills Hoist 旋转晾衣架，"super six" 波纹石棉水泥板围墙，矮砖墙和铁管铁丝网的前院围栏，
+  瓶刷树和桉树行道树，木电线杆，路边等着收的垃圾桶（黄盖是回收）和大件垃圾（旧沙发），街角的 deli（弧形廊檐、
+  门口的彩色塑料条门帘、冰柜、煤气瓶笼、报纸架），红砖铺的减速坡和黄色菱形警示牌，小公园（游乐设施、半个篮球场、粉红凤头鹦鹉）。
+
+路段（entry + 5 + exit，各 40 m；District.length 250-275 m，每种路段每次只出现一遍）
+- Entry（共享车道）：安静的一端，然后红色车道挨着铁路（两条线为岛式站台分开），右边是后院的围墙。
+- Station（共享车道）：行人平交道口和黄色小门，岛式站台和站房（鱼的壁画、MELTHAM 站牌、站台牌），远侧站台停着一列电车；
+  右边是 super six 围墙后面的后院：Hills Hoist、铁皮小棚、蹦床、柠檬树、房子的背面；自行车棚。
+- Bungalows（Whatley Crescent）：两边各三栋平房（四种：砖瓦、石棉板、米色砖、翻新的），车棚、信箱、前院花坛，
+  行道树、电线杆和电线、等着收的垃圾桶。
+- Deli：街角的 deli 和门前的东西；横跨车道的红砖减速坡（Ramp：宽 8、坡长 2.6、高 0.5），黄色 HUMP 警示牌。
+- Park：右边的小公园（大桉树、游乐设施、半个篮球场、草地上吃草籽的粉红凤头鹦鹉），左边三栋平房。
+- Bridge（共享车道）：从 Hotham St 公路桥下面穿过，回到铁路边：近侧线上一列电车正开过，右边一道涂鸦的石灰岩墙和后院。
+- Exit：车道和铁路再走一段，然后安静下来（树丛把铁路收住）。
+
+障碍、动物、跳台
+- OBS_Meltham_WheelieBin（黄盖垃圾桶，可跳）、OBS_Meltham_Trike（儿童三轮车，可跳）、
+  OBS_Meltham_VergeCouch（等着收的旧沙发，不能跳、不能打）、OBS_Meltham_Trolley（被丢在路边的购物车，没有标志，不能跳）。
+- ANM_Meltham_Galah / GalahFeeding（粉红凤头鹦鹉）、ANM_Meltham_Magpie（喜鹊）：animal，不能打。
+- RMP_Meltham_PlywoodJump：小孩搭的胶合板自行车跳台。
+
+远景 FAR_Meltham_Horizon（跟着骑手，没有碰撞体）
+- 两边都是郊区：瓦顶和铁皮顶、桉树和蓝花楹；左边一个球场的灯塔和一座会堂；右边很远处一线 Swan River 和河边的桉树带。
+- Darling Scarp 比前两站更近、更高，山脊上有红白相间的电视发射塔。

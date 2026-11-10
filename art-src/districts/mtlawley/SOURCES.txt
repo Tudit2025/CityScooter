@@ -1,0 +1,73 @@
+MT LAWLEY (district id mtlawley, order 240, east line) - 参考资料和用到了什么
+==========================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\east2\。游戏里没有任何参考图：所有几何都由
+Assets/_Project/Scripts/Editor/Districts/East2Builder.cs / East2MtLawley.cs 用漫画库生成（ComicPalette.mat + ComicInk.mat，
+顶点色）。没有商标和品牌字：店铺的牌子是空白色块或建成年份，只有地名和公共建筑名（ASTOR、MT LAWLEY、WALCOTT ST、BEAUFORT ST）。
+
+照片（Wikimedia Commons）
+- AstorCinema gobeirne.jpg（Astor Theatre 正面，Beaufort St）
+  https://commons.wikimedia.org/wiki/File:AstorCinema_gobeirne.jpg
+  用到的：
+  - 整体体量：街角的方块（三条竖向的色带从雨棚一直到女儿墙上方）、中间凹进去的一段（三道水平"速度线"、钢窗）、
+    塔楼（高出一截，顶部一排 6 个小方格，3 个圆形舷窗，3 条细高窗组成的窗组）、右侧较矮的一翼。
+  - 塔楼左角伸出的竖向招牌：一格一个字母，从上到下 A S T O R（白底字母盒）。游戏里只写 ASTOR，不写 "THE ASTOR THEATRE"、
+    "CINEMA" 和片名。
+  - 钢窗的格子窗棂；一楼黑色贴面砖的店面墩子、通长的悬挑雨棚和入口上方的灯箱（marquee，游戏里只有空白横线）。
+- Astor MtLawley gobeirne.jpg（从 Beaufort St 看 Astor 和街道）
+  https://commons.wikimedia.org/wiki/File:Astor_MtLawley_gobeirne.jpg
+  用到的：现在的配色（白墙 F4F0E6、酒红色的塔面和竖条 9C2F35、青绿色的女儿墙压顶线 2F8F8A）；后面更高的观众厅和舞台塔体量；
+  Beaufort St 的蓝色装饰艺术路灯（两个弯臂、顶上一把扇形"日出"装饰，2F5FA8）、中间一排又高又细的棉花棕榈（washingtonia）、
+  红砖人字铺的人行道和米色边带、对面两层的联邦时期和两战之间的店面（女儿墙、山花、悬挑雨棚）。
+- Beaufort Street Books September 2025.jpg
+  https://commons.wikimedia.org/wiki/File:Beaufort_Street_Books_September_2025.jpg
+  用到的：店面的做法（深色雨棚封檐板、大玻璃橱窗、凹进去的门、上层一排窗），红砖铺地，路边的小街树和花箱。
+- Mount Lawley station February 2021 01.jpg / Mount Lawley station platform from ramp.jpg
+  https://commons.wikimedia.org/wiki/File:Mount_Lawley_station_February_2021_01.jpg
+  https://commons.wikimedia.org/wiki/File:Mount_Lawley_station_platform_from_ramp.jpg
+  用到的：车站在切口里：两侧草坡和米色石灰岩砌块挡土墙，墙顶铁丝网，上面是大榕树（fig）；岛式站台，红砖人字铺面，
+  灰色盲道带和黄线；蝴蝶形（两翼向外上翘）的站台雨棚，红 / 绿两色的站台牌（2 to Midland / 1 to Perth，游戏里只写数字），
+  双臂站台灯；架空线的单柱和悬臂；轨道在站台前分开；通到站台的坡道（灰栏杆、黄扶手）。
+- Mount Lawley houses Learoyd.jpg（Learoyd St 的两层联邦式住宅和环岛上的蓝花楹）
+  https://commons.wikimedia.org/wiki/File:Mount_Lawley_houses_Learoyd.jpg
+  用到的：两层 Federation Queen Anne 住宅：米色抹灰墙、红砖转角、赤陶瓦屋顶、山墙里的木条装饰、上下两层带白色栏杆的木廊、
+  抹灰矮墙加修剪的树篱；街心的蓝花楹（树干低处分叉、枝条向外张开）。
+- OIC mt lawley houses harold 1.jpg
+  https://commons.wikimedia.org/wiki/File:OIC_mt_lawley_houses_harold_1.jpg
+  用到的：单层联邦式住宅的比例：红砖墙加两道米色抹灰横带、突出的一间带半木山墙、弧形（bullnose）铁皮廊檐和白色车木柱、
+  高烟囱、白色尖桩篱笆。
+
+文字资料
+- Astor Theatre, Perth（Wikipedia） https://en.wikipedia.org/wiki/Astor_Theatre,_Perth
+  1914 年建成（Lyceum Theatre），1939 年由 William Leighton 改成两战之间的 Art Deco 风格；地址 659 Beaufort St，
+  立面朝 Beaufort St 和 Walcott St；一、二、三层的砖石建筑，剧院加沿街店铺。现在是现场音乐演出场地
+  （所以后台门口放了演出器材箱和装卸坡道）。
+- Museum of Perth, Beaufort Street inventory: Astor Theatre
+  https://museumofperth.com.au/beaufort-street-inventory/astor-theatre
+  和对面的 Alexander Building、Beaucott Building 一起构成 Art Deco 街景（游戏里右侧的两栋 Art Deco 店面）。
+- Mount Lawley railway station（Wikipedia） https://en.wikipedia.org/wiki/Mount_Lawley_railway_station
+  岛式站台两个站台面，西端一条坡道连到 Railway Parade 和 Whatley Crescent；1907 年开站，1968 年重建。
+- City of Stirling: Mount Lawley / Mount Lawley heritage walk
+  https://www.stirling.wa.gov.au/your-city/about-stirling/suburbs/mount-lawley
+  以 Federation 和殖民风格住宅为主，零售集中在 Beaufort St 和 Walcott St 路口。
+
+路段（entry + 5 + exit，各 40 m；District.length 250-275 m，所以每种路段每次只出现一遍，Astor 不会重复）
+- Entry：安静的一端（石灰岩矮墙、树篱、小蓝花楹），然后左边铁路切口出现，右边两栋联邦式住宅。
+- Station（共享车道，PedestrianMall）：左边切口里的岛式站台、蝴蝶雨棚、站牌 MT LAWLEY、停在远侧站台的电车、架空线门柱、
+  下到站台的坡道；切口尽头一座过街桥把铁路收住；对岸石灰岩墙上的大榕树。右边联邦式住宅。
+- Federation：两边联邦式住宅，路边草带上的蓝花楹，落花。
+- Beaufort：Beaufort St 咖啡街：联邦式和 Art Deco 店面、蓝色日出路灯、棉花棕榈、遮阳伞和桌椅、节日彩旗。
+- Astor：左边 Astor Theatre（34 m 长），右边 Art Deco 店面；Walcott St 路口的红绿灯和路名牌。
+  左车道上是后台门口的装卸坡道（Ramp：宽 2.6、坡长 4、高 1、平台 2.5），旁边的人行道上堆着器材箱和音箱。
+- Avenue：蓝花楹大道（两边 6 棵树在路上方合拢），左边两层的联邦式别墅，右边三栋住宅。
+- Exit：两栋住宅，然后安静下来。
+
+障碍、动物、跳台
+- OBS_Mtlawley_CafeBoard（咖啡馆黑板立牌，可跳）、OBS_Mtlawley_Planter（木花箱，可跳，不能打）、
+  OBS_Mtlawley_FlightCase（演出器材箱，可跳）、OBS_Mtlawley_SpeakerStack（两只音箱叠起来，不能跳）。
+- ANM_Mtlawley_Magpie / MagpieStanding：喜鹊（animal，不能打；11 月是喜鹊护巢的季节）。
+- RMP_Mtlawley_StageRamp：装卸坡道（防滑钢板、黄黑警示条）。
+
+远景 FAR_Mtlawley_Horizon（跟着骑手，没有碰撞体；从这一站起系统把 CBD 天际线沉到地平线以下）
+- 左（北）：铁路对面顺着山坡往上的屋顶、蓝花楹和树，Norfolk 松，山坡上一座带尖塔的砖教堂。
+- 右（南）：屋顶一路降到 Swan River，河对岸的桉树带和几栋浅色公寓楼，再远是蓝色的 Darling Scarp。
