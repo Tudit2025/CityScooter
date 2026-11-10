@@ -1,0 +1,57 @@
+WOODBRIDGE (district id woodbridge, order 330) - 参考资料和用到了什么
+===================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\woodbridge\（Wikimedia Commons 的缩略图）。游戏里没有任何参考图：
+所有几何都由 Assets/_Project/Scripts/Editor/Districts/East5Builder.cs、East5Woodbridge.cs 用漫画库生成
+（ComicPalette.mat + ComicInk.mat，顶点色，水面是顶点色平板）。没有商标和品牌字；牌子上只有地名 WOODBRIDGE。
+
+方向：骑行方向朝东（去 Midland）。铁路在右边（南侧），Swan River 和 Woodbridge House 在左边（北侧），
+Darling Scarp 在前方和两侧的远景里。
+
+Woodbridge House（National Trust，1883–85 年为 Charles Harper 建造）
+- https://commons.wikimedia.org/wiki/File:Woodbridge_House,_April_2021_02.jpg
+  https://commons.wikimedia.org/wiki/File:Woodbridge_House,_April_2021_03.jpg
+  https://commons.wikimedia.org/wiki/File:Woodbridge_House,_April_2021_05.jpg
+  https://commons.wikimedia.org/wiki/File:Woodbridge_House,_April_2021_06.jpg
+  https://commons.wikimedia.org/wiki/File:Woodbridge_House,_August_2026_04.jpg
+  https://commons.wikimedia.org/wiki/File:Entrance_area_to_Woodbridge_House.jpg
+  https://commons.wikimedia.org/wiki/File:Northern_eastern_end_Woodbridge_house.jpg
+  用到的：
+  - 墙是偏橙的玫瑰红砖（BF6347），奶油色的勒脚、窗台和窗楣（E8DCC0）；高而窄的上下推拉窗。
+  - 方形塔楼比屋檐高出一层多：下面是红砖，顶部一段是赭黄色抹灰（D9A95C），有檐口，四角各一个小尖顶。
+  - 塔楼旁边是两个陡山墙（一个凸出、一个平齐），山墙下有叠涩的砖带。
+  - 入口：塔楼脚下的拱门，前面是奶油色的门廊，门廊顶上一圈栏杆。
+  - 阳台是棕色的，不是白色（契约的出发点写的是白色铸铁花边，照片上柱子、花边和栏杆都是棕色/赭色）：
+    西翼是两层阳台（上层菱形花格栏杆、檐下的流苏花边、柱顶的弧形托架），东翼是一层的披檐阳台。按照片做成棕色。
+  - 蓝灰色波纹铁皮的四坡屋顶（93A6B6），带叠涩顶的砖烟囱。
+- https://commons.wikimedia.org/wiki/File:Woodbridge_House_from_the_river.jpg
+  https://commons.wikimedia.org/wiki/File:Woodbridge_House_from_the_river_(2).jpg
+  https://commons.wikimedia.org/wiki/File:Swan_River_at_Woodbridge_House,_August_2026.jpg
+  用到的：河水是偏绿的棕色（5F8F7C）；岸边的桉树和木麻黄；老栈桥的灰色高木桩（有些桩子单独立在水里）；
+  对岸是 Swan Valley 的葡萄园（远景里的一排排葡萄架和棚屋）。
+- https://commons.wikimedia.org/wiki/File:Warden%27s_Cottage,_Woodbridge_House,_April_2021.jpg
+  https://commons.wikimedia.org/wiki/File:Cafe_at_Woodbridge_House,_April_2021.jpg
+  用到的：管理员小屋（红砖、铁皮四坡顶、木柱阳台）——用砖墙版的小屋造型放在 Midland 出口；高大的老棕榈树、草坪、红砖小路。
+- https://www.nationaltrust.org.au/news/50-golden-years-of-woodbridge/ ，
+  https://www.swanvalley.com.au/products/woodbridge-national-trust ，
+  https://communitynews.com.au/kalamunda-reporter/news/historic-woodbridge-house-is-open-again
+  用到的：年代和背景（两层的玫瑰红砖河边大宅，1968 年归 National Trust）。
+
+Woodbridge 站
+- https://commons.wikimedia.org/wiki/File:Woodbridge_Station,_Western_Australia,_December_2022_09.jpg
+  用到的：过街天桥的长坡道夹在两面绿色壁画墙之间（深浅绿色的叶子图案和一只鸟），黄色扶手，墙上面是铁丝网；
+  做成站台远侧的长坡道 + 跨线桥 + 路边的电梯楼梯塔。
+- https://en.wikipedia.org/wiki/Midland_railway_station,_Perth （线路资料：双线、架空接触网）
+  用到的：两条侧式站台、小雨棚；白色车身、绿色腰线和绿色车门的 Transperth 电车；钢柱加横梁的接触网门架。
+
+其他
+- 铁路工人的木板房（weatherboard cottage）：奶油、灰绿、浅蓝、淡黄的木板墙，红氧化铁色或蓝灰色铁皮屋顶，
+  木柱阳台，白色尖桩篱笆，屋侧的波纹铁皮水箱，砖烟囱。按珀斯东区常见的铁路工人住宅做（没有逐栋对照的照片）。
+- 11 月：蓝花楹开花（8F6DC6），树下有落花。
+- Blackadder Creek 在 Woodbridge Riverside Park 汇入 Swan River：做成共享车道的木栈道，跳台 + 6 m 的水面缺口（SPLASH）；
+  铁路在旁边走钢梁桥。
+- 动物：太平洋黑鸭、澳洲白鹮、黑天鹅（都是 animal，不能打）。
+
+没有用到的 / 没有做的
+- 房子的室内、后院的果园和 Harper 家的其他附属建筑。
+- 壁画只做了色块，不是原图案的复制。

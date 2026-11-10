@@ -1,0 +1,79 @@
+MIDLAND (district id midland, order 340) - 参考资料和用到了什么
+===================================================================
+
+参考照片只用来看，存放在仓库外 D:\CityScooter-refs\midland\（Wikimedia Commons 的缩略图）。游戏里没有任何参考图：
+所有几何都由 Assets/_Project/Scripts/Editor/Districts/East5Builder.cs、East5Midland.cs 用漫画库生成
+（ComicPalette.mat + ComicInk.mat，顶点色）。没有商标和品牌字；牌子上只有 MIDLAND、CENTREPOINT、厂房编号 1 2 3 和停车楼的 P。
+
+方向：骑行方向朝东。镇中心在左边（北侧），铁路站场、新车站和 Railway Workshops 在右边（南侧）；
+Darling Scarp 就在前方，远景里两侧的山脊向路的前方合拢。
+
+新的 Midland 站（METRONET，2026 年 2 月 22 日启用，在 Helena St 和 Cale St 之间）
+- https://commons.wikimedia.org/wiki/File:New_Midland_railway_station,_Perth,_April_2026_01.jpg … _11.jpg（共 11 张）
+  用到的：
+  - 架在站台上方的长条形站厅，白色圆柱托着；外面包一层锈红色的竖向鳍片（A9452E / CC6444），高低不齐，
+    有些顶端是更浅的颜色；鳍片后面是深色玻璃，上下是炭灰色的边。
+  - 朝来车方向的一端向前斜挑出去，像船头（02、08 号照片）——做成路边最显眼的造型。
+  - 站前是红砖砌的阶梯花池，种草树（grass tree / balga）和小桉树。
+  - 车站旁边就是红色沥青的共享车道，白色边线和虚线中线，黑色栏杆（07、08 号照片）——这一段路就做成这条车道。
+  - 深色的封闭天桥从站厅跨过轨道（10、11 号照片）；岛式站台上的平顶雨棚。
+- https://en.wikipedia.org/wiki/Midland_railway_station,_Perth
+  用到的：3 个站台面（1 个侧式、1 个岛式）、5 条轨道（3 条客运、2 条货运）；12 个公交站位；这里是 Midland 线的终点。
+- https://pta.wa.gov.au/news/media-statements/the-new-metronet-midland-station-is-officially-open
+  https://www.mediastatements.wa.gov.au/Pages/McGowan/2023/02/New-Midland-Station-designs-revealed-as-major-works-set-to-begin.aspx
+  用到的：五层、800 多个车位的停车楼；公交站雨棚上有社区画的彩色图案板（做成雨棚边上一排彩色板，不是原图案）；
+  24 小时开放的过街天桥；原来 Helena St 的道口移到了 Cale St。
+- https://commons.wikimedia.org/wiki/File:Bus_interchange_at_Midland_Station.jpg ，
+  https://commons.wikimedia.org/wiki/File:Midland_Station,_Western_Australia,_December_2022_01.jpg
+  用到的：白色带绿色裙边的 Transperth 公交车、站台雨棚的样子（旧站）。
+
+Midland Railway Workshops（1904 年起）
+- https://commons.wikimedia.org/wiki/File:Block_1,_Midland_Railway_Workshops,_August_2026_01.jpg ，_03.jpg
+  https://commons.wikimedia.org/wiki/File:Block_2,_Midland_Railway_Workshops,_August_2026_01.jpg
+  https://commons.wikimedia.org/wiki/File:Block_3,_Midland_Railway_Workshops,_August_2026_01.jpg
+  https://commons.wikimedia.org/wiki/File:Woodmill_Lane,_between_Block_1_and_2,_Midland_Railway_Workshops,_August_2026_01.jpg
+  用到的：很长的红砖厂房（B5573A），石头勒脚，每一跨一根砖壁柱，高拱窗（钢窗格），叠涩的砖檐口；
+  侧墙上面露出锯齿形屋顶；端墙是带阶梯形中段的女儿墙，有白色的拱形卷帘门和门上的白底编号牌。
+  两排厂房之间的巷子（Woodmill Lane）——做成最后一段路：两边都是长厂房。
+- https://commons.wikimedia.org/wiki/File:Elevated_water_tank,_Midland_Railway_Workshops,_August_2026_01.jpg
+  https://commons.wikimedia.org/wiki/File:Elevated_water_tank,_Midland_Railway_Workshops,_with_St_John_of_God_Midland_Public_and_Private_Hospitals_in_the_background,_August_2026.jpg
+  用到的：深灰色铆接钢水箱，矮锥顶，架在很高的格构钢塔上（斜腿、圈梁、交叉拉条）；背后是白色的医院楼。
+- https://commons.wikimedia.org/wiki/File:Powerhouse_and_boiler_room,_Midland_Railway_Workshops,_August_2026_02.jpg
+  https://commons.wikimedia.org/wiki/File:Foundry_at_the_Midland_Railway_Workshops,_August_2026_02.jpg
+  用到的：发电房旁边又高又细的烟囱（做成带钢箍的红砖圆烟囱）。
+- https://commons.wikimedia.org/wiki/File:St_John_of_God_Midland_Private_Hospital,_August_2026_01.jpg
+  用到的：白色病房楼，窗是宽窄不一的竖条；下面是红砖和炭灰色的裙房（只做背景，不写名字）。
+- https://en.wikipedia.org/wiki/Midland_Railway_Workshops
+  用到的：建筑清单（Block 1/2/3、Power House、Elevated tank、Pattern Shop、Foundry）；厂房之间以前有移车台（traverser）——
+  做成巷子里的移车台坑：钢板装卸坡道（跳台）+ 6 m 宽的干坑（WHOOPS）。
+  纪念碑（Peace 像）没有做。
+
+Midland Town Hall（1906–07 年；钟是 1923 年的一战纪念钟）
+- https://commons.wikimedia.org/wiki/File:Midland_Town_Hall,_Western_Australia,_April_2026_01.jpg … _07.jpg
+  用到的：街角的圆塔：底层一圈石柱廊，上面是带栏杆的阳台；红砖圆筒身，石带之间是拱窗；檐口；灰色的肋形圆顶；
+  圆顶上是奶油色的方形钟楼，四面有钟，小尖顶和金色顶饰。两翼是红砖配灰白石材：一层方窗，二层成对的拱窗，
+  壁柱，檐口和带栏杆的女儿墙；临街中间一跨凸出，有拱门、三角山花和旗杆。地面是红砖铺地。
+- https://inherit.dplh.wa.gov.au/Public/Inventory/Details/9c1a2d0c-5d71-4923-b81e-fb1fb54a4b35
+  https://placesofpride.awm.gov.au/memorials/259539
+  用到的：年代；"圆塔 + 半球圆顶 + 方形钟楼"的组合在西澳是唯一的。钟楼上的 SOLDIERS 字样没有做。
+
+Midland Centrepoint
+- https://commons.wikimedia.org/wiki/File:Woolworths_Midland_Centrepoint,_2026_(01).jpg （只有一张室内照片，是超市入口；品牌没有用）
+  用到的：是一座单层的购物中心。外观没有找到可用的照片：做成常见的单层购物中心造型——浅色墙板、青绿色腰带、
+  沿街的雨棚和玻璃店面、凸出的高门廊（红框、深色玻璃门、白字 CENTREPOINT）、屋顶设备和玻璃天窗；
+  停车场、手推车回收处、立在入口的招牌塔（红色牌头写 CENTREPOINT，下面是没有字的彩色空牌）。
+  这一部分是按老师指定的名字做的"无品牌造型"，不是对真实立面的复原。
+
+Great Eastern Hwy 的商店街
+- https://commons.wikimedia.org/wiki/File:Midland_gnangarra_0324-168.jpg … -175.jpg
+  用到的：现在的 Great Eastern Hwy 两边多是连锁快餐店（全是品牌，没有用）。老街的样子按 Midland 老镇中心常见的
+  联邦时期两层商铺做：红砖或抹灰的二层、上下推拉窗或拱窗、带山花和球形顶饰的女儿墙、人行道上有柱子的铁皮雨棚、
+  空白的招牌板。
+- https://commons.wikimedia.org/wiki/File:Greenmount_view_of_Midland_in_2010.jpg
+  用到的：从 Greenmount 山上看 Midland：镇子在平地上，紧挨着 Darling Scarp 的山脚；远景里的山脊做得近而高，
+  山坡上有花岗岩露头、Great Eastern Hwy 上山的浅色路堑、山顶的天线。
+
+其他
+- 动物：澳洲喜鹊、粉红凤头鹦鹉（galah）、鸽子（都是 animal，不能打）。
+- 障碍：购物手推车、红白水马、货盘、自行车架。
+- 11 月：Great Eastern Hwy 人行道上的蓝花楹。
