@@ -174,6 +174,14 @@ namespace CityScooter.Tests
             }, () => AubinExit());
         }
 
+        // v0.6 polish: the whole district as the rider sees it, a picture every 20 m (see SouthRideThrough).
+        [UnityTest, Explicit("Ride-through of COCKBURN CENTRAL and AUBIN GROVE, a picture every 20 m, into art-src/districts/<id>/previews/polish")]
+        public IEnumerator Screenshots_RideThrough_CockburnAndAubinGrove()
+        {
+            yield return SouthRideThrough.Ride(_game, _tuning, "cockburn");
+            yield return SouthRideThrough.Ride(_game, _tuning, "aubingrove");
+        }
+
         float EntryAfterExit(string name)
         {
             float start = NextChunk(name, Mathf.Max(0f, _riderZ - 2f));

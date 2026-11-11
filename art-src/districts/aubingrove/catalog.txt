@@ -3,10 +3,10 @@ OBS_AubinGrove_Letterbox 120 tris
 OBS_AubinGrove_RooSign 296 tris
 ANM_AubinGrove_Kangaroo 1120 tris
 ANM_AubinGrove_KangarooGrazing 1120 tris
-CHN_AubinGrove_Entry 17750 tris, 8 renderers
-CHN_AubinGrove_Path 18698 tris, 8 renderers
-CHN_AubinGrove_Estate 12388 tris, 6 renderers
-CHN_AubinGrove_Station 19148 tris, 8 renderers
-CHN_AubinGrove_Wetland 19574 tris, 8 renderers
-CHN_AubinGrove_Drain 17026 tris, 8 renderers
-CHN_AubinGrove_Exit 16514 tris, 8 renderers
+CHN_AubinGrove_Entry 12458 tris, 6 renderers
+CHN_AubinGrove_Path 15412 tris, 8 renderers
+CHN_AubinGrove_Estate 12430 tris, 6 renderers
+CHN_AubinGrove_Station 18832 tris, 8 renderers
+CHN_AubinGrove_Wetland 16064 tris, 8 renderers
+CHN_AubinGrove_Drain 13618 tris, 6 renderers
+CHN_AubinGrove_Exit 12998 tris, 6 renderers

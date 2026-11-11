@@ -1,0 +1,39 @@
+MURDOCH - v0.6 精修记录（南线 A，2026-11-11）
+
+图：before-<序号>-<米>.png 是改之前，after-<序号>-<米>.png 是改之后，同一个位置。米数从场景起点算，m020 = 交界前 20 米。
+这里只留了成对的几张。整套（每 20 米一张，25 张）随时可以重新渲染：
+  Unity -batchmode -runTests -testPlatform PlayMode
+    -testFilter "CityScooter.Tests.DistrictSouth1Screenshots.Screenshots_RideThrough_CanningBridgeAndMurdoch"
+    -cityscooterRideTag after
+
+最差的十处（对着 before 图写的，按显眼程度排）
+ 1. 进口（before-01-000）：树篱加一直铺到 75 米外的大草地，像公园出口；围栏在前 16 米是树篱。
+ 2. 出口（before-22-420、before-23-440）：同样的公园，后面直接是 Cockburn 的公寓楼峡谷。
+ 3. 路面：红沥青在交界线上和 Canning 的灰沥青、Cockburn 的街道硬接（before-01-000）。
+ 4. Station 块右侧（before-05-080、before-06-100）：公交平台下面是一整面光秃秃的绿坡，一排灌木都在同一个
+    高度，有的插进坡里，有的浮在坡上。
+ 5. 高速公路对面：等距的一排圆树，和 Canning 一模一样。
+ 6. 火车：白方块加黄车头；站里那列停在南行线上，车头却朝北。车道上的车也开错边。
+ 7. 字：公交大厅上的 MURDOCH 和名牌石用 3 像素宽的 M，远看像 H。
+ 8. 沙地过曝（before-07-120）：Bushland 的沙几乎是白的，和路肩混在一起。
+ 9. NoiseWall 块左侧只有空的高速公路，没有火车。
+10. 围栏的斜线（同 Canning 第 4 条）。
+
+第一轮（走廊和交界）
+- 走廊换成 SouthLineKit 的标准截面，六块都从 z = 0 画到块尾；对面是 banksia 灌木和桉树（Hospital 块对面空着，
+  留给医院）。
+- 进口：前 14 米是交界路面（灰沥青），z = 14 一条石灰岩铺石带，之后才是 Murdoch 的红沥青；右侧矮石灰岩墙、
+  草带、行道树，后面是灌木保留地，z = 16 起接图案隔音墙。
+- 出口：红沥青在 z = 26 的铺石带处换回灰沥青；banksia 林变疏，接矮墙和行道树；走廊一直到块尾。
+- 火车、车、围栏、标线：同 Canning。站里的车在南行线上朝南。
+
+第二轮（第三次渲染前又补了几处小的）
+- Station 块的土坡：按坡面高度分三排种了灌木和 banksia，坡脚一排袋鼠爪，加了一道从路边上到公交平台的
+  台阶（带扶手）（after-05-080、after-06-100）。
+- 字换成 5 像素宽的 M。
+- 沙地压暗一档，落叶和浅沙斑块加多。
+- NoiseWall 块加了一列南行的火车。
+
+没改
+- 远景里的医院剪影还在（和 Hospital 块里的真医院是两套），交界处远景仍然会沉下去再升起来：四个场景的地平线
+  不一样，没有共用远景。
