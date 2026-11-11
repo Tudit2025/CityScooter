@@ -188,6 +188,52 @@ namespace CityScooter.Tests
             }
         }
 
+        // What a rider sees crossing from one district into the next: 60 m and 20 m before the boundary and 20 m after.
+        // -cityscooterLine east|south|trunk on the command line picks the districts (default: east).
+        [UnityTest, Explicit("Renders every boundary of one line of the real route into art-src/districts/route/boundaries (review)")]
+        public IEnumerator Screenshots_Boundaries()
+        {
+            yield return LoadMain();
+            GameController game = GameController.Instance;
+            TrackTheme theme = game.track.theme;
+            Assert.IsTrue(theme.HasDistricts, "run DistrictSetup.ApplyBatch first");
+            string[] args = System.Environment.GetCommandLineArgs();
+            int at = System.Array.IndexOf(args, "-cityscooterLine");
+            string line = at >= 0 && at + 1 < args.Length ? args[at + 1] : "east";
+            if (line == "trunk") line = "";
+            string folder = System.IO.Path.Combine(Application.dataPath, "../art-src/districts/route/boundaries");
+            System.IO.Directory.CreateDirectory(folder);
+            GameTuning tuning = Object.Instantiate(game.tuning);
+            game.tuning = game.rider.tuning = game.track.tuning = tuning;
+            for (int i = 0; i < theme.districts.Length; i++)
+            {
+                District d = theme.districts[i];
+                if ((d.line ?? "") != line) continue;
+                tuning.startDistrict = d.id;
+                game.EnterReady();
+                yield return null;
+                float z = game.rider.transform.position.z, boundary = float.PositiveInfinity;
+                for (int step = 0; step < 40 && float.IsInfinity(boundary); step++)
+                {
+                    boundary = game.track.NextBoundaryAfter(game.rider.transform.position.z);
+                    if (!float.IsInfinity(boundary)) break;
+                    z += 60f;
+                    yield return RiderAt(game, z);
+                }
+                if (float.IsInfinity(boundary)) continue;
+                District next = game.track.DistrictAt(boundary + 5f);
+                // walk up to it so the generator has laid everything on the way
+                while (z < boundary - 120f) { z += 60f; yield return RiderAt(game, z); }
+                foreach (float offset in new[] { -60f, -20f, 20f })
+                {
+                    yield return RiderAt(game, boundary + offset);
+                    for (int f = 0; f < 6; f++) yield return null;
+                    string name = (i + 1).ToString("00") + "-" + d.id + "-to-" + (next != null ? next.id : "end") + (offset < 0 ? "-before" : "-after") + Mathf.Abs(offset) + "m.png";
+                    Shot(Camera.main, System.IO.Path.Combine(folder, name));
+                }
+            }
+        }
+
         static void Shot(Camera camera, string path)
         {
             var rt = RenderTexture.GetTemporary(1280, 720, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 4);

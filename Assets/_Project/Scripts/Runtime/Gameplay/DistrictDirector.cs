@@ -399,29 +399,34 @@ namespace CityScooter.Gameplay
 
         // ---------------- far scenery: at the horizon around the rider, sinks away / rises at a boundary
 
-        readonly Dictionary<District, GameObject> _scenery = new Dictionary<District, GameObject>();
-        readonly List<District> _sceneryScratch = new List<District>();
+        // One instance per far-scenery PREFAB, not per district (11/11): neighbours that share a prefab (the same
+        // horizon, e.g. several districts along one railway) keep it standing across their boundary instead of
+        // sinking it and raising an identical one.
+        readonly Dictionary<GameObject, GameObject> _scenery = new Dictionary<GameObject, GameObject>();
+        readonly List<GameObject> _sceneryScratch = new List<GameObject>();
 
         void UpdateScenery(District from, District to, float t, float z)
         {
             float y = track.SurfaceHeightAt(z);
+            GameObject a = from != null ? from.farScenery : null, b = to != null ? to.farScenery : null;
             _sceneryScratch.Clear();
-            foreach (KeyValuePair<District, GameObject> kv in _scenery) _sceneryScratch.Add(kv.Key);
-            foreach (District d in _sceneryScratch)
-                if (d != from && d != to && _scenery[d] != null && _scenery[d].activeSelf) _scenery[d].SetActive(false);
-            PlaceScenery(from, from == to ? 1f : 1f - t, y, z);
-            if (to != from) PlaceScenery(to, t, y, z);
+            foreach (KeyValuePair<GameObject, GameObject> kv in _scenery) _sceneryScratch.Add(kv.Key);
+            foreach (GameObject prefab in _sceneryScratch)
+                if (prefab != a && prefab != b && _scenery[prefab] != null && _scenery[prefab].activeSelf) _scenery[prefab].SetActive(false);
+            if (from == to || a == b) { PlaceScenery(a, 1f, y, z); return; }
+            PlaceScenery(a, 1f - t, y, z);
+            PlaceScenery(b, t, y, z);
         }
 
-        void PlaceScenery(District d, float weight, float y, float z)
+        void PlaceScenery(GameObject prefab, float weight, float y, float z)
         {
-            if (d == null || d.farScenery == null) return;
-            if (!_scenery.TryGetValue(d, out GameObject go) || go == null)
+            if (prefab == null) return;
+            if (!_scenery.TryGetValue(prefab, out GameObject go) || go == null)
             {
-                go = Instantiate(d.farScenery, transform);
-                go.name = "FarScenery_" + d.id;
+                go = Instantiate(prefab, transform);
+                go.name = "FarScenery_" + prefab.name;
                 foreach (Collider c in go.GetComponentsInChildren<Collider>(true)) c.enabled = false; // decoration only
-                _scenery[d] = go;
+                _scenery[prefab] = go;
             }
             bool show = weight > 0.001f;
             if (go.activeSelf != show) go.SetActive(show);
@@ -429,7 +434,8 @@ namespace CityScooter.Gameplay
         }
 
         /// <summary>The far scenery instance of a district, if one was made (tests).</summary>
-        public GameObject SceneryOf(District d) => d != null && _scenery.TryGetValue(d, out GameObject go) ? go : null;
+        public GameObject SceneryOf(District d) =>
+            d != null && d.farScenery != null && _scenery.TryGetValue(d.farScenery, out GameObject go) ? go : null;
 
         // ---------------- ambience: two sources cross-fade with the look
 
