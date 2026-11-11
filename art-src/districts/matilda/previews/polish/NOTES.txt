@@ -1,0 +1,51 @@
+MATILDA BAY (id matilda, order 20): v0.6 polish notes
+=====================================================
+Method: see art-src/districts/uwa/previews/polish/NOTES.txt (same tests, same picture names).
+- after-from-uwa-sheet.jpg is the boundary UWA -> Matilda Bay.
+
+Top ten of the worst things (before)
+ 1. UWA -> Matilda Bay was a hard cut: campus, a hedge-and-lawn gap, then the river appeared from nowhere; three
+    surfaces changed on the boundary line; the far scenery sank and rose.
+ 2. Matilda Bay -> Kings Park the same: river and red path stopped on the line, a hedge, then the avenue.
+ 3. The left side of every chunk was one bare olive ramp with identical blobs on it (the scarp): the biggest flat
+    thing on screen.
+ 4. The entry and exit were the generic lawn-hedge-trees clearing (one chunk mirrored).
+ 5. Only sailing boats under full sail, evenly spread; no moorings (the bay is full of moored yachts).
+ 6. The far shore was a pale strip with boxes; the river stopped 170 m out and showed a darker second river.
+ 7. Nothing local besides the boatshed: no Eliza, no bollards along the path.
+ 8. The boatshed's roof was nearly white (blue-grey in life).
+ 9. The lawn on the land side was empty between the picnic shelters.
+10. Peppermint trees all the same height in a row.
+
+Round 1
+ 1. Entry: the left side carries the campus on from UWA's exit (campus paving with its brick border, the low
+    limestone wall, a last cloister) and hands over to the reserve at z = 22 behind a brick band; the scarp rises
+    out of the lawn behind it. The right side starts with the red path, lawn, beach and river exactly as UWA's exit
+    leaves them. Shared far scenery with UWA: nothing sinks at this boundary.
+ 2. Exit: the red path ends inside the chunk (PATH ENDS, bar, stone band at z = 16); the shore swings away behind a
+    bank of bush and lemon-scented gums; on the left the scarp comes down to the road behind a limestone retaining
+    wall that steps up to 1.8 m. Kings Park's entry starts with that wall (stepping down), gums from the first
+    metre and its name wall.
+ 3. The scarp: a gentle foot, a steep face of dark scrub with sand patches and limestone outcrops, a tree line with
+    pale gum trunks on top.
+ 5. Moored yachts (bare mast, boom with a furled sail, boot stripe, orange buoy) in groups off the shore; fewer
+    boats under sail, further out.
+ 6. The chunks' water now reaches the far shore (280 m); far shore with trees and pale houses, yachts beyond.
+ 7. Eliza, the diver on her post, off the shore by the boatshed; timber bollards along the path.
+ 8. Boatshed roof blue-grey (white door between two small white-framed windows was already right).
+ 9. A tall gum on the land-side lawn in the foreshore and cafe chunks.
+
+Round 2
+ 7. Bollards round and smaller (the square ones read as stumps right beside the camera).
+ -  Checked the ride again; triangle counts 9,382 to 22,078 a chunk.
+
+Gameplay layout: unchanged (lanes, slots, the jetty jump over the inlet, benches as sidewalk obstacles, obstacle
+and pedestrian lists, length, the 4 % grade).
+
+Left weak
+- Peppermint trees are still one shape in a few seeds.
+- The water is a flat vertex-coloured plane (a shader matter, out of scope).
+- The cafe pavilion is a plain glazed box; the Royal Perth Yacht Club and the tearooms are not there as buildings
+  (only the moorings stand for them).
+- In life Hackett Drive is flat lawn on the land side and the scarp only begins at Mounts Bay Road; here the scarp
+  runs behind every middle chunk (the chunks cycle, so their ends must match).

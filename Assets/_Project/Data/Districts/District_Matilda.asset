@@ -15,6 +15,7 @@ MonoBehaviour:
   id: matilda
   displayName: MATILDA BAY
   order: 20
+  line: 
   length: {x: 420, y: 560}
   chunks:
   - {fileID: 7858367929100482224, guid: 6546d7e27e514d749ac0024259bbf029, type: 3}
@@ -55,7 +56,8 @@ MonoBehaviour:
   skyYaw: -35
   skySize: 0.85
   skyHeight: -1
-  farScenery: {fileID: 416617628157040032, guid: 47f2aa858f9db8343a8211284ff872e3, type: 3}
+  skyline: 1
+  farScenery: {fileID: 1544484466902347916, guid: 7e3685d6de45b564a95985cf764a5ca8, type: 3}
   gateway: {fileID: 2656431982064092348, guid: 6b02ff41270d41e4cbde1fed68139100, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

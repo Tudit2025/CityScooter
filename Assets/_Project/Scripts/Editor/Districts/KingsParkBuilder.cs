@@ -18,6 +18,10 @@ namespace CityScooter.EditorTools.Districts
     ///   Menu: CityScooter/Districts/Build Kings Park
     ///   Batch: -executeMethod CityScooter.EditorTools.Districts.KingsParkBuilder.BuildBatch
     /// Riding east along Fraser Ave towards the city: the river and the view are on the right.
+    /// v0.6 polish (docs/v0.6-polish.md; notes in art-src/districts/kingspark/previews/polish/NOTES.txt): the entry carries
+    /// on from Matilda Bay's exit (retaining wall stepping down, gums from the first metre), the exit arrives at a city
+    /// street (park gate, Edith Cowan clock, street-kit buildings on West Perth's building line), the State War Memorial
+    /// at the lookout (background only), rust-coloured walkway steel, tall bush to the horizon on the left (far view).
     /// </summary>
     public static class KingsParkBuilder
     {
@@ -31,6 +35,8 @@ namespace CityScooter.EditorTools.Districts
         public const float WalkwayX = 2.4f, WalkwayWidth = 3.2f, WalkwayStart = 4f, WalkwayRise = 10f, WalkwayHeight = 3f, WalkwayTop = 14f, GullyLength = 6f;
 
         static readonly Color DeckMesh = new Color(.34f, .33f, .42f), Timber = new Color(.66f, .47f, .3f);
+        // v0.6: the walkway's steel has a rusted (weathering steel) finish (BGPA's own description).
+        static readonly Color Corten = new Color(.6f, .33f, .2f), CortenDark = new Color(.42f, .23f, .16f);
 
         [MenuItem("CityScooter/Districts/Build Kings Park")]
         public static void Build()
@@ -245,14 +251,14 @@ namespace CityScooter.EditorTools.Districts
             {
                 float b = a + 2f, ya = Deck(a), yb = Deck(b);
                 m.Surface = ComicSurface.Metal;
-                SlopeBox(m, x - w + .16f, x + w - .16f, a, b, ya - .4f, ya, yb - .4f, yb, DeckMesh);
+                SlopeBox(m, x - w + .16f, x + w - .16f, a, b, ya - .2f, ya, yb - .2f, yb, DeckMesh);
                 for (int s = -1; s <= 1; s += 2)
                 {
                     float e = x + s * w, ei = e - s * .16f, g0 = e - s * .12f, g1 = e - s * .05f;
                     m.Surface = ComicSurface.PaintedMetal;
-                    SlopeBox(m, Mathf.Min(e, ei), Mathf.Max(e, ei), a, b, ya - .5f, ya + .14f, yb - .5f, yb + .14f, Steel);
+                    SlopeBox(m, Mathf.Min(e, ei), Mathf.Max(e, ei), a, b, ya - .26f, ya + .1f, yb - .26f, yb + .1f, Corten);
                     m.Surface = ComicSurface.Glass;
-                    SlopeBox(m, Mathf.Min(g0, g1), Mathf.Max(g0, g1), a + .05f, b - .05f, ya + .14f, ya + 1.12f, yb + .14f, yb + 1.12f, Glass);
+                    SlopeBox(m, Mathf.Min(g0, g1), Mathf.Max(g0, g1), a + .05f, b - .05f, ya + .1f, ya + 1.12f, yb + .1f, yb + 1.12f, Glass);
                     m.Surface = ComicSurface.Metal;
                     if (span % 2 == 0) m.Cylinder(V(e - s * .085f, ya + .67f, a), .045f, 1.06f, SteelDark, 8);
                 }
@@ -277,7 +283,7 @@ namespace CityScooter.EditorTools.Districts
             // Columns under the climbing part, the arch under the flat span (the bridge's signature curve).
             m.Surface = ComicSurface.PaintedMetal;
             for (float z = z0 + 4f; z < zr + .1f; z += 3f)
-                for (int s = -1; s <= 1; s += 2) m.Cylinder(V(x + s * (w - .3f), (Deck(z) - .45f) * .5f, z), .13f, Deck(z) - .45f, SteelDark, 8);
+                for (int s = -1; s <= 1; s += 2) m.Cylinder(V(x + s * (w - .3f), (Deck(z) - .24f) * .5f, z), .13f, Deck(z) - .24f, CortenDark, 8);
             const int seg = 8;
             for (int s = -1; s <= 1; s += 2)
             {
@@ -286,9 +292,9 @@ namespace CityScooter.EditorTools.Districts
                 {
                     float t0 = (float)i / seg, t1 = (float)(i + 1) / seg;
                     float za = Mathf.Lerp(zr - 1f, zl - .4f, t0), zb = Mathf.Lerp(zr - 1f, zl - .4f, t1);
-                    float ya = Mathf.Sin(t0 * Mathf.PI) * (H - .7f), yb = Mathf.Sin(t1 * Mathf.PI) * (H - .7f);
-                    Rod(m, V(ax, ya, za), V(ax, yb, zb), .16f, Steel);
-                    if (i % 2 == 1 && ya < H - .8f) m.Cylinder(V(ax, (ya + H - .45f) * .5f, za), .06f, H - .45f - ya, SteelDark, 8);
+                    float ya = Mathf.Sin(t0 * Mathf.PI) * (H - .45f), yb = Mathf.Sin(t1 * Mathf.PI) * (H - .45f);
+                    Rod(m, V(ax, ya, za), V(ax, yb, zb), .16f, Corten);
+                    if (i % 2 == 1 && ya < H - .8f) m.Cylinder(V(ax, (ya + H - .24f) * .5f, za), .06f, H - .24f - ya, CortenDark, 8);
                 }
             }
             // Entrance portal with the name board (dark park green, cream pixel letters), high enough to ride under.
@@ -303,8 +309,9 @@ namespace CityScooter.EditorTools.Districts
             u.Box(c.P(x, 3.98f, pz), V(WalkwayWidth + .3f, .95f, .14f), board);
             u.Box(c.P(x, 4.5f, pz), V(WalkwayWidth + .4f, .12f, .22f), R.ink);
             u.Box(c.P(x, 3.47f, pz), V(WalkwayWidth + .36f, .08f, .2f), R.cream);
-            Text(u, "FEDERATION", x, c.Y(pz) + 4.2f, pz - .08f, .066f, LimestoneCap);
-            Text(u, "WALKWAY", x, c.Y(pz) + 3.78f, pz - .08f, .066f, LimestoneCap);
+            // v0.6: the 5-wide N, W and Y of TrunkAKit's pixel font
+            TrunkAKit.Text(u, "FEDERATION", V(x, c.Y(pz) + 4.2f, pz - .08f), Vector3.right, Vector3.up, Vector3.back, .06f, LimestoneCap);
+            TrunkAKit.Text(u, "WALKWAY", V(x, c.Y(pz) + 3.78f, pz - .08f), Vector3.right, Vector3.up, Vector3.back, .06f, LimestoneCap);
         }
 
         /// <summary>The gully under the end of the walkway: a limestone-lined drop with ferns at the bottom.</summary>
@@ -347,6 +354,14 @@ namespace CityScooter.EditorTools.Districts
             }
             for (int i = 0; i < 3; i++) Balga(c.Props, c.P(F(c.Rnd, 13f, 22f), Mathf.Lerp(.14f, -3.5f, .2f), 6f + i * 12f), 1.1f, c.NextSeed());
             Gum(c.Front, c.P(10.2f, .14f, 2f), 19f, 21); Gum(c.Front, c.P(10.4f, .14f, 39f), 18f, 22);
+            // v0.6: the State War Memorial on its terrace at the edge of the scarp, over the river and the city
+            // (background only: behind the balustrade, no collider). The cross faces the park.
+            c.Front.Surface = ComicSurface.Concrete;
+            c.Front.Box(c.P(32f, -1.9f, 20f), V(16f, 5f, 16f), Limestone);
+            c.Front.Box(c.P(32f, .66f, 20f), V(16.4f, .14f, 16.4f), LimestoneCap);
+            TrunkAKit.Cenotaph(c.Front, c.P(32f, .7f, 20f), 16f, Vector3.left, new Color(.63f, .64f, .66f), new Color(.52f, .53f, .56f),
+                new Color(.82f, .82f, .8f), new Color(.12f, .2f, .5f), R.ink);
+            Palm(c.Props, c.P(20f, -.9f, 7f), 9f, 51); Palm(c.Props, c.P(20f, -.9f, 33f), 9.5f, 52);
             // Treetops of the bush on the escarpment below the lookout.
             for (int i = 0; i < 6; i++)
             {
@@ -404,7 +419,12 @@ namespace CityScooter.EditorTools.Districts
             return c.Save();
         }
 
-        /// <summary>Entry: calm limestone walls and hedges at z = 0, the KINGS PARK name wall, then the gums begin.</summary>
+        /// <summary>
+        /// Entry (v0.6): the road has just climbed off the river (Matilda Bay's exit ends with a 1.8 m limestone retaining
+        /// wall and a bush bank on the left, the park's low wall on the right, gums on both sides). Here the retaining
+        /// wall steps down to the low edge wall by z = 14, the gums stand from the first metre, and the KINGS PARK name
+        /// wall is on the right. No hedges, no lawn gap.
+        /// </summary>
         static RoadChunk Entry()
         {
             ChunkCtx c = New("Entry", Standard);
@@ -412,36 +432,126 @@ namespace CityScooter.EditorTools.Districts
             for (int side = -1; side <= 1; side += 2)
             {
                 ParkGround(c, side);
-                LimestoneEdge(c, side, 0f, 40f, .45f);
-                // Clipped hedges near the boundary (any district can meet them), gums from z 14 on.
-                for (float z = 1f; z < 13f; z += 2.6f)
-                    if (side < 0 || z < 5f) Shrub(c.Props, c.P(side * 10f, .14f, z), 1.25f, Color.Lerp(LeafGreen, Lawn, .3f));
-                GumRows(c, side, 13f, 40f);
-                DeepBush(c, side, 10f, 40f);
-                Undergrowth(c, side, 2, 19f, 24f, 16f, 40f);
+                // the name wall (right, z = 9) keeps a clear view: that side's gum rows start behind it
+                GumRows(c, side, side > 0 ? 12f : 0f, 40f);
+                DeepBush(c, side, 0f, 40f);
+                Undergrowth(c, side, 3, 19f, 24f, side > 0 ? 14f : 4f, 40f);
             }
-            NameBlock(c.Front, c.P(12.5f, .14f, 9f), "KINGS PARK", .17f, Limestone, new Color(.24f, .36f, .2f));
+            Gum(c.Front, c.P(18.5f, .1f, 2.5f), 19f, 61); Gum(c.Front, c.P(19.5f, .1f, 9.5f), 21f, 62);
+            LimestoneEdge(c, 1, 0f, 40f, .45f);
+            float[] zs = { 0f, 4f, 8f, 11f, 14f }, tops = { 2f, 1.5f, 1.05f, .7f };
+            for (int i = 0; i < 4; i++)
+            {
+                Wall(c.FrontFlat, -(Edge + .35f), .6f, tops[i], zs[i], zs[i + 1], Limestone, LimestoneCap, -.6f, zs[i + 1] - zs[i]);
+                float t = (zs[i] + zs[i + 1]) * .5f / 14f;
+                Bank(c.RoadFlat, -1, Edge + .6f, tops[i] - .05f, 40f, Mathf.Lerp(5.4f, .4f, t), BushFloor, zs[i], zs[i + 1]);
+            }
+            LimestoneEdge(c, -1, 14f, 40f, .45f);
+            Balga(c.Props, c.P(-10.4f, 1.6f, 3f), 1.1f, 41); Banksia(c.Props, c.P(-13.5f, 1.7f, 7f), 1f, 42);
+            NameWall(c.Front, c.P(12.5f, .14f, 9f), "KINGS PARK", .15f, Limestone, new Color(.24f, .36f, .2f));
             KangarooPaw(c.Props, c.P(9.6f, .14f, 8.6f), 1.2f, 31); KangarooPaw(c.Props, c.P(15.6f, .14f, 8.8f), 1.2f, 32);
             c.StandardSlots();
             return c.Save();
         }
 
-        /// <summary>Exit: the steep run down towards the city; gums thin out to lawns, hedges and low walls at z = 40.</summary>
+        /// <summary>A limestone name wall facing the rider, letters in the 5-wide pixel font (TrunkAKit).</summary>
+        static void NameWall(ComicMesh m, Vector3 p, string text, float px, Color stone, Color letters)
+        {
+            float w = TrunkAKit.TextWidth(text, px) + 1.2f, h = 5 * px + .9f;
+            m.Surface = ComicSurface.Concrete;
+            m.Box(p + V(0, h * .5f - .3f, 0), V(w, h + .6f, .7f), stone);
+            m.Box(p + V(0, .12f, 0), V(w + .14f, .24f, .84f), R.ink);
+            m.Box(p + V(0, h + .05f, 0), V(w + .2f, .14f, .85f), LimestoneCap);
+            TrunkAKit.Text(m, text, p + V(0, h * .55f, -.36f), Vector3.right, Vector3.up, Vector3.back, px, letters);
+        }
+
+        /// <summary>
+        /// Exit (v0.6): Fraser Avenue runs out of the park into West Perth. The gums end at the park gate (two limestone
+        /// piers at z = 20); beyond it the city street begins: a paved forecourt, a street tree in its pit, the Edith
+        /// Cowan memorial clock (background, behind the kerb), and the first buildings from the street kit on the line of
+        /// West Perth's shop fronts, lower by the park and taller towards the city.
+        /// </summary>
         static RoadChunk Exit()
         {
             ChunkCtx c = New("Exit", -6f);
             StandardRoad(c);
+            const float gate = 20f, city = 24f;
             for (int side = -1; side <= 1; side += 2)
             {
-                ParkGround(c, side);
-                LimestoneEdge(c, side, 0f, 40f, .45f);
-                GumRows(c, side, 0f, 24f, side < 0);
-                for (float z = 27f; z < 40f; z += 2.6f) Shrub(c.Props, c.P(side * 10f, .14f, z), 1.25f, Color.Lerp(LeafGreen, Lawn, .3f));
-                DeepBush(c, side, 0f, 26f);
-                RoundTree(c.Deep, c.P(side * 22f, .1f, 33f), 9f, Color.Lerp(Lawn, LeafGreen, .5f), 40 + side);
+                ParkGround(c, side, 0f, city);
+                LimestoneEdge(c, side, 0f, gate - .8f, .45f);
+                GumRows(c, side, 0f, gate - 2f, side < 0);
+                DeepBush(c, side, 0f, gate - 2f);
+                Undergrowth(c, side, 2, 12f, 20f, 2f, gate - 3f);
+                GatePier(c.Front, c.P(side * (Edge + .75f), .14f, gate));
+                Ground(c.RoadFlat, side, Edge, 60f, .2f, R.pavement, city, 40f, ComicSurface.Paving);
             }
+            Building(c, -1, "Cafe", city, 8f);
+            Building(c, -1, "Office", city + 8f, 8f);
+            Building(c, 1, "RowHouse", city, 4f);
+            Building(c, 1, "Bank", city + 4f, 12f);
+            c.Props.Add(ComicKitGeometry.Prop(new ComicAssetSpec { id = "TreePit", label = "TreePit", style = "tree", width = 2f, height = 5f, depth = 2f, color = R.pavement }, R),
+                c.P(-(Edge + 2.2f), .14f, gate + 2.2f), Quaternion.identity, Vector3.one);
+            CowanClock(c.Front, c.P(Edge + 2.3f, .14f, gate + 2f));
             c.StandardSlots();
             return c.Save();
+        }
+
+        /// <summary>A street-kit building facing the road, its front on the line of West Perth's shop fronts.</summary>
+        static void Building(ChunkCtx c, int side, string id, float z0, float width)
+        {
+            ComicAssetSpec spec = R.buildings.FirstOrDefault(b => b.id == id);
+            if (spec == null) throw new InvalidOperationException("The street kit has no building " + id);
+            float x = side * (Edge + .25f + spec.depth * .5f), drop = (c.Y(z0) - c.Y(z0 + width)) + .8f;
+            c.Front.Add(ComicKitGeometry.Building(spec, R), c.P(x, .2f, z0 + width * .5f) + V(0, c.Y(z0) - c.Y(z0 + width * .5f), 0), Quaternion.Euler(0, side < 0 ? 90f : -90f, 0),
+                new Vector3(width / spec.width, 1f, 1f));
+            c.Front.Surface = ComicSurface.Concrete;
+            c.Front.Box(V(x, c.Y(z0) + .2f - drop * .5f, z0 + width * .5f), V(spec.depth, drop, width), Color.Lerp(spec.color, R.ink, .4f));
+        }
+
+        /// <summary>A park gate pier: limestone, a cream cap and a ball.</summary>
+        static void GatePier(ComicMesh m, Vector3 p)
+        {
+            m.Surface = ComicSurface.Concrete;
+            m.Box(p + V(0, .2f, 0), V(1.5f, .4f, 1.5f), LimestoneDark);
+            m.Box(p + V(0, 1.7f, 0), V(1.15f, 2.6f, 1.15f), Limestone);
+            m.Box(p + V(0, 3.08f, 0), V(1.45f, .16f, 1.45f), LimestoneCap);
+            m.Box(p + V(0, 3.3f, 0), V(.9f, .28f, .9f), Limestone);
+            m.Ellipsoid(p + V(0, 3.78f, 0), V(.8f, .8f, .8f), LimestoneCap);
+        }
+
+        /// <summary>
+        /// The Edith Cowan memorial clock at the Fraser Avenue entrance (1934, about 6 m): a cream square pylon, a white
+        /// dial with dark hands on every face, white globe lamps near the top, a small dome with a ball. Background only.
+        /// </summary>
+        internal static void CowanClock(ComicMesh m, Vector3 p)
+        {
+            Color stone = new Color(.9f, .85f, .7f), pale = new Color(.96f, .93f, .82f), dark = new Color(.16f, .16f, .2f);
+            m.Surface = ComicSurface.Concrete;
+            m.Box(p + V(0, .15f, 0), V(3f, .3f, 3f), LimestoneDark);
+            m.Box(p + V(0, .45f, 0), V(2.3f, .3f, 2.3f), pale);
+            m.Box(p + V(0, 1.2f, 0), V(1.7f, 1.2f, 1.7f), stone);
+            m.Box(p + V(0, 1.86f, 0), V(1.86f, .12f, 1.86f), pale);
+            m.Box(p + V(0, 3.2f, 0), V(1.35f, 2.6f, 1.35f), stone);
+            m.Box(p + V(0, 4.56f, 0), V(1.6f, .14f, 1.6f), pale);
+            m.Box(p + V(0, 5.3f, 0), V(1.45f, 1.35f, 1.45f), stone);
+            m.Box(p + V(0, 6.04f, 0), V(1.65f, .14f, 1.65f), pale);
+            m.Ellipsoid(p + V(0, 6.15f, 0), V(1.2f, .9f, 1.2f), pale);
+            m.Ellipsoid(p + V(0, 6.75f, 0), V(.3f, .3f, .3f), pale);
+            m.Surface = ComicSurface.Metal;
+            m.Box(p + V(0, 2.6f, -.69f), V(.6f, .8f, .05f), new Color(.45f, .33f, .2f)); // the bronze portrait plaque
+            foreach (Vector3 n in new[] { Vector3.forward, Vector3.back, Vector3.right, Vector3.left })
+            {
+                Vector3 right = Vector3.Cross(Vector3.up, n), c0 = p + V(0, 5.3f, 0) + n * .735f;
+                m.Surface = ComicSurface.Plain;
+                TrunkAKit.Disc(m, c0, n, .56f, Color.white, 10);
+                TrunkAKit.Face(m, c0 + n * .01f - right * .03f, c0 + n * .01f + right * .03f, c0 + n * .01f + right * .03f + Vector3.up * .42f, c0 + n * .01f - right * .03f + Vector3.up * .42f, dark, n);
+                TrunkAKit.Face(m, c0 + n * .01f - Vector3.up * .03f, c0 + n * .01f + right * .3f - Vector3.up * .03f, c0 + n * .01f + right * .3f + Vector3.up * .03f, c0 + n * .01f + Vector3.up * .03f, dark, n);
+                // a globe lamp at each corner
+                Vector3 corner = p + V(0, 4.9f, 0) + (n + right) * .82f;
+                m.Surface = ComicSurface.Glass;
+                m.Ellipsoid(corner, V(.3f, .3f, .3f), Color.white);
+            }
         }
 
         // ------------------------------------------------------------------ obstacles, animals, ramp, far view
@@ -535,6 +645,21 @@ namespace CityScooter.EditorTools.Districts
                 m.Ellipsoid(V(F(r, 270f, 330f), -36f, z), V(F(r, 50f, 80f), 14f, 30f), new Color(.42f, .52f, .34f));
                 m.Ellipsoid(V(-F(r, 80f, 120f), 2f, z), V(F(r, 40f, 60f), 22f, 34f), GumLeafDark);
             }
+            // v0.6: the park's interior on the left is tall bush to the horizon (it used to show the sky's river band
+            // under the trees, as if the avenue ran along a ridge with water on both sides): ground, a wall of gum crowns
+            // on pale trunks, a darker mass behind.
+            for (float z = -60f; z < 320f; z += 20f) Flat(m, -420f, -78f, z, z + 20f, .05f, BushFloorDark);
+            for (float z = -50f; z < 320f; z += 13f)
+            {
+                float x = -F(r, 84f, 112f), h = F(r, 20f, 28f);
+                m.Surface = ComicSurface.Wood;
+                m.Cylinder(V(x, h * .3f, z), .7f, h * .6f, GumBark, 6, .6f);
+                m.Surface = ComicSurface.Foliage;
+                m.Ellipsoid(V(x, h * .78f, z), V(F(r, 15f, 21f), h * .5f, F(r, 13f, 17f)), r.Next(2) == 0 ? GumLeaf : GumLeafDark);
+                m.Ellipsoid(V(x + 3f, h * .9f, z - 2f), V(9f, h * .26f, 8f), GumLeafLight);
+            }
+            for (float z = -50f; z < 320f; z += 30f)
+                m.Ellipsoid(V(-F(r, 140f, 190f), 10f, z), V(90f, 40f, 46f), Color.Lerp(GumLeafDark, BanksiaLeaf, .5f));
             m.Surface = ComicSurface.Concrete;
             // No far-shore blocks: the GPU city curl lifts them over the hillside (they floated); the sky panorama shows the city.
             m.Shear(-Standard / 40f); // follows the downhill ahead of the rider like the chunks do

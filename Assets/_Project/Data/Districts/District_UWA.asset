@@ -15,6 +15,7 @@ MonoBehaviour:
   id: uwa
   displayName: UWA
   order: 10
+  line: 
   length: {x: 420, y: 560}
   chunks:
   - {fileID: 6196519693574755084, guid: 47fafd5d7bbcdd345b8103344502c10d, type: 3}
@@ -56,7 +57,8 @@ MonoBehaviour:
   skyYaw: -70
   skySize: 0.85
   skyHeight: -2.5
-  farScenery: {fileID: 3071551644042041595, guid: f08dfcff6a807d74bbf91aa82d311f6f, type: 3}
+  skyline: 1
+  farScenery: {fileID: 1544484466902347916, guid: 7e3685d6de45b564a95985cf764a5ca8, type: 3}
   gateway: {fileID: 8780647176367858469, guid: 5cfd242a69e65cc48a624ee8dbcb3e9a, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35

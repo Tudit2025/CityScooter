@@ -1,0 +1,66 @@
+UWA (id uwa, order 10): v0.6 polish notes
+==========================================
+Method (docs/v0.6-polish.md): ride-through from the chase camera every 20 m (test DistrictTrunkARide.RideThrough),
+boundary pictures 60 / 40 / 20 m before and 0 / 20 / 40 m after (DistrictTrunkARide.Boundaries), a top ten of the
+worst things, fixes from the most visible, two rounds. Compared with last night's east line
+(mtlawley/previews/09-astor.png, guildford/previews/03-guildford-hotel.png).
+
+Pictures here
+- before-sheet-N.jpg / after-sheet-N.jpg: the whole ride, 6 pictures a sheet (left to right, top to bottom, 20 m apart).
+- before-from-<id>-sheet.jpg / after-from-<id>-sheet.jpg: the boundary INTO this district from <id> (warnbro, midland).
+- before-*.png / after-*.png: full-size pairs worth opening.
+
+Top ten of the worst things (before)
+ 1. Every arcade was a flat dark sticker on a flat wall: no depth, no columns, no shade. The whole campus read as
+    cardboard next to the east line's shop fronts.
+ 2. The same block repeated down both sides; bare walls of one flat colour (no stone, no sills, no string course).
+ 3. Winthrop Hall did not match the real front: a solid box for the gallery, two tiers of belfry arches, a tall
+    steep roof; a jacaranda stood in front of it and hid the pond.
+ 4. The entry chunk was the generic "hedge + lawn + trees" clearing: a rider coming back from Warnbro or Midland
+    arrived nowhere. The exit was the same chunk mirrored.
+ 5. UWA -> Matilda Bay: the campus stopped in a lawn, then a different place began; paving cut from campus
+    limestone to grey slabs and a red path exactly on the boundary line; the far scenery sank and another rose.
+ 6. The far scenery was rows of pale boxes with red lids to the horizon on both sides (a toy town).
+ 7. Roofs were bare single-colour wedges.
+ 8. The reflection pond was the same light blue as the lily pond, with lilies; the real one is dark and still.
+ 9. No Moreton Bay fig anywhere; the peacocks only appeared as random pedestrians.
+10. Rows of identical jacarandas, all one size.
+
+Round 1
+ 1. CampusBlock rebuilt: a real ground-floor arcade (TrunkAKit.Arcade: round arches with reveals on stout round
+    columns with capitals and bases, a paved walk 1.6 m deep, the ground-floor wall with doors and windows in the
+    shade behind it), the upper floor over the walk.
+ 2. Rock-faced limestone: blocks in two tones on the walls; sills under the upper windows; string course.
+ 3. Winthrop Hall rebuilt from photographs (SOURCES.txt): undercroft of 12 arches on round columns, loggia of 18
+    small arches in threes with a balustrade, six tall narrow windows, the east pavilion, a low tile roof; tower
+    with one tier of four open belfry arches a side, a pair of windows, the blue-and-cream clock under a hood, a low
+    pyramid roof, the small balcony. The tree in front is gone.
+ 4. Entry: the street arrives at a campus gate (limestone pylons with terracotta caps and wing walls, cypress
+    pairs, street trees from the street kit before the gate); grey paving turns to campus limestone behind a brick
+    band at the gate.
+ 5. Exit: the campus edge carries on along the left; on the right the last block ends, the lawn opens to peppermint
+    trees, beach and Matilda Bay with moored yachts; the red shared path starts inside this chunk (stone band, bar,
+    SHARED PATH on the path); a HACKETT DR street sign. Matilda Bay's entry starts with the same cross-section.
+    One far-scenery prefab for UWA and Matilda Bay (PRP_Crawley_FarRiverside): it no longer sinks at the boundary.
+ 6. Far scenery: the river and the far shore on the right (the campus is on Matilda Bay), campus roofs among
+    two-tone trees and the Kings Park ridge on the left; the chunks' own far blocks got arched windows.
+ 7. TileRoof: two darker tile courses a slope and hip ridges.
+ 8. Reflection pond: dark still water nearly flush with the paving, the hall and tower as pale streaks in it,
+    stone bench walls at the ends, no lilies.
+ 9. A Moreton Bay fig beside Winthrop Hall (towards the Arts building) and one behind the palms of the grove;
+    peacocks on the lawn of the cloister quad (scenery, out of reach).
+
+Round 2
+10. Jacarandas in two sizes in the grove, arcades and Winthrop chunks; one palm less in the grove (budget).
+ -  Checked the ride again: nothing floats or pokes through; triangle counts 13,988 to 24,900 a chunk (limit 25,000).
+
+Gameplay layout: unchanged (lanes, slots, the steps-and-pond jump, benches / bike racks as sidewalk obstacles at
+the same places, obstacle and pedestrian lists, length).
+
+Left weak
+- Cloisters is at 24,900 triangles: no room for more there.
+- The upper-floor windows are still flat (dark arch on the wall, with a sill); only the ground-floor arcades and
+  Winthrop Hall's galleries and belfry have real depth.
+- The tower keeps a clock on three faces (in life the east face has none): a rider approaches from that side and
+  should see "the clock tower".
+- The hall is 34 m long (64 m in life) to fit one 40 m chunk; the tower is 44 m (49 m).

@@ -26,3 +26,53 @@ General knowledge of the place (no image copied):
 
 Proportions used: road 8 m + 4 m paved paths (contract), limestone wall 0.5 m high at x = +-8.3 m, walkway deck 3.2 m wide,
 3 m high, 10 m climb + 14 m flat, then a 6 m gully (WHOOPS).
+
+v0.6 精修（2026-11-11）重新核对的资料
+======================================
+[T] = 网页正文里写明的；[P] = 自己对着 Wikimedia Commons 照片看出来的。
+
+Fraser Avenue
+- [T] 柠檬桉 1938 年种下，换掉了 1898 / 1929 年种的红花桉。
+  https://en.wikipedia.org/wiki/Kings_Park,_Western_Australia
+  https://www.bgpa.wa.gov.au/kings-park/area/fraser-avenue-precinct
+- [P] 路两边各一排，很密；树干光滑，白色到浅粉灰色，下半截没有枝；树冠在双车道上方合拢；草坪边、细的深色灯杆；
+  北端正对着钟塔。Commons "Fraser Avenue looking north"、"Fraser Avenue from north"
+
+State War Memorial
+- [T] 18 m 高的花岗岩方尖碑，立在有地下室的基座上（1929）；西侧是 Court of Contemplation（1955）；
+  Flame of Remembrance 在 Pool of Reflection 里（2000）。
+  https://www.bgpa.wa.gov.au/kings-park/attraction/state-war-memorial
+- [P] 灰色毛面花岗岩，向上收分，四棱锥顶，正面有一个朴素的浮雕十字，基座上有铜牌；阶梯形基座，白色栏杆，两根白旗杆；
+  立在崖边，后面就是水；旁边有一排棕榈。远处是 CBD 楼群、河和对岸。
+  Commons "Kings Park war memorial, January 2014"、"Kings Park war memorial from below and east"
+- 取用：Lookout 路段右侧的石灰岩平台上加了 TrunkAKit.Cenotaph（灰色方尖碑、十字、阶梯基座、白栏杆、两根旗杆）和两棵棕榈。
+  只当背景：在护栏外面，没有碰撞体，撞不到也打不到。做成 16 m 高。
+
+DNA Tower
+- [T] 白色，15 m，101 级台阶，双螺旋，在公园最高处。（原来的做法就符合，没有改。）
+
+Lotterywest Federation Walkway
+- [T] 全长 620 m，架空段 222 m；玻璃和钢的拱桥长 52 m，最高处离地 16 m；钢是锈色面层。
+  https://www.bgpa.wa.gov.au/kings-park/attraction/lotterywest-federation-walkway
+- [P] 很平的深锈棕色拱，斜腿，清玻璃栏板和细金属柱。Commons "Kings Park Glass Bridge"
+- 取用：桥面边梁、拱和立柱从灰钢改成锈色（#995433 / #6B3B29）；桥面和边梁做薄，拱顶抬到梁底。
+
+植物
+- [T] Mangles 袋鼠爪是西澳州花；Banksia menziesii；粉色和白色的 everlasting；草树（Xanthorrhoea）。
+  https://www.bgpa.wa.gov.au/kings-park/area/bushland
+
+Fraser Avenue 入口（West Perth 一端）和 Edith Cowan 纪念钟
+- [T] Fraser Avenue 在一个改过的环岛和 Kings Park Road、Malcolm Street 相接。纪念钟立在环岛的岛上，在公园外面：
+  约 6 m 高，Donnybrook 石，Art Deco，1934 年，每面一个钟，有铜质头像牌。
+  https://en.wikipedia.org/wiki/Edith_Dircksey_Cowan_Memorial
+  https://en.wikipedia.org/wiki/Kings_Park_Road
+- [P] 浅奶油色的方形石柱，白钟面，靠近顶部有白色球灯，小穹顶上一个球。
+  Commons "Edith Cowan memorial at entrance to Kings Park"
+- 取用：出口路段在公园门柱外加了 CowanClock（只当背景，在路缘以外）。门柱的样子和 West Perth 第一条街的房子类型没有
+  查到资料：门柱是按公园的石灰岩矮墙设计的，房子用街道素材库（ComicKitGeometry.Building）生成，和 West Perth 一致。
+
+从 Mounts Bay Road 上到公园
+- [T] Jacob's Ladder（242 级，约 41 m 高差）；Kokoda Track Memorial Walk（约 150 级，62 m 高差，从 Kennedy Fountain 到纪念碑北边）。
+  https://en.wikipedia.org/wiki/Jacob%27s_Ladder_(Perth)
+  https://www.bgpa.wa.gov.au/kings-park/attraction/kokoda-track
+- 取用：Matilda Bay 出口到 Kings Park 入口做成"离开河边、沿石灰岩挡土墙爬进灌木林"。

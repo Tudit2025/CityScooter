@@ -35,3 +35,41 @@ MATILDA BAY（id matilda，order 20）参考来源与取用内容
 说明
 - 河在骑行方向右侧（从 Crawley 往市中心，河在东南边）。
 - 不做任何商标、文字。船屋的旗子只是一块深蓝色。
+
+v0.6 精修（2026-11-11）重新核对的资料
+======================================
+[T] = 网页正文里写明的；[P] = 自己对着 Wikimedia Commons 照片看出来的。
+
+沿 Hackett Drive 从南到北（OSM 纬度）
+- Pelican Point Sea Scouts、Mounts Bay Sailing Club、Royal Perth Yacht Club（都在 Pelican Point 北侧的 Australia II Drive），
+  Matilda Bay Restaurant，Bayside Kitchen 咖啡馆，然后是 Mounts Bay Road，再往北约 900 m 是 Crawley Edge Boatshed。
+  https://en.wikipedia.org/wiki/Pelican_Point_(Swan_River)
+  https://exploreparks.dbca.wa.gov.au/park/matilda-bay-reserve
+  https://nominatim.openstreetmap.org/ （按名字逐个查）
+- 取用：没有做俱乐部的房子，用成片的系泊帆船代表（MooredYacht：光桅杆、收起的帆、彩色水线、橙色浮筒）。
+
+Crawley Edge Boatshed（蓝色船屋）
+- [T] 在 Mounts Bay Road；1930 年代建，1972 年重建得稍大；"bold blue"；栈桥后来换成钢桩。
+  https://en.wikipedia.org/wiki/Crawley_Edge_Boatshed
+- [P] 桩上的单间小屋，蓝色横向护墙板，正中白门、两边各一扇白框小窗，蓝灰色双坡顶；笔直的木板栈桥没有扶手。
+  Commons "Blue Boat House 2016-09-04"
+- 取用：屋顶从近白色改成蓝灰色（#7F97AC）；其余原来就对。
+
+Eliza 雕像
+- [T] 2007 年立；2.2 m 的青铜像，一个准备跳水的女子，站在离岸约 15 m 的钢柱上的基座上（原 Crawley Baths 的位置）。
+  https://en.wikipedia.org/wiki/Eliza_(sculpture)
+- [P] 双臂上举张开，站在钢柱顶上一个木板包的方箱上。Commons "Eliza (sculpture), May 2020"
+- 取用：Boatshed 路段船屋旁的水里加了 Eliza()（布景，在河里，撞不到）。
+
+树、小路、岸
+- [P] 草坪一直到水边；红褐色沥青的共享小路沿 Hackett Drive；木桩（bollard）；弯臂路灯；高桉树和垂枝的薄荷树；
+  窄沙滩；黑天鹅；几十条系泊的白色帆船。
+  Commons "Crawley Matilda Bay Reserve Hackett S from theatres"、"…Matilda Bay Reserve 001"、"…003"
+- 取用：小路边加了圆木桩；陆地一侧的草坪上加了高桉树。
+
+水对面
+- [P] 朝东北看，从左到右：Crawley 的白色公寓楼、又长又暗的 Kings Park / Mount Eliza 山脊、CBD 楼群、低矮的远岸。
+- [T] Mount Eliza：黄褐色沙覆盖在 Tamala 石灰岩上；从下面看是长满深色灌木的陡坡，有浅色的裸露处。
+  https://en.wikipedia.org/wiki/Mount_Eliza_(Western_Australia)
+- 取用：陆地一侧的陡坡（Escarpment）重做：缓坡脚 + 深色灌木的陡面 + 沙斑和石灰岩露头 + 坡顶一排树冠和浅色桉树干。
+  远景和 UWA 共用一个预制体（PRP_Crawley_FarRiverside）：右边是河和远岸，左边是校园屋顶和 Kings Park 山脊。

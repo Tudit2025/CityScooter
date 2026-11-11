@@ -31,3 +31,56 @@ UWA（id uwa，order 10）参考来源与取用内容
 说明
 - 只做风格化剪影，没有校徽、文字或商标。A 字牌只用蓝底金色箭头。
 - 孔雀是 UWA 校园里真实常见的"住客"；做了两种：拖着长尾走路的、开屏的。
+
+v0.6 精修（2026-11-11）重新核对的资料
+======================================
+[T] = 网页正文里写明的；[P] = 自己对着 Wikimedia Commons 照片看出来的（数量、颜色来自照片，不是文件）。
+
+Winthrop Hall 和钟楼
+- [T] 1932 年落成，"Italianate Romanesque"；砖墙外包石灰岩，Donnybrook 砂岩饰件，瓦屋顶；墙基是锯切方石，上部是毛面石。
+  钟楼 49 m（UWA 官网；Waymarking 写 45 m）。钟面 1953 年换成赤陶的。
+  https://www.uwa.edu.au/news/article/2022/april/uwas-historic-winthrop-hall-celebrates-90-majestic-years
+  https://www.waymarking.com/waymarks/WMADHV_University_of_Western_Australia_Clock__Perth_Australia
+  https://inherit.dplh.wa.gov.au/Public/Inventory/Details/5e0b8148-35c4-4340-b171-d825554210ec
+- [P] 朝倒影池的北立面分三层：底层 12 个圆拱（圆柱，6 开间 x 2）；二层外廊 18 个小拱，三个一组，有镂空石栏杆；
+  上面 6 个又高又窄的圆头窗。东端有一个凸出的端亭（一组双窗）。檐下有花饰带，屋顶是低坡橙色赤陶瓦。
+  钟楼在西端：从倒影池看在右手边（OSM 轮廓一致，大厅约 64 x 27 m）。塔顶每面一层 4 个圆拱钟室洞口，上面是檐口和
+  很平的四坡瓦顶；往下每面一对拱窗，再往下是圆钟（蓝心、奶油色外圈，上有小披檐），北面塔身低处有一个带披檐的小阳台。
+  东面没有钟。
+  https://commons.wikimedia.org/wiki/Category:Winthrop_Hall
+  （"UWA Winthrop Hall 2014"、"UWA Winthrop Hall and reflective pool 2021"、"University of Western Australia Withorp Hall"）
+  https://nominatim.openstreetmap.org/search?q=Winthrop+Hall+Crawley&format=json&polygon_text=1
+- 取用：WinthropHall() 按上面重做（12 拱底层 + 18 拱外廊 + 6 高窗 + 东端亭 + 低坡瓦顶；钟楼一层 4 拱钟室、一对拱窗、
+  蓝钟和披檐、小阳台、很平的塔顶）。大厅只做 34 m 长（一个 40 m 路段放得下），塔 44 m。
+  和实物不同的地方：朝来车方向（东面）也放了钟，因为骑手是从这一面接近的，要一眼认出"钟楼"。
+
+倒影池
+- [T] 1932 年学生挖的，在大厅北侧的 Whitfeld Court。
+- [P] 长方形，和立面平行，长度和拱廊差不多；深色静水，几乎和浅色石灰岩铺地齐平；两端有矮石凳墙；没有睡莲。
+  https://inherit.dplh.wa.gov.au/public/inventory/printsinglerecord/e1ff4713-5db7-4df5-9b1c-d5de45759b3f
+  Commons "Winthrop Hall and reflection pool 2008"
+- 取用：水色改深（#2C5F7E），水里有大厅和钟楼的浅色倒影，池边压低，两端加石凳墙；去掉了挡在前面的蓝花楹。
+
+拱廊和屋瓦
+- [T] 老的有顶走廊以石灰岩圆拱为特色；Hackett Hall 是单层，在 Whitfeld Court 东侧，用拱门和 Winthrop Hall 相连。
+- [P] 圆拱落在粗圆柱上，柱头是简单的垫块；墙是奶油色到蜂蜜色的毛面石灰岩，不规则分层；屋顶是橙红色半圆赤陶瓦。
+  Commons "UWA Arches along 2011"、"Winthrop Hall, UWA, September 2020 04"
+- 取用：CampusBlock() 的底层改成真正有进深的拱廊（圆柱、柱头、柱础、1.6 m 深的走道，后墙在阴影里）；
+  墙面加两种色调的石块；屋顶加两道瓦垄和斜脊。（"Cordova" 这个瓦名没有查到出处，不再这样叫。）
+
+Moreton Bay 无花果树
+- [T] 一棵约 1932 年种的大无花果树在 Winthrop Hall 和 Arts Building 之间；2018 年 11 月断过一部分。
+  https://historycouncilwa.org.au/2018-11-26-if-a-branch-falls-and-you-didnt-hear-it/
+- 取用：WinthropHall 路段右侧（朝 Arts 楼一侧）放一棵，Grove 路段棕榈后面再放一棵（板根、粗短树干、又宽又暗的树冠）。
+
+孔雀
+- [T] New Fortune Theatre（Arts 楼里的露天伊丽莎白式剧场）住着孔雀，常站在栏杆上；1975 年捐赠。
+  https://www.uwa.edu.au/facilities/new-fortune-theatre
+- 取用：Cloisters 路段的草坪上放了两只当布景（人行道以外，撞不到）；路上走动的孔雀照旧。
+
+入口和 Hackett Drive
+- [T] 礼仪入口在 Mounts Bay Road / Winthrop Avenue；学校建议访客从 Hackett Drive 进。校门、标牌、行道树的样子没有查到。
+- OSM：Hackett Drive 在 Winthrop Hall 以东、Matilda Bay Restaurant 以西：往北骑，河在右手边，校园在左手边。
+  https://nominatim.openstreetmap.org/search?q=Hackett+Drive+Crawley+Western+Australia&format=json
+- 取用：入口路段做了一座石灰岩门柱（赤陶小顶、弧形翼墙、两对柏树）。这是按校园建筑的语汇设计的，不是照着某一座
+  真实的门做的。出口路段右侧打开到 Matilda Bay，路牌写 HACKETT DR。

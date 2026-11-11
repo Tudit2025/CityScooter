@@ -1,0 +1,53 @@
+KINGS PARK (id kingspark, order 30): v0.6 polish notes
+======================================================
+Method: see art-src/districts/uwa/previews/polish/NOTES.txt (same tests, same picture names).
+- after-from-matilda-sheet.jpg is the boundary Matilda Bay -> Kings Park.
+- after-from-kingspark-sheet.jpg is the boundary Kings Park -> West Perth (West Perth's side is the tech artist's
+  street and was not touched).
+
+Top ten of the worst things (before)
+ 1. Kings Park -> West Perth: the avenue ended in shrubs and lawn with West Perth's huge blank back blocks standing
+    in the open on both sides; then a wall of shop fronts started on the line.
+ 2. Matilda Bay -> Kings Park: hedge blobs, a lawn gap, then the gums.
+ 3. The left side showed the sky's river band under the trees: the avenue looked like a ridge with water on both
+    sides (the park's interior is on the left in life).
+ 4. No State War Memorial at all (the lookout was a wall and two coin binoculars).
+ 5. Beside the Federation Walkway the camera looked at one huge flat grey slab (the deck's edge beam at eye level).
+ 6. The walkway's steel was grey; it is rust-coloured weathering steel.
+ 7. The KINGS PARK name wall and the FEDERATION WALKWAY board used the 3-pixel N and W.
+ 8. The entry was calm for 13 m (clipped shrubs) before anything of the park showed.
+ 9. Nothing marked the Fraser Avenue end of the park (no gate, no clock).
+10. The same gum in the same rhythm in every chunk; little under them in places.
+
+Round 1
+ 1. Exit: the gums end at a park gate (limestone piers with ball caps, z = 20); beyond it a paved forecourt, a
+    street tree from the street kit, the Edith Cowan memorial clock (background, behind the kerb, no collider), and
+    four buildings generated with the street kit (cafe and office on the left, row house and bank on the right) on
+    the line of West Perth's shop fronts. They also hide West Perth's blank back blocks.
+ 2. Entry: the retaining wall and bush bank of Matilda Bay's exit step down to the park's low wall by z = 14, gums
+    from the first metre, grass tree and banksia on the bank, the name wall on the right. No hedges.
+ 3. Far view: on the left ground, a wall of gum crowns on pale trunks and a darker mass behind, to the horizon.
+ 4. The State War Memorial at the lookout: the grey granite obelisk with its cross on a stepped podium with white
+    rails and two flagpoles, on a limestone terrace at the edge of the scarp, two palms. Background only: beyond
+    the balustrade, no collider.
+ 6. Walkway steel in rust colours (deck edge beams, arch, columns).
+ 7. Both signs in TrunkAKit's pixel font (5-wide M, N, W, V, Y).
+
+Round 2
+ 5. Walkway deck and edge beams thinner (0.36 m instead of 0.64 m), the arch raised to meet them: beside the
+    walkway you now see the arch and the glass, not a slab.
+ 4. The memorial moved 7 m further from the road (it was cut off by the top of the screen) and is 16 m high.
+ 2. The gum that stood in front of the name wall moved behind it.
+ -  Checked the ride again; triangle counts 17,264 to 24,508 a chunk.
+
+Gameplay layout: unchanged (lanes, slots, the walkway ramp and its gully numbers, obstacle and pedestrian lists,
+length, grades). ParkRiverKit was not changed.
+
+Left weak
+- Beside the walkway the camera is still only 0.8 m from its edge at deck height: the beam and glass fill a
+  quarter of the screen for a second (a layout matter: the walkway owns the right lane).
+- The lookout does not read as 60 m above the river: the scarp falls away out of sight and the water is the sky
+  picture's. The memorial and the treetops below help; a real view would need the river modelled far below.
+- Wildflowers, Walkway and Entry sit at 24,000 to 24,500 triangles: no room for more undergrowth there.
+- The exit's buildings stand right up to West Perth's first shop front: if West Perth's first chunk starts with a
+  setback building there is a 0.25 m step in the building line.
