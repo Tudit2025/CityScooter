@@ -1656,7 +1656,7 @@ namespace CityScooter.EditorTools.Districts
                 ("BeachSign", null, Make(m => BeachSign(m, Vector3.zero, "WARNBRO BEACH"))),
                 ("StationHall", null, Make(m => StationHall(m, new CqLot(-1, -14f, 14f, 6f, 11f, 0f)))),
                 ("StationCanopy", null, Make(m => StationCanopy(m, V(0, 0, -6f), 12f))),
-                ("Train", null, Make(m => Train(m, Vector3.zero, 1))),
+                ("Train", null, SouthLineKit.TrainSample(20f, true)),
                 ("ParkedCar", null, Make(m => ParkedCar(m, Vector3.zero, 0f, K.Hex("C9CED3")))),
                 ("AccessFence", null, Make(m => AccessFence(m, V(0, 0, 0), V(0, 0, 6f), (x, z) => 0f))),
                 ("SurfRack", rack.gameObject, null),
@@ -1987,7 +1987,8 @@ namespace CityScooter.EditorTools.Districts
             StationHall(d.Frontage, hall);
             d.Wall(hall, 9f);
             StationCanopy(d.Landmark, V(-(K.Edge + 32f), d.Ground(4f), 4f), 34f);
-            Train(d.Deep, V(-(K.Edge + 38.5f), d.Ground(4f) - .4f, 4f), 3);
+            // v0.6: the south line's one standard train (SouthLineKit) on the line behind the platform canopy
+            SouthLineKit.Train(d, 0, 2f, 38f, new SouthLineKit.Corridor { Shift = z => K.Edge + 38.5f - SouthLineKit.TrackA, Lift = z => K.Kerb - .4f - SouthLineKit.RailTopY });
             StationSign(d.Props, V(-(K.Edge + 1.2f), d.Ground(5f), 5f));
             d.Walls.Add(new Bounds(new Vector3(-(K.Edge + 20f), d.Y(20f) + 1f, 20f), new Vector3(38f, 4f, 40f)));
             d.StandardSlots();
@@ -2516,23 +2517,6 @@ namespace CityScooter.EditorTools.Districts
             f.Surface = ComicSurface.Plaster;
             f.Box(p + V(1.5f, 4f, length * .75f), V(2.6f, 8f, 2.6f), K.Hex("E4E2D5"));
             f.Box(p + V(1.5f, 8.1f, length * .75f), V(2.8f, .2f, 2.8f), Navy);
-        }
-
-        /// <summary>A suburban train (no branding): silver carriages with a navy window band, darker doors, ink roof gear.</summary>
-        static void Train(ComicMesh m, Vector3 p, int cars)
-        {
-            for (int i = 0; i < cars; i++)
-            {
-                Vector3 c = p + V(0, 0, i * 20.5f + 10f);
-                m.Surface = ComicSurface.Metal;
-                m.Box(c + V(0, 2.3f, 0), V(3f, 3.4f, 20f), K.Hex("D9DEE3"));
-                m.Surface = ComicSurface.Glass;
-                m.Box(c + V(0, 2.8f, 0), V(3.04f, .9f, 19f), Navy);
-                m.Surface = ComicSurface.PaintedMetal;
-                for (float z = -7f; z <= 7.01f; z += 7f) m.Box(c + V(0, 2.1f, z), V(3.06f, 2.6f, 1.4f), K.Hex("8C96A0"));
-                m.Box(c + V(0, 4.1f, 0), V(2.6f, .3f, 18f), K.Hex("9AA4AE"));
-                m.Box(c + V(0, .5f, 0), V(2.6f, .6f, 18f), K.R.ink);
-            }
         }
 
         // ---------------------------------------------------------------- Warnbro obstacles and animals

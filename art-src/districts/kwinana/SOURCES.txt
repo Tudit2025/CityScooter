@@ -42,5 +42,5 @@ v0.6 精修（2026-11-11，南线 B）又查的资料
 - Kwinana Industrial Area（Westport）https://westport.wa.gov.au/industry/kwinana-industry
   只确认了工业区的范围；炼油厂、氧化铝厂的天际线没有找到可用的描述，仍按 v0.4 的风格化剪影。
 - 交界（docs/v0.6-polish.md）：Mandurah 线在 Kwinana 离开 Kwinana Freeway 的中间带，往西南去 Kwinana、Wellard、Rockingham、Warnbro 各站。
-  所以进口块里高速公路向左甩开，出口块里铁路从左边靠过来、一直通到 Wellard 车站。进口块的高速公路截面照 Aubin Grove
-  现在的数字（CockburnAubinBuilder.FreewaySide）。
+  所以进口块里高速公路向左甩开，出口块里铁路从左边靠过来、一直通到 Wellard 车站。进口块的走廊用 SouthLineKit
+  （南线走廊标准），火车是工具里那一种 Transperth B 系列。

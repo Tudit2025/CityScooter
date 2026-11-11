@@ -3,7 +3,7 @@ OBS_Wellard_Footballs 432 tris
 OBS_Wellard_WheelieBins 448 tris
 OBS_Wellard_Bollard 136 tris
 CHN_Wellard_Entry 19140 tris, 6 renderers
-CHN_Wellard_Station 21740 tris, 8 renderers
+CHN_Wellard_Station 21436 tris, 8 renderers
 CHN_Wellard_Estate 12272 tris, 5 renderers
 CHN_Wellard_Village 16580 tris, 7 renderers
 CHN_Wellard_Park 7020 tris, 7 renderers
