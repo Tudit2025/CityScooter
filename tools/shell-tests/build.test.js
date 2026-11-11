@@ -170,6 +170,7 @@ function installFakeSerial() {
     await page.waitForFunction(() => window.__toUnity.some((c) => c.includes("sim|open:stars:5")), { timeout: 15000 }).catch(() => {});
     await page.click(".cs-monitor-head strong");
     const from = await ev(() => window.__sent.length);
+    let restarts = 0;
     const rides = () => ev((n) => {
       // one entry per ride: did wanted:5 come after its go and before the next go?
       const out = [];
@@ -180,11 +181,19 @@ function installFakeSerial() {
       return out;
     }, from);
     for (const end = Date.now() + 150000; Date.now() < end && (await rides()).filter(Boolean).length < 3;) {
+      // The external simulator can hang when a program is replaced; the shell notices, gives it a new iframe and asks
+      // for its play button again (bridge.md). Do what the student would: click it.
+      if (await ev(() => { const h = document.getElementById("cs-sim-hint"); return !!h && !h.hidden && /Click/.test(h.textContent); })) {
+        const f = page.frames().find((fr) => fr.url().includes("python-simulator.usermbit.org"));
+        try { await f.waitForSelector(".play-button", { visible: true, timeout: 15000 }); await f.click(".play-button"); restarts++; await sleep(2500); } catch (e) { await sleep(1000); }
+        await page.click(".cs-monitor-head strong");
+        continue;
+      }
       await page.keyboard.press("a"); // starts a ride from the start screen or after the ride ended; a jump during a ride
       await sleep(900);
     }
     const got = await rides();
-    check("every ride: open:stars:5 from the board gives 5 stars at the start of 3 rides in a row", got.length >= 3 && got.slice(0, 3).every(Boolean), JSON.stringify(got)
+    check("every ride: open:stars:5 from the board gives 5 stars at the start of 3 rides in a row", got.length >= 3 && got.slice(0, 3).every(Boolean), JSON.stringify(got) + (restarts ? " (simulator restarted " + restarts + "x)" : "")
       + " sent: " + JSON.stringify(await ev((n) => window.__sent.slice(n).slice(-14), from))
       + " toUnity: " + JSON.stringify(await ev(() => window.__toUnity.slice(-6).map((c) => c.slice(0, 90))))
       + " monitor: " + JSON.stringify(await ev(() => [...document.querySelectorAll("#cs-log .cs-line")].slice(-12).map((r) => r.className.replace("cs-line ", "") + " " + r.textContent.slice(0, 110)))));
