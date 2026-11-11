@@ -8,6 +8,7 @@ using CityScooter.Track;
 using UnityEditor;
 using UnityEngine;
 using K = CityScooter.EditorTools.Districts.CbdQuayKit;
+using E = CityScooter.EditorTools.Districts.EastLineKit;
 
 namespace CityScooter.EditorTools.Districts
 {
@@ -21,8 +22,10 @@ namespace CityScooter.EditorTools.Districts
         // The canal jump (timber footbridge hump + road-wide SPLASH gap). For gameplay:
         public const float CanalRampStart = 8f, CanalRise = 6f, CanalHeight = 1.4f, CanalTop = 3f, CanalGap = 5f;
         const float CSea = -1.7f, CoveWidth = 40f;
-        static readonly float[] CTracks = { 6.5f, 11f, 20f, 24.5f };
-        static readonly float[] CDepotTracks = { 6.5f, 11f, 15.5f, 20f, 24.5f };
+        /// <summary>The middle of Claisebrook's far side platform, in u (behind track 2; the corridor's back fence stands
+        /// along its back edge).</summary>
+        const float FarPlatform = T2 + E.PlatformEdge + 1.6f;
+        static readonly Color YardGrey = K.Hex("8E8A80");
         static readonly Color BrickPaving = K.Hex("CFA088"), Promenade = K.Hex("E6D8B6"), PromenadeFlag = K.Hex("D6C7A2");
         static readonly Color[] RenderColours = { K.Hex("F2E6C4"), K.Hex("D9A441"), K.Hex("F0BF9A"), K.Hex("CF7A4E"), K.Hex("EFE3C8"), K.Hex("3E9A96"), K.Hex("E6C98A") };
         static readonly Color[] DoorColours = { K.Hex("2F5A3A"), K.Hex("7A2E2A"), K.Hex("2A3E6E"), K.Hex("20262C") };
@@ -46,7 +49,10 @@ namespace CityScooter.EditorTools.Districts
             K.WriteChunk(CCove(), ChunkPath(n, "Cove"));
             K.WriteChunk(CCanal(), ChunkPath(n, "Canal"));
             K.WriteChunk(CExit(), ChunkPath(n, "Exit"));
-            GameObject far = K.SaveFarScenery(Pf(n, "FAR_Claisebrook_EastPerth"), "FAR_Claisebrook_EastPerth", ClaisebrookFar(-ClaisebrookDrop / 40f));
+            // The same horizon as McIver: one far-scenery prefab for both (built by BuildMciver), so it stays up across
+            // their boundary.
+            GameObject far = AssetDatabase.LoadAssetAtPath<GameObject>(Pf(MciverName, InnerEastFarName));
+            if (far == null) throw new InvalidOperationException("Build McIver first: " + InnerEastFarName + " is the far scenery of both districts.");
 
             GameObject cyclist = Cyclist();
             var own = new List<HazardPattern>
@@ -95,13 +101,20 @@ namespace CityScooter.EditorTools.Districts
 
         // ---------------------------------------------------------------- Claisebrook chunks
 
-        static void CStreet(CqChunkDraft d) => K.StreetSurface(d.Road, d.Length, K.R.asphalt, BrickPaving, KerbCap, true);
+        /// <summary>Claisebrook's own street: asphalt with brick-paved sidewalks.</summary>
+        static E.StreetLook CBrick => E.StreetLook.Street(BrickPaving);
+        /// <summary>The cove promenade's paving: cream with limestone flag side strips.</summary>
+        static E.StreetLook CProm => E.StreetLook.Paved(Promenade, PromenadeFlag, LimestoneCap);
 
-        /// <summary>The cove promenade (PedestrianMall): cream paving with limestone flag sidewalks and darker inlaid bands.</summary>
-        static void CPromenade(CqChunkDraft d, float skipFrom = -1f, float skipTo = -1f)
+        static void CStreet(CqChunkDraft d) => E.Street(d, CBrick);
+
+        /// <summary>The cove promenade (PedestrianMall): cream paving with limestone flag sidewalks and darker inlaid bands.
+        /// threshold: the band of setts at its start (after a street chunk).</summary>
+        static void CPromenade(CqChunkDraft d, float skipFrom = -1f, float skipTo = -1f, bool threshold = false)
         {
             d.Type = RoadType.PedestrianMall;
-            K.StreetSurface(d.Road, d.Length, Promenade, PromenadeFlag, LimestoneCap, false, skipFrom, skipTo);
+            E.Street(d, CProm, null, -1f, skipFrom, skipTo);
+            if (threshold) E.Threshold(d, .35f);
             ComicMesh m = d.Road;
             m.Surface = ComicSurface.Plain;
             for (float z = 2f; z < d.Length - 1f; z += 6f)
@@ -112,25 +125,16 @@ namespace CityScooter.EditorTools.Districts
             }
         }
 
-        static void CRail(CqChunkDraft d, float z0, float z1, float[] tracks, float bed = 32f)
-        {
-            Palisade(d, -1, z0, z1, .45f);
-            Ballast(d, z0, z1, 0f, bed);
-            Ground(d, -1, z0, z1, bed, 80f, K.Hex("8E8A80"), ComicSurface.Concrete, .12f);
-            foreach (float t in tracks) { Track(d, t, z0, z1); Wires(d, t, z0, z1, 20f, 40f); }
-            if (z0 <= 20f && z1 >= 20f) Portal(d, 20f, 2.6f, 27.6f, tracks);
-            SideWall(d, -1, z0, z1, 30f, 6f);
-        }
-
         static CqChunkDraft CEntry()
         {
+            // From McIver: the railway runs on beside the street. The boundary surface (pale flagstones) gives way to
+            // Claisebrook's brick paving at a band of setts; the line's street edge on the right, then the first townhouses.
             var d = new CqChunkDraft("Claisebrook_Entry", ClaisebrookDrop);
-            CStreet(d);
-            CalmEdge(d, -1, 0f, 14f, 5, BrickRed, Limestone);
-            CalmEdge(d, 1, 0f, 14f, 6, BrickRed, Limestone);
-            RailBridgeWall(d, 14f, true, CTracks);
-            CRail(d, 14f, 40f, CTracks);
-            MBackdrop(d, 14f, 40f, 61, 14f, 34f);
+            E.Street(d, E.StreetLook.Boundary, CBrick, 12f);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { Beyond = YardGrey });
+            Emu(d.SlopedFrontage, T2, .8f, 2, BSeries);
+            MBackdrop(d, 0f, 40f, 61, 14f, 34f);
+            OuterEdge(d, 0f, 14f, BrickPaving, 3, true);
             Ground(d, 1, 14f, 40f, 0f, 60f, BrickPaving, ComicSurface.Paving);
             TownhouseRow(d, 1, 15f, 39.5f, K.Edge + 2.5f, 1, false);
             DeepTownhouses(d, 1, 14f, 40f, 18f, 2);
@@ -142,22 +146,22 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft CExit()
         {
-            // A brick road bridge on the railway side (the tracks, where there are any, go under it), parkland with gums,
-            // a last row of townhouses, then calm.
+            // The exit follows Royal St or the cove promenade (the district's length decides): a band of setts at its
+            // start takes either paving, then Claisebrook's brick-paved street, and at a second band the line's boundary
+            // surface. The railway on the left with parkland gums behind it; a last row of townhouses, then the line's
+            // street edge on the right.
             var d = new CqChunkDraft("Claisebrook_Exit", ClaisebrookDrop);
-            CStreet(d);
-            RailBridgeWall(d, 0f, false, CTracks);
-            Ground(d, -1, 6f, 26f, 0f, 60f, Lawn, ComicSurface.Foliage);
-            LowWall(d, -1, 6f, 26f, .5f, Limestone, LimestoneCap);
-            Gum(d.Props, V(-(K.Edge + 5f), d.Ground(12f), 12f), 11f, 3);
-            Gum(d.Props, V(-(K.Edge + 8f), d.Ground(21f), 21f), 9f, 4);
-            DeepTownhouses(d, -1, 6f, 26f, 22f, 4);
-            SideWall(d, -1, 6f, 26f);
+            E.Street(d, CBrick, E.StreetLook.Boundary, 28f);
+            E.Threshold(d, .35f);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { Beyond = Lawn });
+            Gum(d.Props, V(-(K.Edge + 18f), d.Ground(12f), 12f), 11f, 3);
+            Gum(d.Props, V(-(K.Edge + 21f), d.Ground(24f), 24f), 9f, 4);
+            Gum(d.Props, V(-(K.Edge + 18.5f), d.Ground(35f), 35f), 10f, 6);
+            DeepTownhouses(d, -1, 0f, 40f, 30f, 4);
             Ground(d, 1, 0f, 26f, 0f, 60f, BrickPaving, ComicSurface.Paving);
             TownhouseRow(d, 1, .5f, 25.5f, K.Edge + 2.5f, 5, false);
             DeepTownhouses(d, 1, 0f, 26f, 18f, 7);
-            CalmEdge(d, -1, 26f, 40f, 7, BrickRed, Limestone);
-            CalmEdge(d, 1, 26f, 40f, 8, BrickRed, Limestone);
+            OuterEdge(d, 26f, 40f, BrickPaving, 8, true);
             MLights(d, 9f, 21f);
             d.StandardSlots();
             return d;
@@ -165,21 +169,23 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft CStation()
         {
-            // Claisebrook station: the tracks come out from under a road bridge; a side platform and an island with flat
-            // grey canopies, the white enclosed footbridge with its long ramp, an A-series set leaving towards the depot.
+            // Claisebrook station on the line's two tracks: two side platforms (the far one with a flat grey canopy, the
+            // corridor's back fence as its railing), the white enclosed footbridge with its long ramp, an A-series set at
+            // platform 1. The platforms stop short of the chunk's ends, where the corridor is the plain standard: this
+            // chunk also follows the canal chunk when the district's chunks come round again (hence the band of setts).
             var d = new CqChunkDraft("Claisebrook_Station", ClaisebrookDrop);
             CStreet(d);
-            RailBridgeWall(d, 6f, true, CTracks);
-            CRail(d, 6f, 40f, CTracks);
-            MBackdrop(d, 6f, 40f, 71, 14f, 30f);
-            Platform(d, 1f, 4.6f, 6f, 40f, false, true);
-            Platform(d, 13f, 18f, 6f, 40f, true, true);
+            E.Threshold(d, .35f);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { Beyond = YardGrey });
+            MBackdrop(d, 0f, 40f, 71, 14f, 30f);
+            Platform(d, 1f, T1 - E.PlatformEdge, 3f, 37f, false, true);
+            Platform(d, T2 + E.PlatformEdge, FarPlatform + 1.6f, 3f, 37f, true, false);
             Footbridge(d, 12f);
-            FlatCanopy(d, 15.5f, 24f, 13f, 4f, K.Hex("B9C0C6"), K.Hex("6E747A"));
-            PlatformSign(d, 3.1f, 8.2f, "CLAISEBROOK", .085f);
-            PlatformSign(d, 15.5f, 21.5f, "CLAISEBROOK", .08f);
-            Emu(d.SlopedFrontage, CTracks[0], 20.5f, 1, ASeries, false, true, true, false);   // its second car is in the depot chunk
-            ValidatorPoles(d, 3f, 37.5f);
+            FlatCanopy(d, FarPlatform, 24f, 12f, 3f, K.Hex("B9C0C6"), K.Hex("6E747A"));
+            PlatformSign(d, 2.9f, 8.2f, "CLAISEBROOK", .085f);
+            PlatformSign(d, FarPlatform, 21.5f, "CLAISEBROOK", .08f);
+            Emu(d.SlopedFrontage, T1, .8f, 2, ASeries);
+            ValidatorPoles(d, 2.8f, 35.5f);
             Ground(d, 1, 0f, 40f, 0f, 60f, BrickPaving, ComicSurface.Paving);
             CoveApartments(d, new CqLot(1, 1f, 20f, K.Edge + 3f, 14f, d.Base(10.5f)), 5, K.Hex("F2E6C4"), Teal);
             TownhouseRow(d, 1, 21f, 39.5f, K.Edge + 2.5f, 11, false);
@@ -194,19 +200,29 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft CDepot()
         {
-            // The Claisebrook railcar depot: stabled A-series and B-series sets on the storage roads, the long white shed with
-            // its brown roof and open doors, yard floodlights; the old brick warehouse (now apartments) across the road.
+            // The Claisebrook railcar depot behind the line's two tracks, all inside this chunk (its ends are the plain
+            // corridor): a wider ballast yard, a siding off track 2 along the long white shed (brown roof, open doors),
+            // three storage roads from their buffer stops into the shed with sets going in, yard floodlights. The old
+            // brick warehouse (now apartments) across the road.
             var d = new CqChunkDraft("Claisebrook_Depot", ClaisebrookDrop);
             CStreet(d);
-            CRail(d, 0f, 40f, CDepotTracks, 50f);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { BedTo = 40f, WideFrom = 1f, WideTo = 39.5f, Beyond = YardGrey });
+            const float siding = 15.5f, road3 = 20.33f, road4 = 25f, stub = 29.67f;     // u: 23.5, 28.33, 33 and 37.67 from the road centre line
+            E.TrackShift(d, RailSide, E.Track2, K.Edge + siding, 1.5f, 13.5f);
+            E.Track(d, RailSide, K.Edge + siding, 13.5f, 38f);
+            E.Track(d, RailSide, K.Edge + road3, 4f, 23f);
+            E.Track(d, RailSide, K.Edge + road4, 7f, 23f);
+            E.Track(d, RailSide, K.Edge + stub, 12f, 23f);
             ComicMesh m = d.SlopedFrontage;
-            Emu(m, CDepotTracks[0], 0f, 1, ASeries, false, false, false, true);          // the second car of the set at the station
-            Emu(m, CDepotTracks[2], 20.8f, 1, BSeries, false, true, true, false);
-            Emu(m, CDepotTracks[3], 1f, 2, BSeries, true);
-            Emu(m, CDepotTracks[4], 1f, 2, ASeries, true);
-            DepotShed(d, 29f, 47f, 20f, 39.5f);
+            E.BufferStop(m, RailSide, K.Edge + siding, 38.3f, -1);
+            E.BufferStop(m, RailSide, K.Edge + road3, 3.8f);
+            E.BufferStop(m, RailSide, K.Edge + road4, 6.8f);
+            E.BufferStop(m, RailSide, K.Edge + stub, 11.8f);
+            Emu(m, road3, 5f, 1, BSeries, true, false, true, false);       // going into the shed
+            Emu(m, road4, 8f, 1, ASeries, true, false, true, false);
+            DepotShed(d, 18f, 32f, 22f, 39.5f);
             YardLight(m, V(LX(27.3f), .1f, 6f), 15f);
-            YardLight(m, V(LX(13.2f), .1f, 31f), 15f);
+            YardLight(m, V(LX(13.1f), .1f, 31f), 15f);
             MBackdrop(d, 0f, 20f, 81, 12f, 24f);
             Ground(d, 1, 0f, 40f, 0f, 60f, BrickPaving, ComicSurface.Paving);
             Warehouse(d, new CqLot(1, 1f, 23f, K.Edge + 1.5f, 14f, d.Base(12f)));
@@ -221,22 +237,21 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft CRoyalStreet()
         {
-            // Royal St: the railway has gone under a road bridge; cafes and shops under render-and-tile townhouses, alfresco
-            // umbrellas, an apartment block, plane trees.
+            // Royal St beside the railway: cafes and shops under render-and-tile townhouses and alfresco umbrellas on the
+            // right, an apartment block, plane trees; a B-series set passing; more townhouses across the tracks.
             var d = new CqChunkDraft("Claisebrook_RoyalStreet", ClaisebrookDrop);
             CStreet(d);
-            RailBridgeWall(d, 0f, false, CTracks);
-            Ground(d, -1, 6f, 40f, 0f, 60f, BrickPaving, ComicSurface.Paving);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { Beyond = BrickPaving });
+            Emu(d.SlopedFrontage, T2, .8f, 2, BSeries);
             Ground(d, 1, 0f, 40f, 0f, 60f, BrickPaving, ComicSurface.Paving);
-            TownhouseRow(d, -1, 7f, 39.5f, K.Edge + 4.5f, 31, true);
+            TownhouseRow(d, -1, 1f, 39.5f, E.CorridorEnd + 1f, 31, true);
             TownhouseRow(d, 1, .5f, 19.5f, K.Edge + 4.5f, 35, true);
             CoveApartments(d, new CqLot(1, 20.5f, 39.5f, K.Edge + 3f, 14f, d.Base(30f)), 4, K.Hex("F0BF9A"), K.Hex("CF7A4E"));
             Color[] canopies = { White, K.Hex("E2463A"), White, K.Hex("2A9D9A") };
             int k = 0;
-            for (float z = 10f; z < 38f; z += 7f) K.CafeUmbrella(d.Props, null, V(-(K.Edge + 2.2f), d.Ground(z), z), canopies[k++ % canopies.Length]);
-            for (float z = 3f; z < 19f; z += 6.5f) K.CafeUmbrella(d.Props, null, V(K.Edge + 2.2f, d.Ground(z), z), canopies[k++ % canopies.Length]);
+            for (float z = 3f; z < 19f; z += 5.2f) K.CafeUmbrella(d.Props, null, V(K.Edge + 2.2f, d.Ground(z), z), canopies[k++ % canopies.Length]);
             Shrubs(d.Props, V(K.Edge + 1.3f, d.Ground(26f), 22f), 7f, 33);
-            DeepTownhouses(d, -1, 6f, 40f, 20f, 32);
+            DeepTownhouses(d, -1, 0f, 40f, 30f, 32);
             DeepTownhouses(d, 1, 0f, 40f, 22f, 36);
             K.PlaneTree(d.Props, d.Collisions, V(-5.6f, d.Ground(16f), 16f), .9f);
             K.PlaneTree(d.Props, d.Collisions, V(5.6f, d.Ground(31f), 31f), .9f);
@@ -248,15 +263,17 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft CCove()
         {
-            // The promenade along Claisebrook Cove: limestone wall and tapered bollards on the water side, a timber jetty
-            // with moored cruisers, Trafalgar Bridge across the cove; cafe townhouses with a boardwalk on the land side.
+            // The promenade between the railway and Claisebrook Cove: limestone wall and tapered bollards on the water
+            // side, a timber jetty with moored cruisers, Trafalgar Bridge across the cove; across the tracks the cafe
+            // townhouses with their boardwalk and umbrellas.
             var d = new CqChunkDraft("Claisebrook_Cove", ClaisebrookDrop);
-            CPromenade(d);
+            CPromenade(d, -1f, -1f, true);
             CoveSide(d, 0f, 40f, 41, true);
             CoveJetty(d, 9f);
             TrafalgarBridge(d, 30f, K.Edge + .1f, K.Edge + CoveWidth + .8f);
+            E.Corridor(d, RailSide);
             Boardwalk(d, 0f, 40f, 44);
-            DeepTownhouses(d, -1, 0f, 40f, 22f, 45);
+            DeepTownhouses(d, -1, 0f, 40f, 36f, 45);
             d.StandardSlots();
             return d;
         }
@@ -264,17 +281,24 @@ namespace CityScooter.EditorTools.Districts
         static CqChunkDraft CCanal()
         {
             // The promenade crosses the canal that links the cove to the lake: a humped timber footbridge whose middle is
-            // missing (SPLASH). After it: Victoria Gardens with the red-and-white striped shelter, the round lake on the left.
+            // missing (SPLASH); the railway crosses the same canal on steel girders. After it: Victoria Gardens with the
+            // red-and-white striped shelter on the right, the round lake across the tracks on the left.
             var d = new CqChunkDraft("Claisebrook_Canal", ClaisebrookDrop);
             float ramp = CanalRampStart, lip = ramp + CanalRise + CanalTop, far = lip + CanalGap;
             CPromenade(d, lip, far);
             ComicMesh m = d.Road;
             K.Water(m, -(K.Edge + 34f), K.Edge + 150f, lip, far, CSea, CoveWater, CoveLight, 51);
-            CanalWall(d.Road, -(K.Edge + 34f), K.Edge + .7f, lip, true);
-            CanalWall(d.Road, -(K.Edge + 34f), K.Edge + 60f, far, false);
-            // before the gap: the cove on the right, cafes on the left
+            CanalWall(d.Road, -K.Edge, K.Edge + .7f, lip, true);
+            CanalWall(d.Road, -K.Edge, K.Edge + 60f, far, false);
+            // the canal runs on under the railway to the lake: its end wall and the lawn beyond it
+            d.Road.Surface = ComicSurface.Concrete;
+            K.MinMaxBox(d.Road, V(-(K.Edge + 34f), CSea - 1f, lip), V(-(K.Edge + 34.4f), K.Kerb + .02f, far), Limestone);
+            Ground(d, -1, lip, far, 34.4f, 60f, Lawn, ComicSurface.Foliage);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { GroundGapFrom = lip, GroundGapTo = far });
+            E.Girders(d, RailSide, lip, far);
+            // before the gap: the cove on the right, the cafes across the tracks on the left
             CoveSide(d, 0f, lip, 52, false);
-            Boardwalk(d, 0f, lip - 1f, 53);
+            Boardwalk(d, 0f, lip, 53);
             // the timber hump with rails and lamps
             var spec = new CqRampSpec { Name = "FootbridgeHump", X = 0f, Z = ramp, Width = 2f * K.Edge, Rise = CanalRise, Height = CanalHeight, Top = CanalTop, Launch = 1f, Hang = .5f };
             d.Ramps.Add(spec);
@@ -311,13 +335,13 @@ namespace CityScooter.EditorTools.Districts
             Bench(d.Props, V(K.Edge + 2.4f, d.Ground(35f), 35f), 90f);
             for (int i = 0; i < 4; i++) GrassTuft(d.Props, V(K.Edge + 1.3f + (i % 2) * .6f, d.Ground(26f), 25.5f + i * .6f), 1f, i + 3);
             SideWall(d, 1, far, 40f, 20f);
-            // after the gap, left: the round lake with its limestone rim and a jet, paperbarks, townhouses behind
-            Ground(d, -1, far, 40f, 0f, 60f, Lawn, ComicSurface.Foliage);
-            RoundLake(d, -(K.Edge + 15f), 31.5f, 7.5f);
-            Gum(d.Props, V(-(K.Edge + 4f), d.Ground(26f), 26f), 8.5f, 12, K.Hex("7F9A6A"), K.Hex("A3B88A"), K.Hex("E9E2D2"));
-            Gum(d.Props, V(-(K.Edge + 5.5f), d.Ground(37.5f), 37.5f), 9.5f, 14, K.Hex("7F9A6A"), K.Hex("A3B88A"), K.Hex("E9E2D2"));
-            DeepTownhouses(d, -1, far, 40f, 28f, 55);
-            SideWall(d, -1, far, 40f, 20f);
+            // after the gap, left, across the tracks: the round lake with its limestone rim and a jet, paperbarks,
+            // townhouses behind
+            Ground(d, -1, far, 40f, BeyondRail, 60f, Lawn, ComicSurface.Foliage);
+            RoundLake(d, -(K.Edge + 25.5f), 31.5f, 7.5f);
+            Gum(d.Props, V(-(K.Edge + 17.4f), d.Ground(25f), 25f), 8.5f, 12, K.Hex("7F9A6A"), K.Hex("A3B88A"), K.Hex("E9E2D2"));
+            Gum(d.Props, V(-(K.Edge + 17.8f), d.Ground(38.8f), 38.8f), 9.5f, 14, K.Hex("7F9A6A"), K.Hex("A3B88A"), K.Hex("E9E2D2"));
+            DeepTownhouses(d, -1, far, 40f, 36f, 55);
             d.GiftSlots.Add(new Vector2(0f, 30f));
             d.Slot(-2.6f, 35f); d.Slot(2.6f, 35f);
             return d;
@@ -488,27 +512,27 @@ namespace CityScooter.EditorTools.Districts
             }
         }
 
-        /// <summary>The land side of the promenade: a timber boardwalk for alfresco tables under white umbrellas, black lamp
-        /// posts, cafe townhouses behind.</summary>
+        /// <summary>Across the tracks from the promenade (it starts where the corridor ends): a timber boardwalk for
+        /// alfresco tables under white umbrellas, black lamp posts, cafe townhouses behind.</summary>
         static void Boardwalk(CqChunkDraft d, float z0, float z1, int seed)
         {
-            Ground(d, -1, z0, z1, 0f, 60f, PromenadeFlag, ComicSurface.Paving);
+            const float u0 = BeyondRail;
+            Ground(d, -1, z0, z1, u0, 60f, PromenadeFlag, ComicSurface.Paving);
             ComicMesh m = d.Road;
             for (float z = z0; z < z1 - .01f; z += 4f)
             {
                 float e = Mathf.Min(z1, z + 4f);
                 m.Surface = ComicSurface.Wood;
-                K.Face(m, V(-(K.Edge + .1f), K.Kerb + .05f, z), V(-(K.Edge + .1f), K.Kerb + .05f, e), V(-(K.Edge + 5f), K.Kerb + .05f, e), V(-(K.Edge + 5f), K.Kerb + .05f, z), DeckLight, Vector3.up, false);
+                K.Face(m, V(-(K.Edge + u0 + .3f), K.Kerb + .05f, z), V(-(K.Edge + u0 + .3f), K.Kerb + .05f, e), V(-(K.Edge + u0 + 5f), K.Kerb + .05f, e), V(-(K.Edge + u0 + 5f), K.Kerb + .05f, z), DeckLight, Vector3.up, false);
                 m.Surface = ComicSurface.Plain;
-                for (float u = .9f; u < 5f; u += .8f)
+                for (float u = u0 + 1.1f; u < u0 + 5f; u += .8f)
                     K.Face(m, V(-(K.Edge + u), K.Kerb + .06f, z), V(-(K.Edge + u), K.Kerb + .06f, e), V(-(K.Edge + u + .05f), K.Kerb + .06f, e), V(-(K.Edge + u + .05f), K.Kerb + .06f, z), Mix(Deck, Ink, .25f), Vector3.up, false);
             }
-            if (z1 - z0 > 12f) TownhouseRow(d, -1, z0 + .5f, z1 - .5f, K.Edge + 5.6f, seed, true);
+            if (z1 - z0 > 12f) TownhouseRow(d, -1, z0 + .5f, z1 - .5f, K.Edge + u0 + 5.6f, seed, true);
             Color[] canopies = { White, White, K.Hex("E9E4D6") };
             int k = 0;
-            for (float z = z0 + 4f; z < z1 - 2f; z += 6.5f) K.CafeUmbrella(d.Props, null, V(-(K.Edge + 2.7f), d.Ground(z), z), canopies[k++ % canopies.Length]);
-            for (float z = z0 + 7f; z < z1 - 1f; z += 13f) PathLight(d.Props, V(-(K.Edge + .5f), d.Ground(z), z), 4f);
-            SideWall(d, -1, z0, z1, 8f);
+            for (float z = z0 + 4f; z < z1 - 2f; z += 6.5f) K.CafeUmbrella(d.Props, null, V(-(K.Edge + u0 + 2.7f), d.Ground(z), z), canopies[k++ % canopies.Length]);
+            for (float z = z0 + 7f; z < z1 - 1f; z += 13f) PathLight(d.Props, V(-(K.Edge + u0 + .7f), d.Ground(z), z), 4f);
         }
 
         /// <summary>The round lake at the end of the canal: water, a limestone rim, a white jet in the middle.</summary>
@@ -564,7 +588,7 @@ namespace CityScooter.EditorTools.Districts
         {
             ComicMesh m = d.SlopedFrontage;
             Color white = K.Hex("F2F2EE"), roof = K.Hex("DADDDD");
-            float y = 7f, xa = LX(1.2f), xb = LX(30f);
+            float y = 7f, xa = LX(1.2f), xb = LX(FarPlatform + 2f);
             // the bridge
             m.Surface = ComicSurface.PaintedMetal;
             m.Box(V((xa + xb) * .5f, y + .5f, z + 1.4f), V(xa - xb, 1f, 2.8f), white);
@@ -576,9 +600,9 @@ namespace CityScooter.EditorTools.Districts
             m.Surface = ComicSurface.PaintedMetal;
             for (float x = xb + 1.2f; x < xa; x += 2.4f)
                 K.Face(m, V(x - .05f, y + 1f, z - .012f), V(x + .05f, y + 1f, z - .012f), V(x + .05f, y + 2.5f, z - .012f), V(x - .05f, y + 2.5f, z - .012f), white, Vector3.back, false);
-            foreach (float u in new[] { 8.75f, 22.2f, 29.4f }) { m.Surface = ComicSurface.PaintedMetal; m.Cylinder(V(LX(u), y * .5f, z + 1.4f), .3f, y, white, 8); }
+            foreach (float u in new[] { 8.25f }) { m.Surface = ComicSurface.PaintedMetal; m.Cylinder(V(LX(u), y * .5f, z + 1.4f), .3f, y, white, 8); }
             // the lift towers (platform 1 and the island)
-            foreach (float u in new[] { 2.7f, 15.5f })
+            foreach (float u in new[] { 2.7f, FarPlatform })
             {
                 float xt = LX(u);
                 m.Surface = ComicSurface.PaintedMetal;
@@ -634,26 +658,17 @@ namespace CityScooter.EditorTools.Districts
                 K.Face(m, V(x - 2f, .2f, z0 - .012f), V(x + 2f, .2f, z0 - .012f), V(x + 2f, 5.8f, z0 - .012f), V(x - 2f, 5.8f, z0 - .012f), K.Hex("14181D"), Vector3.back);
                 m.Surface = ComicSurface.PaintedMetal;
                 m.Box(V(x, 6f, z0 - .05f), V(4.3f, .3f, .1f), K.Hex("C9CED3"));
-                if (i % 2 == 0)
+                if (i == 0)       // the far road: a set looking out; the other two roads have sets going in
                 {
                     var nose = new ComicMesh();
-                    TrainLook k = i % 4 == 0 ? BSeries : ASeries;
+                    E.TrainLook k = i % 4 == 0 ? BSeries : ASeries;
                     nose.Surface = ComicSurface.Metal;
                     nose.Box(V(0, 2.65f, 1.6f), V(k.Width, 2.8f, 3f), k.Body);
-                    Nose(nose, 0f, .1f, -1f, k);
+                    E.Nose(nose, 0f, .1f, -1f, k);
                     m.Add(nose, V(x, 0f, z0 - .2f), Quaternion.identity, Vector3.one);
                 }
             }
             d.Walls.Add(new Bounds(new Vector3(xc, d.Y(zc) + 4f, zc), new Vector3(w, 10f, len)));
-        }
-
-        static void BufferStop(ComicMesh m, float u, float z)
-        {
-            float x = LX(u);
-            m.Surface = ComicSurface.PaintedMetal;
-            foreach (float sx in new[] { -.72f, .72f }) { m.Beam(V(x + sx, RailTop, z - 1.6f), V(x + sx, 1.5f, z), .14f, K.R.red); m.Box(V(x + sx, .9f, z), V(.14f, 1.3f, .14f), K.R.red); }
-            m.Box(V(x, 1.4f, z), V(2.4f, .3f, .2f), White);
-            m.Box(V(x, 1.4f, z - .11f), V(.5f, .3f, .04f), K.R.red);
         }
 
         /// <summary>A row of East Perth townhouses (and, with cafes, ground-floor shopfronts under awnings): two and three
@@ -941,42 +956,5 @@ namespace CityScooter.EditorTools.Districts
         // A pied cormorant drying off: black back and wings, white front, a long neck and a hooked grey bill.
         static ComicMesh CormorantMesh() =>
             Bird(1.25f, K.Hex("F0EEE6"), K.Hex("20262C"), K.Hex("E4E2D8"), K.Hex("20262C"), K.Hex("8A9198"), .2f, .28f, K.Hex("20262C"), .14f, true);
-
-        // ---------------------------------------------------------------- Claisebrook far scenery
-
-        /// <summary>The horizon around Claisebrook: roofs and trees on the railway side, the cove's far side running on, the
-        /// Swan River and the tree line of the Burswood shore far on the right.</summary>
-        static ComicMesh ClaisebrookFar(float grade)
-        {
-            var m = new ComicMesh();
-            var r = new System.Random(220);
-            Color haze = K.Hex("C6DAE8");
-            const float z0 = -220f, z1 = 820f;
-            FarStrip(m, K.Edge, 60f, 330f, z1, K.Kerb - .03f, PromenadeFlag);
-            FarStrip(m, -K.Edge, -60f, 330f, z1, K.Kerb - .03f, BrickPaving);
-            FarStrip(m, 60f, 190f, z0, z1, -.3f, Haze(K.Hex("A9A79C"), 150f, haze));
-            FarStrip(m, 190f, 420f, z0, z1, CSea - .1f, Haze(River, 300f, haze));
-            FarStrip(m, 420f, 1400f, z0, z1, -.4f, Haze(K.Hex("7F9A66"), 600f, haze));
-            FarStrip(m, -60f, -400f, z0, z1, -.3f, Haze(K.Hex("9E9C92"), 200f, haze));
-            FarStrip(m, -400f, -1400f, z0, z1, -.35f, Haze(K.Hex("9AAE7A"), 700f, haze));
-            m.Surface = ComicSurface.Plain;
-            for (int i = 0; i < 60; i++)
-            {
-                float x = F(r, 200f, 410f), z = F(r, -150f, 760f), len = F(r, 3f, 8f);
-                K.Face(m, V(x, CSea - .08f, z), V(x, CSea - .08f, z + .6f), V(x + len, CSea - .08f, z + .6f), V(x + len, CSea - .08f, z), Haze(RiverLight, x, haze), Vector3.up, false);
-            }
-            FarTown(m, r, 1, 66f, 110f, z0, z1, 7f, 14f, haze, 13f);
-            FarTown(m, r, 1, 120f, 180f, z0, z1, 8f, 20f, haze, 18f);
-            FarTown(m, r, -1, 70f, 120f, z0, z1, 6f, 14f, haze, 14f);
-            FarTown(m, r, -1, 140f, 380f, z0, z1, 8f, 26f, haze, 22f);
-            // the Burswood shore: a long tree line
-            for (float z = z0; z < z1; z += F(r, 16f, 26f))
-            {
-                m.Surface = ComicSurface.Foliage;
-                m.Ellipsoid(V(F(r, 425f, 470f), 6f, z), V(F(r, 20f, 30f), F(r, 12f, 18f), F(r, 18f, 26f)), Haze(Mix(GumLeaf, FigMid, F(r, 0f, 1f)), 450f, haze));
-            }
-            m.Shear(grade);
-            return m;
-        }
     }
 }

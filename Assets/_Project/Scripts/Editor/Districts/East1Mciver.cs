@@ -8,6 +8,7 @@ using CityScooter.Track;
 using UnityEditor;
 using UnityEngine;
 using K = CityScooter.EditorTools.Districts.CbdQuayKit;
+using E = CityScooter.EditorTools.Districts.EastLineKit;
 
 namespace CityScooter.EditorTools.Districts
 {
@@ -20,8 +21,10 @@ namespace CityScooter.EditorTools.Districts
         public const float MciverDrop = -2f;
         // The road works jump (Ramp + road-wide RoadGap: the trench where the Moore St level crossing was). For gameplay:
         public const float WorksRampStart = 8f, WorksRise = 6f, WorksHeight = 1.4f, WorksTop = 3f, WorksGap = 5f;
-        // McIver has four tracks: metres beyond the left sidewalk edge.
-        static readonly float[] MTracks = { 7f, 11.5f, 20.5f, 25f };
+        // McIver has four tracks: the line's standard pair (T1, T2) and two more behind it (T3, T4), from the tunnel mouths
+        // in its entry chunk to the junction in its exit chunk. Every other chunk has all four at both ends (FourTracks).
+        /// <summary>The far scenery McIver and Claisebrook share (the same inner-east horizon): the mean of their slopes.</summary>
+        public const string InnerEastFarName = "FAR_East1_InnerEast";
 
         static void BuildMciver(TrackTheme theme, bool atlas)
         {
@@ -44,7 +47,9 @@ namespace CityScooter.EditorTools.Districts
             K.WriteChunk(MSquare(), ChunkPath(n, "Square"));
             K.WriteChunk(MWorks(), ChunkPath(n, "Works"));
             K.WriteChunk(MExit(), ChunkPath(n, "Exit"));
-            GameObject far = K.SaveFarScenery(Pf(n, "FAR_Mciver_EastPerth"), "FAR_Mciver_EastPerth", MciverFar(-MciverDrop / 40f));
+            // One far scenery for McIver and Claisebrook (v0.6): neighbours that share the prefab keep it standing across
+            // their boundary. Claisebrook loads it from here.
+            GameObject far = K.SaveFarScenery(Pf(n, InnerEastFarName), InnerEastFarName, InnerEastFar(-(MciverDrop + ClaisebrookDrop) * .5f / 40f));
 
             var own = new List<HazardPattern>
             {
@@ -79,7 +84,8 @@ namespace CityScooter.EditorTools.Districts
                     ("ShopTerrace", null, Make(m => { var d = new CqChunkDraft("a", 0f); ShopTerrace(d, new CqLot(-1, -6.5f, 6.5f, 6f, 12f, 0f), 2, BrickRed, TrimCream, K.Hex("2A3E6E"), 1, true); m.Add(d.Frontage, Vector3.zero, Quaternion.identity, Vector3.one); })),
                     ("BarrelShelter", null, Make(m => { var d = new CqChunkDraft("a", 0f); Platform(d, 1f, 5f, -6f, 6f, false, true); BarrelShelter(d, 3f, -4f, 8f, 1, "1"); PlatformSign(d, 3f, 5f, "MCIVER"); m.Add(d.SlopedFrontage, Vector3.zero, Quaternion.identity, Vector3.one); })),
                     ("ASeries", null, Make(m => Emu(m, 0f, -19f, 2, ASeries))),
-                    ("Portal", null, Make(m => { var d = new CqChunkDraft("a", 0f); Portal(d, 0f, 3f, 16f, 7f, 11.5f); m.Add(d.SlopedFrontage, Vector3.zero, Quaternion.identity, Vector3.one); })),
+                    ("Portal", null, Make(m => { var d = new CqChunkDraft("a", 0f); E.Portal(d, RailSide, 0f); m.Add(d.SlopedFrontage, Vector3.zero, Quaternion.identity, Vector3.one); })),
+                    ("StreetTree", null, Make(m => E.StreetTree(m, Vector3.zero))),
                     ("PlaygroundShade", null, Make(m => SquarePlayground(m, Vector3.zero))),
                     ("MiaMias", null, Make(m => MiaMias(m, Vector3.zero))),
                     ("Excavator", null, Make(m => Excavator(m, Vector3.zero, 0f))),
@@ -99,18 +105,18 @@ namespace CityScooter.EditorTools.Districts
 
         // ---------------------------------------------------------------- McIver chunks
 
+        /// <summary>Wellington St is the east line's boundary surface itself (grey asphalt, pale flagstones): no transition.</summary>
         static void MStreet(CqChunkDraft d, float skipFrom = -1f, float skipTo = -1f) =>
-            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, true, skipFrom, skipTo);
+            E.Street(d, E.StreetLook.Boundary, null, -1f, skipFrom, skipTo);
 
-        /// <summary>The four tracks along the left side with their fence, wires and (at z = 20) a portal gantry.</summary>
-        static void MRail(CqChunkDraft d, float z0, float z1, bool fence = true, bool yard = true)
+        /// <summary>The railway on the left: the line's standard corridor with McIver's two extra tracks behind it (a gap
+        /// in the fence for the old level crossing).</summary>
+        static void MRail(CqChunkDraft d, float z0, float z1, float fenceGapFrom = -1f, float fenceGapTo = -1f, Color? beyond = null)
         {
-            if (fence) Palisade(d, -1, z0, z1, .45f);
-            Ballast(d, z0, z1, 0f, 32f);
-            if (yard) Ground(d, -1, z0, z1, 32f, 75f, K.Hex("8E8A80"), ComicSurface.Concrete, .12f);
-            foreach (float t in MTracks) { Track(d, t, z0, z1); Wires(d, t, z0, z1, 20f, 40f); }
-            if (z0 <= 20f && z1 >= 20f) Portal(d, 20f, 3f, 29f, MTracks);
-            SideWall(d, -1, z0, z1, 30f, 6f);
+            E.CorridorOptions o = FourTracks();
+            o.FenceGapFrom = fenceGapFrom; o.FenceGapTo = fenceGapTo;
+            if (beyond.HasValue) o.Beyond = beyond;
+            E.Corridor(d, RailSide, z0, z1, o);
         }
 
         static void MLights(CqChunkDraft d, params float[] zs)
@@ -126,15 +132,16 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft MEntry()
         {
-            // Calm at z = 0, then the railway comes out from under a brick road bridge on the left and the first old
-            // brick shopfronts and plane trees stand on the right.
+            // Arriving from the CBD: the street runs beside a brick road bridge (a bus on it); the four tracks of the
+            // Midland line come out of the tunnel mouths under it, an A-series set still half inside, and run on beside
+            // the road from here to Midland. The line's street edge on the right, then the first old brick shopfronts.
             var d = new CqChunkDraft("Mciver_Entry", MciverDrop);
             MStreet(d);
-            CalmEdge(d, -1, 0f, 14f, 1, BrickRed, TrimCream);
-            CalmEdge(d, 1, 0f, 14f, 2, BrickRed, TrimCream);
-            RailBridgeWall(d, 14f, true, MTracks);
-            MRail(d, 14f, 40f);
-            MBackdrop(d, 14f, 40f, 3);
+            TunnelPortal(d, 0f, 9f);
+            MRail(d, 9f, 40f);
+            Emu(d.SlopedFrontage, T1, 4.5f, 1, ASeries, false, true, false, true);
+            MBackdrop(d, 9f, 40f, 3);
+            OuterEdge(d, 0f, 14f, Paving, 2, false);
             Ground(d, 1, 14f, 40f, 0f, 60f, Paving, ComicSurface.Paving);
             ShopTerrace(d, new CqLot(1, 15f, 27f, K.Edge + 1.5f, 12f, d.Base(21f)), 2, BrickRed, TrimCream, Navy, 1, true);
             ShopTerrace(d, new CqLot(1, 27.5f, 39.5f, K.Edge + 1.5f, 12f, d.Base(33.5f)), 3, K.Hex("E6D7B5"), K.Hex("B98A5A"), K.Hex("8A3A28"), 2, false);
@@ -147,18 +154,28 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft MExit()
         {
-            // The railway and a last brick terrace first, then the tracks go under a road bridge and it calms down.
+            // The junction: the two extra tracks swing over and join track 2, so the railway leaves McIver as the line's
+            // plain two-track corridor (the exit can follow any chunk: they all end with four tracks). A last brick
+            // terrace, then the line's street edge on the right.
             var d = new CqChunkDraft("Mciver_Exit", MciverDrop);
             MStreet(d);
-            MRail(d, 0f, 26f);
-            MBackdrop(d, 0f, 26f, 9);
-            RailBridgeWall(d, 26f, false, MTracks);
+            E.CorridorOptions o = FourTracks();
+            o.ExtraTracks = null; o.Portals = false; o.BackFence = true; o.WideFrom = 0f; o.WideTo = 34f;
+            E.Corridor(d, RailSide, 0f, 40f, o);
+            Func<float, float> third = z => RailSide * Mathf.Lerp(K.Edge + T3, E.Track2, E.Smooth((z - 1f) / 22f));
+            Func<float, float> fourth = z => RailSide * Mathf.Lerp(K.Edge + T4, E.Track2, E.Smooth((z - 5f) / 28f));
+            E.TrackPath(d.Road, 0f, 23f, third);
+            E.WirePath(d.Road, 0f, 23f, third);
+            E.TrackPath(d.Road, 0f, 33f, fourth);
+            E.WirePath(d.Road, 0f, 33f, fourth);
+            E.Portal(d.SlopedFrontage, RailSide, E.PortalZ, E.MastNear, 27.6f, 0f, E.Track1, E.Track2, Mathf.Abs(fourth(E.PortalZ)));
+            MBackdrop(d, 0f, 40f, 9);
+            Trackside(d, 2.6f, 9f, 33f);
             Ground(d, 1, 0f, 26f, 0f, 60f, Paving, ComicSurface.Paving);
             ShopTerrace(d, new CqLot(1, .5f, 12.5f, K.Edge + 1.5f, 12f, d.Base(6.5f)), 2, K.Hex("D9B98A"), TrimCream, SignGreen, 2, false);
             ShopTerrace(d, new CqLot(1, 13f, 25f, K.Edge + 1.5f, 12f, d.Base(19f)), 2, BrickRed, TrimCream, Navy, 0, true);
             DeepBlocks(d, 1, 0f, 26f, 16f, 6, 12f, 24f);
-            CalmEdge(d, -1, 26f, 40f, 3, BrickRed, TrimCream);
-            CalmEdge(d, 1, 26f, 40f, 4, BrickRed, TrimCream);
+            OuterEdge(d, 26f, 40f, Paving, 4, false);
             K.PlaneTree(d.Props, d.Collisions, V(5.6f, d.Ground(14f), 14f), .9f);
             MLights(d, 8f, 22f);
             d.StandardSlots();
@@ -167,15 +184,17 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft MHospital()
         {
-            // Royal Perth Hospital on both sides of Wellington St: North Block (precast bands, blue ribbon glazing) on the
-            // railway side, the tall tan brick ward block with its white balconies opposite, and the enclosed link bridge.
+            // Royal Perth Hospital on both sides of Wellington St and of the railway: North Block (precast bands, blue
+            // ribbon glazing) across the tracks, the tall tan brick ward block with its white balconies on the right, and
+            // the enclosed link bridge over the street and the four tracks.
             var d = new CqChunkDraft("Mciver_Hospital", MciverDrop);
             MStreet(d);
-            Ground(d, -1, 0f, 40f, 0f, 60f, Paving, ComicSurface.Paving);
+            MRail(d, 0f, 40f, -1f, -1f, Paving);
+            Emu(d.SlopedFrontage, T2, .8f, 2, BSeries);
             Ground(d, 1, 0f, 40f, 0f, 60f, Paving, ComicSurface.Paving);
-            NorthBlock(d, new CqLot(-1, 1.5f, 38.5f, K.Edge + 2.2f, 16f, d.Base(20f)));
+            NorthBlock(d, new CqLot(-1, 1.5f, 38.5f, K.Edge + 29.2f, 16f, d.Base(20f)));
             WardBlock(d, new CqLot(1, 4f, 36f, K.Edge + 3.2f, 14f, d.Base(20f)));
-            LinkBridge(d, 18f, 22f);
+            LinkBridge(d, 27f, 31f);
             // forecourt planting and a bus shelter under the bridge side
             Shrubs(d.Props, V(K.Edge + 1.2f, d.Ground(6f), 5f), 8f, 4);
             Shrubs(d.Props, V(K.Edge + 1.2f, d.Ground(30f), 26f), 9f, 7);
@@ -184,7 +203,7 @@ namespace CityScooter.EditorTools.Districts
             K.PlaneTree(d.Props, d.Collisions, V(-5.6f, d.Ground(9f), 9f), .9f);
             K.PlaneTree(d.Props, d.Collisions, V(-5.6f, d.Ground(33f), 33f), .95f);
             MLights(d, 12f, 26f);
-            DeepBlocks(d, -1, 0f, 40f, 34f, 11, 40f, 90f);
+            DeepBlocks(d, -1, 0f, 40f, 48f, 11, 40f, 90f);
             DeepBlocks(d, 1, 0f, 40f, 24f, 12, 18f, 36f);
             d.StandardSlots();
             return d;
@@ -220,22 +239,23 @@ namespace CityScooter.EditorTools.Districts
         static CqChunkDraft MStation()
         {
             // McIver station: two side platforms and an island, barrel-vault shelters, an A-series set at platform 1; old
-            // brick shopfronts with street awnings across the road.
+            // brick shopfronts with street awnings across the road. The platforms stop short of the chunk's ends, where the
+            // corridor is the plain standard again; the tracks stay where they are (platform edges 1.55 from a track centre).
             var d = new CqChunkDraft("Mciver_Station", MciverDrop);
             MStreet(d);
             MRail(d, 0f, 40f);
             MBackdrop(d, 0f, 40f, 31);
-            Platform(d, 1f, 5.1f, 0f, 40f, false, true);
-            Platform(d, 13.4f, 18.6f, 0f, 40f, true, true);
-            Platform(d, 26.9f, 31f, 0f, 40f, true, false);
-            BarrelShelter(d, 2.9f, 9f, 9f, 1, "1");
-            BarrelShelter(d, 16f, 23f, 9f, 1, "2");
-            BarrelShelter(d, 29f, 6f, 9f, -1, "4");
-            PlatformSign(d, 3.2f, 3.5f, "MCIVER", .11f);
-            PlatformSign(d, 16f, 5f, "MCIVER", .1f);
-            Emu(d.SlopedFrontage, MTracks[0], .8f, 2, ASeries);
-            ValidatorPoles(d, 3f, 22f);
-            Underpass(d, 1.3f, 3.4f, 29f, 39f);
+            Platform(d, 1f, T1 - E.PlatformEdge, 3f, 37f, false, true);
+            Platform(d, T2 + E.PlatformEdge, T3 - E.PlatformEdge, 3f, 37f, true, true);
+            Platform(d, T4 + E.PlatformEdge, 31f, 3f, 37f, true, false);
+            BarrelShelter(d, 2.7f, 9f, 9f, 1, "1");
+            BarrelShelter(d, 15.5f, 23f, 9f, 1, "2");
+            BarrelShelter(d, 28.9f, 6f, 9f, -1, "4");
+            PlatformSign(d, 2.9f, 4.8f, "MCIVER", .11f);
+            PlatformSign(d, 15.5f, 5.6f, "MCIVER", .1f);
+            Emu(d.SlopedFrontage, T1, .8f, 2, ASeries);
+            ValidatorPoles(d, 2.8f, 22f);
+            Underpass(d, 1.3f, 3.4f, 28f, 36.4f);
             Ground(d, 1, 0f, 40f, 0f, 60f, Paving, ComicSurface.Paving);
             ShopTerrace(d, new CqLot(1, .5f, 12.5f, K.Edge + 1.5f, 12f, d.Base(6.5f)), 2, BrickRed, TrimCream, K.Hex("2F5A3A"), 1, true);
             ShopTerrace(d, new CqLot(1, 13f, 27f, K.Edge + 1.5f, 13f, d.Base(20f)), 3, K.Hex("E9DCC0"), K.Hex("A8452E"), Navy, 2, false);
@@ -256,7 +276,7 @@ namespace CityScooter.EditorTools.Districts
             MStreet(d);
             MRail(d, 0f, 40f);
             MBackdrop(d, 0f, 40f, 41);
-            Emu(d.SlopedFrontage, MTracks[2], .8f, 2, ASeries);
+            Emu(d.SlopedFrontage, T3, .8f, 2, ASeries);
             Trackside(d, 2.6f, 12f, 33f);
             Ground(d, 1, 0f, 40f, 0f, 90f, Lawn, ComicSurface.Foliage);
             LowWall(d, 1, 0f, 13f, .4f, Limestone, LimestoneCap);
@@ -290,9 +310,7 @@ namespace CityScooter.EditorTools.Districts
             var d = new CqChunkDraft("Mciver_Works", MciverDrop);
             float ramp = WorksRampStart, lip = ramp + WorksRise + WorksTop, far = lip + WorksGap;
             MStreet(d, lip, far);
-            MRail(d, 0f, 40f, false);
-            Palisade(d, -1, 0f, lip - 2f, .45f);
-            Palisade(d, -1, far + 2f, 40f, .45f);
+            MRail(d, 0f, 40f, lip - 2f, far + 2f);
             MBackdrop(d, 0f, 40f, 51);
             Ground(d, 1, 0f, lip, 0f, 60f, K.Hex("B9A27E"), ComicSurface.Concrete);
             Ground(d, 1, far, 40f, 0f, 60f, Lawn, ComicSurface.Foliage);
@@ -350,42 +368,51 @@ namespace CityScooter.EditorTools.Districts
 
         // ---------------------------------------------------------------- McIver parts
 
-        /// <summary>Where the railway starts or ends in an entry / exit chunk: a brick road bridge across the corridor with
-        /// dark openings over the tracks, a cream coping and a steel parapet, trees on the embankment behind it.</summary>
-        static void RailBridgeWall(CqChunkDraft d, float z, bool tracksAhead, float[] tracks, float width = 34f)
+        /// <summary>Where the Midland line begins (McIver's entry chunk, arriving from the CBD): a brick road bridge across
+        /// the whole corridor from z0 to z1, the tracks running out of two double-track tunnel mouths in its far face
+        /// (z1), a cream coping and steel parapets, blind arches along the street, a bus crossing on top. The corridor
+        /// starts at z1.</summary>
+        static void TunnelPortal(CqChunkDraft d, float z0, float z1, float width = 34f)
         {
             ComicMesh m = d.SlopedFrontage;
-            float t = tracksAhead ? -1f : 1f, zb = z + t * 6f;          // the bridge body lies on the side away from the tracks
+            const float top = 7.9f;
+            float zc = (z0 + z1) * .5f, len = z1 - z0;
+            Color dark = K.Hex("14181D");
             m.Surface = ComicSurface.Brick;
-            K.MinMaxBox(m, V(LX(.1f), -1f, z), V(LX(width), 7.2f, zb), BrickDark);
+            K.MinMaxBox(m, V(LX(.1f), -1f, z0), V(LX(width), top, z1), BrickDark);
             m.Surface = ComicSurface.Concrete;
-            K.MinMaxBox(m, V(LX(-.02f), 7.2f, z - t * .15f), V(LX(width + .1f), 7.55f, zb + t * .1f), TrimCream);
+            K.MinMaxBox(m, V(LX(-.02f), top, z0 - .1f), V(LX(width + .1f), top + .35f, z1 + .15f), TrimCream);
             m.Surface = ComicSurface.PaintedMetal;
-            K.MinMaxBox(m, V(LX(.1f), 8.5f, z - t * .05f), V(LX(width), 8.6f, z + t * .1f), SteelDark);
-            for (float u = .3f; u < width; u += 2.8f) m.Box(V(LX(u), 8.05f, z + t * .03f), V(.1f, 1f, .1f), SteelDark);
-            Vector3 n = V(0, 0, -t);
-            float zf = z - t * .02f;
-            foreach (float u in tracks)
+            foreach (float z in new[] { z0 + .05f, z1 - .05f })
             {
-                float x = LX(u);
-                m.Surface = ComicSurface.Plain;
-                K.Face(m, V(x - 2f, .1f, zf), V(x + 2f, .1f, zf), V(x + 2f, 5.6f, zf), V(x - 2f, 5.6f, zf), K.Hex("14181D"), n);
-                K.Face(m, V(x - 2f, 5.6f, zf), V(x + 2f, 5.6f, zf), V(x + 1.3f, 6.4f, zf), V(x - 1.3f, 6.4f, zf), K.Hex("14181D"), n, false);
-                m.Surface = ComicSurface.Concrete;
-                m.Box(V(x, 6.62f, zf), V(3.2f, .22f, .2f), TrimCream);
-                m.Box(V(x - 2.15f, 2.9f, zf), V(.3f, 5.6f, .2f), TrimCream);
-                m.Box(V(x + 2.15f, 2.9f, zf), V(.3f, 5.6f, .2f), TrimCream);
+                K.MinMaxBox(m, V(LX(.1f), top + 1.3f, z - .05f), V(LX(width), top + 1.4f, z + .05f), SteelDark);
+                for (float u = .3f; u < width; u += 2.8f) m.Box(V(LX(u), top + .85f, z), V(.1f, 1f, .1f), SteelDark);
             }
-            // the side along the road: a steel parapet on top, two blind arches in the brick, a cream plinth band
-            float xr = LX(.1f), za = Mathf.Min(z, zb), zc2 = (z + zb) * .5f;
-            m.Surface = ComicSurface.PaintedMetal;
-            m.Box(V(xr, 8.55f, zc2), V(.1f, .1f, 6f), SteelDark);
-            for (float dz = .3f; dz < 6f; dz += 1.8f) m.Box(V(xr, 8.05f, za + dz), V(.1f, 1f, .1f), SteelDark);
-            m.Surface = ComicSurface.Concrete;
-            m.Box(V(xr + .04f, .55f, zc2), V(.12f, .7f, 6f), TrimCream);
-            foreach (float dz in new[] { 1.6f, 4.4f })
+            // the tunnel mouths: one for the standard pair of tracks, one for the two extra tracks
+            float zf = z1 + .02f;
+            foreach (float u in new[] { (T1 + T2) * .5f, (T3 + T4) * .5f })
             {
-                float zm = za + dz;
+                float x = LX(u), hw = 4.3f;
+                m.Surface = ComicSurface.Plain;
+                K.Face(m, V(x - hw, .1f, zf), V(x + hw, .1f, zf), V(x + hw, 6f, zf), V(x - hw, 6f, zf), dark, Vector3.forward);
+                K.Face(m, V(x - hw, 6f, zf), V(x + hw, 6f, zf), V(x + hw - .9f, 6.8f, zf), V(x - hw + .9f, 6.8f, zf), dark, Vector3.forward, false);
+                m.Surface = ComicSurface.Concrete;
+                m.Box(V(x, 7.02f, zf), V(hw * 2f - 1.2f, .22f, .2f), TrimCream);
+                m.Box(V(x - hw - .15f, 3.05f, zf), V(.3f, 6f, .2f), TrimCream);
+                m.Box(V(x + hw + .15f, 3.05f, zf), V(.3f, 6f, .2f), TrimCream);
+            }
+            // the side along the street: a steel parapet on top, blind arches in the brick, a cream plinth band
+            float xr = LX(.1f);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(V(xr, top + 1.35f, zc), V(.1f, .1f, len), SteelDark);
+            for (float z = z0 + .3f; z < z1; z += 1.8f) m.Box(V(xr, top + .85f, z), V(.1f, 1f, .1f), SteelDark);
+            m.Surface = ComicSurface.Concrete;
+            m.Box(V(xr + .04f, .55f, zc), V(.12f, .7f, len), TrimCream);
+            m.Box(V(xr + .04f, 6.2f, zc), V(.12f, .3f, len), TrimCream);
+            int arches = Mathf.Max(1, Mathf.RoundToInt(len / 3f));
+            for (int i = 0; i < arches; i++)
+            {
+                float zm = z0 + len * (i + .5f) / arches;
                 m.Surface = ComicSurface.Plain;
                 K.Face(m, V(xr + .012f, .9f, zm - 1f), V(xr + .012f, .9f, zm + 1f), V(xr + .012f, 4.4f, zm + 1f), V(xr + .012f, 4.4f, zm - 1f), K.Hex("6E2E20"), Vector3.right);
                 K.Face(m, V(xr + .012f, 4.4f, zm - 1f), V(xr + .012f, 4.4f, zm + 1f), V(xr + .012f, 5.2f, zm + .5f), V(xr + .012f, 5.2f, zm - .5f), K.Hex("6E2E20"), Vector3.right, false);
@@ -394,14 +421,19 @@ namespace CityScooter.EditorTools.Districts
                 m.Beam(V(xr + .07f, 4.35f, zm + 1.05f), V(xr + .07f, 5.25f, zm + .5f), .14f, TrimCream);
                 m.Box(V(xr + .07f, 5.27f, zm), V(.14f, .14f, 1.1f), TrimCream);
             }
+            // the end towards the rider coming from the CBD: the abutment with a cream band and a dark service door
+            m.Surface = ComicSurface.Concrete;
+            m.Box(V(LX(width * .5f), 6.2f, z0 - .04f), V(width - .2f, .3f, .12f), TrimCream);
+            m.Surface = ComicSurface.Plain;
+            K.Face(m, V(LX(3f), .25f, z0 - .012f), V(LX(4.4f), .25f, z0 - .012f), V(LX(4.4f), 2.6f, z0 - .012f), V(LX(3f), 2.6f, z0 - .012f), dark, Vector3.back);
             // a bus crossing the bridge: only its top shows over the parapet
             m.Surface = ComicSurface.PaintedMetal;
-            m.Box(V(LX(9f), 9.6f, zc2), V(10f, 2.9f, 2.5f), White);
+            m.Box(V(LX(9f), top + 2.4f, zc), V(10f, 2.9f, 2.5f), White);
             m.Surface = ComicSurface.Glass;
-            m.Box(V(LX(9f), 10f, zc2), V(9.4f, 1.1f, 2.54f), GlassDark);
+            m.Box(V(LX(9f), top + 2.8f, zc), V(9.4f, 1.1f, 2.54f), GlassDark);
             m.Surface = ComicSurface.Plain;
-            m.Box(V(LX(9f), 8.9f, zc2), V(10.02f, .5f, 2.52f), SignGreen);
-            d.Walls.Add(new Bounds(new Vector3(LX(width * .5f), d.Y(z) + 3f, (z + zb) * .5f), new Vector3(width, 9f, 6f)));
+            m.Box(V(LX(9f), top + 1.7f, zc), V(10.02f, .5f, 2.52f), SignGreen);
+            d.Walls.Add(new Bounds(new Vector3(LX(width * .5f), d.Y(zc) + 3f, zc), new Vector3(width, 9f, len)));
         }
 
         /// <summary>Trackside clutter between the fence and the first track: relay cabinets, a signal, weeds.</summary>
@@ -653,11 +685,12 @@ namespace CityScooter.EditorTools.Districts
         }
 
         /// <summary>The enclosed link bridge over Wellington St between the two hospital blocks: white precast bands, a
-        /// ribbon of dark glass, ROYAL PERTH HOSPITAL on the side the rider sees, two round columns beyond the sidewalks.</summary>
+        /// ribbon of dark glass, ROYAL PERTH HOSPITAL on the side the rider sees, round columns. Since v0.6 it also spans
+        /// the railway (North Block stands behind the four tracks).</summary>
         static void LinkBridge(CqChunkDraft d, float z0, float z1)
         {
             ComicMesh m = d.Frontage;
-            float y = d.Y((z0 + z1) * .5f) + 7.6f, xa = -(K.Edge + 2.4f), xb = K.Edge + 3.4f, zc = (z0 + z1) * .5f, len = z1 - z0;
+            float y = d.Y((z0 + z1) * .5f) + 7.6f, xa = -(K.Edge + 29.4f), xb = K.Edge + 3.4f, zc = (z0 + z1) * .5f, len = z1 - z0;
             m.Surface = ComicSurface.Concrete;
             m.Box(V((xa + xb) * .5f, y + .55f, zc), V(xb - xa, 1.1f, len), OffWhite);
             m.Box(V((xa + xb) * .5f, y + 3.25f, zc), V(xb - xa, 1.3f, len), OffWhite);
@@ -673,7 +706,8 @@ namespace CityScooter.EditorTools.Districts
             m.Box(V((xa + xb) * .5f, y - .04f, zc), V(xb - xa, .08f, len - .2f), Ink);
             PixelText(m, "ROYAL PERTH HOSPITAL", 0f, y + 3.25f, z0 - .02f, .15f, Navy);
             m.Surface = ComicSurface.Concrete;
-            foreach (float x in new[] { -(K.Edge + .7f), K.Edge + .7f })
+            // columns: beyond the right sidewalk, between the fence and the ballast, and between the two pairs of tracks
+            foreach (float x in new[] { -(K.Edge + 15.5f), -(K.Edge + 1.05f), K.Edge + .7f })
             {
                 m.Cylinder(V(x, d.Y(zc) + 3.6f, zc), .42f, 8.2f, OffWhite, 8);
                 m.Box(V(x, y - .25f, zc), V(1.4f, .5f, len - .6f), OffWhite);
@@ -1122,6 +1156,7 @@ namespace CityScooter.EditorTools.Districts
             {
                 w.Surface = ComicSurface.Concrete;
                 K.MinMaxBox(w, V(s * (K.Edge + 3.5f), y - .2f, z0 - .25f), V(s * (K.Edge + 3.75f), K.Kerb, z1 + .25f), sheet);
+                if (s < 0) continue;   // the railway's ballast is on the left: the spoil heaps are on the right only
                 w.Ellipsoid(V(s * (K.Edge + 5.6f), K.Kerb - .1f, (z0 + z1) * .5f + s), V(4f, 2.2f, 5.4f), dirt);
                 w.Ellipsoid(V(s * (K.Edge + 4.9f), K.Kerb - .1f, (z0 + z1) * .5f - 1.6f * s), V(2.6f, 1.5f, 3f), dirtDark);
             }
@@ -1398,27 +1433,41 @@ namespace CityScooter.EditorTools.Districts
             }
         }
 
-        /// <summary>The horizon around McIver: the city is in the sky behind, so this is a modest band: paving and ballast
-        /// running on, rows of brick and render buildings with trees between them, taller blocks behind the railway.</summary>
-        static ComicMesh MciverFar(float grade)
+        /// <summary>The horizon McIver and Claisebrook share (one prefab, so it stays up across their boundary): the city
+        /// is in the sky behind, so this is a modest band: paving on the right and the railway's ballast on the left
+        /// running on, rows of brick and render buildings with trees between them, taller blocks behind the railway, and
+        /// far to the right the Swan with the Burswood tree line beyond it.</summary>
+        static ComicMesh InnerEastFar(float grade)
         {
             var m = new ComicMesh();
             var r = new System.Random(210);
-            Color haze = K.Hex("C9D8E6");
+            Color haze = K.Hex("C8D9E7");
             const float z0 = -220f, z1 = 820f;
             FarStrip(m, K.Edge, 60f, 330f, z1, K.Kerb - .03f, Paving);
-            FarStrip(m, -K.Edge, -40f, 330f, z1, .08f, BallastC);
-            FarStrip(m, -40f, -60f, 330f, z1, .08f, K.Hex("8E8A80"));
-            FarStrip(m, 60f, 400f, z0, z1, -.3f, Haze(K.Hex("A9A79C"), 200f, haze));
+            FarStrip(m, -K.Edge, -36.7f, 330f, z1, .08f, BallastC);
+            FarStrip(m, -36.7f, -60f, 330f, z1, .08f, K.Hex("8E8A80"));
+            FarStrip(m, 60f, 190f, z0, z1, -.3f, Haze(K.Hex("A9A79C"), 150f, haze));
+            FarStrip(m, 190f, 420f, z0, z1, CSea - .1f, Haze(River, 300f, haze));
+            FarStrip(m, 420f, 1400f, z0, z1, -.4f, Haze(K.Hex("7F9A66"), 600f, haze));
             FarStrip(m, -60f, -400f, z0, z1, -.3f, Haze(K.Hex("9E9C92"), 200f, haze));
-            FarStrip(m, 400f, 1400f, z0, z1, -.35f, Haze(K.Hex("9AAE7A"), 700f, haze));
             FarStrip(m, -400f, -1400f, z0, z1, -.35f, Haze(K.Hex("9AAE7A"), 700f, haze));
+            m.Surface = ComicSurface.Plain;
+            for (int i = 0; i < 60; i++)
+            {
+                float x = F(r, 200f, 410f), z = F(r, -150f, 760f), len = F(r, 3f, 8f);
+                K.Face(m, V(x, CSea - .08f, z), V(x, CSea - .08f, z + .6f), V(x + len, CSea - .08f, z + .6f), V(x + len, CSea - .08f, z), Haze(RiverLight, x, haze), Vector3.up, false);
+            }
             FarTown(m, r, 1, 66f, 100f, z0, z1, 6f, 16f, haze);
-            FarTown(m, r, 1, 120f, 190f, z0, z1, 10f, 34f, haze, 18f);
+            FarTown(m, r, 1, 120f, 180f, z0, z1, 8f, 26f, haze, 18f);
             FarTown(m, r, -1, 70f, 110f, z0, z1, 6f, 18f, haze);
             FarTown(m, r, -1, 130f, 220f, z0, z1, 14f, 46f, haze, 18f, false);
-            FarTown(m, r, 1, 220f, 380f, z0, z1, 8f, 26f, haze, 26f);
             FarTown(m, r, -1, 240f, 380f, z0, z1, 8f, 30f, haze, 26f);
+            // the Burswood shore: a long tree line
+            for (float z = z0; z < z1; z += F(r, 16f, 26f))
+            {
+                m.Surface = ComicSurface.Foliage;
+                m.Ellipsoid(V(F(r, 425f, 470f), 6f, z), V(F(r, 20f, 30f), F(r, 12f, 18f), F(r, 18f, 26f)), Haze(Mix(GumLeaf, FigMid, F(r, 0f, 1f)), 450f, haze));
+            }
             m.Shear(grade);
             return m;
         }

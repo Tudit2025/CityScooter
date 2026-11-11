@@ -8,6 +8,7 @@ using CityScooter.Track;
 using UnityEditor;
 using UnityEngine;
 using K = CityScooter.EditorTools.Districts.CbdQuayKit;
+using E = CityScooter.EditorTools.Districts.EastLineKit;
 
 namespace CityScooter.EditorTools.Districts
 {
@@ -22,9 +23,10 @@ namespace CityScooter.EditorTools.Districts
         // The foreshore jump (timber boardwalk kicker + road-wide SPLASH gap: the power station's old cooling-water channel).
         public const float ChannelRampStart = 6f, ChannelRise = 6f, ChannelHeight = 1.4f, ChannelTop = 3f, ChannelGap = 5f;
         const float ESea = -1.8f, BankWidth = 11f;
-        // Suburban tracks either side of the island platform, then the standard gauge line of the long-distance trains.
-        const float ES1 = 5f, ES2 = 14f, ESG = 19f;
-        static readonly float[] ETracks = { ES1, ES2, ESG };
+        // Behind the line's standard pair of tracks (T1, T2): the unwired standard gauge line of the long-distance trains
+        // (u = 19: 27 from the road centre line). It begins at a buffer stop at the terminal and joins track 2 in the exit
+        // chunk. The suburban island platform lies between track 2 and it.
+        const float ESG = 19f, IslandNear = T2 + E.PlatformEdge, IslandFar = ESG - E.PlatformEdge, Island = (IslandNear + IslandFar) * .5f;
         static readonly Color StuccoYellow = K.Hex("E3C987"), StuccoRed = K.Hex("D7A08A"), Rust = K.Hex("8A5A3C"), Bronze = K.Hex("B07A3E"), BronzeDark = K.Hex("8C5E2E"), BronzeLight = K.Hex("C99A5A");
 
         static void BuildEastPerth(TrackTheme theme, bool atlas)
@@ -95,20 +97,17 @@ namespace CityScooter.EditorTools.Districts
 
         // ---------------------------------------------------------------- East Perth chunks
 
-        static void EStreet(CqChunkDraft d) => K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, true);
+        /// <summary>East Perth's streets are the line's boundary surface (grey asphalt, pale flagstones).</summary>
+        static void EStreet(CqChunkDraft d) => E.Street(d, E.StreetLook.Boundary);
 
-        /// <summary>The railway on the left: fence, the two suburban tracks under the wires, the unwired standard gauge
-        /// track, a portal gantry at z = 20.</summary>
-        static void ERail(CqChunkDraft d, float z0, float z1, float bed = 21f)
+        /// <summary>The railway on the left: the line's standard corridor and, behind it on ballast out to
+        /// <paramref name="bed"/> (u), the unwired standard gauge track (gauge = false: the chunk draws it itself).</summary>
+        static void ERail(CqChunkDraft d, float z0, float z1, float bed = 21f, bool gauge = true)
         {
-            Palisade(d, -1, z0, z1, .45f);
-            Ballast(d, z0, z1, 0f, bed);
-            foreach (float t in ETracks) Track(d, t, z0, z1);
-            Wires(d, ES1, z0, z1, 20f, 40f);
-            Wires(d, ES2, z0, z1, 20f, 40f);
-            if (z0 <= 20f && z1 >= 20f) Portal(d, 20f, 2.5f, 16.5f, ES1, ES2);
-            Ground(d, -1, z0, z1, bed, 80f, K.Hex("8E8A80"), ComicSurface.Concrete, .12f);
-            SideWall(d, -1, z0, z1, 30f, 6f);
+            E.Corridor(d, RailSide, z0, z1, new E.CorridorOptions
+            {
+                UnwiredTracks = gauge ? new[] { K.Edge + ESG } : null, BedTo = K.Edge + bed, BackFence = false, Beyond = K.Hex("8E8A80"),
+            });
         }
 
         /// <summary>The long terminal platform beyond the standard gauge track, under its canopy.</summary>
@@ -145,15 +144,14 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft EEntry()
         {
-            // Calm at z = 0; then the tracks come out from under a road bridge on the left and, on the right, the lawn of
-            // the East Parade roundabout with the Impossible Triangle.
+            // From Claisebrook: the railway runs on beside the street; the line's street edge on the right, then the lawn
+            // of the East Parade roundabout with the Impossible Triangle. The street becomes the shared path at the start
+            // of the terminal chunk (which also follows the power station chunk when the chunks come round again).
             var d = new CqChunkDraft("Eastperth_Entry", EastPerthDrop);
             EStreet(d);
-            CalmEdge(d, -1, 0f, 14f, 11, BrickBrown, ConcreteGrey);
-            CalmEdge(d, 1, 0f, 14f, 12, BrickBrown, ConcreteGrey);
-            RailBridgeWall(d, 14f, true, ETracks, 30f);
-            ERail(d, 14f, 40f, 32f);
-            MBackdrop(d, 14f, 40f, 91, 12f, 26f);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { Beyond = K.Hex("8E8A80") });
+            MBackdrop(d, 0f, 40f, 91, 12f, 26f);
+            OuterEdge(d, 0f, 14f, Lawn, 12, true);
             Ground(d, 1, 14f, 40f, 0f, 60f, Lawn, ComicSurface.Foliage);
             LowWall(d, 1, 14f, 40f, .35f, ConcreteGrey, KerbCap);
             ImpossibleTriangle(d.Landmark, V(K.Edge + 11f, d.Ground(27f), 27f));
@@ -169,17 +167,19 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft EExit()
         {
+            // The exit follows one of the shared path chunks: PATH ENDS, a band of setts and a zebra bring the street back.
+            // The standard gauge track swings over and joins track 2: from z = 28 the corridor is the plain standard that
+            // Mt Lawley continues. A last terrace and townhouses, then the line's street edge on the right.
             var d = new CqChunkDraft("Eastperth_Exit", EastPerthDrop);
-            EStreet(d);
-            ERail(d, 0f, 26f, 32f);
-            MBackdrop(d, 0f, 26f, 95, 10f, 20f);
-            RailBridgeWall(d, 26f, false, ETracks, 30f);
+            E.Street(d, E.StreetLook.SharedPath(Paving), E.StreetLook.Boundary, 9f);
+            E.Corridor(d, RailSide, 0f, 40f, new E.CorridorOptions { BedTo = K.Edge + 21f, WideFrom = 0f, WideTo = 28f, Beyond = K.Hex("8E8A80") });
+            E.TrackShift(d, RailSide, K.Edge + ESG, E.Track2, 0f, 26f);
+            MBackdrop(d, 0f, 40f, 95, 10f, 20f);
             Ground(d, 1, 0f, 26f, 0f, 60f, Paving, ComicSurface.Paving);
             ShopTerrace(d, new CqLot(1, .5f, 12.5f, K.Edge + 1.5f, 12f, d.Base(6.5f)), 2, BrickRed, TrimCream, K.Hex("2F5A3A"), 1, true);
             TownhouseRow(d, 1, 13f, 25.5f, K.Edge + 2.5f, 41, false);
             DeepTownhouses(d, 1, 0f, 26f, 18f, 96);
-            CalmEdge(d, -1, 26f, 40f, 13, BrickBrown, ConcreteGrey);
-            CalmEdge(d, 1, 26f, 40f, 14, BrickBrown, ConcreteGrey);
+            OuterEdge(d, 26f, 40f, Paving, 14, true);
             MLights(d, 8f, 22f);
             d.StandardSlots();
             return d;
@@ -191,15 +191,20 @@ namespace CityScooter.EditorTools.Districts
             // terminal platform, its blue and yellow locomotive at the head; the brown brick Public Transport Centre with
             // its angled fins rises behind.
             var d = new CqChunkDraft("Eastperth_Terminal", EastPerthDrop);
-            SharedPath(d, PathRed, Paving);
-            PathDiamond(d, 6f);
-            ERail(d, 0f, 40f);
+            // The street (the entry chunk, or the power station chunk) becomes the shared path here: zebra, a band of
+            // setts, SHARED PATH on the red asphalt.
+            d.Type = RoadType.PedestrianMall;
+            E.Street(d, E.StreetLook.Boundary, E.StreetLook.SharedPath(Paving), 4f);
+            PathDiamond(d, 16f);
+            ERail(d, 0f, 40f, 21f, false);
+            E.Track(d, RailSide, K.Edge + ESG, 1.4f, 40f);
             ComicMesh m = d.SlopedFrontage;
-            Locomotive(m, ESG, 1f);
-            LongDistanceCar(m, ESG, 19.1f);
+            E.BufferStop(m, RailSide, K.Edge + ESG, 1.3f);
+            Locomotive(m, ESG, 2f);
+            LongDistanceCar(m, ESG, 19.9f);
             TerminalPlatform(d, 0f, 40f);
-            Platform(d, 7f, 12f, 24f, 40f, true, true);
-            PlatformSign(d, 9.5f, 26f, "EAST PERTH", .095f);
+            Platform(d, IslandNear, IslandFar, 24f, 40f, true, true);
+            PlatformSign(d, Island, 26f, "EAST PERTH", .095f);
             ParkingDeck(d, 0f, 6f);
             TransportCentre(d, new CqLot(-1, 6.5f, 40f, K.Edge + 27.6f, 16f, d.Base(23f)), false);
             EastParade(d, 0f, 40f, 3);
@@ -215,16 +220,16 @@ namespace CityScooter.EditorTools.Districts
             // The carriages of the Indian Pacific, the island platform with its canopy and lift, the footbridge to the
             // terminal concourse, PUBLIC TRANSPORT CENTRE on the building's top band.
             var d = new CqChunkDraft("Eastperth_Concourse", EastPerthDrop);
-            SharedPath(d, PathRed, Paving);
+            SharedPath(d);
             ERail(d, 0f, 40f);
             ComicMesh m = d.SlopedFrontage;
             LongDistanceCar(m, ESG, .3f);
             LongDistanceCar(m, ESG, 20.3f);
             TerminalPlatform(d, 0f, 40f);
-            Platform(d, 7f, 12f, 0f, 40f, true, true);
-            FlatCanopy(d, 9.5f, 4f, 14f, 3.8f, K.Hex("C9CED3"), K.Hex("6E747A"));
-            StationFootbridge(d, 25f, 9.5f, 26f);
-            PlatformSign(d, 9.5f, 33f, "EAST PERTH", .095f);
+            Platform(d, IslandNear, IslandFar, 0f, 40f, true, true);
+            FlatCanopy(d, Island, 4f, 14f, 3.8f, K.Hex("C9CED3"), K.Hex("6E747A"));
+            StationFootbridge(d, 25f, Island, 26f);
+            PlatformSign(d, Island, 33f, "EAST PERTH", .095f);
             TransportCentre(d, new CqLot(-1, 0f, 32f, K.Edge + 27.6f, 16f, d.Base(16f)), true);
             Coach(d.SlopedFrontage, V(LX(31f), .12f, 36f), 200f);
             EastParade(d, 0f, 40f, 5);
@@ -240,16 +245,16 @@ namespace CityScooter.EditorTools.Districts
             // An A-series set at the island platform, the Prospector at the terminal platform, coaches in their bays; on
             // the right the old brick warehouse, then the street opens towards the river.
             var d = new CqChunkDraft("Eastperth_Platforms", EastPerthDrop);
-            SharedPath(d, PathRed, Paving);
+            SharedPath(d);
             PathDiamond(d, 30f);
             ERail(d, 0f, 40f);
             ComicMesh m = d.SlopedFrontage;
-            Emu(m, ES1, .8f, 2, ASeries);
+            Emu(m, T2, .8f, 2, ASeries);
             Emu(m, ESG, .8f, 2, Prospector, false, false);
             TerminalPlatform(d, 0f, 40f, 26f);
-            Platform(d, 7f, 12f, 0f, 33f, true, true);
-            FlatCanopy(d, 9.5f, 8f, 14f, 3.8f, K.Hex("C9CED3"), K.Hex("6E747A"));
-            ValidatorPoles(d, 9.5f, 30f);
+            Platform(d, IslandNear, IslandFar, 0f, 33f, true, true);
+            FlatCanopy(d, Island, 8f, 14f, 3.8f, K.Hex("C9CED3"), K.Hex("6E747A"));
+            ValidatorPoles(d, Island, 30f);
             Coach(m, V(LX(31.5f), .12f, 31f), 8f);
             Coach(m, V(LX(35.5f), .12f, 32f), 8f);
             FlatCanopy(d, 33.5f, 26f, 12f, 9f, K.Hex("D9DEE3"), K.Hex("6E747A"));
@@ -270,7 +275,7 @@ namespace CityScooter.EditorTools.Districts
             // middle is gone (SPLASH). A graffiti noise wall behind the tracks.
             var d = new CqChunkDraft("Eastperth_Foreshore", EastPerthDrop);
             float ramp = ChannelRampStart, lip = ramp + ChannelRise + ChannelTop, far = lip + ChannelGap;
-            SharedPath(d, PathRed, Paving, lip, far);
+            SharedPath(d, lip, far);
             ERail(d, 0f, 40f, 23f);
             GraffitiWall(d, 0f, 40f, 23f, 71);
             MBackdrop(d, 0f, 40f, 72, 10f, 22f);
@@ -322,6 +327,7 @@ namespace CityScooter.EditorTools.Districts
             // Art Deco office block with its corner tower, the great stucco hall with tall windows, bare steel frames.
             var d = new CqChunkDraft("Eastperth_PowerStation", EastPerthDrop);
             EStreet(d);
+            E.PathEnd(d, .35f);     // the shared path of the foreshore chunk ends here
             ERail(d, 0f, 40f, 23f);
             GraffitiWall(d, 16f, 40f, 23f, 81);
             MBackdrop(d, 16f, 40f, 82, 10f, 20f);
