@@ -297,7 +297,7 @@ Transform:
   m_GameObject: {fileID: 3608026850033576268}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -20, y: 3.3799999, z: 6.75}
+  m_LocalPosition: {x: 20, y: 3.3700001, z: 7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -322,7 +322,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 12, y: 7.1, z: 12.700001}
+  m_Size: {x: 12, y: 7.1, z: 13.200001}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4295515380418891696
 GameObject:
@@ -369,112 +369,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
   kind: 0
---- !u!1 &4577912822641179734
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 404751622322885967}
-  - component: {fileID: 4701118417500862262}
-  m_Layer: 0
-  m_Name: Wall4
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &404751622322885967
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4577912822641179734}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 20, y: 4.24, z: 20.25}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8883331353724839204}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &4701118417500862262
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4577912822641179734}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 9.9, z: 11.700001}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &4648656687833017960
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1151257691261084400}
-  - component: {fileID: 2202740265743773069}
-  m_Layer: 0
-  m_Name: Wall3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1151257691261084400
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4648656687833017960}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 20, y: 3.3700001, z: 7}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8883331353724839204}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &2202740265743773069
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4648656687833017960}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 7.1, z: 13.200001}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4744756917808469308
 GameObject:
   m_ObjectHideFlags: 0
@@ -724,9 +618,6 @@ Transform:
   - {fileID: 1452142619053926753}
   - {fileID: 134849363935386313}
   - {fileID: 9162595747598607203}
-  - {fileID: 1151257691261084400}
-  - {fileID: 404751622322885967}
-  - {fileID: 9145009920705217598}
   m_Father: {fileID: 3374691108511241121}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6763267827618340574
@@ -864,59 +755,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
   kind: 0
---- !u!1 &6945403091892739582
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 9145009920705217598}
-  - component: {fileID: 8588112737503853950}
-  m_Layer: 0
-  m_Name: Wall5
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &9145009920705217598
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6945403091892739582}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 20, y: 2.32, z: 33.25}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8883331353724839204}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &8588112737503853950
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6945403091892739582}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 12, y: 7.1, z: 12.699999}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7072049403615214450
 GameObject:
   m_ObjectHideFlags: 0
@@ -943,7 +781,7 @@ Transform:
   m_GameObject: {fileID: 7072049403615214450}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -20, y: 2.84, z: 20.25}
+  m_LocalPosition: {x: 20, y: 4.24, z: 20.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -968,7 +806,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 12, y: 7.1, z: 12.700001}
+  m_Size: {x: 12, y: 9.9, z: 11.700001}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &7284260328108475923
 GameObject:
@@ -1086,7 +924,7 @@ Transform:
   m_GameObject: {fileID: 7823855312129666493}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -20, y: 2.3100002, z: 33.5}
+  m_LocalPosition: {x: 20, y: 2.32, z: 33.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1111,7 +949,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 12, y: 7.1, z: 12.199999}
+  m_Size: {x: 12, y: 7.1, z: 12.699999}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8091862920066896414
 GameObject:
@@ -1194,48 +1032,6 @@ MonoBehaviour:
   collisionLayouts:
   - obstacles:
     - id: Letterbox
-      position: {x: -7.55, y: -0.088000014, z: 7.2000003}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 0.5, z: 0}
-      size: {x: 0.55, y: 1.05, z: 0.55}
-      canJumpOver: 1
-    - id: WheelieBins
-      position: {x: -4.9, y: -0.13199998, z: 8.3}
-      rotation: {x: 0, y: 90, z: 0}
-      centre: {x: 0, y: 0.55, z: 0}
-      size: {x: 1.45, y: 1.1, z: 0.75}
-      canJumpOver: 1
-    - id: Letterbox
-      position: {x: -7.55, y: -0.572, z: 19.300001}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 0.5, z: 0}
-      size: {x: 0.55, y: 1.05, z: 0.55}
-      canJumpOver: 1
-    - id: WheelieBins
-      position: {x: -4.9, y: -0.524, z: 18.1}
-      rotation: {x: 0, y: 90, z: 0}
-      centre: {x: 0, y: 0.55, z: 0}
-      size: {x: 1.45, y: 1.1, z: 0.75}
-      canJumpOver: 1
-    - id: Letterbox
-      position: {x: -7.55, y: -1.168, z: 34.2}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 0.5, z: 0}
-      size: {x: 0.55, y: 1.05, z: 0.55}
-      canJumpOver: 1
-    - id: WheelieBins
-      position: {x: -4.9, y: -1.2119999, z: 35.3}
-      rotation: {x: 0, y: 90, z: 0}
-      centre: {x: 0, y: 0.55, z: 0}
-      size: {x: 1.45, y: 1.1, z: 0.75}
-      canJumpOver: 1
-    - id: YoungTree
-      position: {x: -4.85, y: -0.59999996, z: 20}
-      rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 2.5, z: 0}
-      size: {x: 0.4, y: 5, z: 0.4}
-      canJumpOver: 0
-    - id: Letterbox
       position: {x: 7.55, y: -0.052, z: 6.3}
       rotation: {x: 0, y: 0, z: 0}
       centre: {x: 0, y: 0.5, z: 0}
@@ -1271,6 +1067,24 @@ MonoBehaviour:
       centre: {x: 0, y: 2.5, z: 0}
       size: {x: 0.4, y: 5, z: 0.4}
       canJumpOver: 0
+    - id: YoungTree
+      position: {x: -4.85, y: -0.59999996, z: 20}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 2.5, z: 0}
+      size: {x: 0.4, y: 5, z: 0.4}
+      canJumpOver: 0
+    - id: WheelieBins
+      position: {x: -4.9, y: -0.15999998, z: 9}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 0.55, z: 0}
+      size: {x: 1.45, y: 1.1, z: 0.75}
+      canJumpOver: 1
+    - id: WheelieBins
+      position: {x: -4.9, y: -1.04, z: 31}
+      rotation: {x: 0, y: 90, z: 0}
+      centre: {x: 0, y: 0.55, z: 0}
+      size: {x: 1.45, y: 1.1, z: 0.75}
+      canJumpOver: 1
     - id: RooSign
       position: {x: 4.5, y: -1.2399999, z: 36}
       rotation: {x: 0, y: 0, z: 0}

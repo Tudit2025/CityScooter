@@ -155,6 +155,14 @@ namespace CityScooter.Tests
             });
         }
 
+        // v0.6 polish: the whole district as the rider sees it, a picture every 20 m (see SouthRideThrough).
+        [UnityTest, Explicit("Ride-through of CANNING BRIDGE and MURDOCH, a picture every 20 m, into art-src/districts/<id>/previews/polish")]
+        public IEnumerator Screenshots_RideThrough_CanningBridgeAndMurdoch()
+        {
+            yield return SouthRideThrough.Ride(_game, _tuning, "canningbridge");
+            yield return SouthRideThrough.Ride(_game, _tuning, "murdoch");
+        }
+
         static void Capture(Camera camera, string id, string file)
         {
             const int w = 1600, h = 900;
@@ -174,6 +182,87 @@ namespace CityScooter.Tests
                 string folder = System.IO.Path.Combine(Application.dataPath, "../art-src/districts/" + id + "/previews");
                 System.IO.Directory.CreateDirectory(folder);
                 System.IO.File.WriteAllBytes(System.IO.Path.Combine(folder, file), image.EncodeToPNG());
+            }
+            finally
+            {
+                RenderTexture.active = previous; camera.targetTexture = oldTarget;
+                RenderTexture.ReleaseTemporary(rt);
+                if (image != null) Object.Destroy(image);
+            }
+        }
+    }
+
+    /// <summary>The polish ride-through (docs/v0.6-polish.md): starts in the district BEFORE the one asked for, so the
+    /// boundary, the gateway and the entry chunk are in the pictures; then a picture from the chase camera every 20 m
+    /// from 20 m before the district to 20 m after it. Files: art-src/districts/&lt;id&gt;/previews/polish/
+    /// &lt;tag&gt;-&lt;nn&gt;-&lt;metres&gt;.png (m020 = 20 m before the district). The tag comes from the command line:
+    /// -cityscooterRideTag before|after (default "ride").</summary>
+    internal static class SouthRideThrough
+    {
+        public static IEnumerator Ride(GameController game, GameTuning tuning, string id)
+        {
+            TrackTheme theme = game.track.theme;
+            Assert.IsTrue(theme.HasDistricts, "run DistrictSetup.ApplyBatch first");
+            int at = System.Array.FindIndex(theme.districts, d => d != null && d.id == id);
+            Assert.GreaterOrEqual(at, 1, id + " and the district before it are on the route");
+            string[] args = System.Environment.GetCommandLineArgs();
+            int arg = System.Array.IndexOf(args, "-cityscooterRideTag");
+            string tag = arg >= 0 && arg + 1 < args.Length ? args[arg + 1] : "ride";
+            string folder = System.IO.Path.Combine(Application.dataPath, "../art-src/districts/" + id + "/previews/polish");
+            System.IO.Directory.CreateDirectory(folder);
+
+            tuning.startDistrict = theme.districts[at - 1].id;
+            game.EnterReady();
+            yield return null;
+            TrackGenerator track = game.track;
+            float z = game.rider.transform.position.z, begin = float.PositiveInfinity;
+            for (int step = 0; step < 40; step++)
+            {
+                begin = track.NextBoundaryAfter(game.rider.transform.position.z);
+                if (!float.IsInfinity(begin)) break;
+                z += 60f;
+                yield return At(game, z);
+            }
+            Assert.IsFalse(float.IsInfinity(begin), "the boundary into " + id);
+            while (z < begin - 100f) { z += 60f; yield return At(game, z); }
+            float end = float.PositiveInfinity;
+            int n = 0;
+            for (float offset = -20f; offset < 700f; offset += 20f, n++)
+            {
+                yield return At(game, begin + offset);
+                for (int f = 0; f < 5; f++) yield return null;
+                if (float.IsInfinity(end) && offset >= 0f) end = track.NextBoundaryAfter(begin + offset);
+                string metres = offset < 0f ? "m" + Mathf.Abs(offset).ToString("000") : offset.ToString("000");
+                Shot(Camera.main, System.IO.Path.Combine(folder, tag + "-" + n.ToString("00") + "-" + metres + ".png"));
+                if (begin + offset >= end + 19f) break;
+            }
+            Debug.Log("[RideThrough] " + id + ": " + (n + 1) + " pictures, district " + begin + " to " + end);
+        }
+
+        static IEnumerator At(GameController game, float z)
+        {
+            game.rider.ResetRider(new Vector3(0f, game.track.SurfaceHeightAt(z), z));
+            var follow = Camera.main.GetComponent<FollowCamera>();
+            if (follow != null) follow.SnapToTarget();
+            for (int i = 0; i < 4; i++) yield return null;
+            if (follow != null) follow.SnapToTarget();
+        }
+
+        static void Shot(Camera camera, string path)
+        {
+            const int w = 960, h = 540;
+            var rt = RenderTexture.GetTemporary(w, h, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 4);
+            RenderTexture previous = RenderTexture.active, oldTarget = camera.targetTexture;
+            Texture2D image = null;
+            try
+            {
+                camera.targetTexture = rt;
+                for (int pass = 0; pass < 2; pass++) camera.Render(); // camera.Render: see DistrictSkyTests.Shot
+                RenderTexture.active = rt;
+                image = new Texture2D(w, h, TextureFormat.RGB24, false);
+                image.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+                image.Apply();
+                System.IO.File.WriteAllBytes(path, image.EncodeToPNG());
             }
             finally
             {
