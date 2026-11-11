@@ -176,6 +176,107 @@ namespace CityScooter.Tests
             }
         }
 
+        // ---- v0.6: the continuous corridor (docs/v0.6-polish.md, the east line corridor standard; numbers of EastLineKit,
+        // repeated here on purpose: changing the standard must break this test)
+        const float Track1 = 14f, Track2 = 18.5f, RailOffset = .55f, RailTop = .3f, ContactWire = 5.6f, MessengerMidSpan = 6.05f;
+        const float FenceX = 8.5f, FenceTop = 2f, MastNear = 11.25f, MastFar = 21.25f, PortalTop = 7.6f, PortalZ = 20f;
+
+        sealed class FlatMesh
+        {
+            public Vector3[] V;
+            public Color[] C;
+        }
+
+        /// <summary>A chunk mesh with the chunk's slope taken out: y = metres above the road at that z. (Vertices are
+        /// read from a temporary copy: the saved meshes are not readable.)</summary>
+        static FlatMesh Flat(RoadChunk c, string child)
+        {
+            Transform t = c.transform.Find(child);
+            Assert.NotNull(t, c.name + "/" + child);
+            Mesh copy = Object.Instantiate(t.GetComponent<MeshFilter>().sharedMesh);
+            try
+            {
+                // The saved meshes are not readable (the builders clear the flag); the editor still holds their data.
+                var so = new SerializedObject(copy);
+                SerializedProperty readable = so.FindProperty("m_IsReadable");
+                if (readable != null) { readable.boolValue = true; so.ApplyModifiedPropertiesWithoutUndo(); }
+                var m = new FlatMesh { V = copy.vertices, C = copy.colors };
+                if (m.V.Length == 0) Assert.Inconclusive("mesh data not readable here");
+                float grade = -c.endHeight / c.length;
+                for (int i = 0; i < m.V.Length; i++) m.V[i].y += grade * m.V[i].z;
+                return m;
+            }
+            finally { Object.DestroyImmediate(copy); }
+        }
+
+        [TestCaseSource(nameof(Ids))]
+        public void TheRailwayCorridor_RunsThroughEveryChunk_AndIsTheStandardAtBothEnds(string id)
+        {
+            // Rule 1 and 2 of v0.6: the Midland line (left of the road here) passes every chunk from z = 0 to its end, and
+            // at both ends of every chunk the fence, the two tracks and the wires are where the standard puts them, so any
+            // two chunks join: the next one in order, the first one again (the cycle), the exit, the next district.
+            foreach (RoadChunk c in AllChunks(Load(id)))
+            {
+                FlatMesh road = Flat(c, "RoadAndSidewalk"), front = Flat(c, "Frontage");
+                foreach (float end in new[] { 0f, c.length })
+                {
+                    if (c.name == "CHN_Mciver_Entry" && end == 0f) continue; // the line begins here: a tunnel under a road bridge
+                    string at = c.name + " at z = " + end + ": ";
+                    foreach (float track in new[] { Track1, Track2 })
+                    {
+                        foreach (float o in new[] { -RailOffset, RailOffset })
+                            Assert.IsTrue(road.V.Any(p => Mathf.Abs(p.z - end) < .05f && Mathf.Abs(-p.x - (track + o)) < .06f && Mathf.Abs(p.y - RailTop) < .01f),
+                                at + "a rail of the track at " + track + " (rail head " + RailTop + " above the road)");
+                        Assert.IsTrue(road.V.Any(p => Mathf.Abs(p.z - end) < .05f && Mathf.Abs(-p.x - track) < .01f && Mathf.Abs(p.y - ContactWire) < .01f),
+                            at + "the contact wire over the track at " + track + " at " + ContactWire);
+                        Assert.IsTrue(road.V.Any(p => Mathf.Abs(p.z - end) < .05f && Mathf.Abs(-p.x - track) < .01f && Mathf.Abs(p.y - MessengerMidSpan) < .02f),
+                            at + "the messenger wire over the track at " + track + " at its lowest (" + MessengerMidSpan + ")");
+                    }
+                    Assert.IsTrue(front.V.Any(p => Mathf.Abs(p.z - end) < .12f && Mathf.Abs(-p.x - FenceX) < .06f && p.y > FenceTop),
+                        at + "a post of the palisade fence at " + FenceX);
+                }
+                // the portal on the line's rhythm: both masts at z = 20, their caps above the lattice beam
+                foreach (float mast in new[] { MastNear, c.name.StartsWith("CHN_Mciver_") ? -1f : MastFar })
+                    if (mast > 0f)
+                        Assert.IsTrue(front.V.Any(p => Mathf.Abs(p.z - PortalZ) < .25f && Mathf.Abs(-p.x - mast) < .2f && p.y > PortalTop),
+                            c.name + ": the overhead-line portal's mast at " + mast + ", z = " + PortalZ);
+            }
+        }
+
+        [Test]
+        public void EntryAndExit_MeetTheirNeighbours_OnTheBoundarySurface()
+        {
+            // Rule 4: grey asphalt and pale flagstone sidewalks at z = 0 of every entry and at the end of every exit; a
+            // district's own paving begins and ends inside its own chunks.
+            Color flagstone = new Color32(0xD3, 0xCF, 0xC6, 0xFF);
+            foreach (string id in Ids)
+            {
+                District d = Load(id);
+                foreach ((RoadChunk c, float end) in new[] { (d.entry, 0f), (d.exit, d.exit.length) })
+                {
+                    FlatMesh road = Flat(c, "RoadAndSidewalk");
+                    // the sidewalk's outer edge (x = 8, at kerb height): its top, its outer face and the slab end meet there
+                    var sidewalk = Enumerable.Range(0, road.V.Length)
+                        .Where(i => Mathf.Abs(road.V[i].z - end) < .05f && Mathf.Abs(road.V[i].y - .2f) < .003f && Mathf.Abs(Mathf.Abs(road.V[i].x) - 8f) < .01f).ToList();
+                    Assert.That(sidewalk, Is.Not.Empty, c.name + ": sidewalk at z = " + end);
+                    foreach (int i in sidewalk)
+                    {
+                        Color got = road.C[i];
+                        Assert.Less(Mathf.Abs(got.r - flagstone.linear.r) + Mathf.Abs(got.g - flagstone.linear.g) + Mathf.Abs(got.b - flagstone.linear.b), .03f,
+                            c.name + ": the sidewalk at z = " + end + " is the boundary flagstone");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void McIverAndClaisebrook_ShareOneFarScenery()
+        {
+            // Rule 7: the same horizon = the same prefab, so it stays up across the boundary.
+            Assert.AreSame(Load("mciver").farScenery, Load("claisebrook").farScenery);
+            Assert.AreNotSame(Load("claisebrook").farScenery, Load("eastperth").farScenery, "East Perth's horizon is the river: its own far scenery");
+        }
+
         [TestCaseSource(nameof(Ids))]
         public void SpawnSlots_AreInLanes_KeepAFreeLane_AndAreNeverOnRampsOrGaps(string id)
         {

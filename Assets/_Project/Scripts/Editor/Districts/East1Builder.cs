@@ -8,11 +8,13 @@ using CityScooter.Track;
 using UnityEditor;
 using UnityEngine;
 using K = CityScooter.EditorTools.Districts.CbdQuayKit;
+using E = CityScooter.EditorTools.Districts.EastLineKit;
 
 namespace CityScooter.EditorTools.Districts
 {
     /// <summary>
-    /// East line, art agent 1 (v0.5): the first three districts of the Midland line after the CBD.
+    /// East line, art agent 1 (v0.5; v0.6: the continuous corridor of EastLineKit): the first three districts of the
+    /// Midland line after the CBD.
     /// MCIVER (order 210): Wellington St beside the railway: Royal Perth Hospital (the tan brick ward block with white
     /// balconies, North Block's precast bands and blue ribbon glazing, the enclosed link bridge over the street), the red
     /// brick heritage buildings and the Moreton Bay fig, McIver station (barrel-vault shelters, an A-series set), Wellington
@@ -24,7 +26,9 @@ namespace CityScooter.EditorTools.Districts
     /// Transport Centre with its angled concrete fins), the suburban island platform, the Prospector, the Swan River
     /// foreshore with Matagarup Bridge and Optus Stadium across the water (built with the foreshore chunk at reduced size),
     /// the freeway and rail bridges, the old East Perth Power Station.
-    /// The railway runs along the left (-X) side as scenery: nothing there has a collider.
+    /// The railway runs along the left (-X) side of EVERY chunk as scenery (EastLineKit.Corridor: the same fence, tracks,
+    /// wires and portals from z = 0 to the end, see docs/v0.6-polish.md); nothing there has a collider. Landmarks on the
+    /// railway side stand behind the corridor.
     /// Uses the CBD / Quay comic kit (CbdQuayKit, CqChunkDraft): ComicPalette + ComicInk only, vertex colours.
     ///   Menu: CityScooter/Districts/Build East 1
     ///   Batch: -executeMethod CityScooter.EditorTools.Districts.East1Builder.BuildBatch
@@ -180,38 +184,21 @@ namespace CityScooter.EditorTools.Districts
             return new Bounds(new Vector3(s * (K.Half + K.Side * .5f + .3f), (yTop + yBottom) * .5f, (z0 + z1) * .5f), new Vector3(K.Side + .6f, yTop - yBottom, z1 - z0));
         }
 
-        /// <summary>Calm end of an entry / exit chunk: low wall, clipped hedge, lawn, small trees (any district can follow).</summary>
-        static void CalmEdge(CqChunkDraft d, int s, float z0, float z1, int seed, Color wall, Color cap)
+        /// <summary>The line's street edge (EastLineKit) on the right at the outer end of an entry / exit chunk, with a
+        /// low row of this district's own background blocks behind it: the street goes on, it does not open into a park.</summary>
+        static void OuterEdge(CqChunkDraft d, float z0, float z1, Color ground, int seed, bool townhouses)
         {
-            Ground(d, s, z0, z1, 0f, 60f, Lawn, ComicSurface.Foliage);
-            LowWall(d, s, z0, z1, .55f, wall, cap);
-            HedgeRow(d, s, z0 + .4f, z1 - .4f, .8f);
-            var r = new System.Random(seed);
-            for (float z = z0 + 3.5f; z < z1 - 1f; z += 7f)
-                K.PlaneTree(d.Props, null, V(s * (K.Edge + F(r, 4f, 7f)), d.Ground(z), z), F(r, .75f, .95f), true);
-            for (float z = z0 + 5f; z < z1; z += 9f) CheapGum(d.Deep, V(s * (K.Edge + F(r, 16f, 26f)), d.Ground(z) - .5f, z), F(r, 9f, 13f), seed + (int)z);
-            SideWall(d, s, z0, z1);
+            E.StreetEdge(d, 1, z0, z1, ground);
+            if (townhouses) DeepTownhouses(d, 1, z0, z1, 6.5f, seed);
+            else DeepBlocks(d, 1, z0, z1, 6.5f, seed, 8f, 13f);
         }
 
-        /// <summary>A shared path (PedestrianMall): red asphalt riding surface with a dashed white centre line and pale edge
-        /// lines, grey concrete side strips. Same cross-section as the street.</summary>
-        static void SharedPath(CqChunkDraft d, Color path, Color side, float skipFrom = -1f, float skipTo = -1f)
+        /// <summary>The shared path (PedestrianMall): the line's red asphalt path with its dashed white centre line and
+        /// pale edge lines, pale flagstone side strips. Same cross-section as the street.</summary>
+        static void SharedPath(CqChunkDraft d, float skipFrom = -1f, float skipTo = -1f)
         {
             d.Type = RoadType.PedestrianMall;
-            K.StreetSurface(d.Road, d.Length, path, side, KerbCap, false, skipFrom, skipTo);
-            ComicMesh m = d.Road;
-            m.Surface = ComicSurface.Plain;
-            for (float z = 1f; z < d.Length - 2f; z += 5f)
-            {
-                if (skipFrom >= 0f && z + 2.6f > skipFrom && z < skipTo) continue;
-                K.Face(m, V(-.07f, .03f, z), V(-.07f, .03f, z + 2.6f), V(.07f, .03f, z + 2.6f), V(.07f, .03f, z), White, Vector3.up, false);
-            }
-            for (float z = 0f; z < d.Length - .01f; z += 4f)
-            {
-                if (skipFrom >= 0f && z + 4f > skipFrom && z < skipTo) continue;
-                foreach (int s in new[] { -1, 1 })
-                    K.Face(m, V(s * (K.Half - .35f), .025f, z), V(s * (K.Half - .35f), .025f, z + 4f), V(s * (K.Half - .25f), .025f, z + 4f), V(s * (K.Half - .25f), .025f, z), Mix(path, White, .7f), Vector3.up, false);
-            }
+            E.Street(d, E.StreetLook.SharedPath(Paving), null, -1f, skipFrom, skipTo);
         }
 
         /// <summary>A painted bicycle and walker pair of arrows is too fiddly at this size: a white diamond marks the path.</summary>
@@ -507,15 +494,22 @@ namespace CityScooter.EditorTools.Districts
         /// <summary>Jacaranda in November flower: a dark forked trunk and a wide, rounded purple crown.</summary>
         static void JacarandaTree(ComicMesh m, Vector3 p, float h, int seed) => Gum(m, p, h, seed, Jacaranda, JacarandaLight, JacarandaBark);
 
-        /// <summary>Background gum (no outline back there): thin trunk and two clumps.</summary>
+        /// <summary>Background gum (no outline back there): a leaning trunk that forks into two limbs, three flat clumps
+        /// at different heights (v0.6: it was a ball on a stick).</summary>
         static void CheapGum(ComicMesh m, Vector3 p, float h, int seed, Color? leaf = null)
         {
             Color lf = leaf ?? GumLeaf;
+            float s = (seed & 1) == 0 ? 1f : -1f, r = .13f + h * .011f;
+            Vector3 fork = p + V(s * h * .05f, h * .46f, 0);
+            Vector3 a = fork + V(s * h * .17f, h * .24f, h * .05f), b = fork + V(-s * h * .13f, h * .32f, -h * .04f);
             m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + V(0, h * .35f, 0), .16f + h * .012f, h * .7f, GumBarkDark, 5, .5f);
+            Limb(m, p, fork, r, r * .7f, GumBarkDark, 5);
+            Limb(m, fork, a, r * .7f, r * .4f, GumBarkDark, 4);
+            Limb(m, fork, b, r * .7f, r * .4f, GumBark, 4);
             m.Surface = ComicSurface.Foliage;
-            m.Ellipsoid(p + V(0, h * .74f, 0), V(h * .5f, h * .4f, h * .5f), lf);
-            m.Ellipsoid(p + V(h * .14f * ((seed & 1) == 0 ? 1 : -1), h * .56f, h * .1f), V(h * .36f, h * .26f, h * .36f), Mix(lf, Ink, .15f));
+            m.Ellipsoid(a + V(0, h * .05f, 0), V(h * .44f, h * .2f, h * .42f), lf);
+            m.Ellipsoid(b + V(0, h * .06f, 0), V(h * .48f, h * .22f, h * .44f), Mix(lf, Ink, .13f));
+            m.Ellipsoid(fork + V(s * h * .02f, h * .47f, 0), V(h * .3f, h * .15f, h * .3f), Mix(lf, White, .14f));
         }
 
         /// <summary>A low shrub bed: three or four small blobs.</summary>

@@ -4,138 +4,47 @@ using CityScooter.EditorTools.Art;
 using CityScooter.Rendering;
 using UnityEngine;
 using K = CityScooter.EditorTools.Districts.CbdQuayKit;
+using E = CityScooter.EditorTools.Districts.EastLineKit;
 
 namespace CityScooter.EditorTools.Districts
 {
     /// <summary>
-    /// The railway kit of the east line (art agent 1): ballast, tracks, overhead wires and gantries, palisade fences,
-    /// platforms and shelters, Transperth A-series and B-series sets, the Indian Pacific, the Prospector, a road coach.
+    /// The railway parts that only McIver, Claisebrook and East Perth have: station shelters and canopies, name boards,
+    /// the Indian Pacific, the Prospector, a road coach, yard lights. The corridor itself (fence, ballast, tracks, wires,
+    /// portals, the A-series and B-series sets, platforms) is the east line's shared EastLineKit since v0.6.
     /// Everything is built in flat road space on the LEFT of the road (u = metres beyond the sidewalk edge) and goes into
     /// the chunk's sheared meshes (Road: no ink; SlopedFrontage: ink), so platforms, wires and trains follow the grade.
     /// Scenery only: nothing here adds a collider.
     /// </summary>
     public static partial class East1Builder
     {
-        const float RailTop = .3f, PlatformTop = 1.25f, ContactWire = 5.6f, PortalTop = 7.6f;
-        static readonly Color BallastC = K.Hex("9D9A92"), BallastDark = K.Hex("86837C"), Sleeper = K.Hex("6E6257"), RailSteel = K.Hex("4E545C"), RailShine = K.Hex("B9C0C6");
-        static readonly Color MastGrey = K.Hex("A9B0B6"), Insulator = K.Hex("7A3B2A"), Tactile = K.Hex("F0D060"), PlatformFace = K.Hex("B9B5AA");
-        static readonly Color Stainless = K.Hex("CDD2D6"), StainlessDark = K.Hex("9AA2AA"), TransGreen = K.Hex("1E9E4A"), SkirtRed = K.Hex("D8452B"), DoorYellow = K.Hex("F2D03A");
-        static readonly Color LocoBlue = K.Hex("1F3F8A"), LocoYellow = K.Hex("F2C230"), FenceBlack = K.Hex("2A2F36");
+        // The corridor itself (fence, ballast, tracks, wires, portals, trains, platforms) is the east line's shared kit:
+        // EastLineKit (alias E). Station furniture below is placed in "u" = metres beyond the left sidewalk edge.
+        const int RailSide = E.Left;
+        const float RailTop = E.RailTop, PlatformTop = E.PlatformTop, ContactWire = E.ContactWire, PortalTop = E.PortalTop;
+        /// <summary>The standard pair of tracks in u (6 and 10.5), and the two extra tracks of the four-track section from
+        /// the city to the Claisebrook depot (20.5 and 25: 28.5 and 33 from the road centre line).</summary>
+        const float T1 = E.Track1 - K.Edge, T2 = E.Track2 - K.Edge, T3 = 20.5f, T4 = 25f;
+        /// <summary>Where the standard corridor ends and the district's own ground begins, in u (15.6).</summary>
+        const float BeyondRail = E.CorridorEnd - K.Edge;
+        static readonly Color BallastC = E.Ballast, BallastDark = E.BallastDark, Sleeper = E.Sleeper, RailSteel = E.RailSteel, RailShine = E.RailShine;
+        static readonly Color MastGrey = E.MastGrey, Insulator = E.Insulator, Tactile = E.Tactile, PlatformFace = E.PlatformFace;
+        static readonly Color Stainless = E.Stainless, StainlessDark = E.StainlessDark, TransGreen = E.TransGreen, SkirtRed = E.SkirtRed, DoorYellow = E.DoorYellow;
+        static readonly Color LocoBlue = K.Hex("1F3F8A"), LocoYellow = K.Hex("F2C230"), FenceBlack = E.FenceBlack;
 
         /// <summary>x of a point u metres beyond the left sidewalk edge.</summary>
         static float LX(float u) => -(K.Edge + u);
 
-        /// <summary>The ballast bed from u0 to u1 beyond the left sidewalk.</summary>
-        static void Ballast(CqChunkDraft d, float z0, float z1, float u0, float u1) =>
-            Ground(d, -1, z0, z1, u0, u1, BallastC, ComicSurface.Concrete, .1f);
-
-        /// <summary>One track centred u metres beyond the sidewalk: darker bed, sleepers, two rails (road-side faces shown).</summary>
-        static void Track(CqChunkDraft d, float u, float z0, float z1)
+        /// <summary>The four-track section (McIver, and Claisebrook as far as the depot): the standard corridor plus two
+        /// more wired tracks behind it, the ballast out to 36, the portals' far mast at 35.4, the grey yard beyond.</summary>
+        static E.CorridorOptions FourTracks(bool yard = true) => new E.CorridorOptions
         {
-            ComicMesh m = d.Road;
-            float x = LX(u);
-            m.Surface = ComicSurface.Concrete;
-            for (float z = z0; z < z1 - .01f; z += 4f)
-            {
-                float e = Mathf.Min(z1, z + 4f);
-                K.Face(m, V(x - 1.55f, .115f, z), V(x - 1.55f, .115f, e), V(x + 1.55f, .115f, e), V(x + 1.55f, .115f, z), BallastDark, Vector3.up, false);
-            }
-            m.Surface = ComicSurface.Wood;
-            for (float z = z0 + .3f; z < z1 - .3f; z += 1.3f)
-                K.Face(m, V(x - 1.25f, .13f, z), V(x - 1.25f, .13f, z + .3f), V(x + 1.25f, .13f, z + .3f), V(x + 1.25f, .13f, z), Sleeper, Vector3.up, false);
-            m.Surface = ComicSurface.Metal;
-            for (float z = z0; z < z1 - .01f; z += 4f)
-            {
-                float e = Mathf.Min(z1, z + 4f);
-                foreach (float sx in new[] { -.72f, .72f })
-                {
-                    K.Face(m, V(x + sx - .05f, RailTop, z), V(x + sx - .05f, RailTop, e), V(x + sx + .05f, RailTop, e), V(x + sx + .05f, RailTop, z), RailShine, Vector3.up, false);
-                    K.Face(m, V(x + sx + .05f, .13f, z), V(x + sx + .05f, .13f, e), V(x + sx + .05f, RailTop, e), V(x + sx + .05f, RailTop, z), RailSteel, Vector3.right, false);
-                }
-            }
-        }
+            ExtraTracks = new[] { K.Edge + T3, K.Edge + T4 }, BedTo = 36f, FarMast = 35.4f, BackFence = false,
+            Beyond = yard ? K.Hex("8E8A80") : (Color?)null,
+        };
 
-        static void Ribbon(ComicMesh m, Vector3 a, Vector3 b, float t, Color c)
-        {
-            K.Face(m, a, b, b + Vector3.up * t, a + Vector3.up * t, c, Vector3.right, false);
-            K.Face(m, a, b, b + Vector3.up * t, a + Vector3.up * t, c, Vector3.left, false);
-        }
-
-        /// <summary>The overhead line above a track: the contact wire and the catenary sagging between supports every
-        /// <paramref name="span"/> metres (first support at <paramref name="support"/>), with droppers.</summary>
-        static void Wires(CqChunkDraft d, float u, float z0, float z1, float support = 10f, float span = 20f)
-        {
-            ComicMesh m = d.Road;
-            m.Surface = ComicSurface.Plain;
-            float x = LX(u);
-            float Cat(float z) { float t = Mathf.Repeat(z - support, span) / span; return ContactWire + 1.25f - 3.2f * t * (1f - t); }
-            for (float z = z0; z < z1 - .01f; z += 2f)
-            {
-                float e = Mathf.Min(z1, z + 2f);
-                Ribbon(m, V(x, ContactWire, z), V(x, ContactWire, e), .05f, FenceBlack);
-                // the catenary peaks at a support: do not cut the corner there
-                float ya = Cat(z + .001f), yb = Cat(e - .001f);
-                Ribbon(m, V(x, ya, z), V(x, yb, e), .045f, FenceBlack);
-                if (Mathf.RoundToInt(z) % 4 == 0) Ribbon(m, V(x, ContactWire, z + 1f), V(x, ContactWire, z + 1.04f), Cat(z + 1f) - ContactWire, FenceBlack);
-            }
-        }
-
-        static void MastColumn(ComicMesh m, float x, float z, float h)
-        {
-            m.Surface = ComicSurface.Concrete;
-            m.Box(V(x, .35f, z), V(.6f, .5f, .6f), ConcreteDark);
-            m.Surface = ComicSurface.Metal;
-            m.Box(V(x, h * .5f + .3f, z), V(.26f, h, .3f), MastGrey);
-            m.Surface = ComicSurface.PaintedMetal;
-            m.Box(V(x, h + .34f, z), V(.34f, .08f, .38f), SteelDark);
-        }
-
-        /// <summary>The registration arm holding the contact wire of the track at x, hung from a support at xs.</summary>
-        static void WireArm(ComicMesh m, float x, float xs, float z, float top)
-        {
-            m.Surface = ComicSurface.Metal;
-            m.Box(V(xs, (top + ContactWire + .5f) * .5f, z), V(.1f, top - ContactWire - .5f, .1f), MastGrey);
-            m.Beam(V(xs, ContactWire + 1.25f, z), V(x, ContactWire + 1.25f, z), .07f, MastGrey);
-            m.Beam(V(xs, ContactWire + .55f, z), V(x, ContactWire + .08f, z), .06f, MastGrey);
-            m.Surface = ComicSurface.Plastic;
-            m.Cylinder(V(Mathf.Lerp(xs, x, .35f), ContactWire + 1.25f, z), .09f, .34f, Insulator, 6, 1f, Quaternion.Euler(0, 0, 90));
-        }
-
-        /// <summary>A portal gantry across the tracks at z: two galvanised masts (uL nearest the road), a lattice beam, and
-        /// an arm for each track.</summary>
-        static void Portal(CqChunkDraft d, float z, float uL, float uR, params float[] tracks)
-        {
-            ComicMesh m = d.SlopedFrontage;
-            float xa = LX(uL), xb = LX(uR), y0 = PortalTop - .7f, y1 = PortalTop;
-            MastColumn(m, xa, z, PortalTop);
-            MastColumn(m, xb, z, PortalTop);
-            m.Surface = ComicSurface.Metal;
-            m.Box(V((xa + xb) * .5f, y1, z), V(Mathf.Abs(xa - xb) + .3f, .12f, .16f), MastGrey);
-            m.Box(V((xa + xb) * .5f, y0, z), V(Mathf.Abs(xa - xb) + .3f, .12f, .16f), MastGrey);
-            int n = Mathf.Max(3, Mathf.RoundToInt(Mathf.Abs(xa - xb) / 1.7f));
-            for (int i = 0; i < n; i++)
-            {
-                float p0 = Mathf.Lerp(xa, xb, (float)i / n), p1 = Mathf.Lerp(xa, xb, (float)(i + 1) / n);
-                m.Beam(V(p0, i % 2 == 0 ? y0 : y1, z), V(p1, i % 2 == 0 ? y1 : y0, z), .07f, MastGrey);
-            }
-            foreach (float u in tracks) WireArm(m, LX(u), LX(u) + 1.1f, z, y0);
-        }
-
-        /// <summary>A single mast beside the track(s) with a cantilever arm over them (uMast nearer the road than the tracks).</summary>
-        static void Mast(CqChunkDraft d, float z, float uMast, params float[] tracks)
-        {
-            ComicMesh m = d.SlopedFrontage;
-            float xm = LX(uMast), far = xm;
-            foreach (float u in tracks) far = Mathf.Min(far, LX(u));
-            MastColumn(m, xm, z, PortalTop);
-            m.Surface = ComicSurface.Metal;
-            m.Beam(V(xm, PortalTop - .5f, z), V(far - .6f, PortalTop - .5f, z), .12f, MastGrey);
-            m.Beam(V(xm, PortalTop + .25f, z), V(far - .6f, PortalTop - .42f, z), .06f, MastGrey);
-            foreach (float u in tracks) WireArm(m, LX(u), LX(u) + .9f, z, PortalTop - .5f);
-        }
-
-        /// <summary>A black palisade fence u metres beyond the left sidewalk (or the right one with s = 1): posts, two rails,
-        /// pointed pales.</summary>
+        /// <summary>A fence of another colour away from the railway (the power station's): posts, two rails, pointed pales,
+        /// u metres beyond the sidewalk on side s.</summary>
         static void Palisade(CqChunkDraft d, int s, float z0, float z1, float u, float h = 1.9f, Color? colour = null)
         {
             Color c = colour ?? FenceBlack;
@@ -159,29 +68,9 @@ namespace CityScooter.EditorTools.Districts
             }
         }
 
-        /// <summary>A platform from u0 to u1: red-brown pavers, grey concrete faces, a pale coping and a yellow tactile strip
-        /// along each track edge (near = the edge at u0, far = the edge at u1).</summary>
-        static void Platform(CqChunkDraft d, float u0, float u1, float z0, float z1, bool near, bool far)
-        {
-            ComicMesh m = d.SlopedFrontage;
-            m.Surface = ComicSurface.Paving;
-            K.SideBox(m, -1, z0, z1, .1f, PlatformTop, u0, u1, PaverRed);
-            ComicMesh r = d.Road;
-            for (float z = z0; z < z1 - .01f; z += 4f)
-            {
-                float e = Mathf.Min(z1, z + 4f);
-                r.Surface = ComicSurface.Concrete;
-                K.Face(r, V(LX(u0) + .012f, .1f, z), V(LX(u0) + .012f, .1f, e), V(LX(u0) + .012f, PlatformTop - .14f, e), V(LX(u0) + .012f, PlatformTop - .14f, z), PlatformFace, Vector3.right, false);
-                r.Surface = ComicSurface.Plain;
-                foreach ((bool on, float u, float dir) in new[] { (near, u0, 1f), (far, u1, -1f) })
-                {
-                    if (!on) continue;
-                    float xe = LX(u);
-                    K.Face(r, V(xe, PlatformTop + .012f, z), V(xe, PlatformTop + .012f, e), V(xe - dir * .18f, PlatformTop + .012f, e), V(xe - dir * .18f, PlatformTop + .012f, z), White, Vector3.up, false);
-                    K.Face(r, V(xe - dir * .5f, PlatformTop + .012f, z), V(xe - dir * .5f, PlatformTop + .012f, e), V(xe - dir * .95f, PlatformTop + .012f, e), V(xe - dir * .95f, PlatformTop + .012f, z), Tactile, Vector3.up, false);
-                }
-            }
-        }
+        /// <summary>A platform from u0 to u1 (the kit's, on the left): near = a track edge at u0, far = one at u1.</summary>
+        static void Platform(CqChunkDraft d, float u0, float u1, float z0, float z1, bool near, bool far) =>
+            E.Platform(d, RailSide, K.Edge + u0, K.Edge + u1, z0, z1, near, far);
 
         /// <summary>McIver's shelter: a barrel vault of off-white corrugated sheet on dark steel posts with branching struts,
         /// a white tiled screen wall with poster cases, a bench, a hanging platform-number sign.</summary>
@@ -268,136 +157,21 @@ namespace CityScooter.EditorTools.Districts
             d.SlopedFrontage.Add(sign, V(LX(u), PlatformTop, z), Quaternion.Euler(0, -28f, 0), Vector3.one);
         }
 
-        // ---------------------------------------------------------------- trains
+        // ---------------------------------------------------------------- trains (the sets are the kit's)
 
-        sealed class TrainLook
-        {
-            public float CarLen = 19f, Width = 2.9f;
-            public float[] Doors = { -.24f, .24f };
-            public bool Raked, Ribs = true;
-            public Color Body = Stainless, Nose = White, Mask = K.Hex("1A1E24"), Band = SkirtRed, Stripe = TransGreen, Skirt = Color.clear, DoorEdge = Color.clear;
-        }
-
-        /// <summary>A-series: boxy flat front, white cab end with a black windscreen surround and a red band under it,
-        /// ribbed stainless sides, a thin green strip above the windows.</summary>
-        static TrainLook ASeries => new TrainLook();
-        /// <summary>B-series: raked white nose with a black mask, green cab swoosh and roof edge, red-orange skirt, yellow
-        /// door edges, ribbed stainless sides.</summary>
-        static TrainLook BSeries => new TrainLook { Raked = true, Skirt = SkirtRed, DoorEdge = DoorYellow };
+        static E.TrainLook ASeries => E.ASeries;
+        static E.TrainLook BSeries => E.BSeries;
         /// <summary>The Prospector railcar: stainless, a raked yellow cab front, one door at each end.</summary>
-        static TrainLook Prospector => new TrainLook { CarLen = 19f, Raked = true, Nose = LocoYellow, Band = K.Hex("2A3E6E"), Stripe = K.Hex("2A3E6E"), Doors = new[] { -.42f, .42f } };
+        static E.TrainLook Prospector => new E.TrainLook { Raked = true, Nose = LocoYellow, Band = K.Hex("2A3E6E"), Stripe = K.Hex("2A3E6E"), Doors = new[] { -.42f, .42f } };
 
         static void SideQuad(ComicMesh m, float xs, float z0, float z1, float y0, float y1, Color c, bool ink = false) =>
             K.Face(m, V(xs, y0, z0), V(xs, y0, z1), V(xs, y1, z1), V(xs, y1, z0), c, Vector3.right, ink);
 
         /// <summary>An electric set standing on the track at u, its rear (-Z, facing the rider) end at z0. Returns its length.</summary>
-        static float Emu(ComicMesh m, float u, float z0, int cars, TrainLook k, bool lite = false, bool panto = true, bool noseFront = true, bool noseBack = true)
-        {
-            float x = LX(u), L = k.CarLen, W = k.Width, xs = x + W * .5f + .012f;
-            for (int i = 0; i < cars; i++)
-            {
-                float za = z0 + i * (L + .5f), zb = za + L, zc = (za + zb) * .5f;
-                m.Surface = ComicSurface.Metal;
-                m.Box(V(x, 2.65f, zc), V(W, 2.8f, L), k.Body);
-                m.Box(V(x, 4.14f, zc), V(W - .5f, .2f, L - .6f), Mix(k.Body, Ink, .28f));
-                m.Surface = ComicSurface.PaintedMetal;
-                m.Box(V(x, 1.05f, zc), V(W - .3f, .5f, L - 1f), Ink);
-                foreach (float f in new[] { -.32f, .32f })
-                {
-                    float zbg = zc + f * L;
-                    m.Box(V(x, .72f, zbg), V(2.2f, .55f, 3.4f), SteelDark);
-                    if (lite) continue;
-                    foreach (float dz in new[] { -.95f, .95f }) m.Cylinder(V(x + 1.02f, .72f, zbg + dz), .42f, .14f, Ink, 8, 1f, Quaternion.Euler(0, 0, 90));
-                }
-                if (!lite)
-                {
-                    m.Surface = ComicSurface.Metal;
-                    foreach (float f in new[] { -.22f, .22f }) m.Box(V(x, 4.38f, zc + f * L), V(W - 1.1f, .3f, 3.2f), PlantGrey);
-                }
-                // the side facing the road: ribs, window band between the doors, doors, stripes
-                m.Surface = ComicSurface.Plain;
-                if (k.Ribs) foreach (float y in new[] { 1.5f, 1.72f, 1.94f, 2.16f }) SideQuad(m, xs, za + .3f, zb - .3f, y, y + .04f, Mix(k.Body, Ink, .3f));
-                if (k.Skirt.a > 0f) SideQuad(m, xs, za + .1f, zb - .1f, 1.25f, 1.42f, k.Skirt);
-                if (k.Stripe.a > 0f) SideQuad(m, xs, za + .1f, zb - .1f, k.Raked ? 3.82f : 3.56f, k.Raked ? 4.02f : 3.68f, k.Stripe);
-                var cuts = new List<float> { za + 1.3f };
-                foreach (float f in k.Doors) { cuts.Add(zc + f * L - 1f); cuts.Add(zc + f * L + 1f); }
-                cuts.Add(zb - 1.3f);
-                m.Surface = ComicSurface.Glass;
-                for (int c = 0; c + 1 < cuts.Count; c += 2)
-                    if (cuts[c + 1] - cuts[c] > .6f) SideQuad(m, xs, cuts[c], cuts[c + 1], 2.5f, 3.4f, GlassDark, true);
-                foreach (float f in k.Doors)
-                {
-                    float zd = zc + f * L;
-                    m.Surface = ComicSurface.PaintedMetal;
-                    SideQuad(m, xs + .004f, zd - .82f, zd + .82f, 1.3f, 3.55f, Mix(k.Body, White, .35f), true);
-                    m.Surface = ComicSurface.Glass;
-                    SideQuad(m, xs + .008f, zd - .62f, zd - .08f, 2.45f, 3.35f, GlassDark);
-                    SideQuad(m, xs + .008f, zd + .08f, zd + .62f, 2.45f, 3.35f, GlassDark);
-                    m.Surface = ComicSurface.Plain;
-                    SideQuad(m, xs + .008f, zd - .02f, zd + .02f, 1.3f, 3.55f, Ink);
-                    if (k.DoorEdge.a > 0f) { SideQuad(m, xs + .008f, zd - .82f, zd - .74f, 1.3f, 3.55f, k.DoorEdge); SideQuad(m, xs + .008f, zd + .74f, zd + .82f, 1.3f, 3.55f, k.DoorEdge); }
-                }
-                if (i == 0 && noseFront) Nose(m, x, za, -1f, k); else GangwayEnd(m, x, za - .25f);
-                if (i == cars - 1 && noseBack) Nose(m, x, zb, 1f, k);
-                if (panto && i == 0 && !lite) Pantograph(m, x, zc + L * .3f);
-            }
-            return cars * (L + .5f) - .5f;
-        }
+        static float Emu(ComicMesh m, float u, float z0, int cars, E.TrainLook k, bool lite = false, bool panto = true, bool noseFront = true, bool noseBack = true) =>
+            E.Train(m, RailSide, K.Edge + u, z0, cars, k, lite, panto, noseFront, noseBack);
 
-        static void GangwayEnd(ComicMesh m, float x, float z)
-        {
-            m.Surface = ComicSurface.Rubber;
-            m.Box(V(x, 2.55f, z), V(1.7f, 2.4f, .5f), K.Hex("2A2F36"));
-        }
-
-        static void Pantograph(ComicMesh m, float x, float z)
-        {
-            m.Surface = ComicSurface.PaintedMetal;
-            m.Box(V(x, 4.3f, z), V(1.2f, .12f, 1.7f), SteelDark);
-            m.Beam(V(x, 4.36f, z - .6f), V(x, 4.98f, z + .3f), .07f, SteelDark);
-            m.Beam(V(x, 4.98f, z + .3f), V(x, ContactWire - .08f, z - .3f), .06f, SteelDark);
-            m.Box(V(x, ContactWire - .05f, z - .3f), V(1.5f, .06f, .3f), SteelDark);
-        }
-
-        /// <summary>A cab end at ze, pointing along dir (-1 = towards the rider).</summary>
-        static void Nose(ComicMesh m, float x, float ze, float dir, TrainLook k)
-        {
-            float W = k.Width, hw = W * .5f;
-            Vector3 fwd = V(0, 0, dir);
-            Vector3 P(float dx, float y, float dz) => V(x + dx, y, ze + dir * dz);
-            if (!k.Raked)
-            {
-                m.Surface = ComicSurface.PaintedMetal;
-                K.Face(m, P(-hw + .03f, 1.28f, .02f), P(hw - .03f, 1.28f, .02f), P(hw - .03f, 4.03f, .02f), P(-hw + .03f, 4.03f, .02f), k.Nose, fwd);
-                K.Face(m, P(-hw + .1f, 1.95f, .03f), P(hw - .1f, 1.95f, .03f), P(hw - .1f, 2.38f, .03f), P(-hw + .1f, 2.38f, .03f), k.Band, fwd, false);
-                m.Surface = ComicSurface.Glass;
-                K.Face(m, P(-hw + .18f, 2.5f, .035f), P(hw - .18f, 2.5f, .035f), P(hw - .18f, 3.62f, .035f), P(-hw + .18f, 3.62f, .035f), k.Mask, fwd);
-                K.Face(m, P(-.5f, 3.7f, .035f), P(.5f, 3.7f, .035f), P(.5f, 3.95f, .035f), P(-.5f, 3.95f, .035f), K.Hex("2A2F36"), fwd, false);
-                m.Surface = ComicSurface.Plain;
-                K.Face(m, P(-.4f, 3.76f, .04f), P(.4f, 3.76f, .04f), P(.4f, 3.89f, .04f), P(-.4f, 3.89f, .04f), SafetyOrange, fwd, false);
-                foreach (float sx in new[] { -.95f, .95f }) K.Face(m, P(sx - .18f, 1.5f, .035f), P(sx + .18f, 1.5f, .035f), P(sx + .18f, 1.72f, .035f), P(sx - .18f, 1.72f, .035f), K.R.cream, fwd);
-            }
-            else
-            {
-                m.Surface = ComicSurface.PaintedMetal;
-                m.Box(P(0, 1.9f, .6f), V(W, 1.3f, 1.2f), k.Nose);
-                K.Face(m, P(-hw, 1.26f, 1.21f), P(hw, 1.26f, 1.21f), P(hw, 1.56f, 1.21f), P(-hw, 1.56f, 1.21f), k.Band, fwd, false);
-                foreach (float sx in new[] { -.95f, .95f }) K.Face(m, P(sx - .2f, 1.8f, 1.21f), P(sx + .2f, 1.8f, 1.21f), P(sx + .2f, 2f, 1.21f), P(sx - .2f, 2f, 1.21f), K.R.cream, fwd);
-                // the raked windscreen, the cheeks and the roof cap
-                m.Surface = ComicSurface.Glass;
-                K.Face(m, P(-hw + .1f, 2.55f, 1.2f), P(hw - .1f, 2.55f, 1.2f), P(hw - .22f, 4f, .15f), P(-hw + .22f, 4f, .15f), k.Mask, (fwd + Vector3.up * .6f).normalized);
-                m.Surface = ComicSurface.PaintedMetal;
-                foreach (float sx in new[] { -1f, 1f })
-                {
-                    K.Face(m, P(sx * hw, 2.55f, 1.2f), P(sx * hw, 2.55f, 0f), P(sx * hw, 4.05f, 0f), P(sx * (hw - .12f), 4f, .15f), k.Nose, V(sx, 0, 0));
-                    K.TriFacing(m, P(sx * (hw + .012f), 2.55f, 1.15f), P(sx * (hw + .012f), 2.55f, .05f), P(sx * (hw + .012f), 3.5f, .05f), k.Stripe.a > 0f ? k.Stripe : k.Band, V(sx, 0, 0));
-                    K.Face(m, P(sx * hw, 2.55f, 1.2f), P(sx * (hw - .1f), 2.55f, 1.2f), P(sx * (hw - .22f), 4f, .15f), P(sx * (hw - .12f), 4f, .15f), k.Nose, (fwd + Vector3.up * .6f).normalized);
-                }
-                K.Face(m, P(-hw + .12f, 4f, .15f), P(hw - .12f, 4f, .15f), P(hw, 4.05f, 0f), P(-hw, 4.05f, 0f), k.Nose, Vector3.up);
-            }
-            m.Surface = ComicSurface.PaintedMetal;
-            m.Box(P(0, 1.15f, k.Raked ? 1.45f : .3f), V(.4f, .3f, .7f), Ink);
-        }
+        static void GangwayEnd(ComicMesh m, float x, float z) => E.Gangway(m, x, z);
 
         /// <summary>An Indian Pacific carriage (stainless Comeng stock, no lettering): fluted panels below and above a row of
         /// small windows, a plain navy name board with a gold line, a rounded roof, underframe tanks.</summary>
