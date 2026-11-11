@@ -44,9 +44,12 @@ namespace CityScooter.Tests
             Assert.That(d.length.x, Is.GreaterThanOrEqualTo(200f));
             Assert.That(d.length.y, Is.GreaterThanOrEqualTo(d.length.x));
             Assert.IsTrue(d.HasChunks);
-            Assert.That(d.chunks.Length, Is.InRange(4, 8), "4-6 variants (plus the CBD's widen / narrow transitions)");
-            Assert.AreEqual(d.chunks.Length, d.chunks.Distinct().Count(), "variants are different chunks");
-            Assert.NotNull(d.entry); Assert.NotNull(d.exit);
+            // v0.6: the cycle is longer than the district (CBD 16, quay 10), a second pass with other places and the same
+            // gameplay order, so no landmark comes round twice; plain chunks may be the same prefab in both passes.
+            Assert.That(d.chunks.Length, Is.InRange(4, 16), "the chunk cycle");
+            Assert.That(d.chunks.Distinct().Count(), Is.InRange(4, 10), "4-6 variants (plus the CBD's widen / narrow transitions and the second pass)");
+            Assert.That(d.chunks.Length * 40f, Is.GreaterThanOrEqualTo(d.length.y - 80f), "the cycle covers the longest ride through the district (no landmark twice)");
+                        Assert.NotNull(d.entry); Assert.NotNull(d.exit);
             Assert.IsTrue(d.orderedChunks);
             Assert.IsFalse(d.allowBoulevard, "no boulevard sections: the Terrace is 4 lanes by itself, the quay is a promenade");
             Assert.That(d.obstacles, Is.Not.Null.And.Not.Empty); Assert.IsTrue(d.obstacles.All(o => o != null));

@@ -43,8 +43,10 @@ namespace CityScooter.Tests
                 Assert.IsTrue(System.Text.RegularExpressions.Regex.IsMatch(d.displayName, "^[A-Z ]+$"), "display name is capitals and spaces");
                 Assert.That(d.length.x, Is.GreaterThanOrEqualTo(200f)); Assert.That(d.length.y, Is.GreaterThanOrEqualTo(d.length.x));
                 Assert.IsTrue(d.HasChunks, d.name + " chunks");
-                // Mounts Bay Rd (v0.6): twelve chunks, the six-chunk gameplay order twice with other places, so no landmark comes twice.
-                Assert.That(d.chunks.Length, Is.InRange(4, d.id == "mountsbay" ? 12 : 6), d.name + ": 4-6 chunk variants (Mounts Bay Rd: two passes of six)");
+                // Mounts Bay Rd (v0.6): the six-chunk gameplay order three times with other places (the third pass is plain
+                // bush), so no landmark comes round twice in one ride.
+                Assert.That(d.chunks.Length, Is.InRange(4, d.id == "mountsbay" ? 18 : 6), d.name + ": 4-6 chunk variants (Mounts Bay Rd: three passes of six)");
+                Assert.That(d.chunks.Distinct().Count(), Is.InRange(4, 12), d.name + ": different chunks");
                 Assert.NotNull(d.entry, d.name + " entry"); Assert.NotNull(d.exit, d.name + " exit");
                 Assert.IsFalse(d.allowBoulevard, d.name);
                 Assert.That(d.obstacles, Is.Not.Empty); Assert.IsTrue(d.obstacles.All(o => o != null), d.name + " obstacles");

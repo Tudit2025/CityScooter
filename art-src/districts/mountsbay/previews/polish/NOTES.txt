@@ -1,0 +1,68 @@
+MOUNTS BAY RD - v0.6 polish notes (trunk B, 2026-11-11)
+====================================================
+
+Method (docs/v0.6-polish.md): a ride-through from the rider's chase camera every 20 m on the real route
+(test DistrictPolishRideShots.RideThrough, -cityscooterPolishIds mountsbay), read as contact sheets:
+  before-ride-1.png, before-ride-2.png   the district as it was (two passes of the same six chunks)
+  after-ride-1.png,  after-ride-2.png    after two rounds
+Each sheet is 16 pictures, left to right, top to bottom, 20 m apart; the last six are the exit, the boundary and
+Canning Bridge's entry. Compared with last night's east line (mtlawley 09-astor, claisebrook 09-cove, guildford
+03-guildford-hotel).
+
+The ten worst things (most visible first)
+-----------------------------------------
+ 1. The escarpment was a 200 m staircase of beige boxes: a quarry, not Mount Eliza. (before-escarpment.png)
+ 2. Every landmark came twice: the district is 440-600 m but its cycle was six chunks, so the rider passed a second
+    Jacob's Ladder, a second brewery and a second freeway bridge in one ride. (before-ride-1.png rows 1 and 4)
+ 3. The exit was a hedge-and-lawn gap, the same "park gate" as every other boundary; nothing said Narrows Bridge
+    or freeway. (before-exit-to-canning-bridge.png)
+ 4. The entry: a lawn and a cliff block standing in the water, hedges, plane trees; the river jumped from the right
+    (the quay) to the left with nothing in between. (before-entry-from-quay.png)
+ 5. The Old Swan Brewery was three plain brick boxes with a flat top.
+ 6. Grass trees (balga) on the ledge turned into black ink blots 15 m away (dozens of thin outlined leaves).
+ 7. Long stretches of nothing but white wall on one side and lawn on the other; the river was empty except yachts.
+ 8. The far shore was a green strip with fog-coloured blocks: nothing to read as South Perth.
+ 9. Place names used the 3-pixel M / N / W (MOUNTS BAY RD read as "HOUHTS").
+10. The retaining wall was one flat white slab for 240 m.
+
+Round 1
+-------
+- Escarpment rebuilt (MountsBayBuilder.Scarp): retaining wall with buttresses, base course, weep holes and creepers;
+  a bush ledge; a steep scrub slope in three facets whose colour changes every 4 m; limestone outcrops in twos and
+  threes; scrub blobs without outline (a mass of bush), grass trees / banksias / shrubs with outline near the road;
+  gums on the slope and the park's tall gums on top. Closed ends, so two chunks with different profiles never show sky.
+- Grass tree for distance: trunk, a hanging skirt cone, a round green tuft, a spear (5 closed shapes).
+- Brewery: a long three-storey range under a tiled gable roof, two cross gables with cream copings towards the road,
+  string courses, arched windows, the stair tower with a steep hipped roof and four corner turrets, a brick chimney,
+  a boardwalk; the footbridge now lands on car-park decks built into the escarpment (real). Name wall OLD BREWERY
+  (no brand name).
+- Exit = the Narrows Bridge approach: the red path ends at a kerb band, the escarpment sinks, the land stops at a
+  limestone abutment; from there a bridge balustrade with lamp standards and LEVEL water on the right (2.7 m below
+  the path where the bridge starts, 1.1 m at the end: the path comes down off the bridge), on the left the freeway
+  swinging in over the river: barrier and fence, three lanes, the railway with gantries and wires, the far
+  carriageway, traffic, a green KWINANA FWY board on a gantry, NARROWS BRIDGE on the abutment.
+- Entry continues Elizabeth Quay's exit: asphalt and slab footpaths from z = 0, the quay's railing and water on both
+  sides for 12 m, then the quay's end wall; river bank and palms on the left, on the right a lawn, the name wall and
+  the escarpment growing out of it. The red path starts at a kerb band. Wedges are a palm verge, not a hedged garden.
+- River: black swans, a jetty with a dinghy, river-bank trees of two kinds.
+- Far shore (shared with Elizabeth Quay, one prefab): beach, foreshore lawn, tree line with Norfolk pines, South
+  Perth's apartment towers with balcony bands (the tallest mid-shore), a ferry.
+- Pixel letters with 5-wide M, N, W (TrunkPixelText) on every name wall and board.
+
+Round 2
+-------
+- The hill at the entry was a long flat olive ramp seen from the quay: now a short steep nose with outcrops, scrub
+  and gums.
+- Slope colours darker (bush, not lawn), 40 % more scrub.
+- No landmark twice: the cycle is 18 chunks in the real order from the city, with exactly the old gameplay order
+  (five plain 4-lane chunks around the inlet jump, three times). New places: the Convention Centre (city end), the
+  State War Memorial above the road, Kennedy Fountain and the Kokoda Track walk, Eliza in the river, two plain bush
+  stretches (rowers / picnic shelter and pelican posts). (after-convention-centre.png, after-kokoda-track.png,
+  after-eliza.png)
+- Crags sit in the slope instead of hanging over it.
+
+Left for later
+--------------
+- The freeway's cars and the train are decoration that does not move.
+- The retaining wall is still the longest single element on the right; it is real, but two more niches would help.
+- Water is a flat vertex-coloured plane (shader work, out of scope).

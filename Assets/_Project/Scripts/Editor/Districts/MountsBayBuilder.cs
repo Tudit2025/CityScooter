@@ -61,12 +61,15 @@ namespace CityScooter.EditorTools.Districts
             // order from the city (convention centre, freeway interchange, apartment towers, Jacob's Ladder, the war
             // memorial above the road, the Kokoda Track walk at Kennedy Fountain, the brewery, Eliza in the river), with
             // the SAME gameplay as before: every chunk is a plain 4-lane chunk except the inlet jump, which is still the
-            // 5th of every six (the same prefab twice).
-            RoadChunk inlet = Inlet();
+            // 5th of every six (the same prefab each time).
+            // The longest rides lay a 13th chunk: the cycle goes on with plain bush stretches (not the convention centre
+            // again) before the exit to the bridge.
+            RoadChunk inlet = Inlet(), bushA = Bush("BushA", 0), bushB = Bush("BushB", 1);
             var chunks = new List<RoadChunk>
             {
                 Convention(), Narrows(), Towers(), JacobsLadder(), inlet, Escarpment(),
-                Kokoda(), Brewery(), Eliza(), Bush("BushA", 0), inlet, Bush("BushB", 1),
+                Kokoda(), Brewery(), Eliza(), bushA, inlet, bushB,
+                bushA, bushB, bushA, bushB, inlet, bushA,
             };
             RoadChunk exit = Exit();
 
@@ -262,7 +265,7 @@ namespace CityScooter.EditorTools.Districts
             m.Surface = ComicSurface.Wood;
             m.Cylinder(p + V(0, trunk * .5f, 0), .2f * s, trunk, BalgaTrunk, 6, .9f);
             m.Surface = ComicSurface.Foliage;
-            m.Cylinder(p + V(0, trunk - .2f * s, 0), .8f * s, .8f * s, new Color(.72f, .66f, .38f), 8, .3f);
+            m.Cylinder(p + V(0, trunk - .2f * s, 0), .62f * s, .8f * s, new Color(.62f, .54f, .32f), 8, .35f);
             m.Ellipsoid(p + V(0, trunk + .42f * s, 0), V(1.35f * s, 1f * s, 1.35f * s), new Color(.47f, .64f, .26f));
             m.Surface = ComicSurface.Wood;
             Rod(m, p + V(0, trunk + .6f * s, 0), p + V(0, trunk + 2.2f * s, 0), .06f * s, Spear, 1f, 6);
@@ -383,7 +386,7 @@ namespace CityScooter.EditorTools.Districts
                     float bx = x + k * F(c.Rnd, 1.2f, 2.4f), bz = z + F(c.Rnd, -2.2f, 2.2f);
                     Vector3 size = V(F(c.Rnd, 2.6f, 5f), F(c.Rnd, 2.2f, 4.6f), F(c.Rnd, 3f, 6f));
                     c.Front.Surface = ComicSurface.Concrete;
-                    c.Front.Box(c.P(bx, H(bx - size.x * .5f, bz) + size.y * .3f, bz), size, stone[(i + k) % stone.Length], Quaternion.Euler(F(c.Rnd, -6f, 6f), F(c.Rnd, -20f, 20f), F(c.Rnd, -4f, 8f)));
+                    c.Front.Box(c.P(bx, Mathf.Min(H(bx - size.x * .5f, bz - size.z * .5f), H(bx - size.x * .5f, bz + size.z * .5f)) + size.y * .28f, bz), size, stone[(i + k) % stone.Length], Quaternion.Euler(F(c.Rnd, -6f, 6f), F(c.Rnd, -20f, 20f), F(c.Rnd, -4f, 8f)));
                 }
             }
             // Scrub: soft blobs all over the slope (no outline: a mass of bush, not single plants).
@@ -635,17 +638,20 @@ namespace CityScooter.EditorTools.Districts
                 m.Surface = ComicSurface.Wood;
                 m.Cylinder(p + V(0, .9f, 0), .32f, 3.4f, pile, 8);
                 m.Cylinder(p + V(0, 2.65f, 0), .5f, .14f, pile, 8);
-                // the diver: standing on her toes, leaning out over the water, arms stretched above her head
+                // the diver (larger than life, as she is): standing on her toes, leaning out over the water, arms
+                // stretched above her head
+                var fig = new ComicMesh();
                 Quaternion lean = Quaternion.Euler(0, 0, -20f);
-                m.Surface = ComicSurface.Metal;
-                m.Box(p + V(0, 2.72f, 0) + lean * V(-.09f, .5f, 0), V(.15f, 1f, .17f), bronze, lean);
-                m.Box(p + V(0, 2.72f, 0) + lean * V(.09f, .5f, 0), V(.15f, 1f, .17f), bronze, lean);
-                m.Box(p + V(0, 2.72f, 0) + lean * V(0, 1.38f, 0), V(.42f, .8f, .26f), bronze, lean);
-                m.Box(p + V(0, 2.72f, 0) + lean * V(0, 1.95f, 0), V(.22f, .26f, .22f), bronze, lean);
-                m.Box(p + V(0, 2.72f, 0) + lean * V(-.13f, 2.35f, 0), V(.1f, .8f, .12f), bronze, lean);
-                m.Box(p + V(0, 2.72f, 0) + lean * V(.13f, 2.35f, 0), V(.1f, .8f, .12f), bronze, lean);
-                m.Surface = ComicSurface.Fabric;
-                m.Box(p + V(0, 2.72f, 0) + lean * V(0, 1.42f, 0), V(.46f, .6f, .3f), R.red, lean);
+                fig.Surface = ComicSurface.Metal;
+                fig.Box(lean * V(-.09f, .5f, 0), V(.15f, 1f, .17f), bronze, lean);
+                fig.Box(lean * V(.09f, .5f, 0), V(.15f, 1f, .17f), bronze, lean);
+                fig.Box(lean * V(0, 1.38f, 0), V(.42f, .8f, .26f), bronze, lean);
+                fig.Box(lean * V(0, 1.95f, 0), V(.22f, .26f, .22f), bronze, lean);
+                fig.Box(lean * V(-.13f, 2.35f, 0), V(.1f, .8f, .12f), bronze, lean);
+                fig.Box(lean * V(.13f, 2.35f, 0), V(.1f, .8f, .12f), bronze, lean);
+                fig.Surface = ComicSurface.Fabric;
+                fig.Box(lean * V(0, 1.42f, 0), V(.46f, .6f, .3f), R.red, lean);
+                m.Add(fig, p + V(0, 2.72f, 0), Quaternion.identity, Vector3.one * 1.7f);
                 // old piles of the baths
                 foreach (Vector2 o in new[] { new Vector2(-3f, -5f), new Vector2(3.5f, -3f), new Vector2(-2f, 5f), new Vector2(4f, 6f), new Vector2(7f, 0f) })
                 {

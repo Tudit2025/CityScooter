@@ -48,3 +48,22 @@ Proportions
 - Town hall clock tower 30 m + 9 m spire; clock faces 1.35 m radius at 15.8 m.
 
 Previews: previews/*.png (DistrictCityScreenshots, chase camera, 1600x900).
+
+v0.6 polish (2026-11-11): checked against the real places (web pages read, nothing copied; no images downloaded)
+- Perth Town Hall. inHerit (Heritage Council of WA) place record and the City of Perth walking-tour brochure, via
+  search; https://en.wikipedia.org/wiki/Perth_Town_Hall
+  Took: Victorian Free Gothic, 1867-70, red brick in Flemish bond with stucco dressings; the hall stands on an open
+  undercroft of pointed (Gothic) arches (a market at first, restored in the late 1990s); the clock tower marks the
+  corner of Hay and Barrack Street and is the building's landmark; turrets round the spire; clock of 1868.
+  In the game: pointed undercroft arches and hall windows, buttresses, steep slate roof with dormers, corner tower
+  with two clock faces, pointed belfry openings, four turrets and a spire; an open square at the corner before it.
+- London Court. https://en.wikipedia.org/wiki/London_Court and the UWA "Medievalism in Australian Cultural Memory"
+  items, via search.
+  Took: 1937 arcade between Hay Street Mall and St Georges Terrace; each end is a three-storey mock-Tudor entrance
+  with a wrought-iron gate, heraldic shields (many with the St George cross) and an oriel with a large clock.
+  In the game: three gables, timber framing, oriel clock, shields with red crosses, iron gate, the name over the arch.
+- St George's Cathedral (second pass of the Terrace): general knowledge of the place on St Georges Terrace: red-brick
+  Gothic Revival cathedral of 1888 with a square castellated bell tower of 1902. Stylised.
+- Street names on signs: ST GEORGES TCE, BARRACK ST, HAY ST MALL, CATHEDRAL AVE, LONDON COURT (place names only).
+- Colours added: mall pavers 8B8D90 / B2B3B2, granite C4C6C8, awnings 3A3F46 7A2E2A 23384F 2F6B66 8A5A2B, lit windows
+  F5E7B0, sign blue 1F4E8C, lobby glass 2B4254 / 3E6076.

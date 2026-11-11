@@ -9,5 +9,7 @@ CHN_Cbd_TownHall 19756 tris, 8 renderers
 CHN_Cbd_MallArcade 18052 tris, 8 renderers
 CHN_Cbd_MallShops 19656 tris, 8 renderers
 CHN_Cbd_Plaza 22708 tris, 8 renderers
+CHN_Cbd_PlazaWest 22044 tris, 8 renderers
+CHN_Cbd_Cathedral 17758 tris, 8 renderers
 CHN_Cbd_CarPark 14888 tris, 8 renderers
 CHN_Cbd_Exit 15714 tris, 8 renderers

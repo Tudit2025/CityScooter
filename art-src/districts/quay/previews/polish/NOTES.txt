@@ -1,0 +1,51 @@
+ELIZABETH QUAY - v0.6 polish notes (trunk B, 2026-11-11)
+======================================================
+
+Method (docs/v0.6-polish.md): a ride-through from the rider's chase camera every 20 m on the real route
+(test DistrictPolishRideShots.RideThrough, -cityscooterPolishIds quay), read as contact sheets:
+  before-ride-1.png, before-ride-2.png   as it was
+  after-ride-1.png,  after-ride-2.png    after two rounds
+16 pictures per sheet, 20 m apart; the last six are the exit, the boundary and Mounts Bay Rd's entry.
+The entry after the CBD is in the CBD's ride (cbd/previews/polish) and in before/after-entry-from-cbd.png.
+
+The ten worst things (most visible first)
+-----------------------------------------
+ 1. Exit: hedges, a lawn and two rows of plane trees, then Mounts Bay's cliff standing in the water: the river was
+    on the right here and on the left 40 m later. (before-exit-to-mounts-bay.png)
+ 2. Entry: the same hedge-and-lawn gap after the CBD, and beige paving starting exactly on the boundary line.
+    (before-entry-from-cbd.png)
+ 3. Every landmark came twice: a second Bell Tower, a second arched bridge, a second Spanda in one ride.
+    (before-ride-1.png, rows 1 and 4)
+ 4. The far scenery (CBD towers) sank at the boundary and Mounts Bay's river rose, although it is the same river.
+ 5. The water was another blue and 20 cm lower than Mounts Bay's.
+ 6. The Bell Tower's copper sails read as a tiled drum, the same height on both sides.
+ 7. Nothing at the south-western shore where First Contact stands; no ferry terminal as such.
+ 8. The plaza side had no tall lights; long stretches of promenade with only palms.
+ 9. Lobbies of the towers were black holes at eye level.
+10. No names anywhere except the gateway.
+
+Round 1
+-------
+- Exit (one riverfront): the plaza ends at a quay wall with First Contact (the bird in the boat) on its corner; from
+  there the river is on BOTH sides behind the same railing; the paving hands back to asphalt and slab footpaths at a
+  kerb-stone band with piano-key bars. Mounts Bay's entry carries the railing and the water on for 12 m.
+- Entry (after the CBD's street): 12 m of street between two low pavilions with the CBD's plane trees, the same
+  band, then the plaza on the left and the river on the right.
+- One river: Mounts Bay's water level and colours; the far scenery is now Mounts Bay's prefab (the river and the
+  South Perth shore), so it stays standing across the boundary. The CBD towers that were the far scenery are a third
+  row in every chunk (SkylineRow).
+- Bell Tower: two sails that narrow to a point with slanting tops, the one towards the city taller (about 30 m).
+- Tall white light masts; lit lobbies and doors in the towers (CbdBuilder.GlassTower).
+
+Round 2
+-------
+- No landmark twice: the cycle is ten chunks, the old gameplay order twice (plain, plain, the hump, plain, the jetty
+  jump). Second pass: Elizabeth Quay Jetty (a longer pier under a canopy, two ferries, a QUAY JETTY board), the short
+  bridge to the islet (the same hump without arches, boats on the moorings), The Landing (the carousel, The Towers
+  in bronze glass). (after-jetty-second-pass.png, after-landing-second-pass.png)
+
+Left for later
+--------------
+- Spanda and the Bell Tower are seen from close by; their tops leave the picture as the rider passes.
+- The promenade's surface is plain between the curved bands.
+- The carousel does not turn (decoration, no script).
