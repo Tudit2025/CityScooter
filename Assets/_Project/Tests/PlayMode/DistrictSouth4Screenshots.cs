@@ -135,6 +135,13 @@ namespace CityScooter.Tests
             cam.transform.SetPositionAndRotation(pos, rot);
         }
 
+        // v0.6 polish: a frame every 20 m through the district, packed into contact sheets (see SouthBRideThrough).
+        [UnityTest, Explicit("Ride-through contact sheets of ROCKINGHAM into art-src/districts/rockingham/previews/polish")]
+        public IEnumerator RideThrough_Rockingham() { yield return SouthBRideThrough.Ride(_game, _tuning, "rockingham"); }
+
+        [UnityTest, Explicit("Ride-through contact sheets of WARNBRO into art-src/districts/warnbro/previews/polish")]
+        public IEnumerator RideThrough_Warnbro() { yield return SouthBRideThrough.Ride(_game, _tuning, "warnbro"); }
+
         [UnityTest, Explicit("Renders review images of ROCKINGHAM and WARNBRO into art-src/districts/<id>/previews")]
         public IEnumerator Screenshots_RockinghamAndWarnbro_FromTheChaseCamera()
         {

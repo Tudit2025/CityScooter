@@ -2,10 +2,10 @@ OBS_Wellard_Springer 832 tris
 OBS_Wellard_Footballs 432 tris
 OBS_Wellard_WheelieBins 448 tris
 OBS_Wellard_Bollard 136 tris
-CHN_Wellard_Entry 11784 tris, 5 renderers
-CHN_Wellard_Station 21700 tris, 8 renderers
-CHN_Wellard_Estate 12232 tris, 5 renderers
-CHN_Wellard_Village 15160 tris, 7 renderers
-CHN_Wellard_Park 6996 tris, 7 renderers
-CHN_Wellard_Wetland 21704 tris, 6 renderers
-CHN_Wellard_Exit 11904 tris, 5 renderers
+CHN_Wellard_Entry 19140 tris, 6 renderers
+CHN_Wellard_Station 21740 tris, 8 renderers
+CHN_Wellard_Estate 12272 tris, 5 renderers
+CHN_Wellard_Village 16580 tris, 7 renderers
+CHN_Wellard_Park 7020 tris, 7 renderers
+CHN_Wellard_Wetland 21728 tris, 6 renderers
+CHN_Wellard_Exit 18902 tris, 5 renderers

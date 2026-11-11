@@ -22,6 +22,12 @@ namespace CityScooter.EditorTools.Districts
     /// (rendered brick houses, Colorbond roofs, limestone retaining walls, young street trees), the village square with
     /// cafes, a park with a playground under shade sails (shared path, no cars) and The Spectacles paperbark wetland on a
     /// boardwalk with a boardwalk ramp over open water (SPLASH). Black swans and ducks.
+    /// v0.6 (docs/v0.6-polish.md, south line B): the boundaries are no longer a hedge-and-lawn gap. Kwinana's entry starts
+    /// with Aubin Grove's freeway-and-railway corridor and lets it swing away (KwEntryFreewayCorridor: the one function
+    /// to swap for SouthLineKit); the Mandurah line runs from Kwinana's exit to Wellard station (RailLine); Wellard's
+    /// exit brings the coast in to meet Rockingham's foreshore on the boundary line (WlCoastArrival). Surfaces change
+    /// at a kerb band inside the entry / exit chunks (SurfaceBand) and path chunks begin and end with a street stub
+    /// (StreetStubs). Polish notes: art-src/districts/kwinana|wellard/previews/polish/NOTES.txt.
     /// Built with the CBD/Quay kit (CbdQuayKit, CqChunkDraft): the standard street cross-section at both ends of every
     /// chunk, 25k triangles and 8 renderers per chunk, only ComicPalette and ComicInk. Landmarks are decoration only.
     ///   Menu: CityScooter/Districts/Build Kwinana and Wellard
@@ -254,7 +260,8 @@ namespace CityScooter.EditorTools.Districts
             K.SideBox(d.Road, s, z0, z1, -2.4f, top, from, to, c);
         }
 
-        /// <summary>A few flat patches (red earth, tyre marks, scrub) on the ground, flat road space.</summary>
+        /// <summary>A few flat patches (red earth, tyre marks, scrub) on the ground x0..x1 metres beyond the sidewalk
+        /// edge, flat road space (v0.6: measured from the sidewalk edge; from the centre line some lay over the road).</summary>
         static void Patches(CqChunkDraft d, int s, float z0, float z1, float x0, float x1, float y, Color a, Color b, int count, int seed)
         {
             var r = new System.Random(seed);
@@ -262,7 +269,7 @@ namespace CityScooter.EditorTools.Districts
             d.Road.Surface = ComicSurface.Plain;
             for (int i = 0; i < count; i++)
             {
-                float x = Mathf.Lerp(x0, x1, F()), z = Mathf.Lerp(z0 + 1f, z1 - 3f, F()), w = 1.5f + F() * 3f, l = 1.5f + F() * 2.5f;
+                float x = K.Edge + Mathf.Lerp(x0, x1, F()), z = Mathf.Lerp(z0 + 1f, z1 - 3f, F()), w = 1.5f + F() * 3f, l = 1.5f + F() * 2.5f;
                 K.Flat(d.Road, s * x, s * (x + w), s * (x + w * .2f), s * (x + w * .9f), z, Mathf.Min(z1, z + l), y + i * .001f, i % 2 == 0 ? a : b);
             }
         }
@@ -303,10 +310,10 @@ namespace CityScooter.EditorTools.Districts
         static void Wires(ComicMesh lat, int s, float xf, float y0, float y1, float a, float b)
         {
             lat.Surface = ComicSurface.Plain;
-            float hgt = y1 - y0, w = .022f;
+            float hgt = y1 - y0, w = .034f;   // v0.6: thicker and wider apart (0.044 m wires every 0.55 m shimmered far away)
             Vector3 n = new Vector3(-s, 0, 0);
             for (int dir = -1; dir <= 1; dir += 2)
-                for (float zs = a - hgt; zs < b; zs += .55f)
+                for (float zs = a - hgt; zs < b; zs += .92f)
                 {
                     // the line z = zs + (y - y0) (dir +1) or z = zs + hgt - (y - y0) (dir -1), clipped to [a, b]
                     float ya = y0, yb = y1;
@@ -532,43 +539,308 @@ namespace CityScooter.EditorTools.Districts
             for (float z = z0; z < z1; z += 20f) K.Lamp(d.Props, d.Collisions, z < 20f ? -1 : 1, d.Ground(z), z);
         }
 
+        // =====================================================================================================
+        // v0.6 boundaries (docs/v0.6-polish.md, rules 3, 4 and 7): what runs alongside carries across the boundary,
+        // and the surface changes inside the district's own entry / exit chunk, never on the boundary line.
+        // =====================================================================================================
+
+        /// <summary>Where the surface changes in the boundary chunks (metres into the chunk).</summary>
+        const float KwPathEnd = 14f, KwExitPlainFrom = 26f, WlExitVergeEnd = 30f;
+        /// <summary>The Mandurah line beside the road from Kwinana's exit to Wellard station: track centre and mast line,
+        /// metres beyond the sidewalk edge (the same numbers as the station chunk).</summary>
+        const float RailOff = 25f, MastOff = 28f;
+
+        // Aubin Grove's shared path and freeway side (CockburnAubinBuilder.SharedPath / FreewaySide), copied so the
+        // corridor meets it at z = 0. SouthLineKit will own these.
+        static readonly Color PspFootpath = H("CFCAC0"), PspDryGrass = H("C9B77A"), PspLawnDry = H("A7A85A"), PspBallast = H("8E8578"), PspRail = H("5C6066"),
+            PspSleeper = H("6A5A4A"), PspBarrier = H("DAD7CF"), PspNoiseWall = H("D7C3A0"), PspNoiseWallDark = H("B89F78"), PspFence = H("2C3238"), PspMast = H("8E959D");
+
+        /// <summary>How far the freeway has swung away from the path at z (0 at the boundary, 26 m at the chunk's end).</summary>
+        static float KwFreewayOffset(float z) => 26f * Mathf.Pow(Mathf.Clamp01((z - 4f) / 36f), 1.5f);
+
+        /// <summary>
+        /// v0.6: THE PIECE TO SWAP FOR SouthLineKit (the shared freeway corridor). The left (-X) side of Kwinana's entry
+        /// chunk, z = 0..40, and the shared-path surface of its first 14 m.
+        /// At z = 0 it is Aubin Grove's freeway side as built today (CockburnAubinBuilder.FreewaySide): dry verge with the
+        /// black path fence 4.5 m beyond the sidewalk, the bank down to the southbound lanes (|x| 15..26.5, 0.9 m below
+        /// the path), jersey barriers, the Mandurah line in the median (tracks at |x| 29.8 and 34.2, masts, wires), the
+        /// northbound lanes (37.5..49) and the far noise wall at 52. From z = 4 the freeway swings away to the left
+        /// (KwFreewayOffset) and a bush-covered bank rises in the widening wedge between it and the path, so the freeway
+        /// leaves the picture inside this chunk and the industrial road carries on alone.
+        /// </summary>
+        static void KwEntryFreewayCorridor(CqChunkDraft d)
+        {
+            const float step = 2f, L = 40f;
+            ComicMesh road = d.Road;
+            float Off(float z) => KwFreewayOffset(z);
+            // the freeway's level below the path: 0.9 m at the boundary (Aubin Grove's), dipping to 5 m where it goes
+            // under the yard at the end of the chunk
+            float Yf(float z) => -.9f - 4.1f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6f, L, z));
+            // a strip of the freeway cross-section between a and b metres from the centre line (before the offset),
+            // dy above the freeway's level
+            void Strip(float a, float b, float dy, Color c, ComicSurface surface, float z0 = 0f, float z1 = L)
+            {
+                road.Surface = surface;
+                for (float z = z0; z < z1 - .01f; z += step)
+                {
+                    float e = Mathf.Min(z1, z + step);
+                    K.Face(road, V(-(a + Off(z)), Yf(z) + dy, z), V(-(a + Off(e)), Yf(e) + dy, e), V(-(b + Off(e)), Yf(e) + dy, e), V(-(b + Off(z)), Yf(z) + dy, z), c, Vector3.up, false);
+                }
+            }
+            // ---- the shared path's surface (Aubin Grove's), up to the give-way line where it joins the industrial road
+            K.StreetSurface(road, L, K.R.asphalt, PspFootpath, K.R.cream, false, KwPathEnd, L);
+            foreach (float z in new[] { 1f, 7f }) K.Flat(road, -.07f, .07f, -.07f, .07f, z, z + 3f, .03f, FlareWhite);
+            // ---- the path's own verge and black fence (straight, with the path), to where the yard fence takes over
+            road.Surface = ComicSurface.Foliage;
+            K.SideBox(road, -1, 0f, L, -2.4f, K.Kerb - .03f, 0f, 4.4f, PspDryGrass);
+            road.Surface = ComicSurface.Plain;
+            for (int i = 0; i < 4; i++) K.Flat(road, -(K.Edge + .6f + i * .9f), -(K.Edge + 2.4f + i * .5f), -(K.Edge + .9f + i * .9f), -(K.Edge + 2f + i * .5f), 2f + i * 4.6f, 4.4f + i * 4.6f, K.Kerb - .025f, i % 2 == 0 ? PspLawnDry : Sand);
+            PathFence(d.SlopedFrontage, -1, K.Edge + 4.5f, 0f, 20f);
+            P.Banksia(d.Props, V(-(K.Edge + 2.4f), d.Ground(5f) - .03f, 5f), .75f, 61);
+            P.Balga(d.Props, V(-(K.Edge + 3f), d.Ground(15f) - .03f, 15f), .9f, 62);
+            // ---- the wedge between the path and the freeway: the dry verge, from z = 14 the first yard's gravel next
+            // to the path, and beyond it a bank rising under bush that hides the freeway as it leaves
+            float inner = K.Edge + 4.4f, top = K.Kerb - .03f;
+            float Yard(float z) => Mathf.Min(Off(z) * .6f, 13f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(12f, 22f, z)));
+            float Rise(float z) => 3f * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(8f, 26f, z)) * Mathf.Clamp01((Off(z) - Yard(z) - 1.5f) / 5f);
+            float WedgeY(float v, float z)
+            {
+                float yard = Yard(z), w = Off(z) - yard;
+                return v <= yard || w < .01f ? top : top + Rise(z) * Mathf.Pow(Mathf.Max(0f, Mathf.Sin(Mathf.PI * Mathf.Clamp01((v - yard) / w))), .8f);   // Max: sin(pi) is a hair below 0, and Pow of that is NaN
+            }
+            float Across(int i, float z) => i <= 2 ? Yard(z) * i / 2f : Yard(z) + (Off(z) - Yard(z)) * (i - 2) / 5f;
+            for (float z = 4f; z < L - .01f; z += step)
+            {
+                float e = z + step;
+                for (int i = 0; i < 7; i++)
+                {
+                    float a0 = Across(i, z), a1 = Across(i + 1, z), b0 = Across(i, e), b1 = Across(i + 1, e);
+                    Vector3 a = V(-(inner + a0), WedgeY(a0, z), z), b = V(-(inner + b0), WedgeY(b0, e), e);
+                    Vector3 c = V(-(inner + b1), WedgeY(b1, e), e), dd = V(-(inner + a1), WedgeY(a1, z), z);
+                    Color col = i < 2 ? Color.Lerp(PspDryGrass, Gravel, Mathf.InverseLerp(14f, 22f, z))
+                        : Color.Lerp(Color.Lerp(PspDryGrass, Scrub, Mathf.Clamp01(z / 16f)), P.GumLeafDark, Rise(z) > .4f ? .2f + .12f * ((i + (int)(z / step)) % 2) : 0f);
+                    road.Surface = i < 2 && z >= 18f ? ComicSurface.Concrete : ComicSurface.Foliage;
+                    K.Face(road, a, b, c, dd, col, Vector3.up, false);
+                }
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                float z = 14f + i * 3.4f, w = Off(z) - Yard(z), v = Yard(z) + w * (.4f + .25f * ((i * 7) % 5) / 4f);
+                if (w < 2.5f) continue;
+                var p = V(-(inner + v), d.Y(z) + WedgeY(v, z) - .1f, z);
+                if (i % 3 == 0) P.Gum(d.Frontage, p, 9f + (i % 4), 300 + i);
+                else if (i % 3 == 1) P.Banksia(d.Frontage, p, .9f + .1f * (i % 3), 310 + i);
+                else P.Shrub(d.Frontage, p, 1.5f + .3f * (i % 2), Color.Lerp(P.GumLeafDark, Scrub, .3f));
+            }
+            // ---- the freeway, swinging away and dipping: batter, southbound lanes, median railway, northbound lanes,
+            // the far verge with its noise wall and the far batter back up to the bush
+            road.Surface = ComicSurface.Foliage;
+            for (float z = 0f; z < L - .01f; z += step)
+            {
+                float e = z + step;
+                K.Face(road, V(-(inner + Off(z)), top, z), V(-(inner + Off(e)), top, e), V(-(K.Edge + 7f + Off(e)), Yf(e), e), V(-(K.Edge + 7f + Off(z)), Yf(z), z), PspDryGrass, Vector3.up, false);
+                K.Face(road, V(-(62f + Off(z)), Yf(z), z), V(-(62f + Off(e)), Yf(e), e), V(-(69f + Off(e)), top, e), V(-(69f + Off(z)), top, z), PspDryGrass, Vector3.up, false);
+                K.Face(road, V(-(69f + Off(z)), top, z), V(-(69f + Off(e)), top, e), V(-102f, top, e), V(-102f, top, z), Color.Lerp(PspDryGrass, Scrub, .6f), Vector3.up, false);
+            }
+            Strip(K.Edge + 7f, 15f, 0f, PspLawnDry, ComicSurface.Foliage);
+            foreach ((float a, float b) in new[] { (15f, 26.5f), (37.5f, 49f) })
+            {
+                Strip(a, b, 0f, K.R.asphalt, ComicSurface.Asphalt);
+                Strip(a + .4f, a + .55f, .02f, FlareWhite, ComicSurface.Plain);
+                Strip(b - .55f, b - .4f, .02f, K.R.yellow, ComicSurface.Plain);
+                for (float lane = a + 4f; lane < b - 2f; lane += 3.6f)
+                    for (float z = 0f; z < L - 3f; z += 9f) Strip(lane - .07f, lane + .07f, .02f, FlareWhite, ComicSurface.Plain, z, z + 3f);
+            }
+            Strip(27.3f, 36.7f, -.05f, PspBallast, ComicSurface.Concrete);
+            Strip(49f, 62f, 0f, PspDryGrass, ComicSurface.Foliage);
+            ComicMesh f = d.SlopedFrontage;
+            for (float z = 0f; z < L - .01f; z += 4f)
+            {
+                float e = z + 4f;
+                f.Surface = ComicSurface.Concrete;
+                foreach (float bx in new[] { 26.9f, 37.1f })
+                {
+                    f.Beam(V(-(bx + Off(z)), Yf(z) + .06f, z), V(-(bx + Off(e)), Yf(e) + .06f, e), .6f, PspBarrier);
+                    f.Beam(V(-(bx + Off(z)), Yf(z) + .58f, z), V(-(bx + Off(e)), Yf(e) + .58f, e), .3f, PspBarrier);
+                }
+                foreach (float tc in new[] { 29.8f, 34.2f })
+                {
+                    road.Surface = ComicSurface.Metal;
+                    foreach (float rx in new[] { tc - .72f, tc + .72f }) road.Beam(V(-(rx + Off(z)), Yf(z) + .09f, z), V(-(rx + Off(e)), Yf(e) + .09f, e), .12f, PspRail);
+                    road.Beam(V(-(tc + Off(z)), Yf(z) + 5.93f, z), V(-(tc + Off(e)), Yf(e) + 5.93f, e), .06f, K.R.ink);
+                }
+            }
+            foreach (float tc in new[] { 29.8f, 34.2f })
+                for (float z = .45f; z < L - .3f; z += .9f) Strip(tc - 1.25f, tc + 1.25f, .02f, PspSleeper, ComicSurface.Plain, z, z + .24f);
+            foreach (float z in new[] { 6f, 26f })
+            {
+                ComicMesh m = d.Props;
+                m.Surface = ComicSurface.PaintedMetal;
+                float by = d.Y(z) + Yf(z), o = Off(z);
+                m.Box(V(-(27.6f + o), by + 3.3f, z), V(.3f, 6.6f, .3f), PspMast);
+                m.Box(V(-(36.4f + o), by + 3.3f, z), V(.3f, 6.6f, .3f), PspMast);
+                m.Box(V(-(32f + o), by + 6.4f, z), V(9f, .3f, .3f), PspMast);
+            }
+            // far noise wall (upright panels turned along the curve) and a few cars
+            for (float z = 0f; z < L - .01f; z += 4f)
+            {
+                float zc = z + 2f, yaw = -Mathf.Atan2(Off(z + 4f) - Off(z), 4f) * Mathf.Rad2Deg, len = Mathf.Sqrt(16f + Mathf.Pow(Off(z + 4f) - Off(z), 2f));
+                d.Deep.Surface = ComicSurface.Concrete;
+                d.Deep.Box(V(-(52f + Off(zc)), d.Y(zc) + Yf(zc) + 1.9f, zc), V(.4f, 5.6f, len - .04f), (int)(z / 4f) % 2 == 0 ? PspNoiseWall : Color.Lerp(PspNoiseWall, K.R.cream, .3f), Quaternion.Euler(0, yaw, 0));
+                d.Deep.Box(V(-(51.75f + Off(zc)), d.Y(zc) + Yf(zc) + 3.2f, zc), V(.1f, .9f, 2.2f), PspNoiseWallDark, Quaternion.Euler(0, yaw, 0));
+            }
+            (float lane, float z, bool south, Color c)[] cars = { (18.6f, 9f, true, H("C8452F")), (22.2f, 24f, true, H("D8DDE0")), (41.3f, 15f, false, H("2F5FA8")) };
+            foreach (var car in cars)
+            {
+                float yaw = -Mathf.Atan2(Off(car.z + 2f) - Off(car.z - 2f), 4f) * Mathf.Rad2Deg + (car.south ? 0f : 180f);
+                d.Landmark.Add(CarMesh(car.c), V(-(car.lane + Off(car.z)), d.Y(car.z) + Yf(car.z), car.z), Quaternion.Euler(0, yaw, 0), Vector3.one);
+            }
+            // ---- where the freeway leaves the chunk it goes under the yard: a concrete portal with three dark mouths
+            float xe0 = inner + Off(L), xe1 = 69f + Off(L), ye = Yf(L);
+            f.Surface = ComicSurface.Concrete;
+            K.MinMaxBox(f, V(-xe0, ye - .3f, L - .35f), V(-xe1, K.Kerb + 1.2f, L), Concrete);
+            K.MinMaxBox(f, V(-xe0 + .1f, K.Kerb + 1.2f, L - .45f), V(-xe1 - .1f, K.Kerb + 1.4f, L), SteelDark);
+            f.Surface = ComicSurface.Plain;
+            foreach ((float a, float b) in new[] { (15.2f, 26.4f), (27.5f, 36.5f), (37.6f, 48.8f) })
+                K.Face(f, V(-(a + Off(L)), ye, L - .36f), V(-(b + Off(L)), ye, L - .36f), V(-(b + Off(L)), ye + 4.3f, L - .36f), V(-(a + Off(L)), ye + 4.3f, L - .36f), H("23282E"), Vector3.back, false);
+        }
+
+        /// <summary>The black path fence of the shared path (as CockburnAubinBuilder.Fence): posts every 2.5 m, top and
+        /// bottom rails, two wires (flat road space).</summary>
+        static void PathFence(ComicMesh m, int s, float x, float z0, float z1)
+        {
+            m.Surface = ComicSurface.PaintedMetal;
+            for (float z = z0 + .3f; z < z1; z += 2.5f) m.Box(V(s * x, K.Kerb + .8f, z), V(.09f, 1.7f, .09f), PspFence);
+            for (float z = z0; z < z1 - .01f; z += 4f)
+            {
+                float e = Mathf.Min(z1, z + 4f);
+                foreach (float y in new[] { K.Kerb + 1.55f, K.Kerb + .15f }) K.MinMaxBox(m, V(s * x - .04f, y - .04f, z), V(s * x + .04f, y + .04f, e), PspFence);
+                foreach (float y in new[] { K.Kerb + .65f, K.Kerb + 1.1f }) K.MinMaxBox(m, V(s * x - .015f, y - .015f, z), V(s * x + .015f, y + .015f, e), PspMast);
+            }
+        }
+
+        /// <summary>A band across the whole cross-section where the surface changes (a flush limestone kerb strip on the
+        /// road and over the sidewalks), so the change reads as made on purpose.</summary>
+        internal static void SurfaceBand(ComicMesh road, float z, float width, Color c)
+        {
+            road.Surface = ComicSurface.Plain;
+            K.Flat(road, -K.Half, K.Half, -K.Half, K.Half, z, z + width, .036f, c);
+            for (int s = -1; s <= 1; s += 2) K.Flat(road, s * K.Half, s * K.Edge, s * K.Half, s * K.Edge, z, z + width, K.Kerb + .045f, c);
+        }
+
+        /// <summary>A row of white give-way triangles across the road just before z (points towards the rider).</summary>
+        internal static void GiveWayTeeth(ComicMesh road, float z)
+        {
+            road.Surface = ComicSurface.Plain;
+            for (float x = -K.Half + .5f; x < K.Half - .9f; x += 1f)
+                K.TriFacing(road, V(x, .034f, z), V(x + .7f, .034f, z), V(x + .35f, .034f, z - .9f), FlareWhite, Vector3.up);
+        }
+
+        /// <summary>A small round sign on a post beyond the sidewalk edge (decoration, no collider): blue shared-path
+        /// disc; ends: with a red slash.</summary>
+        static void PathSign(ComicMesh m, Vector3 p, bool ends)
+        {
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + V(0, 1.2f, 0), .05f, 2.4f, Steel, 6);
+            m.Cylinder(p + V(0, 2.5f, -.04f), .42f, .06f, K.R.ink, 12, 1f, Quaternion.Euler(90, 0, 0));
+            m.Cylinder(p + V(0, 2.5f, -.08f), .36f, .06f, TerminalBlue, 12, 1f, Quaternion.Euler(90, 0, 0));
+            m.Box(p + V(0, 2.5f, -.12f), V(.34f, .08f, .03f), FlareWhite);
+            m.Box(p + V(-.1f, 2.62f, -.12f), V(.08f, .2f, .03f), FlareWhite);
+            m.Box(p + V(.12f, 2.38f, -.12f), V(.08f, .2f, .03f), FlareWhite);
+            if (ends) m.Box(p + V(0, 2.5f, -.14f), V(.86f, .1f, .03f), FlareRed, Quaternion.Euler(0, 0, 45f));
+        }
+
         static CqChunkDraft KwEntry()
         {
-            // Calm at z = 0: limestone walls, coastal scrub and tuarts; the fences and tanks start further on.
+            // From Aubin Grove: the shared path beside the Kwinana Freeway and the Mandurah line carries on across the
+            // boundary (left); the freeway swings away behind a bush bank and the path joins the industrial road at a
+            // give-way line. Right: coastal bush behind a limestone wall, then the first yard fence and tank.
             var d = new CqChunkDraft("Kwinana_Entry", KwinanaDrop);
-            KwinanaStreet(d);
-            for (int s = -1; s <= 1; s += 2)
-            {
-                Ground(d, s, 0, 20, 0, 72, Scrub, K.Kerb - .02f, ComicSurface.Foliage);
-                Ground(d, s, 20, 40, 0, 72, Gravel);
-                Patches(d, s, 20, 40, 3f, 40f, K.Kerb, RedEarth, RedEarthDark, 5, 11 + s);
-                CoastalScrub(d, s, 0, 19, 120 + s, true, true);
-                ChainFence(d, s, 21, 40, K.Edge + .6f, s > 0);
-            }
-            Tank(d.Frontage, V(-22f, d.Base(33f), 33f), 6f, 9f, TankWhite, TankBand, true, 1);
+            KwEntryFreewayCorridor(d);
+            KwinanaStreet(d, 0f, KwPathEnd);
+            GiveWayTeeth(d.Road, KwPathEnd - .3f);
+            SurfaceBand(d.Road, KwPathEnd, .5f, KerbCap);
+            foreach (int s in new[] { -1, 1 }) PathSign(d.Props, V(s * (K.Edge + .45f), d.Ground(KwPathEnd - 1f), KwPathEnd - 1f), true);
+            Ground(d, 1, 0, 20, 0, 72, Scrub, K.Kerb - .02f, ComicSurface.Foliage);
+            Ground(d, 1, 20, 40, 0, 72, Gravel);
+            Patches(d, 1, 20, 40, 3f, 40f, K.Kerb, RedEarth, RedEarthDark, 5, 12);
+            Patches(d, -1, 22, 40, .5f, 3f, K.Kerb - .02f, RedEarth, Gravel, 3, 10);
+            CoastalScrub(d, 1, 0, 19, 121, true, true);
+            ChainFence(d, 1, 21, 40, K.Edge + .6f, true);
+            ChainFence(d, -1, 21, 40, K.Edge + .6f, false);
+            Tank(d.Frontage, V(-19f, d.Base(34f), 34f), 4.5f, 8f, TankWhite, TankBand, true, 1);
             Tank(d.Frontage, V(21f, d.Base(34f), 34f), 5f, 7f, TankCream, H("B5603A"), true, -1);
-            Column(d.Deep, V(-40f, d.Base(30f), 30f), 2f, 26f, 2);
             Chimney(d.Deep, V(46f, d.Base(36f), 36f), 44f, 1.8f, true);
             K.Lamp(d.Props, d.Collisions, -1, d.Ground(30f), 30f);
             d.StandardSlots();
             return d;
         }
 
+        /// <summary>Railway beside the road on side s, track centre x(z) metres from the centre line (flat road space):
+        /// the same ballast, timber sleepers and rails as Track (the station), following a curve; masts with the contact
+        /// wire at the given z; the black line fence 3.5 m inside the track.</summary>
+        static void RailLine(CqChunkDraft d, int s, Func<float, float> x, float z0, float z1, float fenceFrom, params float[] masts)
+        {
+            ComicMesh road = d.Road, m = d.SlopedFrontage;
+            const float step = 2f;
+            for (float z = z0; z < z1 - .01f; z += step)
+            {
+                float e = Mathf.Min(z1, z + step), xa = x(z), xb = x(e);
+                road.Surface = ComicSurface.Concrete;
+                K.Face(road, V(s * (xa - 1.7f), K.Kerb + .12f, z), V(s * (xb - 1.7f), K.Kerb + .12f, e), V(s * (xb + 1.7f), K.Kerb + .12f, e), V(s * (xa + 1.7f), K.Kerb + .12f, z), H("8F887C"), Vector3.up, false);
+                K.Face(road, V(s * (xa - 1.7f), K.Kerb - .1f, z), V(s * (xb - 1.7f), K.Kerb - .1f, e), V(s * (xb - 1.7f), K.Kerb + .12f, e), V(s * (xa - 1.7f), K.Kerb + .12f, z), H("8F887C"), new Vector3(-s, 0, 0), false);
+                m.Surface = ComicSurface.Metal;
+                foreach (float dx in new[] { -.72f, .72f }) m.Beam(V(s * (xa + dx), K.Kerb + .3f, z), V(s * (xb + dx), K.Kerb + .3f, e), .11f, H("8A9198"));
+                m.Beam(V(s * xa, K.Kerb + 5.62f, z), V(s * xb, K.Kerb + 5.62f, e), .05f, K.R.ink);
+                if (z >= fenceFrom)
+                {
+                    m.Surface = ComicSurface.PaintedMetal;
+                    foreach (float fy in new[] { K.Kerb + 1.55f, K.Kerb + .15f }) m.Beam(V(s * (xa - 3.5f), fy, z), V(s * (xb - 3.5f), fy, e), .08f, PspFence);
+                    m.Box(V(s * (xa - 3.5f), K.Kerb + .8f, z), V(.09f, 1.7f, .09f), PspFence);
+                }
+            }
+            m.Surface = ComicSurface.Wood;
+            for (float z = z0 + .4f; z < z1; z += .8f)
+            {
+                float yaw = Mathf.Atan2(s * (x(z + .4f) - x(z - .4f)), .8f) * Mathf.Rad2Deg;
+                m.Box(V(s * x(z), K.Kerb + .18f, z), V(2.4f, .12f, .24f), H("6B5A48"), Quaternion.Euler(0, yaw, 0));
+            }
+            m.Surface = ComicSurface.PaintedMetal;
+            foreach (float z in masts)
+            {
+                float xm = x(z) + (MastOff - RailOff);
+                m.Box(V(s * xm, K.Kerb + 3.4f, z), V(.3f, 6.8f, .3f), H("8A9198"));
+                m.Beam(V(s * xm, K.Kerb + 6.2f, z), V(s * (xm - 4.6f), K.Kerb + 6.2f, z), .15f, H("8A9198"));
+                m.Beam(V(s * xm, K.Kerb + 5.2f, z), V(s * (xm - 4f), K.Kerb + 6.1f, z), .1f, H("8A9198"));
+            }
+        }
+
+        /// <summary>Kwinana's exit: where the Mandurah line swings in beside the road (it has left the freeway).</summary>
+        static float KwExitRailX(float z) => K.Edge + RailOff + 12f * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, 20f, z)));
+
         static CqChunkDraft KwExit()
         {
-            // Industry first, then calm towards z = 40: limestone walls, scrub, tuarts.
+            // The last yards, then bush behind limestone walls. Left: the Mandurah line, having left the freeway, swings
+            // in beside the road and runs on across the boundary to Wellard station (same track, masts and fence there).
+            // The industrial road's red verge and centre line end at a band 14 m before the boundary.
             var d = new CqChunkDraft("Kwinana_Exit", KwinanaDrop);
-            KwinanaStreet(d);
+            KwinanaStreet(d, KwExitPlainFrom, 40f);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Pave, KerbCap, false, 0f, KwExitPlainFrom);
+            SurfaceBand(d.Road, KwExitPlainFrom - .5f, .5f, KerbCap);
             for (int s = -1; s <= 1; s += 2)
             {
                 Ground(d, s, 0, 20, 0, 72, Gravel);
                 Ground(d, s, 20, 40, 0, 72, Scrub, K.Kerb - .02f, ComicSurface.Foliage);
                 ChainFence(d, s, 0, 19, K.Edge + .6f, s < 0);
-                CoastalScrub(d, s, 21, 40, 140 + s, true, true);
+                CoastalScrub(d, s, 21, 40, 140 + s, true, s > 0);
+                YoungTree(d.Props, d.Collisions, V(s * (K.Edge - .9f), d.Ground(31f), 31f), 31 + s);
             }
+            RailLine(d, -1, KwExitRailX, 0f, 40f, 8f, 2f, 22f);
+            // a railcar on its way to Wellard station (the track is straight from z = 20): what makes the line read from the road
+            TrainCar(d.Landmark, V(-(K.Edge + RailOff), d.Ground(30f) + .3f, 30f), true);
             Tank(d.Frontage, V(-21f, d.Base(8f), 8f), 5.5f, 8f, TankWhite, TankBand, true, 1);
             Column(d.Frontage, V(23f, d.Base(7f), 7f), 1.6f, 20f, 2);
-            Chimney(d.Deep, V(-44f, d.Base(4f), 4f), 40f, 1.6f, true);
+            Chimney(d.Deep, V(-64f, d.Base(4f), 4f), 40f, 1.6f, true);
             K.Lamp(d.Props, d.Collisions, 1, d.Ground(10f), 10f);
             d.StandardSlots();
             return d;
@@ -748,7 +1020,7 @@ namespace CityScooter.EditorTools.Districts
         {
             ComicMesh m = d.Landmark;
             float b = d.Base(20f) - .2f;
-            GrainTerminalAt(m, V(7f, b, 0), true);   // set back from the fence so its silhouette reads from the road
+            GrainTerminalAt(m, V(13f, b, 0), true);   // set back from the fence so its silhouette reads from the road (v0.6: 6 m further)
         }
 
         static void GrainTerminalAtlas(ComicMesh m) => GrainTerminalAt(m, V(-27f, 0, -20f), false);
@@ -881,23 +1153,9 @@ namespace CityScooter.EditorTools.Districts
             }
         }
 
-        /// <summary>Norfolk Island pine: tall straight trunk and tiers of flat, drooping dark-green branch layers.</summary>
-        static void NorfolkPine(ComicMesh m, Vector3 p, float h)
-        {
-            m.Surface = ComicSurface.PaintedMetal;
-            m.Cylinder(p + V(0, .08f, 0), .5f, .16f, K.R.ink, 8);
-            m.Surface = ComicSurface.Wood;
-            m.Cylinder(p + V(0, h * .5f, 0), .32f, h, H("7A5C44"), 8, .4f);
-            m.Surface = ComicSurface.Foliage;
-            int tiers = 6;
-            for (int i = 0; i < tiers; i++)
-            {
-                float t = (float)i / tiers, y = h * (.32f + .62f * t), r = Mathf.Lerp(2.6f, .7f, t);
-                m.Cylinder(p + V(0, y, 0), r, .9f, i % 2 == 0 ? PineGreen : PineLight, 8, .55f);
-                m.Cylinder(p + V(0, y - .55f, 0), r * .92f, .3f, Color.Lerp(PineGreen, K.R.ink, .3f), 8, 1.1f);
-            }
-            m.Cylinder(p + V(0, h + .3f, 0), .4f, 1.4f, PineLight, 8, .1f);
-        }
+        /// <summary>Norfolk Island pine (v0.6: Rockingham's tiered pine with frond pads, one tree for the whole coast;
+        /// the old one here was a stack of cones).</summary>
+        static void NorfolkPine(ComicMesh m, Vector3 p, float h) => RockinghamBuilder.NorfolkPine(m, p, h, Mathf.RoundToInt(Mathf.Abs(p.z) * 7f + h));
 
         /// <summary>Picnic shelter: limestone slab, four posts, a green hip roof, a table.</summary>
         static void Shelter(ComicMesh m, Vector3 p)
@@ -1382,15 +1640,15 @@ namespace CityScooter.EditorTools.Districts
             for (float z = -60f; z < 300f; z += 24f + F() * 10f)
             {
                 float x = -(88f + F() * 50f);
-                FarIndustry(m, V(x, .1f, z), (int)(F() * 6f), .18f + F() * .1f, haze, F);
+                FarIndustry(m, V(x, .1f, z), (int)(F() * 6f), .08f + F() * .08f, haze, F);
             }
             for (float z = -40f; z < 340f; z += 34f + F() * 14f)
             {
                 float x = -(170f + F() * 120f);
-                FarIndustry(m, V(x, .1f, z), (int)(F() * 6f), .42f + F() * .12f, haze, F);
+                FarIndustry(m, V(x, .1f, z), (int)(F() * 6f), .26f + F() * .1f, haze, F);
             }
             // ahead-left: more of the strip towards the vanishing point
-            for (float x = -150f; x < -30f; x += 22f + F() * 12f) FarIndustry(m, V(x, .1f, 200f + F() * 50f), (int)(F() * 6f), .32f, haze, F);
+            for (float x = -150f; x < -30f; x += 22f + F() * 12f) FarIndustry(m, V(x, .1f, 200f + F() * 50f), (int)(F() * 6f), .2f, haze, F);
             // ---- the Darling Range, far and blue
             Color hills = Color.Lerp(H("4A6688"), haze, .35f);
             m.Surface = ComicSurface.Foliage;
@@ -1621,13 +1879,37 @@ namespace CityScooter.EditorTools.Districts
         // ---------------------------------------------------------------- Wellard surfaces
 
         /// <summary>Estate street: asphalt, concrete footpath by the kerb, grass verge on the outer 1.8 m.</summary>
-        static void EstateStreet(CqChunkDraft d, bool verge = true)
+        static void EstateStreet(CqChunkDraft d, bool verge = true, float vergeFrom = 0f, float vergeTo = -1f)
         {
             K.StreetSurface(d.Road, d.Length, K.R.asphalt, Pave, KerbCap, false);
             if (!verge) return;
-            foreach ((float a, float b) in Pieces(d.Length, 4f))
+            if (vergeTo < 0f) vergeTo = d.Length;
+            foreach ((float a, float b) in Pieces(d.Length, 2f))
                 for (int s = -1; s <= 1; s += 2)
-                    K.Flat(d.Road, s * (K.Edge - 1.8f), s * K.Edge, s * (K.Edge - 1.8f), s * K.Edge, a, b, K.Kerb + .03f, Lawn);
+                {
+                    if (a < vergeFrom - .01f || b > vergeTo + .01f) continue;
+                    // the verge tapers in and out over 4 m where it starts or ends inside a chunk (boundary chunks)
+                    float W(float z) => 1.8f * Mathf.Min(vergeFrom > 0f ? Mathf.Clamp01((z - vergeFrom) / 4f) : 1f, vergeTo < d.Length ? Mathf.Clamp01((vergeTo - z) / 4f) : 1f);
+                    K.Flat(d.Road, s * (K.Edge - W(a)), s * K.Edge, s * (K.Edge - W(b)), s * K.Edge, a, b, K.Kerb + .03f, Lawn);
+                }
+        }
+
+        /// <summary>v0.6: a chunk with its own surface (a path, a boardwalk, a shared street) begins and ends with a
+        /// short stub of the street's surface (asphalt and the district's footpath) closed by a kerb band, so the change
+        /// of surface happens inside the chunk and reads as made on purpose. District lengths vary, so any chunk, or the
+        /// exit, can come next: every chunk line has the street on both sides.</summary>
+        internal static void StreetStubs(CqChunkDraft d, Color footpath, Color band, float len = 2.4f)
+        {
+            ComicMesh m = d.Road;
+            foreach ((float a, float b, float at) in new[] { (0f, len, len), (d.Length - len, d.Length, d.Length - len - .5f) })
+            {
+                m.Surface = ComicSurface.Asphalt;
+                K.Face(m, V(-K.Half, .034f, a), V(-K.Half, .034f, b), V(K.Half, .034f, b), V(K.Half, .034f, a), K.R.asphalt, Vector3.up, false);
+                m.Surface = ComicSurface.Paving;
+                for (int s = -1; s <= 1; s += 2)
+                    K.Face(m, V(s * K.Half, K.Kerb + .032f, a), V(s * K.Half, K.Kerb + .032f, b), V(s * K.Edge, K.Kerb + .032f, b), V(s * K.Edge, K.Kerb + .032f, a), footpath, Vector3.up, false);
+                SurfaceBand(m, at, .5f, band);
+            }
         }
 
         /// <summary>The standard cross-section drawn as a path (park shared path, boardwalk): no joints on the sides,
@@ -1756,10 +2038,10 @@ namespace CityScooter.EditorTools.Districts
 
         /// <summary>One side of an estate street from z0 to z1: front lawns, a low limestone retaining wall with gaps for
         /// the driveways, houses on 13 m lots, Colorbond side fences, letterboxes, young street trees on the verge.</summary>
-        static void EstateSide(CqChunkDraft d, int s, float z0, float z1, int seed)
+        static void EstateSide(CqChunkDraft d, int s, float z0, float z1, int seed, float ground = 72f)
         {
             const float setback = 6.5f, depth = 13f;
-            Ground(d, s, z0, z1, 0, 72, Lawn, K.Kerb - .02f, ComicSurface.Foliage);
+            Ground(d, s, z0, z1, 0, ground, Lawn, K.Kerb - .02f, ComicSurface.Foliage);
             int lots = Mathf.Max(1, Mathf.RoundToInt((z1 - z0) / 13f));
             float lw = (z1 - z0) / lots;
             float wallFrom = z0;
@@ -1795,44 +2077,132 @@ namespace CityScooter.EditorTools.Districts
                 YoungTree(d.Props, d.Collisions, V(s * (K.Edge - .9f), d.Ground(z), z), seed + (int)z);
         }
 
-        /// <summary>Calm edge: a clipped hedge behind a low limestone wall and young trees (entries and exits).</summary>
-        static void HedgeEdge(CqChunkDraft d, int s, float z0, float z1, int seed)
+        /// <summary>v0.6 boundary street side (replaces the hedge-and-lawn gap): the estate's low limestone wall and
+        /// young street trees at the estate's spacing, lawn behind; bush: paperbarks and shrubs behind the wall (the
+        /// bush between the industry and the estate), otherwise open lawn (so what runs alongside can be seen).</summary>
+        static void EstateEdge(CqChunkDraft d, int s, float z0, float z1, int seed, bool bush, bool trees = true)
         {
             Ground(d, s, z0, z1, 0, 72, Lawn, K.Kerb - .02f, ComicSurface.Foliage);
-            LimestoneWall(d.SlopedFrontage, s, z0, z1, K.Edge + .5f, .45f);
-            d.SlopedFrontage.Surface = ComicSurface.Foliage;
-            for (float z = z0; z < z1 - .01f; z += 4f)
-                K.MinMaxBox(d.SlopedFrontage, V(s * (K.Edge + 1.2f), K.Kerb, z + .05f), V(s * (K.Edge + 2.6f), K.Kerb + 1.4f, Mathf.Min(z1, z + 4f) - .05f), (int)z % 8 == 0 ? H("4F8A3E") : H("5A9444"));
-            for (float z = z0 + 4f; z < z1 - 2f; z += 9f)
-                YoungTree(d.Props, d.Collisions, V(s * (K.Edge - .9f), d.Ground(z), z), seed + (int)z);
-            for (float z = z0 + 6f; z < z1 - 3f; z += 12f)
-                P.Gum(d.Frontage, V(s * (K.Edge + 7f), d.Ground(z), z), 10f, seed * 3 + (int)z);
+            LimestoneWall(d.SlopedFrontage, s, z0, z1, K.Edge + .5f, .4f);
+            if (trees)
+                for (float z = z0 + 4f; z < z1 - 2f; z += 9f)
+                    YoungTree(d.Props, d.Collisions, V(s * (K.Edge - .9f), d.Ground(z), z), seed + (int)z);
+            var r = new System.Random(seed);
+            float F() => (float)r.NextDouble();
+            for (float z = z0 + 1.5f; z < z1 - 1f; z += 3.2f + F())
+                P.Shrub(d.Frontage, V(s * (K.Edge + 2f + F() * (bush ? 9f : 3f)), d.Ground(z) - .05f, z), .9f + F() * .5f, Color.Lerp(P.LeafGreen, bush ? PaperLeaf : Lawn, .3f + F() * .3f));
+            if (!bush) return;
+            int k = 0;
+            for (float z = z0 + 3f; z < z1 - 2f; z += 6.5f, k++)
+                Paperbark(k % 2 == 0 ? d.Frontage : d.Deep, V(s * (K.Edge + 6f + F() * 4f + (k % 2) * 9f), d.Ground(z) - .05f, z), 8f + F() * 3f, seed + k);
         }
 
         // ---------------------------------------------------------------- Wellard chunks
 
         static CqChunkDraft WlEntry()
         {
+            // From Kwinana: the bush thins into the estate. Left: the Mandurah line that came across the boundary runs
+            // on behind the first houses to the station (the next chunk): same track, masts and fence. The grass verge
+            // starts 6 m in (the boundary surface is plain footpath).
             var d = new CqChunkDraft("Wellard_Entry", WellardDrop);
-            EstateStreet(d);
-            for (int s = -1; s <= 1; s += 2)
-            {
-                HedgeEdge(d, s, 0, 14, 200 + s);
-                EstateSide(d, s, 14, 40, s > 0 ? 3 : 8);
-            }
+            EstateStreet(d, true, 6f);
+            EstateEdge(d, -1, 0, 14, 199, false);
+            EstateEdge(d, 1, 0, 14, 201, true);
+            EstateSide(d, -1, 14, 40, 8);
+            EstateSide(d, 1, 14, 40, 3);
+            RailLine(d, -1, z => K.Edge + RailOff, 0f, 40f, 0f, 2f, 22f);
             d.StandardSlots();
             return d;
         }
 
+        /// <summary>Wellard's exit, sea side: how far the coast still is from where Rockingham's foreshore has it
+        /// (0 at the boundary: the limestone wall 13 m and the water's edge 25 m beyond the sidewalk).</summary>
+        static float WlCoastShift(float z) => 87f * Mathf.Pow(1f - Mathf.Clamp01(z / 40f), 2.2f);
+
         static CqChunkDraft WlExit()
         {
+            // The road arrives at the sea. Left: the last houses, then lawn and the first Norfolk pine. Right: one last
+            // house, then the estate ends and the coast comes in at an angle: dune scrub, white sand and the turquoise
+            // water of Cockburn Sound, meeting Rockingham's foreshore (lawn, limestone wall, beach) on the boundary line.
             var d = new CqChunkDraft("Wellard_Exit", WellardDrop);
+            EstateStreet(d, true, 0f, WlExitVergeEnd);
             EstateSide(d, -1, 0, 26, 11);
-            EstateSide(d, 1, 0, 26, 16);
-            EstateStreet(d);
-            for (int s = -1; s <= 1; s += 2) HedgeEdge(d, s, 26, 40, 220 + s);
+            Ground(d, -1, 26, 40, 0, 72, Lawn, K.Kerb - .02f, ComicSurface.Foliage);
+            LimestoneWall(d.SlopedFrontage, -1, 26, 40, K.Edge + .5f, .4f);
+            YoungTree(d.Props, d.Collisions, V(-(K.Edge - .9f), d.Ground(28.5f), 28.5f), 77);
+            NorfolkPine(d.Frontage, V(-(K.Edge + 4.5f), d.Ground(35f), 35f), 13f);
+            P.Shrub(d.Frontage, V(-(K.Edge + 3f), d.Ground(30f), 30f), 1.1f, Color.Lerp(P.LeafGreen, Lawn, .3f));
+            EstateSide(d, 1, 0, 13, 16, 24f);
+            WlCoastArrival(d);
             d.StandardSlots();
             return d;
+        }
+
+        /// <summary>The right (+X) side of Wellard's exit: land, a low foredune, sand and water as one height field, the
+        /// shore line swinging in from 87 m further out (z = 0) to Rockingham's foreshore profile at z = 40.</summary>
+        static void WlCoastArrival(CqChunkDraft d)
+        {
+            const float L = 40f;
+            float sea = RockinghamBuilder.RSea, wallX = RockinghamBuilder.WallX;
+            Color dune = H("A9B06E"), sand = RockinghamBuilder.Sand, wet = RockinghamBuilder.SandWet;
+            float Wall(float z) => wallX + WlCoastShift(z);
+            float Height(float x, float z)
+            {
+                float w = Wall(z), shift = WlCoastShift(z);
+                if (x <= w)
+                {
+                    // land: lawn level, with a low foredune just behind the beach while the coast is still far out
+                    float hump = Mathf.Clamp01((shift - 4f) / 10f) * 1.1f * Mathf.Pow(Mathf.Max(0f, Mathf.Sin(Mathf.PI * Mathf.Clamp01((w - x) / 11f))), 1.5f);   // Max: sin(pi) is a hair below 0, and Pow of that is NaN
+                    return K.Kerb + .05f + hump;
+                }
+                return Mathf.Lerp(-.45f, sea - .4f, Mathf.InverseLerp(w + .7f, w + 17f, x));
+            }
+            Color Colour(float x, float z, float y)
+            {
+                float w = Wall(z);
+                if (x > w + .3f) return x > w + 8.5f ? wet : sand;
+                return Color.Lerp(Lawn, dune, Mathf.Clamp01((x - (w - 16f)) / 8f) * Mathf.Clamp01(WlCoastShift(z) / 3f));
+            }
+            // behind the last house (z 0..13) the lawn slab reaches 24 m; the height field carries on from there
+            RockinghamBuilder.Terrain(d.Road, K.Edge + 24f, 172f, 0f, 13f, 4f, 2.6f, Height, Colour, ComicSurface.Foliage);
+            RockinghamBuilder.Terrain(d.Road, K.Edge, 172f, 13f, L, 3f, 1.5f, Height, Colour, ComicSurface.Foliage);
+            for (float z = 0f; z < L - .01f; z += 4f)
+            {
+                float shore = Wall(z + 4f) + 12f;
+                K.Water(d.Road, shore - 4f, shore + 29f, z, z + 4f, sea, RockinghamBuilder.Turquoise, RockinghamBuilder.TurquoiseLight, 300 + (int)z);
+                if (shore + 29f < 172f) K.Water(d.Road, shore + 29f, 172f, z, z + 4f, sea, RockinghamBuilder.SeaBlue, RockinghamBuilder.SeaRipple, 340 + (int)z);
+            }
+            // the estate's limestone wall and street trees to the end of the houses' street, bush on the dune
+            LimestoneWall(d.SlopedFrontage, 1, 13, 30, K.Edge + .5f, .4f);
+            YoungTree(d.Props, d.Collisions, V(K.Edge - .9f, d.Ground(19.5f), 19.5f), 78);
+            YoungTree(d.Props, d.Collisions, V(K.Edge - .9f, d.Ground(28.5f), 28.5f), 79);
+            var r = new System.Random(55);
+            float F() => (float)r.NextDouble();
+            for (float z = 14f; z < 38f; z += 2.2f + F() * 1.4f)
+            {
+                float w = Wall(z), x = Mathf.Lerp(K.Edge + 2.5f, Mathf.Max(K.Edge + 3f, w - 2f), F());
+                if (WlCoastShift(z) < 3f && x > K.Edge + 5f) continue;                  // the mown foreshore lawn starts
+                Vector3 p = V(x, d.Y(z) + Height(x, z) - .08f, z);
+                int kind = r.Next(5);
+                if (kind == 0) P.Balga(d.Frontage, p, .8f + F() * .2f, 400 + (int)z);
+                else if (kind == 1) P.Banksia(d.Frontage, p, .8f + F() * .3f, 410 + (int)z);
+                else P.Shrub(d.Frontage, p, .9f + F() * .6f, Color.Lerp(P.GumLeafDark, dune, .2f + F() * .5f));
+            }
+            // Rockingham's limestone wall between lawn and beach starts here (the last 8 m) and its first pine
+            ComicMesh wall = d.SlopedFrontage;
+            wall.Surface = ComicSurface.Concrete;
+            for (float z = 32f; z < L - .01f; z += 2f)
+            {
+                float xa = Wall(z), xb = Wall(z + 2f), yaw = Mathf.Atan2(xb - xa, 2f) * Mathf.Rad2Deg, len = Mathf.Sqrt(4f + (xb - xa) * (xb - xa));
+                wall.Box(V((xa + xb) * .5f + .32f, (K.Kerb + .32f - 1.1f) * .5f, z + 1f), V(.75f, K.Kerb + .32f + 1.1f, len), RockinghamBuilder.Limestone, Quaternion.Euler(0, yaw, 0));
+                wall.Box(V((xa + xb) * .5f + .32f, K.Kerb + .38f, z + 1f), V(.9f, .12f, len), RockinghamBuilder.LimestoneCap, Quaternion.Euler(0, yaw, 0));
+            }
+            NorfolkPine(d.Frontage, V(13f, d.Ground(36f) + .05f, 36f), 12f);
+            // Rockingham's foreshore path (2.4 m, 6.6 m beyond the sidewalk) starts here, off the roadside footpath
+            ComicMesh road = d.Road;
+            road.Surface = ComicSurface.Paving;
+            K.Face(road, V(14.6f, K.Kerb + .07f, 30.6f), V(14.6f, K.Kerb + .07f, L), V(17f, K.Kerb + .07f, L), V(17f, K.Kerb + .07f, 30.6f), RockinghamBuilder.PathGrey, Vector3.up, false);
+            K.Face(road, V(K.Edge, K.Kerb + .07f, 30.6f), V(K.Edge, K.Kerb + .07f, 33f), V(14.6f, K.Kerb + .07f, 33f), V(14.6f, K.Kerb + .07f, 30.6f), RockinghamBuilder.PathGrey, Vector3.up, false);
         }
 
         static CqChunkDraft WlEstate()
@@ -2061,7 +2431,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // A small hatchback (no brand), front at +Z.
-        static ComicMesh CarMesh(Color body)
+        internal static ComicMesh CarMesh(Color body)
         {
             var m = new ComicMesh { Surface = ComicSurface.PaintedMetal };
             m.Box(V(0, .62f, 0), V(1.8f, .6f, 4.2f), body);
@@ -2085,6 +2455,33 @@ namespace CityScooter.EditorTools.Districts
             return m;
         }
 
+        /// <summary>v0.6: the side wall of the shop beyond the village square faces riders and was blank: two upper
+        /// windows, a teal painted band with the place name, a low planter along its foot (the wall is at z, facing -Z).</summary>
+        static void SideWallMural(ComicMesh m, float x0, float x1, float baseY, float z)
+        {
+            float zc = z - .04f, xc = (x0 + x1) * .5f;
+            void Panel(float a, float b, float y0, float y1, float off, Color c, ComicSurface surface)
+            {
+                m.Surface = surface;
+                K.Face(m, V(a, baseY + y0, z - off), V(b, baseY + y0, z - off), V(b, baseY + y1, z - off), V(a, baseY + y1, z - off), c, Vector3.back);
+            }
+            foreach (float x in new[] { Mathf.Lerp(x0, x1, .27f), Mathf.Lerp(x0, x1, .73f) })
+            {
+                Panel(x - 1f, x + 1f, 4.45f, 6.35f, .04f, H("F4F2EA"), ComicSurface.PaintedMetal);
+                Panel(x - .85f, x + .85f, 4.6f, 6.2f, .06f, GlassDark, ComicSurface.Glass);
+                Panel(x - .04f, x + .04f, 4.6f, 6.2f, .07f, H("F4F2EA"), ComicSurface.PaintedMetal);
+                m.Surface = ComicSurface.Concrete;
+                K.MinMaxBox(m, V(x - 1.1f, baseY + 4.3f, z - .22f), V(x + 1.1f, baseY + 4.45f, z), H("F4F2EA"));
+            }
+            Panel(x0 + .9f, x1 - .9f, 1.7f, 3.5f, .04f, StationTeal, ComicSurface.PaintedMetal);
+            Panel(x0 + .9f, x1 - .9f, 1.55f, 1.7f, .05f, StationOrange, ComicSurface.PaintedMetal);
+            Letters(m, "WELLARD", xc, baseY + 2.6f, zc - .03f, .2f, H("F4F2EA"));
+            m.Surface = ComicSurface.Concrete;
+            K.MinMaxBox(m, V(x0 + .9f, baseY, z - 1.1f), V(x1 - .9f, baseY + .55f, z - .1f), Ret);
+            K.MinMaxBox(m, V(x0 + .8f, baseY + .55f, z - 1.2f), V(x1 - .8f, baseY + .65f, z), RetCap);
+            for (float x = x0 + 2f; x < x1 - 1.5f; x += 2.4f) P.Shrub(m, V(x, baseY + .6f, z - .6f), .8f, Color.Lerp(P.LeafGreen, Lawn, .35f));
+        }
+
         static CqChunkDraft WlVillage()
         {
             // Wellard village: two-storey shops with awnings and cafe tables, the village square with a clock tower.
@@ -2095,6 +2492,7 @@ namespace CityScooter.EditorTools.Districts
             for (int i = 0; i < 4; i++) Shop(d, new CqLot(-1, i * 10f, i * 10f + 10f, K.Edge + .3f, 12f, d.Base(i * 10f + 5f)), i);
             Shop(d, new CqLot(1, 0, 12, K.Edge + .3f, 12f, d.Base(6f)), 5);
             Shop(d, new CqLot(1, 28, 40, K.Edge + .3f, 12f, d.Base(34f)), 6);
+            SideWallMural(d.Frontage, K.Edge + .6f, K.Edge + 12f, d.Base(34f), 28.1f);
             Shop(d, new CqLot(1, 12, 28, K.Edge + 16f, 12f, d.Base(20f)), 7);
             // the square: lighter paving, a clock tower, a shade tree, benches
             d.Road.Surface = ComicSurface.Paving;
@@ -2218,6 +2616,7 @@ namespace CityScooter.EditorTools.Districts
             // footy goal posts, gums and a BBQ shelter on the right.
             var d = new CqChunkDraft("Wellard_Park", WellardDrop) { Type = RoadType.PedestrianMall };
             PathSurface(d, H("D8D2C4"), ComicSurface.Concrete, Lawn, ComicSurface.Foliage, KerbCap, true, 0f);
+            StreetStubs(d, Pave, KerbCap);
             for (int s = -1; s <= 1; s += 2) Ground(d, s, 0, 40, 0, 72, Lawn, K.Kerb - .02f, ComicSurface.Foliage);
             // mowing stripes on the oval
             d.Road.Surface = ComicSurface.Plain;
@@ -2355,6 +2754,7 @@ namespace CityScooter.EditorTools.Districts
             var d = new CqChunkDraft("Wellard_Wetland", WellardDrop) { Type = RoadType.PedestrianMall };
             float z0 = BoardwalkRampZ, lip = z0 + BoardwalkRise + BoardwalkTop, far = lip + WetlandGap;
             PathSurface(d, Boards, ComicSurface.Wood, BoardsLight, ComicSurface.Wood, Rail, false, .6f, lip, far);
+            StreetStubs(d, Pave, KerbCap);
             K.Water(d.Road, -(K.Edge + 40f), K.Edge + 40f, 0, 40, PondLevel, Pond, PondLight, 21);
             d.Road.Surface = ComicSurface.Plain;
             var rr = new System.Random(77);
@@ -2600,19 +3000,26 @@ namespace CityScooter.EditorTools.Districts
             // woodland bands and rooftops, in layers (near: dark and crisp; far: hazy)
             for (int layer = 0; layer < 3; layer++)
             {
-                float xa = 78f + layer * 60f, t = .12f + layer * .2f;
+                // v0.6: woodland as clumps standing on the ground (the old single crowns on thin trunks read as pale
+                // lollipops), closer together and less hazed
+                float xa = 78f + layer * 60f, t = .05f + layer * .14f;
                 for (int s = -1; s <= 1; s += 2)
-                    for (float z = -60f; z < 300f; z += 16f + F() * 10f)
+                    for (float z = -60f; z < 300f; z += 11f + F() * 7f)
                     {
                         float x = xa + F() * 40f, y = .1f;
-                        if (F() < .55f)
+                        if (F() < .62f)
                         {
-                            float hgt = 8f + F() * 6f;
-                            m.Surface = ComicSurface.Wood;
-                            m.Cylinder(V(s * x, y + hgt * .3f, z), .5f, hgt * .6f, Hz(PaperTrunk, t), 6);
+                            float hgt = 9f + F() * 6f;
+                            Color leaf = Color.Lerp(PaperLeafDark, H("4F6A3C"), F() * .6f);
                             m.Surface = ComicSurface.Foliage;
-                            m.Ellipsoid(V(s * x, y + hgt * .75f, z), V(9f + F() * 5f, 4.5f + F() * 2f, 8f + F() * 4f), Hz(F() < .5f ? PaperLeaf : PaperLeafDark, t));
-                            m.Ellipsoid(V(s * (x + 3f), y + hgt * .9f, z + 2f), V(6f, 3.5f, 6f), Hz(PaperLeafLight, t));
+                            m.Ellipsoid(V(s * x, y + hgt * .42f, z), V(13f + F() * 6f, hgt, 12f + F() * 6f), Hz(leaf, t));
+                            m.Ellipsoid(V(s * (x + 5f), y + hgt * .36f, z + 6f), V(10f + F() * 4f, hgt * .8f, 10f), Hz(Color.Lerp(leaf, PaperLeaf, .5f), t));
+                            m.Ellipsoid(V(s * (x - 2f), y + hgt * .8f, z - 2f), V(7f, hgt * .45f, 7f), Hz(PaperLeafLight, t + .05f));
+                            if (layer == 0)
+                            {
+                                m.Surface = ComicSurface.Wood;
+                                m.Cylinder(V(s * (x - 5f), y + hgt * .3f, z - 5f), .45f, hgt * .6f, Hz(PaperTrunk, t), 6);
+                            }
                         }
                         else
                         {

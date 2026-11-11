@@ -36,3 +36,15 @@ WARNBRO (district id warnbro, order 150) - 参考资料和用到了什么
 
 动物：银鸥（站着的和走动的）、蓝舌石龙子 bobtail（在步道上慢慢爬）。都是 animal、Person、不能打。
 障碍：冲浪板架、红盖垃圾桶、海滩通道围栏（可以跳过）、红黄巡逻旗。
+
+v0.6 精修（2026-11-11，南线 B）又查的资料
+- Warnbro Sound（Wikipedia / Wikiwand）https://mobileapps.wikiwand.com/en/Warnbro_Sound
+  用到：Warnbro Sound 是 Cape Peron 以南的一个半圆形海湾，宽约 7 公里，岸线约 11 公里。海湾有两头，
+  所以出口（整条线的终点）做成沙滩尽头一道伸进海里的石灰岩岬角，把海湾收住，而不是把海截断。
+- Warnbro Beach（freebeach.com.au）https://www.freebeach.com.au/beach/warnbro-beach-port-kennedy
+  用到：Warnbro Beach 从 Safety Bay 到 Port Kennedy 长 7.6 公里，路尽头是小停车场和海滩入口。
+- Safety Bay, Western Australia（Wikipedia）https://www.wikipedia.org/wiki/Safety_Bay
+  用到：从 Shoalwater 到 Port Kennedy 整个海湾一览无余；最近的岛是 Penguin Island（在海湾北头）。
+- 岬角具体的样子（Becher Point）没有找到照片资料，按海岸石灰岩和灌木的常识做。
+- 远景改成和 Rockingham 共用一个预制体（FAR_Rockingham_CockburnSound），原来的 FAR_Warnbro_Sound 删掉了。
+- 出口的指路牌：掉头箭头加 UWA（路线从这里回到起点），只有地名。
