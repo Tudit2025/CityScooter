@@ -74,7 +74,7 @@ MonoBehaviour:
   skySize: 1
   skyHeight: 0
   skyline: 1
-  farScenery: {fileID: 4445086154559869049, guid: abd73868734fb3c488766f596db705b6, type: 3}
+  farScenery: {fileID: 967322672613499864, guid: edb1b7d12405012499d6b9ff18c0f661, type: 3}
   gateway: {fileID: 7406661259454456956, guid: 41d94a9d183aece4d945d3bb95b0b7d0, type: 3}
   ambience: {fileID: 0}
   ambienceVolume: 0.35
