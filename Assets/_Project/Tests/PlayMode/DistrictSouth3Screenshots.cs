@@ -145,6 +145,13 @@ namespace CityScooter.Tests
             cam.transform.rotation = keep;
         }
 
+        // v0.6 polish: a frame every 20 m through the district, packed into contact sheets (see SouthBRideThrough).
+        [UnityTest, Explicit("Ride-through contact sheets of KWINANA into art-src/districts/kwinana/previews/polish")]
+        public IEnumerator RideThrough_Kwinana() { yield return SouthBRideThrough.Ride(_game, _tuning, "kwinana"); }
+
+        [UnityTest, Explicit("Ride-through contact sheets of WELLARD into art-src/districts/wellard/previews/polish")]
+        public IEnumerator RideThrough_Wellard() { yield return SouthBRideThrough.Ride(_game, _tuning, "wellard"); }
+
         [UnityTest, Explicit("Renders review images of KWINANA and WELLARD into art-src/districts/<id>/previews")]
         public IEnumerator Screenshots_KwinanaAndWellard_FromTheChaseCamera()
         {

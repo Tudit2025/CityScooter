@@ -23,6 +23,11 @@ namespace CityScooter.EditorTools.Districts
     /// fences and signs, the surf life saving club and its patrol tower with red-and-yellow flags, Warnbro Beach Rd with
     /// tile-roofed houses, Warnbro station and its car park; coastal path chunks (PedestrianMall) between the dunes and a
     /// beach creek crossed with a dune kicker (SPLASH).
+    /// v0.6 (docs/v0.6-polish.md, south line B): one coast road. Rockingham's foreshore runs from its entry boundary
+    /// (where Wellard's exit brings the coast in) to its exit boundary; Warnbro's entry starts with the same profile and
+    /// turns it into dunes (CoastBlend); the sea level, the paving and the far scenery (CoastFar, one prefab for both
+    /// districts) are shared. Warnbro's exit is the end of the line: a limestone point closes the bay (Headland) and a
+    /// guide sign points back to UWA (ReturnSign). Polish notes: art-src/districts/rockingham|warnbro/previews/polish/NOTES.txt.
     /// Uses the CBD / Quay comic kit (CbdQuayKit, CqChunkDraft): ComicPalette + ComicInk only, vertex colours.
     ///   Menu: CityScooter/Districts/Build Rockingham and Warnbro
     ///   Batch: -executeMethod CityScooter.EditorTools.Districts.RockinghamBuilder.BuildBatch
@@ -46,31 +51,35 @@ namespace CityScooter.EditorTools.Districts
 
         /// <summary>The coast is nearly flat: -1.2 m (Rockingham) and -1.4 m (Warnbro) per 40 m chunk.</summary>
         public const float RockDrop = -1.2f, WarnDrop = -1.4f;
-        const float RSea = -1.5f, WSea = -1.6f;
+        /// <summary>v0.6: Rockingham and Warnbro share one far-scenery prefab (the same horizon), sheared with the mean of
+        /// their two grades (the difference is 0.2 m per 40 m: under a metre at the far end of what is built ahead).</summary>
+        public const string CoastFarName = "FAR_Rockingham_CockburnSound";
+        public const float CoastGrade = -(RockDrop + WarnDrop) * .5f / 40f;
+        internal const float RSea = -1.5f, WSea = -1.5f;   // one sea level for both: one coast, one shared horizon (v0.6)
         // Rockingham foreshore (beyond the sea-side sidewalk edge at x = 8): lawn to x = 21, limestone wall, sand, water.
-        const float LawnW = 13f, WallX = K.Edge + LawnW, ShoreX = 33f;
+        internal const float LawnW = 13f, WallX = K.Edge + LawnW, ShoreX = 33f;
         // The jetty jump (Ramp + road-wide RoadGap) and the Warnbro creek jump. Numbers for gameplay:
         public const float JettyDeckStart = 3f, JettyRampStart = 10f, JettyRise = 6f, JettyHeight = 1.4f, JettyTop = 3f, JettyGap = 6f;
         public const float CreekRampStart = 6f, CreekRise = 6f, CreekHeight = 1.4f, CreekTop = 2f, CreekGap = 6f;
 
         // Palette (sRGB; sources and notes in art-src/districts/rockingham|warnbro/SOURCES.txt).
-        static readonly Color Paving = K.Hex("D3CFC6"), PavingStripe = K.Hex("A9A59C"), KerbCap = K.Hex("EDE8DC"), SharedGrey = K.Hex("C9C4BA");
-        static readonly Color Lawn = K.Hex("6DA544"), LawnLight = K.Hex("82B654"), PathGrey = K.Hex("DCD6C8");
-        static readonly Color Limestone = K.Hex("E2D2A6"), LimestoneCap = K.Hex("F0E6CA"), LimestoneDark = K.Hex("BFA978");
-        static readonly Color Sand = K.Hex("F2E9CF"), SandWet = K.Hex("DCCDA6"), Foam = K.Hex("F4FBFA");
-        static readonly Color Turquoise = K.Hex("47C4C2"), TurquoiseLight = K.Hex("A5E8E0"), SeaBlue = K.Hex("2E9CC2"), SeaRipple = K.Hex("6CC6DE");
-        static readonly Color PineDark = K.Hex("2C5A36"), PineMid = K.Hex("3B6F42"), PineLight = K.Hex("5A8C4C"), PineUnder = K.Hex("1C3826"), PineBark = K.Hex("6E5A47");
-        static readonly Color White = K.Hex("F6F4EE"), Cream = K.Hex("F0E6CF"), PaleYellow = K.Hex("F3E3B0"), PaleBlue = K.Hex("DCE8EE");
-        static readonly Color CafeRoof = K.Hex("D45A3A"), GlassDark = K.Hex("2D4B59"), Balustrade = K.Hex("BFDCE3"), Navy = K.Hex("2A3E6E");
-        static readonly Color SailRed = K.Hex("E2463A"), SailOrange = K.Hex("F28C28"), SailYellow = K.Hex("F6C543"), SailPink = K.Hex("E85A8C"), SailTeal = K.Hex("2A9D9A");
-        static readonly Color Sandstone = K.Hex("E2CDA3"), AptCream = K.Hex("EFE4CC"), Teal = K.Hex("2BB3A8"), Deck = K.Hex("9A6B45"), DeckLight = K.Hex("B88757");
-        static readonly Color Timber = K.Hex("A8774E"), Bronze = K.Hex("6B4F2C"), AnchorBlack = K.Hex("23282E"), CanopyBlue = K.Hex("2F6FB0");
+        internal static readonly Color Paving = K.Hex("D3CFC6"), PavingStripe = K.Hex("A9A59C"), KerbCap = K.Hex("EDE8DC"), SharedGrey = K.Hex("C9C4BA");
+        internal static readonly Color Lawn = K.Hex("6DA544"), LawnLight = K.Hex("82B654"), PathGrey = K.Hex("DCD6C8");
+        internal static readonly Color Limestone = K.Hex("E2D2A6"), LimestoneCap = K.Hex("F0E6CA"), LimestoneDark = K.Hex("BFA978");
+        internal static readonly Color Sand = K.Hex("F2E9CF"), SandWet = K.Hex("DCCDA6"), Foam = K.Hex("F4FBFA");
+        internal static readonly Color Turquoise = K.Hex("47C4C2"), TurquoiseLight = K.Hex("A5E8E0"), SeaBlue = K.Hex("2E9CC2"), SeaRipple = K.Hex("6CC6DE");
+        internal static readonly Color PineDark = K.Hex("2C5A36"), PineMid = K.Hex("3B6F42"), PineLight = K.Hex("5A8C4C"), PineUnder = K.Hex("1C3826"), PineBark = K.Hex("6E5A47");
+        internal static readonly Color White = K.Hex("F6F4EE"), Cream = K.Hex("F0E6CF"), PaleYellow = K.Hex("F3E3B0"), PaleBlue = K.Hex("DCE8EE");
+        internal static readonly Color CafeRoof = K.Hex("D45A3A"), GlassDark = K.Hex("2D4B59"), Balustrade = K.Hex("BFDCE3"), Navy = K.Hex("2A3E6E");
+        internal static readonly Color SailRed = K.Hex("E2463A"), SailOrange = K.Hex("F28C28"), SailYellow = K.Hex("F6C543"), SailPink = K.Hex("E85A8C"), SailTeal = K.Hex("2A9D9A");
+        internal static readonly Color Sandstone = K.Hex("E2CDA3"), AptCream = K.Hex("EFE4CC"), Teal = K.Hex("2BB3A8"), Deck = K.Hex("86705C"), DeckLight = K.Hex("B5A088");
+        internal static readonly Color Timber = K.Hex("A8774E"), Bronze = K.Hex("6B4F2C"), AnchorBlack = K.Hex("23282E"), CanopyBlue = K.Hex("2F6FB0");
         // Warnbro
-        static readonly Color PathConcrete = K.Hex("D8D2C4"), Shoulder = K.Hex("E6DAB9"), Heath = K.Hex("7F9364"), HeathDark = K.Hex("5F7650"),
+        internal static readonly Color PathConcrete = K.Hex("D8D2C4"), Shoulder = K.Hex("E6DAB9"), Heath = K.Hex("7F9364"), HeathDark = K.Hex("5F7650"),
             HeathLight = K.Hex("9AAA74"), HeathGrey = K.Hex("A3AE8E"), DuneSand = K.Hex("EBDFC0"), BeachWhite = K.Hex("F4EEDC");
-        static readonly Color Terracotta = K.Hex("B85A3C"), Colorbond = K.Hex("4A5057"), Surfmist = K.Hex("E4E2D5"), Render = K.Hex("EDE6D6"),
+        internal static readonly Color Terracotta = K.Hex("B85A3C"), Colorbond = K.Hex("4A5057"), Surfmist = K.Hex("E4E2D5"), Render = K.Hex("EDE6D6"),
             FencePost = K.Hex("8E8471"), MeshGreen = K.Hex("5E7D5A"), PatrolRed = K.Hex("E1322B"), PatrolYellow = K.Hex("F7D23C");
-        static readonly Color Peppermint = K.Hex("5F7D3C"), PeppermintLight = K.Hex("7C9A48");
+        internal static readonly Color Peppermint = K.Hex("5F7D3C"), PeppermintLight = K.Hex("7C9A48");
 
         [MenuItem("CityScooter/Districts/Build Rockingham and Warnbro")]
         public static void Build() => Build(false);
@@ -125,7 +134,7 @@ namespace CityScooter.EditorTools.Districts
             K.WriteChunk(RockJetty(), RockChunkPath("Jetty"));
             K.WriteChunk(RockVillageGreen(), RockChunkPath("VillageGreen"));
             K.WriteChunk(RockExit(), RockChunkPath("Exit"));
-            GameObject far = K.SaveFarScenery(RockPf("FAR_Rockingham_CockburnSound"), "FAR_Rockingham_CockburnSound", RockFar(-RockDrop / 40f));
+            GameObject far = K.SaveFarScenery(RockPf(CoastFarName), CoastFarName, CoastFar(CoastGrade));
 
             bool created = AssetDatabase.LoadAssetAtPath<District>(RockDistrictPath) == null;
             District d = K.LoadOrCreate<District>(RockDistrictPath);
@@ -280,6 +289,7 @@ namespace CityScooter.EditorTools.Districts
             Bench(d.Props, V(17.8f, d.Ground(19f) + .05f, 19f), -90f);
             BeachShade(d.Props, V(26f, d.Y(10f) - .3f, 10f), SailRed);
             BeachShade(d.Props, V(27.5f, d.Y(29f) - .4f, 29f), SailTeal);
+            DolphinPod(d.Road, V(43f, RSea, 21f), 10f, 1.9f);
             // land side: low shops then an apartment block
             LeftGround(d, 0, 40, 60f, Paving, ComicSurface.Paving);
             SidewalkTrees(d, -1, 6f, 26f);
@@ -303,6 +313,7 @@ namespace CityScooter.EditorTools.Districts
             BeachShade(d.Props, V(26.5f, d.Y(18f) - .35f, 18f), SailPink);
             BeachShade(d.Props, V(25.8f, d.Y(35f) - .3f, 35f), Navy);
             Bench(d.Props, V(17.8f, d.Ground(22f) + .05f, 22f), -90f);
+            DolphinPod(d.Road, V(45f, RSea, 24f), -8f, 1.8f);
             CafeStrip(d, 0f, 40f, 1);
             DeepTown(d, 0, 40, 5);
             d.StandardSlots();
@@ -342,6 +353,7 @@ namespace CityScooter.EditorTools.Districts
             m.Surface = ComicSurface.Plain;
             for (float z = 1f; z < d.Length - 4.5f; z += 3.2f)
                 K.Face(m, V(-K.Half + .1f, .022f, z), V(-K.Half + .1f, .022f, z + .7f), V(K.Half - .1f, .022f, z + 3.6f), V(K.Half - .1f, .022f, z + 2.9f), PavingStripe, Vector3.up, false);
+            KwinanaWellardBuilder.StreetStubs(d, Paving, KerbCap);
             Foreshore(d, 0, 40, 144);
             ForeshorePines(d, 14, 5f, 36f);
             // the sea rescue building on a limestone pad on the beach
@@ -414,22 +426,37 @@ namespace CityScooter.EditorTools.Districts
             return d;
         }
 
+        /// <summary>v0.6 boundary surface (docs/v0.6-polish.md rule 4): the first metres of the entry are plain asphalt and
+        /// plain paving, as Wellard's exit ends; Rockingham's centre line and striped paving start at a kerb band inside
+        /// the chunk, not on the boundary line.</summary>
+        static void RockEntryStreet(CqChunkDraft d, float plainTo)
+        {
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, false, plainTo, d.Length);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, true, 0f, plainTo);
+            SidewalkStripes(d.Road, plainTo, d.Length);
+            KwinanaWellardBuilder.SurfaceBand(d.Road, plainTo - .5f, .5f, KerbCap);
+        }
+
         static CqChunkDraft RockEntry()
         {
-            // Calm at z = 0 (low limestone walls, hedges, small trees), then the foreshore opens on the right behind a
-            // rock groyne, beach houses and a pine on the left.
+            // The road has arrived at the sea (Wellard's exit brings the coast in): the foreshore (lawn, limestone wall,
+            // beach, Cockburn Sound) runs from the boundary line on, with the last dune scrub on its first metres and the
+            // row of Norfolk pines starting. Land side: lawn, the low limestone wall, beach houses and pines.
             var d = new CqChunkDraft("Rockingham_Entry", RockDrop);
-            RockStreet(d);
-            CalmEdge(d, -1, 0f, 14f, 1);
-            CalmEdge(d, 1, 0f, 14f, 2);
-            Foreshore(d, 14f, 40f, 161);
-            Groyne(d, 14f);
-            ForeshorePines(d, 16, 20f, 31f);
-            ForeshoreLamps(d, 26f, 40f);
-            LeftGround(d, 14f, 40f, 60f, Lawn, ComicSurface.Foliage);
-            LowWall(d, -1, 14f, 40f, .6f);
+            RockEntryStreet(d, 8f);
+            Foreshore(d, 0f, 40f, 161);
+            ForeshorePines(d, 16, 9f, 28f);
+            ForeshoreLamps(d, 6f, 40f);
+            var r = new System.Random(162);
+            for (float z = 1f; z < 10f; z += 2.3f) HeathBush(d.SlopedFrontage, V(F(r, 17.6f, 20f), K.Kerb + .03f, z), F(r, .8f, 1.2f), 162 + (int)(z * 3));
+            BeachShade(d.Props, V(26.5f, d.Y(20f) - .35f, 20f), SailYellow);
+            Bench(d.Props, V(17.8f, d.Ground(33f) + .05f, 33f), -90f);
+            LeftGround(d, 0f, 40f, 60f, Lawn, ComicSurface.Foliage);
+            LowWall(d, -1, 0f, 40f, .6f);
+            BeachHouse(d.Frontage, new CqLot(-1, 4f, 14f, K.Edge + 8f, 11f, d.Base(9f)), White, K.Hex("4A5057"));
             BeachHouse(d.Frontage, new CqLot(-1, 18f, 28f, K.Edge + 7f, 11f, d.Base(23f)), Cream, CafeRoof);
             BeachHouse(d.Frontage, new CqLot(-1, 29f, 39f, K.Edge + 8f, 11f, d.Base(34f)), PaleBlue, K.Hex("4A5057"));
+            NorfolkPine(d.Props, V(-(K.Edge + 3.4f), d.Ground(1.5f), 1.5f), 13f, 94);
             NorfolkPine(d.Props, V(-(K.Edge + 3.2f), d.Ground(16f), 16f), 14f, 93);
             d.StandardSlots();
             return d;
@@ -437,21 +464,49 @@ namespace CityScooter.EditorTools.Districts
 
         static CqChunkDraft RockExit()
         {
-            // The foreshore and cafes first, then calm towards z = 40: a groyne, low walls, hedges, small trees.
+            // No break in the coast: the foreshore runs to the boundary line and Warnbro's entry carries the lawn, the
+            // limestone wall, the beach, the path and the lamps on while the dunes take over. Here the pines thin out
+            // (two tall ones, then a young one) and heath appears on the lawn's sea edge. The striped paving stops 10 m
+            // before the boundary. Land side: lawn, the low wall and beach houses all the way.
             var d = new CqChunkDraft("Rockingham_Exit", RockDrop);
-            RockStreet(d);
-            Foreshore(d, 0f, 26f, 171);
-            Groyne(d, 26f);
-            ForeshorePines(d, 17, 6f, 17f);
-            ForeshoreLamps(d, 2f, 26f);
-            LeftGround(d, 0f, 26f, 60f, Lawn, ComicSurface.Foliage);
-            LowWall(d, -1, 0f, 26f, .6f);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, true);
+            SidewalkStripes(d.Road, 0f, 31f);
+            Foreshore(d, 0f, 40f, 171);
+            ForeshorePines(d, 17, 6f, 19f);
+            NorfolkPine(d.Props, V(12.7f, d.Ground(33f) + .05f, 33f), 11.5f, 172);
+            ForeshoreLamps(d, 2f, 40f);
+            var r = new System.Random(173);
+            for (float z = 21f; z < 39.5f; z += F(r, 2f, 3f)) HeathBush(d.SlopedFrontage, V(F(r, 17.8f, 20.2f), K.Kerb + .03f, z), F(r, .8f, 1.3f), 173 + (int)(z * 3));
+            BeachShade(d.Props, V(26f, d.Y(12f) - .3f, 12f), SailTeal);
+            LeftGround(d, 0f, 40f, 60f, Lawn, ComicSurface.Foliage);
+            LowWall(d, -1, 0f, 40f, .6f);
             BeachHouse(d.Frontage, new CqLot(-1, 2f, 12f, K.Edge + 7f, 11f, d.Base(7f)), White, CafeRoof);
             BeachHouse(d.Frontage, new CqLot(-1, 13f, 23f, K.Edge + 8f, 11f, d.Base(18f)), PaleYellow, CafeRoof);
-            CalmEdge(d, -1, 26f, 40f, 3);
-            CalmEdge(d, 1, 26f, 40f, 4);
+            BeachHouse(d.Frontage, new CqLot(-1, 28f, 38f, K.Edge + 7.5f, 11f, d.Base(33f)), Cream, Terracotta);
+            NorfolkPine(d.Props, V(-(K.Edge + 3.4f), d.Ground(25.5f), 25.5f), 13f, 174);
             d.StandardSlots();
             return d;
+        }
+
+        /// <summary>v0.6: a pod of dolphins leaping in the shallows (the ones in the far scenery were small, grey and
+        /// still, and read as rocks): one in mid-leap, one surfacing (back and fin), one coming down, with white splash
+        /// rings where they leave and enter the water. p on the water surface; they swim along +Z turned by yaw.</summary>
+        static void DolphinPod(ComicMesh m, Vector3 p, float yaw, float s)
+        {
+            // Well apart along their course so the three arcs never merge into one dark lump, and in the road mesh
+            // (no ink outline: at 40 m the outline turned them into a black rock).
+            Quaternion q = Quaternion.Euler(0, yaw, 0);
+            Dolphin(m, p + q * V(0, .2f * s, 0), yaw, s);
+            Dolphin(m, p + q * V(-1.2f * s, -.55f * s, -4.2f * s), yaw + 6f, s * .9f);
+            Dolphin(m, p + q * V(1.1f * s, -.1f * s, 4.4f * s), yaw - 8f, s * .85f);
+            m.Surface = ComicSurface.Plain;
+            foreach (Vector3 ring in new[] { V(0, 0, -1.5f * s), V(0, 0, 1.5f * s), V(-1.2f * s, 0, -4.2f * s), V(1.1f * s, 0, 5.7f * s), V(1.1f * s, 0, 3.1f * s) })
+            {
+                m.Cylinder(p + q * ring + V(0, .04f, 0), .8f * s, .08f, Foam, 8);
+                m.Cylinder(p + q * ring + V(0, .09f, 0), .45f * s, .1f, TurquoiseLight, 8);
+            }
+            foreach (Vector3 drop in new[] { V(.3f, .5f, 1.9f), V(-.3f, .8f, 1.7f), V(.1f, .35f, -1.9f), V(1.4f, .4f, 6f), V(-1.3f, .3f, -4.6f) })
+                m.Box(p + q * (drop * s), Vector3.one * .18f * s, Foam, Quaternion.Euler(30f, 20f, 40f));
         }
 
         // ---------------------------------------------------------------- Rockingham parts
@@ -469,36 +524,6 @@ namespace CityScooter.EditorTools.Districts
             m.Surface = ComicSurface.Concrete;
             K.SideBox(m, s, z0, z1, -1f, K.Kerb + height, .05f, .55f, Limestone);
             K.SideBox(m, s, z0, z1, K.Kerb + height, K.Kerb + height + .1f, 0f, .6f, LimestoneCap);
-        }
-
-        // Calm end of an entry / exit chunk: low limestone wall, clipped hedge, lawn, two small round trees.
-        static void CalmEdge(CqChunkDraft d, int s, float z0, float z1, int seed)
-        {
-            ComicMesh m = d.SlopedFrontage;
-            d.Road.Surface = ComicSurface.Foliage;
-            K.SideBox(d.Road, s, z0, z1, -2.4f, K.Kerb + .03f, 0f, 60f, Lawn);
-            LowWall(d, s, z0, z1, .55f);
-            m.Surface = ComicSurface.Foliage;
-            K.SideBox(m, s, z0 + .4f, z1 - .4f, K.Kerb, K.Kerb + 1.3f, .8f, 1.9f, K.Hex("4E7F3A"));
-            var r = new System.Random(seed);
-            for (float z = z0 + 3.5f; z < z1 - 1f; z += 7f)
-                K.PlaneTree(d.Props, null, V(s * (K.Edge + F(r, 4f, 7f)), d.Ground(z), z), F(r, .75f, .95f), true);
-            if (s > 0) for (float z = z0 + 2f; z < z1; z += 10f) TwinLamp(d.Props, V(K.Edge + .6f, d.Ground(z) + .05f, z));
-            d.Walls.Add(new Bounds(new Vector3(s * (K.Edge + 7f), d.Y((z0 + z1) * .5f) + 1f, (z0 + z1) * .5f), new Vector3(13.5f, 4f, z1 - z0)));
-        }
-
-        // A rock groyne running out into the sea where the beach starts or ends (hides the end of the sand and water).
-        static void Groyne(CqChunkDraft d, float z)
-        {
-            ComicMesh m = d.SlopedFrontage;
-            m.Surface = ComicSurface.Concrete;
-            K.MinMaxBox(m, V(K.Edge + .2f, RSea - 1f, z - 1.2f), V(70f, -.2f, z + 1.2f), LimestoneDark);
-            var r = new System.Random((int)z * 13 + 5);
-            for (float x = K.Edge + 1f; x < 70f; x += F(r, 1.6f, 2.4f))
-            {
-                float y = x < WallX ? K.Kerb : Mathf.Lerp(-.2f, RSea + .3f, Mathf.InverseLerp(WallX, 60f, x));
-                m.Box(V(x, y + .25f, z + F(r, -.5f, .5f)), V(F(r, 1.4f, 2.2f), F(r, .8f, 1.3f), F(r, 1.6f, 2.4f)), Color.Lerp(Limestone, LimestoneDark, F(r, 0f, .8f)), Quaternion.Euler(F(r, -8f, 8f), F(r, 0f, 90f), F(r, -8f, 8f)));
-            }
         }
 
         // Seawall across the cove (the jetty chunk): its face at z looks out over the water; limestone coping flush with the
@@ -541,7 +566,11 @@ namespace CityScooter.EditorTools.Districts
             for (int s = -1; s <= 1; s += 2)
             {
                 p.Box(V(s * (K.Edge + .12f), K.Kerb + .55f, (z0 + z1) * .5f), V(.12f, .12f, z1 - z0), Timber);
-                for (float z = z0 + .5f; z < z1; z += 2.5f) p.Box(V(s * (K.Edge + .12f), K.Kerb + .3f, z), V(.16f, 1.1f, .16f), Deck);
+                for (float z = z0 + .5f; z < z1; z += 2.5f)
+                {
+                    p.Box(V(s * (K.Edge + .12f), K.Kerb + .3f, z), V(.16f, 1.1f, .16f), Deck);
+                    p.Box(V(s * (K.Edge + .12f), K.Kerb + .9f, z), V(.24f, .1f, .24f), White);          // white pile caps
+                }
                 JettyLamp(p, V(s * (K.Edge + .35f), K.Kerb, z0 + 3f));
             }
         }
@@ -589,7 +618,7 @@ namespace CityScooter.EditorTools.Districts
 
         // ---- facade parts (after CbdBuilder: ink frames, glass set in, mullions, sills; every edge inked)
 
-        static readonly Color WindowGlass = K.Hex("2F6F86"), TrimCream = K.Hex("F3E4C2"), PlantGrey = K.Hex("8F969C");
+        internal static readonly Color WindowGlass = K.Hex("2F6F86"), TrimCream = K.Hex("F3E4C2"), PlantGrey = K.Hex("8F969C");
         static readonly Color[] SignColours = { K.Hex("E2463A"), K.Hex("F6C543"), K.Hex("2A9D9A"), K.Hex("2F6FB0"), K.Hex("F28C28"), K.Hex("E85A8C") };
 
         /// <summary>Shopfront glazing between a0 and a1: ink frame, glass set in above a kick plate, ink mullions, a transom.</summary>
@@ -876,7 +905,7 @@ namespace CityScooter.EditorTools.Districts
 
         /// <summary>Norfolk Island pine: tall straight tapering trunk on an ink root ring, whorls of thick frond pads
         /// (two bent slabs each, dark green on top, darker underneath) shorter towards the top, a light leader tuft.</summary>
-        static void NorfolkPine(ComicMesh m, Vector3 p, float h, int seed)
+        internal static void NorfolkPine(ComicMesh m, Vector3 p, float h, int seed)
         {
             var r = new System.Random(seed * 131 + 7);
             m.Surface = ComicSurface.PaintedMetal;
@@ -1205,10 +1234,10 @@ namespace CityScooter.EditorTools.Districts
         }
 
         /// <summary>A dolphin arcing out of the water: a curved grey body of beams, pale belly, dorsal fin, tail flukes.</summary>
-        static void Dolphin(ComicMesh m, Vector3 p, float yaw, float s)
+        internal static void Dolphin(ComicMesh m, Vector3 p, float yaw, float s)
         {
             Quaternion q = Quaternion.Euler(0, yaw, 0);
-            Color grey = K.Hex("5F6F7C"), belly = K.Hex("C9D1D6");
+            Color grey = K.Hex("5A748C"), belly = K.Hex("E6ECEF");
             m.Surface = ComicSurface.Plastic;
             Vector3 P(float t) => p + q * V(0, Mathf.Sin(t * Mathf.PI) * 1.1f * s - .2f * s, (t - .5f) * 3f * s);
             for (int i = 0; i < 5; i++)
@@ -1412,14 +1441,14 @@ namespace CityScooter.EditorTools.Districts
         /// and the Point Peron headland ahead-right; on the land side rows of tiled roofs and Norfolk pines, a tuart tree line
         /// and the hazy Darling Scarp far behind. Sheared with the road's grade so it meets the chunks' water. No colliders.
         /// </summary>
-        static ComicMesh RockFar(float grade)
+        static ComicMesh CoastFar(float grade)
         {
             var m = new ComicMesh();
             var r = new System.Random(140);
             Color haze = K.Hex("C3DCE8");
             const float z0 = -220f, z1 = 820f;
             // ground and water bands
-            FarStrip(m, K.Edge, WallX, 330f, z1, K.Kerb - .02f, Lawn);
+            FarStrip(m, K.Edge, WallX, 330f, z1, K.Kerb - .02f, Color.Lerp(Lawn, Heath, .5f));   // lawn (Rockingham) or dune heath (Warnbro)
             FarStrip(m, WallX, ShoreX, 330f, z1, -.9f, Sand);
             FarStrip(m, ShoreX, 150f, 330f, z1, RSea - .06f, Turquoise);
             FarStrip(m, 150f, 260f, z0, z1, RSea - .06f, Color.Lerp(SeaBlue, haze, .1f));
@@ -1437,21 +1466,24 @@ namespace CityScooter.EditorTools.Districts
                 K.Face(m, V(x, y, z), V(x, y, z + .5f), V(x + len, y, z + .5f), V(x + len, y, z), Haze(i % 4 == 0 ? Foam : SeaRipple, x, haze), Vector3.up, false);
             }
             // Garden Island: long and low across the water on the right, pale limestone shore, olive scrub
-            Ridge(m, 1, 240f, 90f, z0, z1, RSea, z => 7f + 3.5f * Mathf.Sin(z * .011f + .4f) + 2f * Mathf.Sin(z * .037f + 1.7f), K.Hex("E9E0C6"), K.Hex("6F8B5E"), K.Hex("819A6A"), haze, .45f);
+            Ridge(m, 1, 240f, 90f, z0, z1, RSea, z => 7f + 3.5f * Mathf.Sin(z * .011f + .4f) + 2f * Mathf.Sin(z * .037f + 1.7f), K.Hex("E9E0C6"), K.Hex("56764C"), K.Hex("6B8758"), haze, .28f);
             for (float z = z0 + 10f; z < z1; z += F(r, 18f, 30f))
             {
                 float h = 7f + 3.5f * Mathf.Sin(z * .011f + .4f) + 2f * Mathf.Sin(z * .037f + 1.7f);
                 m.Surface = ComicSurface.Foliage;
-                m.Cylinder(V(F(r, 262f, 290f), RSea + h + 1f, z), F(r, 7f, 12f), F(r, 2.5f, 4f), Haze(K.Hex("5E7A50"), 270f, haze), 6, .55f);
+                m.Cylinder(V(F(r, 262f, 290f), RSea + h + 1f, z), F(r, 7f, 12f), F(r, 2.5f, 4f), Haze(K.Hex("4F6E44"), 180f, haze), 6, .55f);
             }
             // Penguin Island: limestone cliffs, flat scrub top, a beach ring
             Vector3 pi = V(118f, RSea, 175f);
             m.Surface = ComicSurface.Concrete;
-            m.Cylinder(pi + V(0, .3f, 0), 19f, .6f, Haze(Sand, 200f, haze), 9, .95f);
-            m.Cylinder(pi + V(0, 5.5f, 0), 15f, 10f, Haze(K.Hex("E3D3AE"), 200f, haze), 7, .82f);
+            // (v0.6: lower and wider with more scrub: the tall pale cylinder read as an iceberg)
+            m.Cylinder(pi + V(0, .3f, 0), 27f, .6f, Haze(Sand, 120f, haze), 9, .95f);
+            m.Cylinder(pi + V(0, 2.8f, 0), 22f, 5f, Haze(K.Hex("D9C594"), 120f, haze), 9, .86f);
+            m.Cylinder(pi + V(9f, 4f, 4f), 9f, 7.4f, Haze(K.Hex("CDB786"), 120f, haze), 7, .8f);
             m.Surface = ComicSurface.Foliage;
-            m.Cylinder(pi + V(1f, 11f, -1f), 12.6f, 1.6f, Haze(K.Hex("7D9466"), 200f, haze), 7, .7f);
-            for (int i = 0; i < 6; i++) m.Cylinder(pi + V(F(r, -8f, 8f), 12.2f, F(r, -8f, 8f)), F(r, 2.5f, 4.5f), 1.8f, Haze(K.Hex("67804F"), 200f, haze), 6, .5f);
+            m.Cylinder(pi + V(0, 5.9f, 0), 19.4f, 1.7f, Haze(K.Hex("6F8A55"), 120f, haze), 9, .8f);
+            m.Cylinder(pi + V(9f, 8.4f, 4f), 7.6f, 1.5f, Haze(K.Hex("668250"), 120f, haze), 7, .7f);
+            for (int i = 0; i < 9; i++) m.Cylinder(pi + V(F(r, -14f, 14f), 7.2f, F(r, -13f, 13f)), F(r, 2.5f, 5f), 1.9f, Haze(K.Hex("57723F"), 120f, haze), 6, .5f);
             // Point Peron: a low limestone headland reaching across ahead-right
             for (float x = 40f; x < 210f; x += 13f)
             {
@@ -1470,8 +1502,7 @@ namespace CityScooter.EditorTools.Districts
                 Sailboat(boat, Vector3.zero, 1f, bands[i % bands.Length]);
                 m.Add(boat, V(x, RSea - .1f, z), Quaternion.Euler(0, F(r, -40f, 40f) + (i % 2) * 180f, 0), Vector3.one * F(r, 1.3f, 1.9f));
             }
-            foreach (Vector3 pod in new[] { V(46f, 0, 40f), V(58f, 0, 130f), V(50f, 0, 230f) })
-                for (int k = 0; k < 3; k++) Dolphin(m, V(pod.x + k * 2.2f, RSea - .1f, pod.z + k * 1.6f), F(r, -20f, 20f), F(r, 1.1f, 1.5f));
+            // (v0.6: no dolphins here any more; frozen far away they read as rocks. Pods leap in the chunks: DolphinPod.)
             // land side: tiled roofs and Norfolk pines, a tuart tree line, the hazy scarp
             Color[] walls = { Cream, White, PaleYellow, K.Hex("D9CBB0") };
             Color[] roofs = { Terracotta, CafeRoof, Colorbond, K.Hex("8A8F94") };
@@ -1534,7 +1565,7 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // Height field in flat road space (x0..x1, z0..z1), cells of about dx by dz; y = h(x, z), colour col(x, z, y).
-        static void Terrain(ComicMesh m, float x0, float x1, float z0, float z1, float dx, float dz, Func<float, float, float> h, Func<float, float, float, Color> col, ComicSurface surface)
+        internal static void Terrain(ComicMesh m, float x0, float x1, float z0, float z1, float dx, float dz, Func<float, float, float> h, Func<float, float, float, Color> col, ComicSurface surface)
         {
             m.Surface = surface;
             int nx = Mathf.Max(1, Mathf.RoundToInt(Mathf.Abs(x1 - x0) / dx)), nz = Mathf.Max(1, Mathf.RoundToInt((z1 - z0) / dz));
@@ -1570,7 +1601,12 @@ namespace CityScooter.EditorTools.Districts
             K.WriteChunk(WarnDunePath(), WarnChunkPath("DunePath"));
             K.WriteChunk(WarnCreek(), WarnChunkPath("Creek"));
             K.WriteChunk(WarnExit(), WarnChunkPath("Exit"));
-            GameObject far = K.SaveFarScenery(WarnPf("FAR_Warnbro_Sound"), "FAR_Warnbro_Sound", WarnFar(-WarnDrop / 40f));
+            // v0.6: the same horizon as Rockingham (the sea, Garden Island, Penguin Island, the next point along the coast):
+            // one prefab for both, so the district system keeps it standing across their boundary. Warnbro's own goes.
+            var far = AssetDatabase.LoadAssetAtPath<GameObject>(RockPf(CoastFarName));
+            if (far == null) throw new InvalidOperationException("Build Rockingham first: Warnbro shares its far scenery " + CoastFarName);
+            AssetDatabase.DeleteAsset(WarnPf("FAR_Warnbro_Sound"));
+            AssetDatabase.DeleteAsset(WarnMeshes + "/FAR_Warnbro_Sound.asset");
 
             bool created = AssetDatabase.LoadAssetAtPath<District>(WarnDistrictPath) == null;
             District d = K.LoadOrCreate<District>(WarnDistrictPath);
@@ -1620,7 +1656,7 @@ namespace CityScooter.EditorTools.Districts
                 ("BeachSign", null, Make(m => BeachSign(m, Vector3.zero, "WARNBRO BEACH"))),
                 ("StationHall", null, Make(m => StationHall(m, new CqLot(-1, -14f, 14f, 6f, 11f, 0f)))),
                 ("StationCanopy", null, Make(m => StationCanopy(m, V(0, 0, -6f), 12f))),
-                ("Train", null, Make(m => Train(m, Vector3.zero, 1))),
+                ("Train", null, SouthLineKit.TrainSample(20f, true)),
                 ("ParkedCar", null, Make(m => ParkedCar(m, Vector3.zero, 0f, K.Hex("C9CED3")))),
                 ("AccessFence", null, Make(m => AccessFence(m, V(0, 0, 0), V(0, 0, 6f), (x, z) => 0f))),
                 ("SurfRack", rack.gameObject, null),
@@ -1637,7 +1673,7 @@ namespace CityScooter.EditorTools.Districts
         // ---------------------------------------------------------------- Warnbro chunks
 
         static void WarnStreet(CqChunkDraft d, float skipFrom = -1f, float skipTo = -1f) =>
-            K.StreetSurface(d.Road, d.Length, K.R.asphalt, K.Hex("D6D1C6"), KerbCap, true, skipFrom, skipTo);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, true, skipFrom, skipTo);
 
         // The coastal shared path (PedestrianMall): pale concrete with a dashed white centre line, compacted limestone shoulders.
         static void CoastPath(CqChunkDraft d, float skipFrom = -1f, float skipTo = -1f)
@@ -1657,6 +1693,7 @@ namespace CityScooter.EditorTools.Districts
                 foreach (int s in new[] { -1, 1 })
                     K.Face(m, V(s * (K.Half - .35f), .025f, z), V(s * (K.Half - .35f), .025f, z + 4f), V(s * (K.Half - .25f), .025f, z + 4f), V(s * (K.Half - .25f), .025f, z), K.Hex("B9B2A2"), Vector3.up, false);
             }
+            KwinanaWellardBuilder.StreetStubs(d, Paving, KerbCap);
         }
 
         // Foredune profile on the sea side, u metres beyond the sidewalk edge: up to a heath-covered crest, down to the beach.
@@ -1778,56 +1815,151 @@ namespace CityScooter.EditorTools.Districts
             for (float z = z0 + 4f; z < z1; z += 12f) CheapPine(d.Deep, V(-(K.Edge + F(r, 24f, 32f)), d.Ground(z) + 1f, z), F(r, 13f, 18f));
         }
 
-        // Calm end for Warnbro entry / exit: low limestone wall, heath and peppermints on both sides.
-        static void WarnCalm(CqChunkDraft d, int s, float z0, float z1, int seed)
-        {
-            d.Road.Surface = ComicSurface.Foliage;
-            K.SideBox(d.Road, s, z0, z1, -2.4f, K.Kerb + .03f, 0f, 60f, K.Hex("8DAA5A"));
-            LowWall(d, s, z0, z1, .5f);
-            var r = new System.Random(seed);
-            for (float z = z0 + 1f; z < z1 - 1f; z += 3.6f) HeathBush(d.SlopedFrontage, V(s * (K.Edge + F(r, 1.4f, 4f)), K.Kerb, z), F(r, .9f, 1.4f), seed + (int)(z * 3));
-            for (float z = z0 + 4f; z < z1 - 2f; z += 8f) PeppermintTree(d.Props, V(s * (K.Edge + F(r, 5f, 8f)), d.Ground(z), z), F(r, 5f, 6.5f), seed + (int)z);
-            d.Walls.Add(new Bounds(new Vector3(s * (K.Edge + 7f), d.Y((z0 + z1) * .5f) + 1f, (z0 + z1) * .5f), new Vector3(13.5f, 4f, z1 - z0)));
-        }
-
         static CqChunkDraft WarnEntry()
         {
+            // One coast road with Rockingham: its foreshore crosses the boundary line unchanged (lawn, limestone wall,
+            // beach, the path, a lamp, a last young pine) and over the next 20 m the lawn turns into the foredune, the
+            // wall is buried by sand and the beach widens. Land side: the retaining wall and houses of Warnbro Beach Rd.
             var d = new CqChunkDraft("Warnbro_Entry", WarnDrop);
             WarnStreet(d);
-            WarnCalm(d, -1, 0f, 14f, 1);
-            WarnCalm(d, 1, 0f, 14f, 2);
-            SeaSide(d, 14f, 40f, 201, .8f);
-            DuneEnd(d, 14f);
-            HouseSide(d, 14f, 40f, 3);
+            CoastBlend(d);
+            HouseSide(d, 0f, 40f, 3);
             d.StandardSlots();
             return d;
+        }
+
+        /// <summary>v0.6, the sea side of Warnbro's entry: one height field that is Rockingham's foreshore profile at
+        /// z = 0 (Foreshore: lawn 13 m, the wall, sand, the water's edge 25 m out) and Warnbro's dune and beach from
+        /// z = 26 (SeaSide), so the beach, the dune line and the sea never break at the boundary.</summary>
+        static void CoastBlend(CqChunkDraft d)
+        {
+            const float L = 40f, crest = .8f;
+            float T(float z) => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6f, 26f, z));
+            float RockY(float x) => x - K.Edge <= LawnW ? K.Kerb + .05f : Mathf.Lerp(-.45f, RSea - .4f, Mathf.InverseLerp(WallX + .7f, 38f, x));
+            float WarnY(float x, float z) => x - K.Edge <= 18f ? SeaDune(x - K.Edge, z, 0f, crest) : Mathf.Lerp(-.6f, WSea - .45f, Mathf.InverseLerp(K.Edge + 18f, K.Edge + 38f, x));
+            float Y(float x, float z) => Mathf.Lerp(RockY(x), WarnY(x, z), T(z));
+            Color Colour(float x, float z, float y)
+            {
+                Color rock = x - K.Edge <= LawnW ? Lawn : x > ShoreX - 3.5f ? SandWet : Sand;
+                Color warn = x - K.Edge <= 18f ? DuneColour(WarnY(x, z), x, z) : x > K.Edge + 30.5f ? SandWet : BeachWhite;
+                return Color.Lerp(rock, warn, T(z));
+            }
+            Terrain(d.Road, K.Edge, K.Edge + 38f, 0f, L, 1.5f, 2f, Y, Colour, ComicSurface.Foliage);
+            // the sea: the same level and colours on both sides of the boundary; the water's edge is where the sand dips under
+            foreach ((float a, float b) in new[] { (0f, 12f), (12f, 24f), (24f, 40f) })
+            {
+                float edge = Mathf.Lerp(62f, K.Edge + 59f, T((a + b) * .5f));
+                K.Water(d.Road, 30f, edge, a, b, WSea, Turquoise, TurquoiseLight, 271 + (int)a);
+                K.Water(d.Road, edge, 170f, a, b, WSea, SeaBlue, SeaRipple, 281 + (int)a);
+            }
+            ComicMesh m = d.Road;
+            m.Surface = ComicSurface.Plain;
+            var r = new System.Random(291);
+            for (float z = 0f; z < L - 1f; z += F(r, 2.5f, 5f))
+            {
+                float e = Mathf.Min(L, z + F(r, 2f, 5f)), xs = Mathf.Lerp(ShoreX + .4f, K.Edge + 31.6f, T(z));
+                K.Face(m, V(xs, WSea + .02f, z), V(xs, WSea + .02f, e), V(xs + .8f, WSea + .02f, e), V(xs + .8f, WSea + .02f, z), Foam, Vector3.up, false);
+                if (z > 14f) K.Face(m, V(xs + 7f, WSea + .02f, z), V(xs + 7f, WSea + .02f, e), V(xs + 7.45f, WSea + .02f, e), V(xs + 7.45f, WSea + .02f, z), Foam, Vector3.up, false);
+            }
+            // Rockingham's limestone wall runs 7 m on and ends in a few blocks the sand has half buried
+            ComicMesh w = d.SlopedFrontage;
+            w.Surface = ComicSurface.Concrete;
+            K.SideBox(w, 1, 0f, 7f, -1.1f, K.Kerb + .32f, LawnW - .05f, LawnW + .7f, Limestone);
+            K.SideBox(w, 1, 0f, 7f, K.Kerb + .32f, K.Kerb + .44f, LawnW - .12f, LawnW + .78f, LimestoneCap);
+            for (int i = 0; i < 4; i++)
+                w.Box(V(WallX + .3f + F(r, -.5f, .5f), K.Kerb - .05f - i * .14f, 7.7f + i * 1.15f), V(1.3f, .7f, 1f), Color.Lerp(Limestone, LimestoneDark, F(r, .1f, .7f)), Quaternion.Euler(F(r, -12f, 12f), F(r, 0f, 40f), F(r, -14f, 14f)));
+            // the foreshore path's last metres and its link back to the roadside footpath
+            m.Surface = ComicSurface.Paving;
+            K.Face(m, V(14.6f, K.Kerb + .07f, 0f), V(14.6f, K.Kerb + .07f, 5.8f), V(17f, K.Kerb + .07f, 5.8f), V(17f, K.Kerb + .07f, 0f), PathGrey, Vector3.up, false);
+            K.Face(m, V(K.Edge, K.Kerb + .07f, 3.4f), V(K.Edge, K.Kerb + .07f, 5.8f), V(14.6f, K.Kerb + .07f, 5.8f), V(14.6f, K.Kerb + .07f, 3.4f), PathGrey, Vector3.up, false);
+            // the last young pine, the last of the foreshore's white lamps, then peppermints and heath on the dune
+            NorfolkPine(d.Props, V(12.8f, d.Ground(1.6f) + .05f, 1.6f), 10.5f, 301);
+            TwinLamp(d.Props, V(K.Edge + .6f, d.Ground(2f) + .05f, 2f));
+            TwinLamp(d.Props, V(K.Edge + .6f, d.Y(22f) + Y(K.Edge + .6f, 22f) - .05f, 22f));
+            PeppermintTree(d.Props, V(K.Edge + 4.5f, d.Y(13f) + Y(K.Edge + 4.5f, 13f) - .2f, 13f), 5.5f, 302);
+            PeppermintTree(d.Props, V(K.Edge + 5.5f, d.Y(31f) + Y(K.Edge + 5.5f, 31f) - .2f, 31f), 6.2f, 303);
+            for (float z = 9f; z < L - 1f; z += F(r, 3f, 4.4f))
+                for (int k = 0; k < 2; k++)
+                {
+                    float u = F(r, 3f, 12f);
+                    if (T(z) < .3f && u < 11f) continue;                                 // still lawn there
+                    HeathBush(d.SlopedFrontage, V(K.Edge + u, Y(K.Edge + u, z) - .1f, z + F(r, -.6f, .6f)), F(r, .8f, 1.5f), 310 + (int)(z * 7) + k);
+                }
         }
 
         static CqChunkDraft WarnExit()
         {
+            // The end of the south line and of the beach road. The centre line stops at a band; the beach ends at a
+            // limestone point that runs out into the sea across the view (the bay is closed, nothing is cut off), with a
+            // lookout shelter on it; a guide sign shows where the route goes next: a U-turn arrow and UWA.
             var d = new CqChunkDraft("Warnbro_Exit", WarnDrop);
-            WarnStreet(d);
-            SeaSide(d, 0f, 26f, 211, .8f);
-            DuneEnd(d, 26f);
-            HouseSide(d, 0f, 26f, 5);
-            WarnCalm(d, -1, 26f, 40f, 6);
-            WarnCalm(d, 1, 26f, 40f, 7);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, true, 30f, 40f);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, Paving, KerbCap, false, 0f, 30f);
+            KwinanaWellardBuilder.SurfaceBand(d.Road, 29.5f, .5f, KerbCap);
+            SeaSide(d, 0f, 40f, 211, .8f, 9f);
+            Headland(d);
+            HouseSide(d, 0f, 40f, 5);
+            ReturnSign(d.Props, V(K.Edge + 2.6f, d.Ground(33.5f) + .1f, 33.5f));
+            TwinLamp(d.Props, V(K.Edge + .6f, d.Ground(16f) + .05f, 16f));
             d.StandardSlots();
             return d;
         }
 
-        // A limestone rock wall across the beach where the dunes start or end (hides the cut end of the sand and water).
-        static void DuneEnd(CqChunkDraft d, float z)
+        /// <summary>The limestone point that ends Warnbro's beach (exit chunk, sea side): its shore runs diagonally out to
+        /// sea from 20 m into the chunk, a low cliff up to a heath plateau, down again to street level at the chunk's
+        /// end. Drawn over SeaSide's dunes, beach and water (where it is not land it stays under them).</summary>
+        static void Headland(CqChunkDraft d)
         {
-            ComicMesh m = d.SlopedFrontage;
-            var r = new System.Random((int)z * 31 + 1);
-            m.Surface = ComicSurface.Concrete;
-            K.MinMaxBox(m, V(K.Edge + .2f, WSea - 1f, z - 1f), V(80f, -.4f, z + 1f), LimestoneDark);
-            for (float x = K.Edge + .8f; x < 80f; x += F(r, 1.8f, 2.6f))
+            float Shore(float x) => Mathf.Lerp(20f, 31f, Mathf.InverseLerp(K.Edge + 6f, 172f, x)) + 1.1f * Mathf.Sin(x * .31f);
+            float Y(float x, float z)
             {
-                float y = x < K.Edge + 18f ? Mathf.Lerp(K.Kerb, .2f, (x - K.Edge) / 18f) : Mathf.Lerp(-.4f, WSea + .2f, Mathf.InverseLerp(K.Edge + 18f, 70f, x));
-                m.Box(V(x, y + .3f, z + F(r, -.5f, .5f)), V(F(r, 1.6f, 2.4f), F(r, .9f, 1.5f), F(r, 1.6f, 2.4f)), Color.Lerp(Limestone, LimestoneDark, F(r, .1f, .9f)), Quaternion.Euler(F(r, -8f, 8f), F(r, 0f, 90f), F(r, -8f, 8f)));
+                float inside = z - Shore(x);
+                if (inside <= 0f) return -4f;
+                float plateau = 2.7f + .9f * Mathf.Sin(x * .13f + 1f) + .5f * Mathf.Sin(z * .5f + x * .07f);
+                float target = Mathf.Lerp(K.Kerb + .05f, plateau, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, 7f, x - K.Edge)));
+                target = Mathf.Lerp(target, K.Kerb + .05f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(34f, 40f, z)));
+                return Mathf.Lerp(-1.3f, target, Mathf.SmoothStep(0f, 1f, inside / 3.2f));
             }
+            Color Colour(float x, float z, float y)
+            {
+                float inside = z - Shore(x);
+                if (inside < 3.4f && y < 2.2f && x > K.Edge + 13f) return Color.Lerp(K.Hex("E9DCB8"), LimestoneDark, .5f + .5f * Mathf.Sin(x * 1.9f + z * 2.3f));
+                return DuneColour(Mathf.Max(y, 1.2f), x, z);
+            }
+            Terrain(d.Road, K.Edge, 172f, 16f, 40f, 3f, 1.6f, Y, Colour, ComicSurface.Foliage);
+            var r = new System.Random(331);
+            // boulders along the foot of the cliff, heath and a peppermint on top
+            for (float x = K.Edge + 4f; x < 90f; x += F(r, 3f, 5f))
+                Outcrop(d.SlopedFrontage, V(x, Mathf.Max(WSea, Mathf.Lerp(-.6f, WSea - .3f, Mathf.InverseLerp(K.Edge + 18f, K.Edge + 38f, x))) - .15f, Shore(x) + F(r, -.6f, .4f)), F(r, 1.2f, 2f), 340 + (int)x);
+            for (float x = K.Edge + 5f; x < 70f; x += F(r, 3.5f, 5.5f))
+            {
+                float z = Shore(x) + F(r, 5f, 12f);
+                if (z > 38f) continue;
+                HeathBush(d.SlopedFrontage, V(x, Y(x, z) - .1f, z), F(r, 1f, 1.8f), 350 + (int)x);
+            }
+            PeppermintTree(d.Props, V(K.Edge + 15f, d.Y(34f) + Y(K.Edge + 15f, 34f) - .2f, 34f), 6f, 361);
+            PicnicShelter(d.Frontage, V(K.Edge + 9.5f, d.Y(29f) + Y(K.Edge + 9.5f, 29f) - .05f, 29f));
+        }
+
+        /// <summary>The guide sign at the end of the line (decoration beyond the sidewalk, no collider): a green board
+        /// on two posts with a white U-turn arrow and UWA (a place name: the route goes back to where it started).</summary>
+        static void ReturnSign(ComicMesh m, Vector3 p)
+        {
+            const float px = .15f;
+            m.Surface = ComicSurface.PaintedMetal;
+            foreach (float x in new[] { -1.45f, 1.45f }) m.Box(p + V(x, 1.9f, .08f), V(.14f, 3.8f, .14f), K.Hex("9AA0A6"));
+            m.Box(p + V(0, 3.1f, 0), V(4f, 1.9f, .08f), K.Hex("1F6B4A"));
+            m.Box(p + V(0, 3.1f, .012f), V(4.14f, 2.04f, .06f), White);
+            PixelText(m, "UWA", p.x + .7f, p.y + 3.1f, p.z - .045f, px, White);
+            // the U-turn arrow: up the right stem, over the top, down the left stem to the arrow head
+            float z = -.045f;
+            m.Surface = ComicSurface.Plain;
+            void Bar(float x0, float x1, float y0, float y1) =>
+                m.Quad(p + V(x1, y0, z), p + V(x0, y0, z), p + V(x0, y1, z), p + V(x1, y1, z), White, false);
+            Bar(-.95f, -.75f, 2.5f, 3.6f);
+            Bar(-1.55f, -.75f, 3.5f, 3.7f);
+            Bar(-1.55f, -1.35f, 2.95f, 3.6f);
+            K.TriFacing(m, p + V(-1.8f, 2.98f, z), p + V(-1.1f, 2.98f, z), p + V(-1.45f, 2.5f, z), White, Vector3.back);
         }
 
         static CqChunkDraft WarnStation()
@@ -1855,7 +1987,8 @@ namespace CityScooter.EditorTools.Districts
             StationHall(d.Frontage, hall);
             d.Wall(hall, 9f);
             StationCanopy(d.Landmark, V(-(K.Edge + 32f), d.Ground(4f), 4f), 34f);
-            Train(d.Deep, V(-(K.Edge + 38.5f), d.Ground(4f) - .4f, 4f), 3);
+            // v0.6: the south line's one standard train (SouthLineKit) on the line behind the platform canopy
+            SouthLineKit.Train(d, 0, 2f, 38f, new SouthLineKit.Corridor { Shift = z => K.Edge + 38.5f - SouthLineKit.TrackA, Lift = z => K.Kerb - .4f - SouthLineKit.RailTopY });
             StationSign(d.Props, V(-(K.Edge + 1.2f), d.Ground(5f), 5f));
             d.Walls.Add(new Bounds(new Vector3(-(K.Edge + 20f), d.Y(20f) + 1f, 20f), new Vector3(38f, 4f, 40f)));
             d.StandardSlots();
@@ -1870,6 +2003,7 @@ namespace CityScooter.EditorTools.Districts
             HouseSide(d, 0f, 40f, 9);
             for (float z = 18f; z < 40f; z += 20f) MountsBayStyleLamp(d.Props, V(K.Edge + .5f, d.Ground(z), z));
             Bench(d.Props, V(K.Edge + 1.6f, d.Ground(24f) + .2f, 24f), -90f);
+            DolphinPod(d.Road, V(K.Edge + 42f, WSea, 26f), 6f, 1.9f);
             d.StandardSlots();
             return d;
         }
@@ -2006,7 +2140,7 @@ namespace CityScooter.EditorTools.Districts
 
         /// <summary>A coastal heath bush like the kit's plant blob, but low and wide: a squat grey-green ellipsoid and a
         /// smaller, lighter one on top of it, off-centre.</summary>
-        static void HeathBush(ComicMesh m, Vector3 p, float s, int seed)
+        internal static void HeathBush(ComicMesh m, Vector3 p, float s, int seed)
         {
             var r = new System.Random(seed * 37 + 11);
             Color[] tones = { Heath, HeathDark, HeathGrey, K.Hex("8B9A5E"), K.Hex("6E8A55") };
@@ -2103,7 +2237,7 @@ namespace CityScooter.EditorTools.Districts
         {
             ['A'] = "010/101/111/101/101", ['B'] = "110/101/110/101/110", ['C'] = "011/100/100/100/011", ['E'] = "111/100/110/100/111",
             ['H'] = "101/101/111/101/101", ['N'] = "1001/1101/1011/1001/1001", ['O'] = "010/101/101/101/010", ['R'] = "110/101/110/101/101",
-            ['S'] = "011/100/010/001/110", ['W'] = "10001/10001/10101/10101/01010", ['M'] = "10001/11011/10101/10001/10001",
+            ['S'] = "011/100/010/001/110", ['U'] = "101/101/101/101/111", ['W'] = "10001/10001/10101/10101/01010", ['M'] = "10001/11011/10101/10001/10001",
         };
 
         static float PixelWidth(string text, float px)
@@ -2298,14 +2432,8 @@ namespace CityScooter.EditorTools.Districts
         /// <summary>A parked car, nose towards +X at yaw 0: body, cabin with dark glass, ink bumpers, four wheels.</summary>
         static void ParkedCar(ComicMesh m, Vector3 p, float yaw, Color c)
         {
-            Quaternion q = Quaternion.Euler(0, yaw, 0);
-            void B(Vector3 at, Vector3 size, Color col, ComicSurface s) { m.Surface = s; m.Box(p + q * at, size, col, q); }
-            B(V(0, .62f, 0), V(1.75f, .6f, 4.1f), c, ComicSurface.PaintedMetal);
-            B(V(0, 1.18f, -.25f), V(1.55f, .55f, 2.2f), c, ComicSurface.PaintedMetal);
-            B(V(0, 1.18f, -.25f), V(1.6f, .42f, 2f), GlassDark, ComicSurface.Glass);
-            B(V(0, .45f, 2.06f), V(1.8f, .22f, .1f), K.R.ink, ComicSurface.PaintedMetal);
-            B(V(0, .45f, -2.06f), V(1.8f, .22f, .1f), K.R.ink, ComicSurface.PaintedMetal);
-            foreach (float z in new[] { 1.3f, -1.3f }) foreach (float x in new[] { -.82f, .82f }) B(V(x, .32f, z), V(.24f, .62f, .62f), K.R.ink, ComicSurface.Rubber);
+            // v0.6: Wellard's hatchback (windows, lights, round wheels); the cars here were plain boxes on box wheels
+            m.Add(KwinanaWellardBuilder.CarMesh(c), p, Quaternion.Euler(0, yaw, 0), Vector3.one);
         }
 
         static void CarParkLight(ComicMesh m, Vector3 p)
@@ -2391,23 +2519,6 @@ namespace CityScooter.EditorTools.Districts
             f.Box(p + V(1.5f, 8.1f, length * .75f), V(2.8f, .2f, 2.8f), Navy);
         }
 
-        /// <summary>A suburban train (no branding): silver carriages with a navy window band, darker doors, ink roof gear.</summary>
-        static void Train(ComicMesh m, Vector3 p, int cars)
-        {
-            for (int i = 0; i < cars; i++)
-            {
-                Vector3 c = p + V(0, 0, i * 20.5f + 10f);
-                m.Surface = ComicSurface.Metal;
-                m.Box(c + V(0, 2.3f, 0), V(3f, 3.4f, 20f), K.Hex("D9DEE3"));
-                m.Surface = ComicSurface.Glass;
-                m.Box(c + V(0, 2.8f, 0), V(3.04f, .9f, 19f), Navy);
-                m.Surface = ComicSurface.PaintedMetal;
-                for (float z = -7f; z <= 7.01f; z += 7f) m.Box(c + V(0, 2.1f, z), V(3.06f, 2.6f, 1.4f), K.Hex("8C96A0"));
-                m.Box(c + V(0, 4.1f, 0), V(2.6f, .3f, 18f), K.Hex("9AA4AE"));
-                m.Box(c + V(0, .5f, 0), V(2.6f, .6f, 18f), K.R.ink);
-            }
-        }
-
         // ---------------------------------------------------------------- Warnbro obstacles and animals
 
         // A timber-and-steel surf rack with four boards standing in it.
@@ -2471,96 +2582,6 @@ namespace CityScooter.EditorTools.Districts
                 m.Box(V(s * .08f, .15f, -.43f), V(.03f, .03f, .03f), K.R.ink);
                 foreach (float z in new[] { -.16f, .16f }) m.Box(V(s * .17f, .04f, z), V(.1f, .07f, .08f), head);
             }
-            return m;
-        }
-
-        // ---------------------------------------------------------------- Warnbro far scenery
-
-        /// <summary>
-        /// The whole horizon at Warnbro Sound: the open Indian Ocean on the right (paler with distance) with a few boats,
-        /// the coastline curving out to the south-west ahead-right (white beach, low dunes), Garden Island faint far to the
-        /// north on the right edge; on the land side rolling heath dunes, tile-roofed houses, Norfolk pines and the hazy
-        /// scarp. Sheared with the grade so it meets the chunks' water. No colliders.
-        /// </summary>
-        static ComicMesh WarnFar(float grade)
-        {
-            var m = new ComicMesh();
-            var r = new System.Random(150);
-            Color haze = K.Hex("C6DDE8");
-            const float z0 = -220f, z1 = 820f;
-            float shore = K.Edge + 33f;
-            FarStrip(m, K.Edge, K.Edge + 18f, 330f, z1, .6f, Heath);
-            FarStrip(m, K.Edge + 18f, shore, 330f, z1, -.9f, BeachWhite);
-            FarStrip(m, shore, 170f, 330f, z1, WSea - .06f, Turquoise);
-            FarStrip(m, 160f, 300f, z0, z1, WSea - .06f, Color.Lerp(K.Hex("2A8CC0"), haze, .1f));
-            FarStrip(m, 300f, 600f, z0, z1, WSea - .06f, Color.Lerp(K.Hex("2A8CC0"), haze, .3f));
-            FarStrip(m, 600f, 1500f, z0, z1, WSea - .06f, Color.Lerp(K.Hex("2A8CC0"), haze, .5f));
-            FarStrip(m, -K.Edge - .5f, -40f, 330f, z1, 1.2f, Heath);
-            FarStrip(m, -40f, -200f, z0, z1, -.2f, Haze(K.Hex("8E9C6A"), 120f, haze));
-            FarStrip(m, -200f, -480f, z0, z1, -.3f, Haze(K.Hex("97A57A"), 300f, haze));
-            FarStrip(m, -480f, -1500f, z0, z1, -.35f, Haze(K.Hex("9FAE88"), 650f, haze));
-            m.Surface = ComicSurface.Plain;
-            for (int i = 0; i < 170; i++)
-            {
-                float x = F(r, 60f, 620f), z = F(r, -150f, 760f), len = F(r, 2f, 8f), y = WSea - .04f;
-                K.Face(m, V(x, y, z), V(x, y, z + .5f), V(x + len, y, z + .5f), V(x + len, y, z), Haze(i % 3 == 0 ? Foam : SeaRipple, x, haze), Vector3.up, false);
-            }
-            for (float z = z0; z < z1; z += 6f)
-                K.Face(m, V(shore + 22f, WSea - .03f, z), V(shore + 22f, WSea - .03f, z + 4f), V(shore + 23f, WSea - .03f, z + 4f), V(shore + 23f, WSea - .03f, z), Foam, Vector3.up, false);
-            // the coastline curving out to the south-west (Port Kennedy, Becher Point): beach and low dunes ahead-right
-            Vector3 prevS = Vector3.zero;
-            for (int i = 0; i <= 18; i++)
-            {
-                float t = i / 18f, ang = Mathf.Lerp(18f, 62f, t) * Mathf.Deg2Rad, dist = Mathf.Lerp(330f, 300f, t);
-                Vector3 s = V(Mathf.Sin(ang) * dist, WSea, Mathf.Cos(ang) * dist);
-                Vector3 inward = V(Mathf.Sin(ang), 0, Mathf.Cos(ang));
-                if (i > 0)
-                {
-                    float d2 = (s.magnitude + prevS.magnitude) * .5f;
-                    m.Surface = ComicSurface.Paving;
-                    K.Face(m, prevS, s, s + inward * 14f + V(0, 1f, 0), prevS + inward * 14f + V(0, 1f, 0), Haze(BeachWhite, d2, haze), (Vector3.up * 2f - inward).normalized, false);
-                    m.Surface = ComicSurface.Foliage;
-                    float h0 = 5f + 2.5f * Mathf.Sin(i * 1.3f), h1 = 5f + 2.5f * Mathf.Sin((i - 1) * 1.3f);
-                    K.Face(m, prevS + inward * 14f + V(0, 1f, 0), s + inward * 14f + V(0, 1f, 0), s + inward * 30f + V(0, h0, 0), prevS + inward * 30f + V(0, h1, 0), Haze(Heath, d2, haze), (Vector3.up - inward).normalized, false);
-                    K.Face(m, prevS + inward * 30f + V(0, h1, 0), s + inward * 30f + V(0, h0, 0), s + inward * 90f + V(0, 1f, 0), prevS + inward * 90f + V(0, 1f, 0), Haze(HeathGrey, d2 + 40f, haze), Vector3.up, false);
-                }
-                prevS = s;
-            }
-            // Garden Island: very faint and low, far away on the right edge (to the north)
-            Ridge(m, 1, 520f, 120f, z0, 120f, WSea, z => 9f + 3f * Mathf.Sin(z * .015f + 1f), K.Hex("E6DECA"), K.Hex("7D9471"), K.Hex("8EA27E"), haze, .62f);
-            // boats on the Sound
-            Color[] bands = { K.R.red, Navy, SailTeal, White };
-            for (int i = 0; i < 7; i++)
-            {
-                float x = F(r, 70f, 300f), z = F(r, -40f, 260f);
-                var boat = new ComicMesh();
-                Sailboat(boat, Vector3.zero, 1f, bands[i % bands.Length]);
-                m.Add(boat, V(x, WSea - .1f, z), Quaternion.Euler(0, F(r, -50f, 50f), 0), Vector3.one * F(r, 1.4f, 2f));
-            }
-            // land side: rolling heath dunes, houses with tiled and Colorbond roofs, Norfolk pines, the far scarp
-            for (float z = z0; z < z1; z += F(r, 12f, 20f))
-            {
-                float x = -F(r, 44f, 90f), dist = Mathf.Sqrt(x * x + z * z);
-                m.Surface = ComicSurface.Foliage;
-                m.Cylinder(V(x, 1.2f, z), F(r, 9f, 15f), F(r, 3f, 6f), Haze(Color.Lerp(Heath, HeathGrey, F(r, 0f, 1f)), dist, haze), 7, .55f);
-            }
-            for (float z = z0; z < z1; z += F(r, 12f, 18f))
-                for (int row = 0; row < 2; row++)
-                {
-                    float x = -(96f + row * 30f + F(r, 0f, 14f)), dist = Mathf.Sqrt(x * x + z * z), w = F(r, 9f, 13f), h = F(r, 3f, 5f);
-                    m.Surface = ComicSurface.Plaster;
-                    m.Box(V(x, h * .5f, z), V(w, h + 2f, w * .8f), Haze(r.NextDouble() < .5 ? Render : Surfmist, dist, haze));
-                    m.Surface = ComicSurface.Brick;
-                    m.Cylinder(V(x, h + 2f, z), w * .74f, 2.2f, Haze(r.NextDouble() < .6 ? Terracotta : Colorbond, dist, haze), 4, .15f, Quaternion.Euler(0, 45, 0));
-                }
-            for (float z = z0; z < z1; z += F(r, 26f, 40f)) CheapPine(m, V(-F(r, 60f, 160f), 1f, z), F(r, 15f, 22f), Haze(PineDark, 150f, haze));
-            for (float z = z0; z < z1; z += F(r, 15f, 22f))
-            {
-                m.Surface = ComicSurface.Foliage;
-                m.Ellipsoid(V(-F(r, 180f, 240f), 5f, z), V(F(r, 16f, 24f), F(r, 8f, 12f), F(r, 14f, 20f)), Haze(Color.Lerp(K.Hex("63804A"), K.Hex("7F9A5C"), F(r, 0f, 1f)), 260f, haze));
-            }
-            Ridge(m, -1, 560f, 160f, z0, z1, -.4f, z => 32f + 8f * Mathf.Sin(z * .009f + 1f) + 4f * Mathf.Sin(z * .027f), K.Hex("8FA27E"), K.Hex("7F95A6"), K.Hex("93A7B8"), haze, .55f);
-            m.Shear(grade);
             return m;
         }
 

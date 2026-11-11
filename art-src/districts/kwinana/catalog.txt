@@ -2,10 +2,10 @@ OBS_Kwinana_Truck 1568 tris
 OBS_Kwinana_WaterBarrier 288 tris
 OBS_Kwinana_Pallets 456 tris
 OBS_Kwinana_OilDrums 1032 tris
-CHN_Kwinana_Entry 14428 tris, 6 renderers
-CHN_Kwinana_Refinery 17876 tris, 8 renderers
-CHN_Kwinana_Tanks 13880 tris, 6 renderers
-CHN_Kwinana_GrainTerminal 23692 tris, 7 renderers
-CHN_Kwinana_Beach 13586 tris, 8 renderers
-CHN_Kwinana_Trench 14668 tris, 6 renderers
-CHN_Kwinana_Exit 14552 tris, 6 renderers
+CHN_Kwinana_Entry 20738 tris, 6 renderers
+CHN_Kwinana_Refinery 17460 tris, 8 renderers
+CHN_Kwinana_Tanks 13464 tris, 6 renderers
+CHN_Kwinana_GrainTerminal 23276 tris, 7 renderers
+CHN_Kwinana_Beach 16770 tris, 8 renderers
+CHN_Kwinana_Trench 14316 tris, 6 renderers
+CHN_Kwinana_Exit 19876 tris, 8 renderers
