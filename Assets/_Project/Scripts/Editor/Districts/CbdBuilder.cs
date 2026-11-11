@@ -34,6 +34,17 @@ namespace CityScooter.EditorTools.Districts
         /// <summary>The ordered cycle: it starts and ends at the street width (4), the Terrace part between Widen and
         /// Narrow is 4 lanes (halfWidth 8), Hay Street Mall stays narrow.</summary>
         public static readonly string[] ChunkIds = { "Widen", "Terrace", "TownHall", "Plaza", "CarPark", "Narrow", "MallArcade", "MallShops" };
+        /// <summary>v0.6: the district (480-640 m) is longer than its eight chunks, so the cycle used to start again and the
+        /// rider passed a second Town Hall and the same tallest towers again. The cycle is now sixteen chunks with exactly
+        /// the old order of chunk TYPES (widen, three plain 4-lane chunks around the car-park kicker, narrow, two mall
+        /// chunks; twice), so the district ends where it always did: the second time St George's Cathedral stands in the
+        /// Town Hall's place, the plaza has other towers and the mall chunk without London Court comes first. Widen,
+        /// Terrace, CarPark and Narrow are the same prefabs both times.</summary>
+        public static readonly string[] Cycle =
+        {
+            "Widen", "Terrace", "TownHall", "Plaza", "CarPark", "Narrow", "MallArcade", "MallShops",
+            "Widen", "Terrace", "Cathedral", "PlazaWest", "CarPark", "Narrow", "MallShops", "MallArcade",
+        };
         public const float WideHalf = 8f;
         public static string ChunkPath(string variant) => PrefabFolder + "/CHN_Cbd_" + variant + ".prefab";
         static string Pf(string name) => PrefabFolder + "/" + name + ".prefab";
@@ -44,7 +55,16 @@ namespace CityScooter.EditorTools.Districts
         static readonly Color FrameLight = K.Hex("DDE3EA"), FrameDark = K.Hex("1F2833"), Concrete = K.Hex("E6E1D3"), RibbonDark = K.Hex("34404C");
         static readonly Color Brick = K.Hex("B5523B"), Trim = K.Hex("F1E6CE"), Slate = K.Hex("4A4F5A"), Sandstone = K.Hex("D9B98A"),
             SandDark = K.Hex("C29A68"), Render = K.Hex("F2EEE4"), Timber = K.Hex("4A3326");
-        static readonly Color MallPaver = K.Hex("6F7378"), MallPaverLight = K.Hex("9A9C9E"), Granite = K.Hex("B8BABD"), Awning = K.Hex("3A3F46");
+        static readonly Color MallPaver = K.Hex("8B8D90"), MallPaverLight = K.Hex("B2B3B2"), Granite = K.Hex("C4C6C8"), Awning = K.Hex("3A3F46");
+        static readonly Color[] Awnings = { K.Hex("3A3F46"), K.Hex("7A2E2A"), K.Hex("23384F"), K.Hex("2F6B66"), K.Hex("8A5A2B") };
+        static readonly Color SignBlue = K.Hex("1F4E8C"), Warm = K.Hex("F5E7B0");
+
+        // v0.6: the sun stands behind and to the left of the rider, so everything on the left of a street of towers kept
+        // the whole road in shadow all the way through the district. While the CBD's own chunks are built, the buildings
+        // on the left go into the chunk's Landmark renderer (ink outline, receives but does not CAST shadows): the street
+        // is sunlit, trees, lamps, awnings and traffic still throw their shadows. Other callers are not affected.
+        static bool _sunlitStreet;
+        static ComicMesh Body(CqChunkDraft d, CqLot l) => _sunlitStreet && l.S < 0 ? d.Landmark : d.Frontage;
         static readonly Color[] MallWalls = { K.Hex("EFE6D2"), K.Hex("E9D3B8"), K.Hex("D8E0E4"), K.Hex("F3EBDD"), K.Hex("E4C9A8"), K.Hex("D7CFC2") };
 
         [MenuItem("CityScooter/Districts/Build Perth CBD")]
@@ -65,16 +85,23 @@ namespace CityScooter.EditorTools.Districts
             GameObject vanOncoming = K.SaveVehicle(Pf("VEH_Cbd_VanOncoming"), "VEH_Cbd_Van", null, new Vector3(2.05f, 2.6f, 5.3f), -14f, 0f);
 
             // ---- chunks
-            K.WriteChunk(Entry(drop), ChunkPath("Entry"));
-            K.WriteChunk(Widen(drop, true), ChunkPath("Widen"));
-            K.WriteChunk(Widen(drop, false), ChunkPath("Narrow"));
-            K.WriteChunk(Terrace(drop), ChunkPath("Terrace"));
-            K.WriteChunk(TownHall(drop), ChunkPath("TownHall"));
-            K.WriteChunk(Mall(drop, true), ChunkPath("MallArcade"));
-            K.WriteChunk(Mall(drop, false), ChunkPath("MallShops"));
-            K.WriteChunk(Plaza(drop), ChunkPath("Plaza"));
-            K.WriteChunk(CarPark(drop), ChunkPath("CarPark"));
-            K.WriteChunk(Exit(drop), ChunkPath("Exit"));
+            _sunlitStreet = true;
+            try
+            {
+                K.WriteChunk(Entry(drop), ChunkPath("Entry"));
+                K.WriteChunk(Widen(drop, true), ChunkPath("Widen"));
+                K.WriteChunk(Widen(drop, false), ChunkPath("Narrow"));
+                K.WriteChunk(Terrace(drop), ChunkPath("Terrace"));
+                K.WriteChunk(TownHall(drop), ChunkPath("TownHall"));
+                K.WriteChunk(Mall(drop, true), ChunkPath("MallArcade"));
+                K.WriteChunk(Mall(drop, false), ChunkPath("MallShops"));
+                K.WriteChunk(Plaza(drop, false), ChunkPath("Plaza"));
+                K.WriteChunk(Plaza(drop, true), ChunkPath("PlazaWest"));
+                K.WriteChunk(Cathedral(drop), ChunkPath("Cathedral"));
+                K.WriteChunk(CarPark(drop), ChunkPath("CarPark"));
+                K.WriteChunk(Exit(drop), ChunkPath("Exit"));
+            }
+            finally { _sunlitStreet = false; }
             GameObject far = K.SaveFarScenery(Pf("FAR_Cbd_Towers"), "FAR_Cbd_Towers", FarTowers());
 
             // ---- traffic patterns for the 4-lane Terrace (roadHalfWidth 8, never on the mall or the narrow chunks).
@@ -92,7 +119,7 @@ namespace CityScooter.EditorTools.Districts
             if (theme == null) throw new InvalidOperationException("No comic theme at " + ComicCityBuilder.ThemePath);
             District d = K.LoadOrCreate<District>(DistrictPath);
             d.id = Id; d.displayName = "PERTH CBD"; d.order = 50; d.length = new Vector2(480f, 640f);
-            d.chunks = ChunkIds.Select(c => AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath(c)).GetComponent<RoadChunk>()).ToArray();
+            d.chunks = Cycle.Select(c => AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath(c)).GetComponent<RoadChunk>()).ToArray();
             d.orderedChunks = true;
             d.entry = AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath("Entry")).GetComponent<RoadChunk>();
             d.exit = AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath("Exit")).GetComponent<RoadChunk>();
@@ -142,7 +169,7 @@ namespace CityScooter.EditorTools.Districts
                 ("LoadingDock", dockRamp.gameObject, null),
                 ("BusShelter", AssetDatabase.LoadAssetAtPath<GameObject>(ComicCityBuilder.Prefabs + "/Props/PRP_BusShelter.prefab"), null),
             });
-            Debug.Log("[Districts/CBD] built " + (ChunkIds.Length + 2) + " chunks: " + string.Join("; ", K.Report));
+            Debug.Log("[Districts/CBD] built " + (Cycle.Distinct().Count() + 2) + " chunks: " + string.Join("; ", K.Report));
         }
 
         static ComicMesh Atlas(Action<ComicMesh> build) { var m = new ComicMesh(); build(m); return m; }
@@ -155,30 +182,73 @@ namespace CityScooter.EditorTools.Districts
 
         // ================================================================ chunks
 
+        // A street name on a pole at the kerb: a blue blade with white pixel letters facing the rider.
+        static void StreetSign(CqChunkDraft d, int s, float z, string name, float half = K.Half)
+        {
+            Vector3 p = new Vector3(s * (half + .5f), d.Ground(z), z);
+            ComicMesh m = d.Props;
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + K.V(0, .08f, 0), .18f, .16f, K.R.ink, 8);
+            m.Cylinder(p + K.V(0, 2.1f, 0), .06f, 4.1f, K.Hex("3A3F46"), 8);
+            float w = TrunkPixelText.Width(name, .07f) + .28f;
+            TrunkPixelText.Board(m, name, p + K.V(s * (w * .5f + .1f), 3.7f, 0), Vector3.right, .07f, SignBlue, Color.white, Color.white, .08f);
+            K.Thin(d.Collisions, "StreetSign", p, 4f, .3f);
+        }
+
+        // A banner pole at the kerb (the Terrace's banners): a slim dark pole and a tall coloured banner with a cream band.
+        static void Banner(CqChunkDraft d, int s, float z, Color colour, float half)
+        {
+            Vector3 p = new Vector3(s * (half + .6f), d.Ground(z), z);
+            ComicMesh m = d.Props;
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + K.V(0, .08f, 0), .18f, .16f, K.R.ink, 8);
+            m.Cylinder(p + K.V(0, 3.2f, 0), .06f, 6.3f, K.Hex("3A3F46"), 8);
+            m.Box(p + K.V(s * .45f, 6.15f, 0), K.V(.9f, .06f, .06f), K.Hex("3A3F46"));
+            m.Surface = ComicSurface.Fabric;
+            m.Box(p + K.V(s * .5f, 4.9f, 0), K.V(.8f, 2.4f, .06f), colour);
+            m.Box(p + K.V(s * .5f, 5.6f, 0), K.V(.82f, .3f, .08f), K.R.cream);
+            K.Thin(d.Collisions, "Banner", p, 6.3f, .3f);
+        }
+
+        // Plane trees of different sizes (a row of one identical tree reads as a stamp).
+        static void StreetTree(CqChunkDraft d, float x, float z, int i) =>
+            K.PlaneTree(d.Props, d.Collisions, new Vector3(x, d.Ground(z), z), new[] { .86f, 1.02f, .92f, 1.1f, .8f }[((i % 5) + 5) % 5]);
+
         static CqChunkDraft Entry(float drop)
         {
-            // Calm at z = 0 (any district can come before): Stirling Gardens-style trees, hedges and low sandstone walls,
-            // then the first heritage front and towers from z = 16.
+            // After West Perth's street (v0.6: city into denser city): the street simply runs on and grows. Two-storey
+            // shops under awnings on the building line from z = 0, three-storey heritage fronts, then the first towers.
             var d = new CqChunkDraft("Cbd_Entry", drop);
             StreetRoad(d, false);
             for (int s = -1; s <= 1; s += 2)
             {
-                GardenEdge(d, s, 0, 16);
+                if (s < 0)
+                {
+                    MallShop(d, new CqLot(s, 0, 8, K.Edge, 14, d.Base(4)), MallWalls[1], 2, true);
+                    BrickHeritage(d, new CqLot(s, 8, 16, K.Edge, 14, d.Base(12)), 3, true);
+                }
+                else
+                {
+                    SandstoneColonnade(d, new CqLot(s, 0, 8, K.Edge, 14, d.Base(4)), 2);
+                    MallShop(d, new CqLot(s, 8, 16, K.Edge, 14, d.Base(12)), MallWalls[3], 3, false);
+                }
                 CqLot heritage = new CqLot(s, 16, 28, K.Edge, 14, d.Base(22));
                 if (s < 0) SandstoneColonnade(d, heritage, 3); else BrickHeritage(d, heritage, 3, true);
                 GlassTower(d, new CqLot(s, 28, 40, K.Edge, 16, d.Base(34)), s < 0 ? 64 : 82, s < 0 ? GlassTeal : GlassBlue, FrameLight, s < 0 ? 0 : 3);
-                for (float z = 3; z < 16; z += 6.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .95f);
-                K.Lamp(d.Props, d.Collisions, s, d.Ground(22f), 22f);
-                DeepTowers(d, s, 16, 40, 1);
-                DeepParkTrees(d, s, 0, 16);
+                int i = s < 0 ? 0 : 2;
+                foreach (float z in new[] { 3f, 16f, 29f }) StreetTree(d, s * 5.6f, z + (s < 0 ? 0f : 6.5f), i++);
+                K.Lamp(d.Props, d.Collisions, s, d.Ground(s < 0 ? 22f : 29f), s < 0 ? 22f : 29f);
+                DeepTowers(d, s, 0, 40, 1);
             }
+            StreetSign(d, -1, 36f, "ST GEORGES TCE");
             d.StandardSlots();
             return d;
         }
 
         static CqChunkDraft Exit(float drop)
         {
-            // Towers first, then calm towards z = 40: the Esplanade end with trees and low limestone walls.
+            // Towers first, then the street runs on to the district's end between lower fronts under awnings: the same
+            // city street whether Elizabeth Quay (down to the river) or McIver (east beside the railway) comes next.
             var d = new CqChunkDraft("Cbd_Exit", drop);
             StreetRoad(d, true);
             for (int s = -1; s <= 1; s += 2)
@@ -186,11 +256,20 @@ namespace CityScooter.EditorTools.Districts
                 GlassTower(d, new CqLot(s, 0, 14, K.Edge, 16, d.Base(7)), s < 0 ? 96 : 70, s < 0 ? GlassBlue : GlassSilver, FrameLight, s < 0 ? 1 : 0);
                 CqLot heritage = new CqLot(s, 14, 24, K.Edge, 14, d.Base(19));
                 if (s < 0) BrickHeritage(d, heritage, 2, false); else SandstoneColonnade(d, heritage, 2);
-                GardenEdge(d, s, 24, 40);
-                for (float z = 27; z < 40; z += 6.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .95f);
-                K.Lamp(d.Props, d.Collisions, s, d.Ground(12f), 12f);
-                DeepTowers(d, s, 0, 24, 2);
-                DeepParkTrees(d, s, 24, 40);
+                if (s < 0)
+                {
+                    MallShop(d, new CqLot(s, 24, 32, K.Edge, 14, d.Base(28)), MallWalls[4], 3, false);
+                    MallShop(d, new CqLot(s, 32, 40, K.Edge, 14, d.Base(36)), MallWalls[0], 2, true);
+                }
+                else
+                {
+                    MallShop(d, new CqLot(s, 24, 32, K.Edge, 14, d.Base(28)), MallWalls[2], 2, true);
+                    BrickHeritage(d, new CqLot(s, 32, 40, K.Edge, 14, d.Base(36)), 2, false);
+                }
+                int i = s < 0 ? 1 : 3;
+                foreach (float z in new[] { 14f, 27f, 33.5f }) StreetTree(d, s * 5.6f, z, i++);
+                K.Lamp(d.Props, d.Collisions, s, d.Ground(21f), 21f);
+                DeepTowers(d, s, 0, 40, 2);
             }
             d.StandardSlots();
             return d;
@@ -217,8 +296,11 @@ namespace CityScooter.EditorTools.Districts
             BrickHeritage(d, new CqLot(1, 34, 40, E, 14, d.Base(37)), 2, false);
             for (int s = -1; s <= 1; s += 2)
             {
-                for (float z = s < 0 ? 6 : 1; z < 40; z += 14) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z), z), .9f);
+                int i = s < 0 ? 0 : 3;
+                for (float z = s < 0 ? 6 : 1; z < 40; z += 14) StreetTree(d, s * (h + .95f), z, i++);
                 K.Lamp(d.Props, d.Collisions, s, d.Ground(s < 0 ? 13f : 33f), s < 0 ? 13f : 33f, h);
+                Banner(d, s, s < 0 ? 10f : 8f, s < 0 ? K.R.red : GlassTeal, h);
+                Banner(d, s, s < 0 ? 27f : 20f, s < 0 ? K.R.yellow : SignBlue, h);
                 K.TrafficLight(d.Props, d.Collisions, s, d.Ground(37.5f), 37.5f, h);
                 DeepTowers(d, s, 0, 40, 3);
             }
@@ -234,27 +316,127 @@ namespace CityScooter.EditorTools.Districts
             K.WideStreetSurface(d.Road, d);
             float E = d.Edge, h = d.Half;
             for (int x = -7; x <= 7; x++) K.Flat(d.Road, x - .27f, x + .27f, x - .27f, x + .27f, 1.2f, 4.6f, .036f, K.R.cream);
-            // Left: a small paved forecourt (4 m) before the red-brick town hall with its clock tower, then sandstone.
-            const float set = 4f;
-            Forecourt(d, -1, 0, 26, set);
-            TownHallBuilding(d, new CqLot(-1, 2, 26, E + set, 16, d.Base(14)));
-            BrickHeritage(d, new CqLot(-1, 0, 2, E + set, 14, d.Base(1)), 2, false);
-            SandstoneColonnade(d, new CqLot(-1, 26, 40, E, 14, d.Base(33)), 3);
+            // Left (v0.6): the corner at the crossing is an open paved square with a low sandstone building at its back,
+            // so the Town Hall's clock tower (at the near end of the hall, 14 m on) shows from the crossing and from the
+            // chunk before; then the red-brick hall itself behind a narrow forecourt.
+            const float set = 4f, square = 12f, hall = 14f;
+            Forecourt(d, -1, 0, hall, square);
+            Forecourt(d, -1, hall, 40, set);
+            SandstoneColonnade(d, new CqLot(-1, 0, hall - 1f, E + square, 12, d.Base(6.5f)), 2);
+            TownHallBuilding(d, new CqLot(-1, hall, 40, E + set, 16, d.Base(27)));
+            K.PlaneTree(d.Props, d.Collisions, new Vector3(-(E + 8f), d.Ground(4f), 4f), 1f);
+            K.PlaneTree(d.Props, d.Collisions, new Vector3(-(E + 4.5f), d.Ground(10f), 10f), .85f);
+            K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(-(E + 2.2f), d.Ground(5.5f), 5.5f), 90f);
             // Right: green glass tower, blue tower, heritage corner.
             GlassTower(d, new CqLot(1, 0, 16, E, 16, d.Base(8)), 104, GlassGreen, FrameLight, 0);
             GlassTower(d, new CqLot(1, 16, 30, E, 16, d.Base(23)), 78, GlassPale, FrameDark, 2);
             SandstoneColonnade(d, new CqLot(1, 30, 40, E, 14, d.Base(35)), 2);
-            K.PlaneTree(d.Props, d.Collisions, new Vector3(-(E + 2.2f), d.Ground(24.5f), 24.5f), 1f);
-            K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(-(h + 3.3f), d.Ground(14f), 14f), 90f);
-            for (float z = 4; z < 40; z += 12) K.PlaneTree(d.Props, d.Collisions, new Vector3(h + .95f, d.Ground(z), z), 1f);
+            for (float z = 4; z < 40; z += 12) StreetTree(d, h + .95f, z, (int)z);
+            StreetTree(d, -(h + .95f), 22f, 1);
+            StreetTree(d, -(h + .95f), 35f, 3);
             K.Lamp(d.Props, d.Collisions, 1, d.Ground(22f), 22f, h);
-            K.Lamp(d.Props, d.Collisions, -1, d.Ground(32f), 32f, h);
+            K.Lamp(d.Props, d.Collisions, -1, d.Ground(29f), 29f, h);
             K.TrafficLight(d.Props, d.Collisions, -1, d.Ground(1f), 1f, h);
             K.TrafficLight(d.Props, d.Collisions, 1, d.Ground(1f), 1f, h);
+            StreetSign(d, 1, 6f, "BARRACK ST", h);
             DeepTowers(d, -1, 0, 40, 4);
             DeepTowers(d, 1, 0, 40, 5);
             d.StandardSlots();
             return d;
+        }
+
+        // Second pass of the Terrace: St George's Cathedral where the Town Hall stood the first time (the same plain
+        // 4-lane chunk for gameplay), the old treasury's stone front after it.
+        static CqChunkDraft Cathedral(float drop)
+        {
+            var d = Wide("Cbd_Cathedral", drop);
+            K.WideStreetSurface(d.Road, d);
+            float E = d.Edge, h = d.Half;
+            const float set = 5f;
+            Forecourt(d, -1, 0, 30, set);
+            CathedralBuilding(d, new CqLot(-1, 3, 29, E + set, 15, d.Base(16)));
+            SandstoneColonnade(d, new CqLot(-1, 30, 40, E, 14, d.Base(35)), 3);
+            K.PlaneTree(d.Props, d.Collisions, new Vector3(-(E + 2.4f), d.Ground(1.5f), 1.5f), .85f);
+            ConcreteTower(d, new CqLot(1, 0, 12, E, 16, d.Base(6)), 58);
+            GlassTower(d, new CqLot(1, 12, 28, E, 16, d.Base(20)), 98, GlassTeal, FrameLight, 1);
+            BrickHeritage(d, new CqLot(1, 28, 40, E, 14, d.Base(34)), 3, true);
+            int i = 0;
+            for (float z = 5; z < 40; z += 11) StreetTree(d, h + .95f, z, i++);
+            StreetTree(d, -(h + .95f), 12f, 2);
+            StreetTree(d, -(h + .95f), 26f, 4);
+            K.Lamp(d.Props, d.Collisions, 1, d.Ground(22f), 22f, h);
+            K.Lamp(d.Props, d.Collisions, -1, d.Ground(33f), 33f, h);
+            Banner(d, -1, 19f, K.R.yellow, h);
+            StreetSign(d, 1, 2f, "CATHEDRAL AVE", h);
+            DeepTowers(d, -1, 0, 40, 14);
+            DeepTowers(d, 1, 0, 40, 15);
+            d.StandardSlots();
+            return d;
+        }
+
+        // St George's Cathedral (1888, Gothic Revival; St Georges Terrace), stylised: red brick with limestone dressings,
+        // a nave under a steep slate roof with buttresses and pointed windows, a gabled front with a tall pointed window
+        // towards the rider, and the square castellated bell tower (1902) at the far corner. Decoration only.
+        static void CathedralBuilding(CqChunkDraft d, CqLot l)
+        {
+            ComicMesh m = Body(d, l);
+            Foundation(d, l);
+            float W = l.W, D = l.Depth, h = 9.5f, ridge = h + 7f;
+            Vector3 toRoad = new Vector3(-l.S, 0, 0);
+            m.Surface = ComicSurface.Brick;
+            K.LBox(m, l, 0, W - 6f, 0, h, 0, -D, Brick);
+            m.Surface = ComicSurface.Concrete;
+            K.LBox(m, l, -.05f, W - 5.95f, 0, .8f, .1f, -D - .05f, Trim);
+            K.LBox(m, l, -.1f, W - 5.9f, h - .1f, h + .4f, .3f, -D - .1f, Trim);
+            for (float a = 2.4f; a < W - 7.5f; a += 3.6f)
+            {
+                PointedArch(m, l, a, .75f, 2.2f, 6.2f, 7.6f, .03f, K.R.glass, Trim);
+                K.LBox(m, l, a - .06f, a + .06f, 2.2f, 6.2f, .1f, 0, Trim);
+                K.LBox(m, l, a + 1.6f, a + 2f, 0, h - 1.5f, .6f, 0, Brick);                         // buttress
+                K.LBox(m, l, a + 1.56f, a + 2.04f, h - 1.5f, h - 1.2f, .7f, 0, Trim);
+            }
+            m.Surface = ComicSurface.PaintedMetal;
+            K.LSlope(m, l, -.3f, W - 6f, h + .4f, ridge, .3f, -D * .5f, -D - .1f, Slate);
+            // the front towards the rider: a brick gable with a tall pointed window and a cross
+            m.Surface = ComicSurface.Brick;
+            K.TriFacing(m, l.P(-.32f, h + .4f, .3f), l.P(-.32f, h + .4f, -D - .1f), l.P(-.32f, ridge + .3f, -D * .5f), Brick, Vector3.back);
+            m.Surface = ComicSurface.Concrete;
+            m.Beam(l.P(-.36f, h + .3f, .4f), l.P(-.36f, ridge + .4f, -D * .5f), .3f, Trim);
+            m.Beam(l.P(-.36f, h + .3f, -D - .2f), l.P(-.36f, ridge + .4f, -D * .5f), .3f, Trim);
+            float oc = -D * .5f;
+            K.LBox(m, l, -.05f, 0, 2.4f, 8.4f, oc + 1.6f, oc - 1.6f, Trim);
+            K.LBox(m, l, -.08f, -.04f, 2.7f, 8.1f, oc + 1.3f, oc - 1.3f, K.R.glass);
+            K.TriFacing(m, l.P(-.05f, 8.4f, oc + 1.6f), l.P(-.05f, 8.4f, oc - 1.6f), l.P(-.05f, 10.6f, oc), Trim, Vector3.back);
+            K.TriFacing(m, l.P(-.08f, 8.1f, oc + 1.3f), l.P(-.08f, 8.1f, oc - 1.3f), l.P(-.08f, 9.9f, oc), K.R.glass, Vector3.back);
+            K.LBox(m, l, -.4f, -.2f, ridge + .3f, ridge + 2.3f, oc + .12f, oc - .12f, Trim);
+            K.LBox(m, l, -.4f, -.2f, ridge + 1.5f, ridge + 1.75f, oc + .6f, oc - .6f, Trim);
+            // the bell tower at the far corner: square, stepping out to the forecourt, louvred belfry, battlements
+            float t0 = W - 6f, t1 = W, to0 = 3.4f, to1 = -2.6f, th = 25f, bc = (t0 + t1) * .5f, tc = (to0 + to1) * .5f;
+            m.Surface = ComicSurface.Brick;
+            K.LBox(m, l, t0, t1, 0, th, to0, to1, Brick);
+            m.Surface = ComicSurface.Concrete;
+            K.LBox(m, l, t0 - .1f, t1 + .1f, 0, .9f, to0 + .1f, to1 - .1f, Trim);
+            foreach (float y in new[] { 6f, 13f, 19f }) K.LBox(m, l, t0 - .1f, t1 + .1f, y - .2f, y + .2f, to0 + .12f, to1 - .12f, Trim);
+            PointedArch(m, l, bc, 1f, .1f, 3f, 4.3f, to0 + .03f, K.Hex("2A1E16"), Trim);
+            PointedArch(m, l, bc, .5f, 8f, 10.6f, 11.6f, to0 + .03f, K.R.glass, Trim);
+            PointedArch(m, l, bc - 1.2f, .55f, 20f, 22.4f, 23.4f, to0 + .03f, K.R.ink, Trim);
+            PointedArch(m, l, bc + 1.2f, .55f, 20f, 22.4f, 23.4f, to0 + .03f, K.R.ink, Trim);
+            K.LBox(m, l, t0 - .03f, t0, 20f, 23f, tc + 1.7f, tc + .4f, K.R.ink);
+            K.LBox(m, l, t0 - .03f, t0, 20f, 23f, tc - .4f, tc - 1.7f, K.R.ink);
+            K.LBox(m, l, t0 - .2f, t1 + .2f, th, th + .5f, to0 + .2f, to1 - .2f, Trim);
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    if (i == 1 && j == 1) continue;
+                    float a = Mathf.Lerp(t0 + .4f, t1 - .4f, i * .5f), o = Mathf.Lerp(to0 - .4f, to1 + .4f, j * .5f);
+                    K.LBox(m, l, a - .55f, a + .55f, th + .5f, th + 1.7f, o + .55f, o - .55f, Trim);
+                }
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(l.P(bc, th + 3.4f, tc), .07f, 5.6f, K.R.ink, 6);
+            m.Surface = ComicSurface.Fabric;
+            m.Box(l.P(bc, th + 5.6f, tc) + new Vector3(0, 0, .8f), new Vector3(.05f, 1f, 1.5f), Color.white);
+            m.Box(l.P(bc, th + 5.6f, tc) + new Vector3(.01f, 0, .8f), new Vector3(.06f, .22f, 1.5f), K.R.red);
+            m.Box(l.P(bc, th + 5.6f, tc) + new Vector3(.01f, 0, .8f), new Vector3(.06f, 1f, .26f), K.R.red);
         }
 
         // The Terrace opens from the 2-lane street to 4 lanes (Widen) and closes again before the mall (Narrow), like the
@@ -329,7 +511,7 @@ namespace CityScooter.EditorTools.Districts
             int k = arcade ? 0 : 3;
             for (int s = -1; s <= 1; s += 2)
             {
-                float[] cuts = s < 0 ? new[] { 0f, 8f, 16f, 24f, 32f, 40f } : new[] { 0f, 10f, 18f, 28f, 40f };
+                float[] cuts = s < 0 ? (arcade ? new[] { 0f, 7f, 14f, 26f, 33f, 40f } : new[] { 0f, 8f, 16f, 24f, 32f, 40f }) : new[] { 0f, 10f, 18f, 28f, 40f };
                 for (int i = 0; i + 1 < cuts.Length; i++)
                 {
                     var lot = new CqLot(s, cuts[i], cuts[i + 1], K.Edge, 14, d.Base((cuts[i] + cuts[i + 1]) * .5f));
@@ -338,7 +520,8 @@ namespace CityScooter.EditorTools.Districts
                     k++;
                 }
                 // Plane trees and benches along the low kerbs; a planter or two against the shops.
-                for (float z = arcade ? 6 : 2; z < 40; z += 12) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 4.9f, d.Ground(z), z), .9f);
+                int i0 = s < 0 ? 0 : 2;
+                foreach (float z in arcade ? (s < 0 ? new[] { 5f, 29f } : new[] { 7f, 19f }) : new[] { 2f, 14f, 26f, 38f }) StreetTree(d, s * 4.9f, z, i0++);
                 K.PropFromKit(d.Props, d.Collisions, "Bench", new Vector3(s * 5.1f, d.Ground(arcade ? 13f : 9f), arcade ? 13f : 9f), s < 0 ? 90f : -90f);
                 K.PropFromKit(d.Props, d.Collisions, "Planter", new Vector3(s * 7.4f, d.Ground(arcade ? 33f : 22f), arcade ? 33f : 22f), s < 0 ? 90f : -90f);
                 K.PropFromKit(d.Props, d.Collisions, "Bin", new Vector3(s * 5.0f, d.Ground(arcade ? 31f : 27f), arcade ? 31f : 27f), 0f);
@@ -346,23 +529,37 @@ namespace CityScooter.EditorTools.Districts
             }
             // Bunting-free: the mall reads from paving, awnings, trees and people. Lamps on tall posts in the centre strip
             // would block the lanes, so the mall's light poles stand at the kerbs.
-            K.Lamp(d.Props, d.Collisions, -1, d.Ground(20f), 20f);
+            K.Lamp(d.Props, d.Collisions, -1, d.Ground(arcade ? 9f : 20f), arcade ? 9f : 20f);
             K.Lamp(d.Props, d.Collisions, 1, d.Ground(36f), 36f);
+            if (arcade) StreetSign(d, 1, 2.5f, "HAY ST MALL");
             d.StandardSlots();
             return d;
         }
 
-        static CqChunkDraft Plaza(float drop)
+        static CqChunkDraft Plaza(float drop, bool west)
         {
             // Open: the tallest towers stand back behind forecourts with cafe tables, so their whole height shows.
-            var d = Wide("Cbd_Plaza", drop);
+            // west (second pass): other towers, the dark one with sun-shade bands and the stepped silver one.
+            var d = Wide(west ? "Cbd_PlazaWest" : "Cbd_Plaza", drop);
             K.WideStreetSurface(d.Road, d);
             float E = d.Edge, h = d.Half;
             const float set = 6f;
             for (int s = -1; s <= 1; s += 2)
             {
                 Forecourt(d, s, 0, 40, set);
-                if (s < 0)
+                if (west && s < 0)
+                {
+                    ConcreteTower(d, new CqLot(-1, 0, 10, E + set, 16, d.Base(5)), 50);
+                    GlassTower(d, new CqLot(-1, 10, 30, E + set, 20, d.Base(20)), 138, GlassNavy, FrameDark, 3);
+                    GlassTower(d, new CqLot(-1, 30, 40, E + set, 16, d.Base(35)), 46, GlassGreen, FrameLight, 0);
+                }
+                else if (west)
+                {
+                    GlassTower(d, new CqLot(1, 0, 14, E + set, 16, d.Base(7)), 72, GlassPale, FrameLight, 1);
+                    GlassTower(d, new CqLot(1, 14, 32, E + set, 18, d.Base(23)), 112, GlassSilver, FrameLight, 2);
+                    BrickHeritage(d, new CqLot(1, 32, 40, E + set, 14, d.Base(36)), 3, true);
+                }
+                else if (s < 0)
                 {
                     GlassTower(d, new CqLot(-1, 0, 8, E + set, 16, d.Base(4)), 40, GlassSilver, FrameLight, 0);
                     CentralTower(d, new CqLot(-1, 8, 30, E + set, 22, d.Base(19)));
@@ -375,7 +572,9 @@ namespace CityScooter.EditorTools.Districts
                     ConcreteTower(d, new CqLot(1, 30, 40, E + set, 16, d.Base(35)), 44);
                 }
                 for (float z = 6; z < 40; z += 13) K.CafeUmbrella(d.Props, d.Collisions, new Vector3(s * (E + 2.6f), d.Ground(z), z), s < 0 ? K.Hex("F4F2EA") : K.Hex("2F6B66"));
-                for (float z = 0; z < 40; z += 14f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z + 3), z + 3), 1f);
+                int i = s < 0 ? 1 : 4;
+                for (float z = 0; z < 40; z += 14f) StreetTree(d, s * (h + .95f), z + 3, i++);
+                Banner(d, s, s < 0 ? 12f : 26f, s < 0 ? SignBlue : K.R.red, h);
                 DeepTowers(d, s, 0, 40, 8 + s);
             }
             K.Lamp(d.Props, d.Collisions, -1, d.Ground(27f), 27f, h);
@@ -403,7 +602,8 @@ namespace CityScooter.EditorTools.Districts
             d.SlopedFrontage.Add(deck, Vector3.zero, Quaternion.identity, Vector3.one);
             for (int s = -1; s <= 1; s += 2)
             {
-                for (float z = s < 0 ? 31 : 3; z < 40; z += 10) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * (h + .95f), d.Ground(z), z), 1f);
+                int i = s < 0 ? 2 : 0;
+                for (float z = s < 0 ? 31 : 3; z < 40; z += 10) StreetTree(d, s * (h + .95f), z, i++);
                 DeepTowers(d, s, 0, 40, 10 + s);
             }
             K.Lamp(d.Props, d.Collisions, 1, d.Ground(18f), 18f, h);
@@ -443,8 +643,8 @@ namespace CityScooter.EditorTools.Districts
 
         static void Foundation(CqChunkDraft d, CqLot l)
         {
-            d.Frontage.Surface = ComicSurface.Concrete;
-            K.LBox(d.Frontage, l, 0, l.W, -2.6f, 0f, .02f, -l.Depth, K.R.ink);
+            Body(d, l).Surface = ComicSurface.Concrete;
+            K.LBox(Body(d, l), l, 0, l.W, -2.6f, 0f, .02f, -l.Depth, K.R.ink);
             d.Wall(l, 30f);
         }
 
@@ -452,16 +652,22 @@ namespace CityScooter.EditorTools.Districts
         // crown 0 flat parapet + plant room, 1 mast, 2 stepped crown, 3 open crown frame.
         internal static void GlassTower(CqChunkDraft d, CqLot l, float h, Color glass, Color frame, int crown)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
             float W = l.W, D = l.Depth;
             m.Surface = ComicSurface.Glass;
-            K.LBox(m, l, 0, W, 0, 6.5f, -.6f, -D, K.Hex("1E2A36"));                        // dark lobby glass, set in
+            K.LBox(m, l, 0, W, 0, 6.5f, -.6f, -D, K.Hex("2B4254"));                        // lobby glass, set in
+            // (v0.6) the lobby is lit: a warm band of reception light, the doors under the canopy
+            K.LQuad(m, l, .6f, W - .6f, 3.9f, 5.6f, -.58f, K.Hex("3E6076"), false);
+            K.LQuad(m, l, W * .5f - 1.5f, W * .5f + 1.5f, 0f, 3.1f, -.57f, K.R.ink);
+            K.LQuad(m, l, W * .5f - 1.35f, W * .5f - .08f, .1f, 2.95f, -.55f, Warm, false);
+            K.LQuad(m, l, W * .5f + .08f, W * .5f + 1.35f, .1f, 2.95f, -.55f, Warm, false);
             m.Surface = ComicSurface.Concrete;
             for (float a = 0; a <= W + .01f; a += Mathf.Max(2.5f, W / Mathf.Max(1, Mathf.Round(W / 4f))))
                 K.LBox(m, l, Mathf.Clamp(a - .3f, 0, W - .6f), Mathf.Clamp(a + .3f, .6f, W), 0, 6.5f, 0, -.8f, frame); // podium columns
             K.LBox(m, l, 0, W, 6.5f, 7.3f, .2f, -D, frame);                                      // podium cornice
             K.LBox(m, l, W * .3f, W * .7f, 3.4f, 3.7f, 2.2f, 0, frame);                          // entrance canopy
+            K.LBox(m, l, W * .3f - .04f, W * .7f + .04f, 3.42f, 3.6f, 2.26f, 2.1f, new[] { K.R.red, K.R.yellow, GlassGreen, SignBlue }[crown & 3]);
             int tiers = h > 95 ? 3 : h > 55 ? 2 : 1;
             float y0 = 7.3f;
             for (int t = 0; t < tiers; t++)
@@ -526,7 +732,7 @@ namespace CityScooter.EditorTools.Districts
         // Cream concrete tower with dark ribbon windows wrapping round (the 1970s/80s Terrace offices).
         internal static void ConcreteTower(CqChunkDraft d, CqLot l, float h)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
             float W = l.W, D = l.Depth;
             m.Surface = ComicSurface.Glass;
@@ -545,7 +751,7 @@ namespace CityScooter.EditorTools.Districts
         static void CentralTower(CqChunkDraft d, CqLot l)
         {
             GlassTower(d, l, 150f, GlassSilver, FrameDark, 2);
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             float W = l.W;
             m.Cylinder(l.P(W * .5f, 150f + 9.6f + 11f, -l.Depth * .5f), .3f, 22f, K.R.ink, 6, .3f);
             // a red aircraft light near the top
@@ -556,7 +762,7 @@ namespace CityScooter.EditorTools.Districts
         static void BracedTower(CqChunkDraft d, CqLot l, float h)
         {
             GlassTower(d, l, h, GlassNavy, FrameDark, 0);
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             float W = l.W, a0 = .8f, a1 = W - .8f, o = .65f;
             m.Surface = ComicSurface.PaintedMetal;
             float storey = 22f;
@@ -571,7 +777,7 @@ namespace CityScooter.EditorTools.Districts
         // Two to four storeys of red brick with cream string courses, arched windows and a parapet.
         static void BrickHeritage(CqChunkDraft d, CqLot l, int floors, bool gable)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
             float W = l.W, D = l.Depth, fh = 4f, h = floors * fh;
             m.Surface = ComicSurface.Brick;
@@ -607,7 +813,7 @@ namespace CityScooter.EditorTools.Districts
         // Sandstone with a ground-floor colonnade, a heavy cornice and a slate mansard (Old Treasury / GPO family).
         static void SandstoneColonnade(CqChunkDraft d, CqLot l, int floors)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
             float W = l.W, D = l.Depth, fh = 4.2f, h = floors * fh;
             m.Surface = ComicSurface.Concrete;
@@ -639,113 +845,171 @@ namespace CityScooter.EditorTools.Districts
                 K.LBox(m, l, a - .5f, a + .5f, h + 1.6f, h + 3f, -.9f, -2.2f, Trim);                 // dormers
         }
 
-        // Red-brick town hall with white trim and a clock tower (stylised Perth Town Hall).
+        // A pointed (Gothic) opening on the facade plane: ink outline, fill, the head a triangle.
+        static void PointedArch(ComicMesh m, CqLot l, float a, float w, float y0, float y1, float tip, float o, Color fill, Color surround)
+        {
+            Vector3 toRoad = new Vector3(-l.S, 0, 0);
+            K.LQuad(m, l, a - w - .16f, a + w + .16f, y0, y1, o, surround);
+            K.TriFacing(m, l.P(a - w - .16f, y1, o), l.P(a + w + .16f, y1, o), l.P(a, tip + .3f, o), surround, toRoad);
+            K.LQuad(m, l, a - w, a + w, y0, y1, o + .03f, fill, false);
+            K.TriFacing(m, l.P(a - w, y1, o + .03f), l.P(a + w, y1, o + .03f), l.P(a, tip, o + .03f), fill, toRoad);
+        }
+
+        // Perth Town Hall (Victorian Free Gothic, 1867-70, corner of Hay and Barrack St), stylised: red brick with cream
+        // stucco dressings, an open undercroft of pointed arches under the hall, tall pointed hall windows, a steep slate
+        // roof with dormers, and the clock tower on the corner: clock faces towards the rider and the road, pointed
+        // belfry openings, four corner turrets ("wedding cake") and a steep slate spire with a flag.
         static void TownHallBuilding(CqChunkDraft d, CqLot l)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
-            float W = l.W, D = l.Depth, fh = 4.4f;
-            int floors = 3; float h = floors * fh;
+            float W = l.W, D = l.Depth, under = 5.2f, h = 11.6f;
             m.Surface = ComicSurface.Brick;
             K.LBox(m, l, 0, W, 0, h, 0, -D, Brick);
             m.Surface = ComicSurface.Concrete;
-            for (int f = 1; f <= floors; f++) K.LBox(m, l, -.05f, W + .05f, f * fh - .25f, f * fh + .1f, .18f, -D - .05f, Trim);
-            K.LBox(m, l, -.05f, W + .05f, 0, .9f, .1f, -D - .05f, Trim);                         // plinth
-            for (int f = 0; f < floors; f++)
-                for (float a = 7.2f; a < W - .8f; a += 2.4f)
-                {
-                    float wy0 = f * fh + (f == 0 ? 1.1f : 1f), wy1 = f * fh + 3.4f;
-                    K.LQuad(m, l, a - .55f, a + .55f, wy0, wy1, .02f, K.R.ink);
-                    K.LQuad(m, l, a - .42f, a + .42f, wy0 + .1f, wy1 - .3f, .04f, K.R.glass);
-                    K.LBox(m, l, a - .7f, a + .7f, wy1 - .05f, wy1 + .35f, .14f, 0, Trim);
-                    K.LBox(m, l, a - .12f, a + .12f, wy0, wy1 - .3f, .07f, 0, Trim);               // mullion
-                }
-            // steep slate roof with a cream ridge
+            K.LBox(m, l, -.05f, W + .05f, 0, .8f, .1f, -D - .05f, Trim);                          // plinth
+            K.LBox(m, l, -.05f, W + .05f, under - .25f, under + .15f, .2f, -D - .05f, Trim);      // string course over the undercroft
+            K.LBox(m, l, -.15f, W + .15f, h - .1f, h + .5f, .4f, -D - .1f, Trim);                 // cornice
+            for (float a = 9.2f; a < W - 1.2f; a += 3.3f)
+            {
+                PointedArch(m, l, a, 1.05f, .1f, 3.2f, 4.5f, .03f, K.Hex("2A1E16"), Trim);       // the undercroft's arches
+                PointedArch(m, l, a, .7f, under + 1.1f, under + 4.2f, under + 5.4f, .03f, K.R.glass, Trim);
+                K.LBox(m, l, a - .06f, a + .06f, under + 1.1f, under + 4.2f, .1f, 0, Trim);       // mullion
+                K.LBox(m, l, a + 1.5f, a + 1.8f, 0, h, .22f, 0, Brick);                            // buttress
+                K.LBox(m, l, a + 1.46f, a + 1.84f, h - 1.2f, h - .9f, .3f, 0, Trim);
+            }
+            // steep slate roof with a cream ridge and three dormers
             m.Surface = ComicSurface.PaintedMetal;
-            K.LSlope(m, l, 6.5f, W - .3f, h + .1f, h + 4.5f, .1f, -D * .5f, -D + .1f, Slate);
-            // corner clock tower (on the near end, stepping out into the forecourt, so the rider sees it coming)
-            float t0 = .3f, t1 = 6.5f, to0 = 3.6f, to1 = -2.6f, th = 30f;
+            K.LSlope(m, l, 7f, W - .3f, h + .5f, h + 5.6f, .1f, -D * .5f, -D + .1f, Slate);
+            m.Surface = ComicSurface.Concrete;
+            K.LBox(m, l, 7f, W - .3f, h + 5.5f, h + 5.8f, -D * .5f + .2f, -D * .5f - .2f, Trim);
+            for (float a = 10.8f; a < W - 2f; a += 5.5f) K.LGable(m, l, a - .9f, a + .9f, h + .9f, h + 3f, -.6f, -3f, Trim);
+            // the clock tower on the corner, stepping out into the forecourt
+            float t0 = .3f, t1 = 7f, to0 = 3.6f, to1 = -3.1f, th = 34f;
+            float bc = (t0 + t1) * .5f, oc = (to0 + to1) * .5f;
             m.Surface = ComicSurface.Brick;
             K.LBox(m, l, t0, t1, 0, th, to0, to1, Brick);
             m.Surface = ComicSurface.Concrete;
-            foreach (float y in new[] { 4.2f, 8.6f, 13f, 18.5f, 24f }) K.LBox(m, l, t0 - .12f, t1 + .12f, y - .25f, y + .2f, to0 + .14f, to1 - .14f, Trim);
+            K.LBox(m, l, t0 - .1f, t1 + .1f, 0, .9f, to0 + .1f, to1 - .1f, Trim);
+            foreach (float y in new[] { 5.2f, 11.6f, 17.5f, 26.5f, 31.5f }) K.LBox(m, l, t0 - .12f, t1 + .12f, y - .25f, y + .2f, to0 + .14f, to1 - .14f, Trim);
             for (int i = 0; i < 4; i++) // corner quoins
             {
                 float a = i % 2 == 0 ? t0 - .05f : t1 - .5f, o = i < 2 ? to0 + .06f : to1 + .5f;
                 K.LBox(m, l, a, a + .55f, 0, th, o, o - .56f, Trim);
             }
-            // arched belfry openings on the road face and the face towards the rider
-            float bc = (t0 + t1) * .5f, oc = (to0 + to1) * .5f;
-            K.LQuad(m, l, bc - 1.6f, bc - .3f, 19.4f, 23.2f, to0 + .02f, K.R.ink);
-            K.LQuad(m, l, bc + .3f, bc + 1.6f, 19.4f, 23.2f, to0 + .02f, K.R.ink);
-            K.LBox(m, l, t0 - .02f, t0, 19.4f, 23.2f, oc + 1.6f, oc + .3f, K.R.ink);
-            K.LBox(m, l, t0 - .02f, t0, 19.4f, 23.2f, oc - .3f, oc - 1.6f, K.R.ink);
-            // clock faces: road side and rider side
-            K.Clock(m, l.P(bc, 15.8f, to0 + .05f), Quaternion.Euler(0, l.S < 0 ? 90 : -90, 0), 1.35f, Trim, K.R.ink);
-            K.Clock(m, l.P(t0 - .05f, 15.8f, oc), Quaternion.Euler(0, 180, 0), 1.35f, Trim, K.R.ink);
-            // spire: steep slate pyramid with four cream pinnacles and a flag pole
+            // the tower's own pointed doorway, a tall lancet above it, the belfry openings (road face and rider face)
+            PointedArch(m, l, bc, 1.1f, .1f, 3.2f, 4.6f, to0 + .03f, K.Hex("2A1E16"), Trim);
+            PointedArch(m, l, bc, .55f, 6.6f, 9.6f, 10.6f, to0 + .03f, K.R.glass, Trim);
+            PointedArch(m, l, bc - 1.2f, .6f, 27.2f, 29.6f, 30.6f, to0 + .03f, K.R.ink, Trim);
+            PointedArch(m, l, bc + 1.2f, .6f, 27.2f, 29.6f, 30.6f, to0 + .03f, K.R.ink, Trim);
+            K.LBox(m, l, t0 - .03f, t0, 27.2f, 30.2f, oc + 1.9f, oc + .5f, K.R.ink);
+            K.LBox(m, l, t0 - .03f, t0, 27.2f, 30.2f, oc - .5f, oc - 1.9f, K.R.ink);
+            K.LBox(m, l, t0 - .03f, t0, 6.6f, 10f, oc + .6f, oc - .6f, K.R.glass);
+            // clock faces: road side and rider side, in cream surrounds
+            K.LBox(m, l, bc - 2.2f, bc + 2.2f, 19.6f, 24f, to0 + .12f, to0, Trim);
+            K.LBox(m, l, t0 - .12f, t0, 19.6f, 24f, oc + 2.2f, oc - 2.2f, Trim);
+            K.Clock(m, l.P(bc, 21.8f, to0 + .14f), Quaternion.Euler(0, l.S < 0 ? 90 : -90, 0), 1.75f, K.Hex("FBF6E4"), K.R.ink);
+            K.Clock(m, l.P(t0 - .14f, 21.8f, oc), Quaternion.Euler(0, 180, 0), 1.75f, K.Hex("FBF6E4"), K.R.ink);
+            // parapet, corner turrets and the spire
+            K.LBox(m, l, t0 - .25f, t1 + .25f, th, th + .9f, to0 + .25f, to1 - .25f, Trim);
+            foreach (float a in new[] { t0 + .1f, t1 - .1f })
+                foreach (float o in new[] { to0 - .1f, to1 + .1f })
+                {
+                    m.Surface = ComicSurface.Concrete;
+                    m.Cylinder(l.P(a, th + 1.6f, o), .62f, 3.2f, Trim, 8);
+                    m.Surface = ComicSurface.PaintedMetal;
+                    m.Cylinder(l.P(a, th + 4.3f, o), .7f, 2.4f, Slate, 8, .05f);
+                }
             m.Surface = ComicSurface.PaintedMetal;
-            m.Cylinder(l.P(bc, th + 4.5f, oc), 3.6f, 9f, Slate, 4, .04f, Quaternion.Euler(0, 45, 0));
-            foreach (float a in new[] { t0 + .2f, t1 - .2f })
-                foreach (float o in new[] { to0 - .2f, to1 + .2f })
-                    m.Cylinder(l.P(a, th + 1.2f, o), .3f, 2.4f, Trim, 6, .2f);
-            m.Cylinder(l.P(bc, th + 11f, oc), .07f, 4f, K.R.ink, 6);
-            m.Box(l.P(bc, th + 12.2f, oc + l.S * .0f) + new Vector3(0, 0, .7f), new Vector3(.05f, .9f, 1.3f), K.R.red);
+            m.Cylinder(l.P(bc, th + .9f + 5.5f, oc), 3.9f, 11f, Slate, 4, .05f, Quaternion.Euler(0, 45, 0));
+            m.Cylinder(l.P(bc, th + 13.6f, oc), .07f, 4.4f, K.R.ink, 6);
+            m.Surface = ComicSurface.Fabric;
+            m.Box(l.P(bc, th + 15f, oc) + new Vector3(0, 0, .8f), new Vector3(.05f, 1f, 1.5f), K.R.red);
         }
 
-        // London Court-style mock-Tudor arcade entrance: white render, dark timber framing, a gable and an arch.
+        // London Court's Hay Street entrance (1937, mock Tudor), stylised: three storeys of white render and dark timber
+        // framing, jettied upper floors, three gables (the middle one taller), an oriel with the big clock, heraldic
+        // shields with red crosses, the arcade's arch with its wrought-iron gate, and the name over it.
         static void LondonCourt(CqChunkDraft d, CqLot l)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
-            float W = l.W, D = l.Depth, h = 12.5f, c = W * .5f;
+            float W = l.W, D = l.Depth, h = 13f, c = W * .5f;
+            int bays = Mathf.Max(6, Mathf.RoundToInt(W / 1.5f) / 2 * 2);
             m.Surface = ComicSurface.Plaster;
-            K.LBox(m, l, 0, W, 0, 3.8f, 0, -D, Render);
-            K.LBox(m, l, -.1f, W + .1f, 3.8f, h, .45f, -D, Render);                              // jettied upper floors
+            K.LBox(m, l, 0, W, 0, 4.2f, 0, -D, Render);
+            K.LBox(m, l, -.1f, W + .1f, 4.2f, h, .5f, -D, Render);                               // jettied upper floors
             m.Surface = ComicSurface.Wood;
-            K.LBox(m, l, -.15f, W + .15f, 3.7f, 4.05f, .6f, -D, Timber);
-            for (float a = 0f; a <= W + .01f; a += W / 6f) K.LBox(m, l, a - .14f, a + .14f, 4f, h, .55f, .4f, Timber);
-            foreach (float y in new[] { 7.2f, 10.2f }) K.LBox(m, l, -.12f, W + .12f, y - .12f, y + .12f, .56f, .4f, Timber);
-            for (int i = 0; i < 6; i++)
+            K.LBox(m, l, -.15f, W + .15f, 4.1f, 4.5f, .66f, -D, Timber);
+            for (int i = 0; i <= bays; i++) { float a = i * W / bays; K.LBox(m, l, a - .14f, a + .14f, 4.4f, h, .62f, .45f, Timber); }
+            foreach (float y in new[] { 7.4f, 10.4f }) K.LBox(m, l, -.12f, W + .12f, y - .13f, y + .13f, .63f, .45f, Timber);
+            for (int i = 0; i < bays; i++)
             {
-                float a0 = i * W / 6f, a1 = (i + 1) * W / 6f;
+                float a0 = i * W / bays, a1 = (i + 1) * W / bays;
                 bool rising = i % 2 == 0;
-                m.Beam(l.P(a0, rising ? 4.1f : 7.1f, .5f), l.P(a1, rising ? 7.1f : 4.1f, .5f), .16f, Timber);
+                m.Surface = ComicSurface.Wood;
+                m.Beam(l.P(a0, rising ? 4.5f : 7.3f, .56f), l.P(a1, rising ? 7.3f : 4.5f, .56f), .16f, Timber);
+                // leaded windows on the top floor
+                float a = (a0 + a1) * .5f;
+                K.LQuad(m, l, a - .42f, a + .42f, 7.8f, 9.9f, .64f, K.R.ink);
+                K.LQuad(m, l, a - .34f, a + .34f, 7.9f, 9.8f, .66f, K.Hex("C9B36A"), false);
             }
-            // leaded windows on the top floor
-            for (int i = 0; i < 6; i++)
+            // three gables facing the street: the middle one taller, bargeboards and a king post each
+            float[] centres = { W * .2f, c, W * .8f }, widths = { W * .3f, W * .36f, W * .3f }, peaks = { 3.2f, 5f, 3.2f };
+            for (int i = 0; i < 3; i++)
             {
-                float a = (i + .5f) * W / 6f;
-                K.LQuad(m, l, a - .4f, a + .4f, 7.7f, 9.7f, .58f, K.R.ink);
-                K.LQuad(m, l, a - .32f, a + .32f, 7.8f, 9.6f, .6f, K.Hex("C9B36A"));
+                float g0 = centres[i] - widths[i] * .5f, g1 = centres[i] + widths[i] * .5f;
+                m.Surface = ComicSurface.Plaster;
+                K.LGable(m, l, g0, g1, h, h + peaks[i], .5f, -3f, Render);
+                m.Surface = ComicSurface.Wood;
+                m.Beam(l.P(g0, h, .64f), l.P(centres[i], h + peaks[i], .64f), .28f, Timber);
+                m.Beam(l.P(g1, h, .64f), l.P(centres[i], h + peaks[i], .64f), .28f, Timber);
+                K.LBox(m, l, centres[i] - .12f, centres[i] + .12f, h, h + peaks[i] - .2f, .64f, .5f, Timber);
+                K.LBox(m, l, g0 + .3f, g1 - .3f, h + peaks[i] * .45f - .1f, h + peaks[i] * .45f + .1f, .64f, .5f, Timber);
+                m.Surface = ComicSurface.PaintedMetal;
+                m.Cylinder(l.P(centres[i], h + peaks[i] + 1.1f, .2f), .05f, 2.2f, K.R.ink, 6);
+                m.Surface = ComicSurface.Fabric;
+                m.Box(l.P(centres[i], h + peaks[i] + 1.75f, .2f) + new Vector3(0, 0, .55f), new Vector3(.05f, .7f, 1f), i == 1 ? K.R.red : Color.white);
             }
-            // gable facing the street
-            m.Surface = ComicSurface.Plaster;
-            K.LGable(m, l, .2f, W - .2f, h, h + 4.2f, .5f, -3f, Render);
-            m.Surface = ComicSurface.Wood;
-            m.Beam(l.P(.2f, h, .62f), l.P(c, h + 4.2f, .62f), .28f, Timber);
-            m.Beam(l.P(W - .2f, h, .62f), l.P(c, h + 4.2f, .62f), .28f, Timber);
-            K.LBox(m, l, c - .12f, c + .12f, h, h + 4f, .62f, .5f, Timber);
             m.Surface = ComicSurface.PaintedMetal;
-            K.LSlope(m, l, 0f, W, h, h + 4.2f, .4f, -3f, -D, Slate);
-            // the arcade arch with a clock above it, shop windows either side
-            K.LQuad(m, l, c - 1.7f, c + 1.7f, 0f, 3.5f, .03f, K.Hex("2A1E16"));
+            K.LSlope(m, l, 0f, W, h, h + 3.4f, .4f, -3f, -D, Slate);
+            // the arcade arch with the wrought-iron gate, stone surround, the name band over it
+            K.LQuad(m, l, c - 1.9f, c + 1.9f, 0f, 3.6f, .03f, K.Hex("2A1E16"));
+            m.Surface = ComicSurface.PaintedMetal;
+            for (float a = c - 1.6f; a <= c + 1.61f; a += .4f) K.LBox(m, l, a - .04f, a + .04f, 2.2f, 3.5f, .1f, .04f, K.R.ink);
+            K.LBox(m, l, c - 1.9f, c + 1.9f, 2.15f, 2.3f, .12f, .04f, K.R.ink);
             m.Surface = ComicSurface.Concrete;
-            K.LBox(m, l, c - 2.1f, c - 1.7f, 0, 3.5f, .25f, 0, Trim);
-            K.LBox(m, l, c + 1.7f, c + 2.1f, 0, 3.5f, .25f, 0, Trim);
-            K.LBox(m, l, c - 2.1f, c + 2.1f, 3.3f, 3.7f, .3f, 0, Trim);
-            K.Clock(m, l.P(c, 5.6f, .7f), Quaternion.Euler(0, l.S < 0 ? 90 : -90, 0), .85f, K.Hex("F5E7B0"), K.R.ink);
-            foreach (float a in new[] { 1.2f, W - 1.2f })
+            K.LBox(m, l, c - 2.35f, c - 1.9f, 0, 3.6f, .28f, 0, Trim);
+            K.LBox(m, l, c + 1.9f, c + 2.35f, 0, 3.6f, .28f, 0, Trim);
+            K.LBox(m, l, c - 2.35f, c + 2.35f, 3.5f, 3.95f, .34f, 0, Trim);
+            m.Surface = ComicSurface.Wood;
+            K.LBox(m, l, c - 3.4f, c + 3.4f, 4.6f, 5.5f, .82f, .6f, Timber);
+            TrunkPixelText.Draw(m, "LONDON COURT", l.P(c, 5.05f, .84f), l.S < 0 ? Vector3.forward : Vector3.back, Vector3.up, .1f, Warm);
+            // the clock in its oriel, heraldic shields either side (white with a red cross)
+            m.Surface = ComicSurface.Plaster;
+            K.LBox(m, l, c - 1.3f, c + 1.3f, 5.7f, 7.6f, 1f, .5f, Render);
+            m.Surface = ComicSurface.Wood;
+            K.LBox(m, l, c - 1.4f, c + 1.4f, 7.55f, 7.75f, 1.08f, .5f, Timber);
+            K.Clock(m, l.P(c, 6.65f, 1.02f), Quaternion.Euler(0, l.S < 0 ? 90 : -90, 0), .82f, K.Hex("F5E7B0"), K.R.ink);
+            foreach (float a in new[] { c - 2.5f, c + 2.5f })
             {
-                K.LQuad(m, l, a - .9f, a + .9f, .5f, 3f, .03f, K.R.ink);
-                K.LQuad(m, l, a - .8f, a + .8f, .6f, 2.9f, .05f, K.R.glass);
+                K.LBox(m, l, a - .4f, a + .4f, 5.9f, 6.9f, .72f, .6f, Color.white);
+                K.LBox(m, l, a - .07f, a + .07f, 5.95f, 6.85f, .74f, .6f, K.R.red);
+                K.LBox(m, l, a - .35f, a + .35f, 6.33f, 6.47f, .74f, .6f, K.R.red);
+            }
+            // shop windows either side of the arch
+            foreach (float a in new[] { W * .14f, W * .86f })
+            {
+                K.LQuad(m, l, a - 1f, a + 1f, .5f, 3.1f, .03f, K.R.ink);
+                K.LQuad(m, l, a - .9f, a + .9f, .6f, 3f, .05f, K.R.glass, false);
+                K.LQuad(m, l, a - .7f, a + .7f, .7f, 1.5f, .06f, Warm, false);
             }
         }
 
         // Hay Street Mall shopfront: pale heritage facade, dark awning over the sidewalk, plain coloured sign band.
         static void MallShop(CqChunkDraft d, CqLot l, Color wall, int floors, bool pediment)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
             float W = l.W, D = l.Depth, gh = 4.2f, fh = 3.6f, h = gh + (floors - 1) * fh;
             m.Surface = ComicSurface.Plaster;
@@ -755,9 +1019,14 @@ namespace CityScooter.EditorTools.Districts
             K.LQuad(m, l, .45f, W - .45f, .3f, 3.05f, .04f, K.Hex("33505E"));
             m.Surface = ComicSurface.PaintedMetal;
             for (float a = 2f; a < W - .5f; a += 2f) K.LBox(m, l, a - .05f, a + .05f, .3f, 3.05f, .08f, 0, K.R.ink);
-            // awning: flat dark canopy out over the sidewalk (2.4 m), on hidden ties
-            K.LBox(m, l, -.02f, W + .02f, 3.35f, 3.6f, 2.5f, 0, Awning);
-            K.LBox(m, l, -.02f, W + .02f, 3.2f, 3.35f, 2.55f, 2.35f, Color.Lerp(wall, K.R.ink, .2f));
+            // lit display windows behind the glass
+            for (float a = 1f; a < W - 1f; a += 2f) K.LQuad(m, l, a - .7f, a + .7f, .45f, 1.7f, .05f, a % 4f < 2f ? Warm : K.Hex("E9D3B8"), false);
+            // awning: flat canopy out over the sidewalk (2.4 m), on hidden ties; each shop its own colour. It always goes
+            // into the shadow-casting frontage: its shadow on the footpath is what makes the mall read in the sun.
+            Color awning = Awnings[Mathf.Abs(ComicKitGeometry.StableHash(d.Id + "awn" + l.Z0 + l.S)) % Awnings.Length];
+            d.Frontage.Surface = ComicSurface.PaintedMetal;
+            K.LBox(d.Frontage, l, -.02f, W + .02f, 3.35f, 3.6f, 2.5f, 0, awning);
+            K.LBox(d.Frontage, l, -.02f, W + .02f, 3.2f, 3.35f, 2.55f, 2.35f, Color.Lerp(awning, K.R.cream, .75f));
             // sign band on the awning fascia: plain colour, no letters
             Color sign = new[] { K.R.red, K.R.yellow, K.Hex("2F6B66"), K.Hex("2E5E9E"), K.R.cream }[Mathf.Abs(ComicKitGeometry.StableHash(d.Id + l.Z0 + l.S)) % 5];
             K.LBox(m, l, W * .2f, W * .8f, 3.86f, 4.2f, .14f, 0, sign);
@@ -782,7 +1051,7 @@ namespace CityScooter.EditorTools.Districts
 
         static void CarParkBuilding(CqChunkDraft d, CqLot l)
         {
-            ComicMesh m = d.Frontage;
+            ComicMesh m = Body(d, l);
             Foundation(d, l);
             float W = l.W, D = l.Depth, fh = 3f;
             int floors = 6; float h = floors * fh;

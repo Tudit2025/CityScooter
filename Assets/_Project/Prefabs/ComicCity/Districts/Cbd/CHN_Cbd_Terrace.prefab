@@ -369,6 +369,97 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
   kind: 0
+--- !u!1 &2795685987891682765
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5688961058703302605}
+  - component: {fileID: 4696755719783934956}
+  - component: {fileID: 421890283772910011}
+  m_Layer: 0
+  m_Name: Landmark
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5688961058703302605
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2795685987891682765}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7524816860236479847}
+  m_Father: {fileID: 7803246512853836909}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &4696755719783934956
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2795685987891682765}
+  m_Mesh: {fileID: 4300000, guid: 89f168c5c1266684583170a04958068e, type: 2}
+--- !u!23 &421890283772910011
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2795685987891682765}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: df16ade6caa101c42a2422d6b218e6a3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &2957676922316525742
 GameObject:
   m_ObjectHideFlags: 0
@@ -1113,6 +1204,7 @@ Transform:
   - {fileID: 2982108259468937626}
   - {fileID: 4455621759701928697}
   - {fileID: 2480247554901999920}
+  - {fileID: 5688961058703302605}
   - {fileID: 8687507912871719859}
   - {fileID: 149984767774930530}
   m_Father: {fileID: 0}
@@ -1161,26 +1253,38 @@ MonoBehaviour:
     - id: PlaneTree
       position: {x: -8.95, y: -0.2720604, z: 6}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.3499999, z: 0}
-      size: {x: 0.4, y: 2.6999998, z: 0.4}
+      centre: {x: 0, y: 1.29, z: 0}
+      size: {x: 0.4, y: 2.58, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: -8.95, y: -1.3735346, z: 20}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.3499999, z: 0}
-      size: {x: 0.4, y: 2.6999998, z: 0.4}
+      centre: {x: 0, y: 1.53, z: 0}
+      size: {x: 0.4, y: 3.06, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: -8.95, y: -2.4750087, z: 34}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.3499999, z: 0}
-      size: {x: 0.4, y: 2.6999998, z: 0.4}
+      centre: {x: 0, y: 1.38, z: 0}
+      size: {x: 0.4, y: 2.76, z: 0.4}
       canJumpOver: 0
     - id: StreetLamp
       position: {x: -8.55, y: -0.8227975, z: 13}
       rotation: {x: 0, y: 90, z: 0}
       centre: {x: 0, y: 2.5, z: 0}
       size: {x: 0.35, y: 5, z: 0.35}
+      canJumpOver: 0
+    - id: Banner
+      position: {x: -8.6, y: -0.5867673, z: 10}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 3.15, z: 0}
+      size: {x: 0.3, y: 6.3, z: 0.3}
+      canJumpOver: 0
+    - id: Banner
+      position: {x: -8.6, y: -1.9242716, z: 27}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 3.15, z: 0}
+      size: {x: 0.3, y: 6.3, z: 0.3}
       canJumpOver: 0
     - id: TrafficLight
       position: {x: -8.45, y: -2.7503774, z: 37.5}
@@ -1191,26 +1295,38 @@ MonoBehaviour:
     - id: PlaneTree
       position: {x: 8.95, y: 0.12132327, z: 1}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.3499999, z: 0}
-      size: {x: 0.4, y: 2.6999998, z: 0.4}
+      centre: {x: 0, y: 1.6500001, z: 0}
+      size: {x: 0.4, y: 3.3000002, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -0.980151, z: 15}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.3499999, z: 0}
-      size: {x: 0.4, y: 2.6999998, z: 0.4}
+      centre: {x: 0, y: 1.2, z: 0}
+      size: {x: 0.4, y: 2.4, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -2.0816252, z: 29}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.3499999, z: 0}
-      size: {x: 0.4, y: 2.6999998, z: 0.4}
+      centre: {x: 0, y: 1.29, z: 0}
+      size: {x: 0.4, y: 2.58, z: 0.4}
       canJumpOver: 0
     - id: StreetLamp
       position: {x: 8.55, y: -2.396332, z: 33}
       rotation: {x: 0, y: -90, z: 0}
       centre: {x: 0, y: 2.5, z: 0}
       size: {x: 0.35, y: 5, z: 0.35}
+      canJumpOver: 0
+    - id: Banner
+      position: {x: 8.6, y: -0.42941386, z: 8}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 3.15, z: 0}
+      size: {x: 0.3, y: 6.3, z: 0.3}
+      canJumpOver: 0
+    - id: Banner
+      position: {x: 8.6, y: -1.3735346, z: 20}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 3.15, z: 0}
+      size: {x: 0.3, y: 6.3, z: 0.3}
       canJumpOver: 0
     - id: TrafficLight
       position: {x: 8.45, y: -2.7503774, z: 37.5}
@@ -1230,6 +1346,96 @@ MonoBehaviour:
       centre: {x: 0, y: 0.5, z: 0}
       size: {x: 2, y: 1, z: 0.8}
       canJumpOver: 1
+--- !u!1 &7076382308947957142
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7524816860236479847}
+  - component: {fileID: 3663347329201536533}
+  - component: {fileID: 1274427149413700394}
+  m_Layer: 0
+  m_Name: InkOutline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7524816860236479847
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7076382308947957142}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5688961058703302605}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &3663347329201536533
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7076382308947957142}
+  m_Mesh: {fileID: 4300000, guid: 89f168c5c1266684583170a04958068e, type: 2}
+--- !u!23 &1274427149413700394
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7076382308947957142}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 547d8a0fb21293447bf5174d030f2e93, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &8474763288796918536
 GameObject:
   m_ObjectHideFlags: 0

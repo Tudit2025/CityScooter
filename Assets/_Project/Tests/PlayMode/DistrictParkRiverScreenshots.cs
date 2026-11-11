@@ -144,18 +144,21 @@ namespace CityScooter.Tests
             District d = Load("Assets/_Project/Data/Districts/District_MountsBay.asset");
             Assert.NotNull(d);
             Use(d);
-            PlaceRamp(d, 2f, 172f);
-            // 4-lane road (lane centres x = -6, -2, 2, 6). Chunks: entry 0 (widens), Towers 40, Narrows 80, JacobsLadder 120
-            // (stairs at z 140), Escarpment 160, Inlet 200, Brewery 240, exit 280 (narrows).
+            PlaceRamp(d, 2f, 252f);
+            // 4-lane road (lane centres x = -6, -2, 2, 6). Chunks (v0.6): entry 0 (widens), Convention 40, Narrows 80,
+            // Towers 120, JacobsLadder 160 (stairs at z 180), Inlet 200, Escarpment 240, Kokoda 280, Brewery 320, Eliza 360,
+            // BushA 400, Inlet 440, BushB 480, exit 520 (narrows onto the Narrows Bridge approach).
             yield return Shot("mountsbay", "01-entry-widening.png", 0f, 1f);
-            yield return Shot("mountsbay", "02-towers-and-palms.png", -2f, 42f);
-            yield return Shot("mountsbay", "03-narrows-bridge.png", 2f, 84f);
-            yield return Shot("mountsbay", "04-jacobs-ladder.png", 6f, 112f);
-            yield return Shot("mountsbay", "04b-jacobs-ladder-near.png", 9.5f, 128f);
-            yield return Shot("mountsbay", "05-escarpment-river.png", -10f, 162f);
+            yield return Shot("mountsbay", "02-convention-centre.png", -2f, 42f);
+            yield return Shot("mountsbay", "03-narrows-interchange.png", 2f, 84f);
+            yield return Shot("mountsbay", "04-jacobs-ladder.png", 6f, 152f);
+            yield return Shot("mountsbay", "04b-jacobs-ladder-near.png", 9.5f, 168f);
+            yield return Shot("mountsbay", "05-escarpment-river.png", -10f, 242f);
             yield return Shot("mountsbay", "06-inlet-jump.png", -2f, 198f);
-            yield return Shot("mountsbay", "07-brewery.png", 2f, 246f);
-            yield return Shot("mountsbay", "08-exit-narrowing.png", 0f, 284f);
+            yield return Shot("mountsbay", "07-brewery.png", 2f, 326f);
+            yield return Shot("mountsbay", "08-exit-narrowing.png", 0f, 524f);
+            yield return Shot("mountsbay", "09-kokoda-track.png", 4f, 282f);
+            yield return Shot("mountsbay", "10-eliza.png", -6f, 362f);
         }
 
         static void Capture(Camera camera, string id, string file)

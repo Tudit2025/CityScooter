@@ -28,6 +28,12 @@ namespace CityScooter.EditorTools.Districts
         public const string PatternFolder = CbdBuilder.DataFolder + "/quay";
         public const string DistrictPath = CbdBuilder.DataFolder + "/District_Quay.asset";
         public static readonly string[] ChunkIds = { "Promenade", "BellTower", "Bridge", "Spanda", "Inlet" };
+        /// <summary>v0.6: the district (360-480 m) is longer than its five chunks, so the cycle used to start again and the
+        /// rider passed a second Bell Tower, a second arched bridge and a second Spanda. The cycle is now ten chunks: the
+        /// same gameplay order twice (plain, plain, the hump, plain, the jetty jump) with other real places the second
+        /// time: the ferry jetty, the short bridge to the island's moorings, The Landing with the carousel and The Towers.
+        /// The plain promenade and the inlet are the same prefabs both times.</summary>
+        public static readonly string[] Cycle = { "Promenade", "BellTower", "Bridge", "Spanda", "Inlet", "Promenade", "Jetty", "IslandBridge", "Landing", "Inlet" };
         public static string ChunkPath(string variant) => PrefabFolder + "/CHN_Quay_" + variant + ".prefab";
         [MenuItem("CityScooter/Districts/Build Perth CBD and Elizabeth Quay")]
         public static void BuildBoth() { CbdBuilder.Build(); Build(); }
@@ -35,7 +41,8 @@ namespace CityScooter.EditorTools.Districts
 
         /// <summary>Riverside: flatter than the street (-1.6 m per 40 m instead of -3.15).</summary>
         public const float Drop = -1.6f;
-        const float WaterLevel = -1.3f;
+        // The same river as Mounts Bay Rd (v0.6: one riverfront): its level, its colours, its far shore.
+        const float WaterLevel = MountsBayBuilder.WaterY;
         // How far out the river plane goes (the panorama sky shows the far shore beyond it).
         const float RiverFar = 260f;
 
@@ -45,7 +52,7 @@ namespace CityScooter.EditorTools.Districts
 
         // Elizabeth Quay palette (sRGB; sources in art-src/districts/quay/SOURCES.txt).
         static readonly Color Beige = K.Hex("D8C7A6"), BeigeLight = K.Hex("E3D6BC"), Band = K.Hex("8C877E"), Limestone = K.Hex("ECE6D8");
-        static readonly Color Water = K.Hex("2F6E9A"), Ripple = K.Hex("5D9AC6"), BridgeWhite = K.Hex("F4F4F0"), Deck = K.Hex("8A5A3C"),
+        static readonly Color Water = ParkRiverKit.Water, Ripple = ParkRiverKit.WaterLight, BridgeWhite = K.Hex("F4F4F0"), Deck = K.Hex("8A5A3C"),
             RailGrey = K.Hex("9AA0A6"), Copper = K.Hex("B8733D"), CopperDark = K.Hex("8E5229"), SpireGlass = K.Hex("8FB8C8"),
             FerryGreen = K.Hex("1F7A5C"), Lawn = K.Hex("6E9A45"), RoofRed = K.Hex("C4532F"), Timber = K.Hex("A8774E");
         static readonly Color GlassGrey = K.Hex("5F7384"), GlassBlue = K.Hex("2E5E9E"), GlassPale = K.Hex("7FA8D8"), FrameLight = K.Hex("DDE3EA");
@@ -66,12 +73,23 @@ namespace CityScooter.EditorTools.Districts
             // ---- chunks
             K.WriteChunk(Entry(), ChunkPath("Entry"));
             K.WriteChunk(Promenade(), ChunkPath("Promenade"));
-            K.WriteChunk(BellTower(), ChunkPath("BellTower"));
-            K.WriteChunk(Bridge(), ChunkPath("Bridge"));
-            K.WriteChunk(Spanda(), ChunkPath("Spanda"));
+            K.WriteChunk(BellTower(true), ChunkPath("BellTower"));
+            K.WriteChunk(Bridge(true), ChunkPath("Bridge"));
+            K.WriteChunk(Spanda(true), ChunkPath("Spanda"));
+            K.WriteChunk(BellTower(false), ChunkPath("Jetty"));
+            K.WriteChunk(Bridge(false), ChunkPath("IslandBridge"));
+            K.WriteChunk(Spanda(false), ChunkPath("Landing"));
             K.WriteChunk(Inlet(), ChunkPath("Inlet"));
             K.WriteChunk(Exit(), ChunkPath("Exit"));
-            GameObject far = K.SaveFarScenery(Pf("FAR_Quay_Skyline"), "FAR_Quay_Skyline", FarSkyline());
+            // Far scenery: the river and the South Perth shore, the SAME prefab as Mounts Bay Rd (neighbours that share
+            // it keep it standing across their boundary). The CBD towers behind the quay are in the chunks (SkylineRow).
+            GameObject far = AssetDatabase.LoadAssetAtPath<GameObject>(MountsBayBuilder.FarShorePath);
+            if (far == null) far = K.SaveFarScenery(Pf("FAR_Quay_Skyline"), "FAR_Quay_Skyline", FarSkyline()); // Mounts Bay not built yet
+            else
+            {
+                AssetDatabase.DeleteAsset(Pf("FAR_Quay_Skyline"));
+                AssetDatabase.DeleteAsset(MeshFolder + "/FAR_Quay_Skyline.asset");
+            }
 
             // ---- promenade patterns (no cars here: seagulls, bollards, food trucks)
             var patterns = new List<HazardPattern>
@@ -85,7 +103,7 @@ namespace CityScooter.EditorTools.Districts
             if (theme == null) throw new InvalidOperationException("No comic theme at " + ComicCityBuilder.ThemePath);
             District d = K.LoadOrCreate<District>(DistrictPath);
             d.id = Id; d.displayName = "ELIZABETH QUAY"; d.order = 60; d.length = new Vector2(360f, 480f);
-            d.chunks = ChunkIds.Select(c => AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath(c)).GetComponent<RoadChunk>()).ToArray();
+            d.chunks = Cycle.Select(c => AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath(c)).GetComponent<RoadChunk>()).ToArray();
             d.orderedChunks = true;
             d.entry = AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath("Entry")).GetComponent<RoadChunk>();
             d.exit = AssetDatabase.LoadAssetAtPath<GameObject>(ChunkPath("Exit")).GetComponent<RoadChunk>();
@@ -122,7 +140,7 @@ namespace CityScooter.EditorTools.Districts
             AssetDatabase.SaveAssets();
             K.WriteReport("art-src/districts/quay/catalog.txt");
             RenderAtlas(bollard, truck, umbrella, gull, jetty);
-            Debug.Log("[Districts/Quay] built " + (ChunkIds.Length + 2) + " chunks: " + string.Join("; ", K.Report));
+            Debug.Log("[Districts/Quay] built " + (Cycle.Distinct().Count() + 2) + " chunks: " + string.Join("; ", K.Report));
         }
 
         static void RenderAtlas(Obstacle bollard, Obstacle truck, Obstacle umbrella, GameObject gull, Ramp jetty)
@@ -167,44 +185,99 @@ namespace CityScooter.EditorTools.Districts
 
         // ================================================================ chunks
 
-        static CqChunkDraft Entry()
+        // Where the street's asphalt and slab footpaths hand over to the promenade's paving (or back): a cream kerb-stone
+        // band and a dark granite band across the whole width, and piano-key bars on the road like a raised crossing.
+        static void PavingBand(CqChunkDraft d, float z, bool pavingAfter)
         {
-            // Calm at z = 0 (low walls, hedges, trees), then the river opens up on the right and the plaza on the left.
-            var d = new CqChunkDraft("Quay_Entry", Drop);
-            Promenade(d);
+            ComicMesh m = d.Road;
+            float k0 = pavingAfter ? z - 2.6f : z + .9f;
+            for (int x = -3; x <= 3; x++) K.Flat(m, x - .3f, x + .3f, x - .3f, x + .3f, k0, k0 + 1.7f, .036f, K.R.cream);
+            K.Flat(m, -K.Half, K.Half, -K.Half, K.Half, z - .5f, z, .037f, Limestone);
+            K.Flat(m, -K.Half, K.Half, -K.Half, K.Half, z, z + .5f, .037f, Band);
             for (int s = -1; s <= 1; s += 2)
             {
-                CbdBuilder.GardenEdge(d, s, 0, 14, s > 0 ? 14f : 50f); // the river starts 14 m out on the right
-                for (float z = 3; z < 14; z += 5.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .9f);
+                K.Flat(m, s * (K.Half + .24f), s * K.Edge, s * (K.Half + .24f), s * K.Edge, z - .5f, z, K.Kerb + .03f, Limestone);
+                K.Flat(m, s * (K.Half + .24f), s * K.Edge, s * (K.Half + .24f), s * K.Edge, z, z + .5f, K.Kerb + .03f, Band);
             }
-            River(d, 14, 40);
-            K.Water(d.Road, K.Edge + 14f, RiverFar, 0, 14, WaterLevel, Water, Ripple, 11);
+        }
+
+        // A tall white light mast of the promenade (decoration beyond the rideable edge).
+        static void LightMast(ComicMesh m, Vector3 p, int s)
+        {
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + K.V(0, .12f, 0), .26f, .24f, K.R.ink, 8);
+            m.Cylinder(p + K.V(0, 4.6f, 0), .11f, 9f, BridgeWhite, 8, .6f);
+            m.Beam(p + K.V(0, 8.9f, 0), p + K.V(-s * 1.5f, 9.3f, 0), .1f, BridgeWhite);
+            m.Box(p + K.V(-s * 1.5f, 9.22f, 0), K.V(.7f, .14f, .34f), K.R.cream);
+            m.Box(p + K.V(-s * 1.5f, 9.32f, 0), K.V(.76f, .08f, .4f), K.R.ink);
+        }
+
+        // The third row behind the quay: the tallest CBD towers (no outline, no shadows), so the city stands right behind
+        // the plaza in every chunk (they used to be the district's far scenery).
+        static void SkylineRow(CqChunkDraft d, float z0, float z1, int seed)
+        {
+            ComicMesh m = d.Deep;
+            Color[] glass = { GlassBlue, GlassGrey, GlassPale, K.Hex("2F6B66"), K.Hex("9AAFC4"), K.Hex("E6E1D3"), K.Hex("B08A56") };
+            var rng = new System.Random(6060 + seed * 31);
+            for (float z = z0 + 2f; z < z1 - 6f; z += 19f)
+            {
+                float x = -(K.Edge + 68f + (float)rng.NextDouble() * 30f), h = 70f + (float)rng.NextDouble() * 80f, w = 15f + (float)rng.NextDouble() * 7f;
+                Color c = Color.Lerp(glass[rng.Next(glass.Length)], new Color(.62f, .76f, .88f), .3f);
+                float y = d.Ground(z) - 3f;
+                m.Surface = ComicSurface.Glass;
+                m.Box(new Vector3(x, y + h * .5f, z + 7f), new Vector3(w, h, w), c);
+                for (float by = 8f; by < h - 3f; by += 8f) m.Box(new Vector3(x, y + by, z + 7f), new Vector3(w + .1f, .6f, w + .1f), Color.Lerp(c, K.R.ink, .3f));
+                m.Box(new Vector3(x, y + h + 1.5f, z + 7f), new Vector3(w * .55f, 3f, w * .55f), Color.Lerp(c, K.R.ink, .35f));
+            }
+        }
+
+        static CqChunkDraft Entry()
+        {
+            // After the CBD's exit (a city street): the street runs on for 12 m between two low buildings, then the
+            // paving changes at a kerb-stone band, the plaza opens on the left and the river on the right.
+            var d = new CqChunkDraft("Quay_Entry", Drop);
+            const float street = 12f;
+            Promenade(d, 0f, street);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, K.R.pavement, K.R.cream, true, street, d.Length);
+            PavingBand(d, street, true);
+            // left: the esplanade pavilion on the street's building line, then the plaza
             d.SlopedFrontage.Surface = ComicSurface.Paving;
-            K.SideBox(d.SlopedFrontage, -1, 0, 14, -2.4f, K.Kerb - .02f, 14f, 60f, BeigeLight);
-            Plaza(d, 14, 40, true);
-            Pavilion(d, new CqLot(-1, 22, 40, K.Edge + 10, 12, d.Base(31)), K.Hex("F2EEE4"));
-            CbdBuilder.DeepTowers(d, -1, 14, 40, 21);
+            K.SideBox(d.SlopedFrontage, -1, 0, street, -2.4f, K.Kerb - .02f, 0f, 60f, BeigeLight);
+            Pavilion(d, new CqLot(-1, 0, street - .4f, K.Edge + .3f, 12, d.Base(6)), K.Hex("E9E2D2"));
+            Plaza(d, street, 40, true);
+            Pavilion(d, new CqLot(-1, 24, 40, K.Edge + 10, 12, d.Base(32)), K.Hex("F2EEE4"));
+            // right: the ferry office on a paved apron, the quay wall, then the open river
+            K.SideBox(d.SlopedFrontage, 1, 0, street, WaterLevel - 1f, K.Kerb - .02f, 0f, 11f, BeigeLight);
+            Pavilion(d, new CqLot(1, 0, 8.5f, K.Edge + .3f, 9, d.Base(4)), K.Hex("F2EEE4"));
+            K.Water(d.Road, K.Edge + 11f, RiverFar, 0, street, WaterLevel, Water, Ripple, 11);
+            River(d, street, 40);
+            for (int s = -1; s <= 1; s += 2)
+                foreach (float z in new[] { 3f, 9.5f }) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .9f);
+            LightMast(d.Props, new Vector3(-(K.Edge + 1.2f), d.Ground(18f), 18f), -1);
+            CbdBuilder.DeepTowers(d, -1, 0, 40, 21);
+            SkylineRow(d, 0, 40, 1);
             d.StandardSlots();
             return d;
         }
 
         static CqChunkDraft Exit()
         {
-            // The river and plaza first, then calm towards z = 40: low walls, hedges, trees.
+            // Before Mounts Bay Rd's entry (one riverfront): the plaza ends at a quay wall with First Contact on its
+            // corner, and from there the path runs on with the river on BOTH sides (the mouth of the inlet on the right,
+            // the open river on the left); the paving hands back to the street's asphalt at a kerb-stone band.
             var d = new CqChunkDraft("Quay_Exit", Drop);
-            Promenade(d);
-            River(d, 0, 26);
-            K.Water(d.Road, K.Edge + 14f, RiverFar, 26, 40, WaterLevel, Water, Ripple, 12);
-            d.SlopedFrontage.Surface = ComicSurface.Paving;
-            K.SideBox(d.SlopedFrontage, -1, 26, 40, -2.4f, K.Kerb - .02f, 14f, 60f, BeigeLight);
-            Plaza(d, 0, 26, true);
-            Pavilion(d, new CqLot(-1, 0, 16, K.Edge + 10, 12, d.Base(8)), K.Hex("E9E2D2"));
-            CbdBuilder.DeepTowers(d, -1, 0, 26, 22);
-            for (int s = -1; s <= 1; s += 2)
-            {
-                CbdBuilder.GardenEdge(d, s, 26, 40, s > 0 ? 14f : 50f);
-                for (float z = 28; z < 40; z += 5.5f) K.PlaneTree(d.Props, d.Collisions, new Vector3(s * 5.6f, d.Ground(z), z), .9f);
-            }
+            const float street = 26f, quayEnd = 20f;
+            Promenade(d, street, d.Length);
+            K.StreetSurface(d.Road, d.Length, K.R.asphalt, K.R.pavement, K.R.cream, true, 0f, street);
+            PavingBand(d, street, false);
+            River(d, 0, 40);
+            Plaza(d, 0, quayEnd, true);
+            Pavilion(d, new CqLot(-1, 0, 12, K.Edge + 10, 12, d.Base(6)), K.Hex("E9E2D2"));
+            CbdBuilder.DeepTowers(d, -1, 0, quayEnd, 22);
+            SkylineRow(d, 0, quayEnd, 7);
+            FirstContact(d, new Vector3(-(K.Edge + 4.5f), d.Ground(quayEnd - 4f), quayEnd - 4f));
+            River(d, quayEnd, 40, true, -1);
+            LightMast(d.Props, new Vector3(-(K.Edge + 1.2f), d.Ground(8f), 8f), -1);
             d.StandardSlots();
             return d;
         }
@@ -218,52 +291,138 @@ namespace CityScooter.EditorTools.Districts
             Pavilion(d, new CqLot(-1, 4, 20, K.Edge + 10, 12, d.Base(12)), K.Hex("F2EEE4"));
             CbdBuilder.GlassTower(d, new CqLot(-1, 22, 38, K.Edge + 12, 16, d.Base(30)), 96, GlassGrey, FrameLight, 0);
             CbdBuilder.DeepTowers(d, -1, 0, 40, 23);
+            SkylineRow(d, 0, 40, 2);
             Ferry(d.Props, new Vector3(24f, d.Y(24f) + WaterLevel, 24f), 12f);
             d.StandardSlots();
             return d;
         }
 
-        static CqChunkDraft BellTower()
+        // tower: the Bell Tower chunk. Without it (second pass): Elizabeth Quay Jetty, the ferry terminal: a longer pier
+        // under a white canopy, two ferries, the jetty's name on a board.
+        static CqChunkDraft BellTower(bool tower)
         {
-            var d = new CqChunkDraft("Quay_BellTower", Drop);
+            var d = new CqChunkDraft(tower ? "Quay_BellTower" : "Quay_Jetty", Drop);
             Promenade(d);
             River(d, 0, 40);
             // the ferry jetty: a timber pier out from the quay with a ferry alongside
             ComicMesh m = d.SlopedFrontage;
+            float pier = tower ? 9f : 16f, pz0 = tower ? 4f : 14f, pz1 = pz0 + 4f;
             m.Surface = ComicSurface.Wood;
-            K.SideBox(m, 1, 4, 8, K.Kerb - .25f, K.Kerb, .2f, 9f, Deck);
-            for (float x = 1f; x < 9f; x += 2.6f)
-                foreach (float z in new[] { 4.3f, 7.7f }) K.SideBox(m, 1, z - .15f, z + .15f, WaterLevel - .5f, K.Kerb - .25f, x - .15f, x + .15f, Color.Lerp(Deck, K.R.ink, .4f));
-            Ferry(d.Props, new Vector3(K.Edge + 11.2f, d.Y(16f) + WaterLevel, 16f), 0f);
-            BellTowerLandmark(d, new Vector3(34f, d.Y(26f), 26f));
+            K.SideBox(m, 1, pz0, pz1, K.Kerb - .25f, K.Kerb, .2f, pier, Deck);
+            for (float x = 1f; x < pier; x += 2.6f)
+                foreach (float z in new[] { pz0 + .3f, pz1 - .3f }) K.SideBox(m, 1, z - .15f, z + .15f, WaterLevel - .5f, K.Kerb - .25f, x - .15f, x + .15f, Color.Lerp(Deck, K.R.ink, .4f));
+            if (tower)
+            {
+                Ferry(d.Props, new Vector3(K.Edge + 11.2f, d.Y(16f) + WaterLevel, 16f), 0f);
+                BellTowerLandmark(d, new Vector3(34f, d.Y(26f), 26f));
+            }
+            else
+            {
+                Ferry(d.Props, new Vector3(K.Edge + 6f, d.Y(26f) + WaterLevel, 26f), 0f);
+                Ferry(d.Props, new Vector3(K.Edge + 13f, d.Y(5f) + WaterLevel, 5f), 0f);
+                // the canopy over the pier and the name board at its head
+                ComicMesh f = d.Frontage;
+                f.Surface = ComicSurface.PaintedMetal;
+                float y = d.Ground(pz0 + 2f);
+                for (float x = 2f; x < pier; x += 4.4f)
+                    foreach (float z in new[] { pz0 + .4f, pz1 - .4f }) f.Cylinder(K.V(K.Edge + x, y + 1.6f, z), .08f, 3.2f, BridgeWhite, 8);
+                f.Box(K.V(K.Edge + pier * .5f + .4f, y + 3.3f, pz0 + 2f), K.V(pier, .16f, 4.8f), BridgeWhite, Quaternion.Euler(0, 0, -3f));
+                f.Box(K.V(K.Edge + pier * .5f + .4f, y + 3.18f, pz0 + 2f), K.V(pier + .1f, .1f, 4.9f), FerryGreen, Quaternion.Euler(0, 0, -3f));
+                foreach (float x in new[] { 1.2f, 6.6f }) f.Cylinder(K.V(K.Edge + x, d.Ground(pz0 - 1.5f) + .9f, pz0 - 1.5f), .07f, 5.8f, K.R.ink, 8);
+                TrunkPixelText.Board(f, "QUAY JETTY", K.V(K.Edge + 3.9f, d.Ground(pz0 - 1.5f) + 3.5f, pz0 - 1.5f), Vector3.right, .11f, FerryGreen, Color.white, Color.white);
+            }
             Plaza(d, 0, 40, false);
-            Pavilion(d, new CqLot(-1, 0, 14, K.Edge + 10, 12, d.Base(7)), K.Hex("E9E2D2"));
-            CbdBuilder.GlassTower(d, new CqLot(-1, 16, 34, K.Edge + 12, 18, d.Base(25)), 132, GlassBlue, FrameLight, 1);
-            CbdBuilder.DeepTowers(d, -1, 0, 40, 24);
+            if (tower)
+            {
+                Pavilion(d, new CqLot(-1, 0, 14, K.Edge + 10, 12, d.Base(7)), K.Hex("E9E2D2"));
+                CbdBuilder.GlassTower(d, new CqLot(-1, 16, 34, K.Edge + 12, 18, d.Base(25)), 132, GlassBlue, FrameLight, 1);
+            }
+            else
+            {
+                CbdBuilder.GlassTower(d, new CqLot(-1, 2, 18, K.Edge + 12, 16, d.Base(10)), 74, K.Hex("2F6B66"), FrameLight, 2);
+                Pavilion(d, new CqLot(-1, 22, 38, K.Edge + 10, 12, d.Base(30)), K.Hex("F2EEE4"));
+            }
+            CbdBuilder.DeepTowers(d, -1, 0, 40, tower ? 24 : 34);
+            SkylineRow(d, 0, 40, tower ? 3 : 9);
             d.StandardSlots();
             return d;
         }
 
-        static CqChunkDraft Spanda()
+        // A carousel on the plaza (The Landing): striped tent roof, a ring of poles with horses.
+        static void Carousel(ComicMesh m, Vector3 p)
         {
-            var d = new CqChunkDraft("Quay_Spanda", Drop);
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + K.V(0, .2f, 0), 4.2f, .4f, K.R.ink, 12);
+            m.Cylinder(p + K.V(0, 2.2f, 0), .5f, 4f, K.R.cream, 8);
+            m.Cylinder(p + K.V(0, 4.05f, 0), 4.5f, .5f, K.R.red, 12);
+            m.Cylinder(p + K.V(0, 4.36f, 0), 4.56f, .14f, K.R.cream, 12);
+            m.Surface = ComicSurface.Fabric;
+            m.Cylinder(p + K.V(0, 5.45f, 0), 4.4f, 2.1f, K.R.cream, 12, .06f);
+            for (int i = 0; i < 6; i++)
+            {
+                Quaternion q = Quaternion.Euler(0, i * 60f, 0);
+                m.Surface = ComicSurface.Fabric;
+                m.Box(p + K.V(0, 5.3f, 0) + q * K.V(0, 0, 2.2f), K.V(1.15f, 1.9f, .1f), K.R.red, q * Quaternion.Euler(-62f, 0, 0));
+                m.Surface = ComicSurface.Metal;
+                m.Cylinder(p + q * K.V(0, 2.2f, 3.2f), .05f, 3.6f, K.Hex("D9B45A"), 6);
+                m.Surface = ComicSurface.Plastic;
+                m.Box(p + q * K.V(0, 1.5f + (i % 2) * .4f, 3.2f), K.V(1.1f, .5f, .34f), i % 2 == 0 ? Color.white : K.Hex("8A5A3C"), q);
+                m.Box(p + q * K.V(.5f, 1.95f + (i % 2) * .4f, 3.2f), K.V(.3f, .5f, .26f), i % 2 == 0 ? Color.white : K.Hex("8A5A3C"), q);
+            }
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Cylinder(p + K.V(0, 6.7f, 0), .12f, .5f, K.R.yellow, 8);
+        }
+
+        // sculpture: the Spanda chunk (with the island across the water). Without it (second pass): The Landing with the
+        // carousel, and The Towers behind it (two bronze-glass towers, the taller with a stepped crown).
+        static CqChunkDraft Spanda(bool sculpture)
+        {
+            var d = new CqChunkDraft(sculpture ? "Quay_Spanda" : "Quay_Landing", Drop);
             Promenade(d);
             River(d, 0, 40);
-            Island(d);
             Plaza(d, 0, 40, false);
-            SpandaLandmark(d, new Vector3(-(K.Edge + 11f), d.Ground(22f), 22f));
-            Pavilion(d, new CqLot(-1, 30, 40, K.Edge + 10, 12, d.Base(35)), K.Hex("F2EEE4"));
-            CbdBuilder.GlassTower(d, new CqLot(-1, 2, 16, K.Edge + 14, 16, d.Base(9)), 84, GlassPale, FrameLight, 3);
-            CbdBuilder.DeepTowers(d, -1, 0, 40, 25);
+            if (sculpture)
+            {
+                Island(d);
+                SpandaLandmark(d, new Vector3(-(K.Edge + 11f), d.Ground(22f), 22f));
+                Pavilion(d, new CqLot(-1, 30, 40, K.Edge + 10, 12, d.Base(35)), K.Hex("F2EEE4"));
+                CbdBuilder.GlassTower(d, new CqLot(-1, 2, 16, K.Edge + 14, 16, d.Base(9)), 84, GlassPale, FrameLight, 3);
+            }
+            else
+            {
+                Carousel(d.Landmark, new Vector3(-(K.Edge + 12f), d.Ground(9f), 9f));
+                CbdBuilder.GlassTower(d, new CqLot(-1, 18, 30, K.Edge + 16, 14, d.Base(24)), 96, K.Hex("B08A56"), K.Hex("E9DCC2"), 2);
+                CbdBuilder.GlassTower(d, new CqLot(-1, 31, 40, K.Edge + 16, 12, d.Base(35.5f)), 62, K.Hex("C29A68"), K.Hex("E9DCC2"), 0);
+                Ferry(d.Props, new Vector3(30f, d.Y(22f) + WaterLevel, 22f), 168f);
+                for (int i = 0; i < 3; i++) Dinghy(d.Props, new Vector3(K.Edge + 3.2f, d.Y(7f + i * 11f) + WaterLevel, 7f + i * 11f), i);
+            }
+            CbdBuilder.DeepTowers(d, -1, 0, 40, sculpture ? 25 : 35);
+            SkylineRow(d, 0, 40, sculpture ? 4 : 10);
             d.StandardSlots();
             return d;
         }
 
-        static CqChunkDraft Bridge()
+        // A small moored boat (the quay's public moorings).
+        static void Dinghy(ComicMesh m, Vector3 p, int i)
+        {
+            Color band = new[] { K.R.red, K.Hex("2E5E9E"), FerryGreen }[i % 3];
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(p + K.V(0, .35f, 0), K.V(1.9f, .7f, 5.2f), BridgeWhite);
+            m.Box(p + K.V(0, .62f, 0), K.V(1.96f, .14f, 5.26f), band);
+            m.Box(p + K.V(0, 1.1f, -.6f), K.V(1.4f, .8f, 2f), BridgeWhite);
+            m.Surface = ComicSurface.Glass;
+            m.Box(p + K.V(0, 1.15f, -.6f), K.V(1.44f, .4f, 1.7f), K.Hex("26333D"));
+            m.Surface = ComicSurface.PaintedMetal;
+            m.Box(p + K.V(0, 1.54f, -.6f), K.V(1.5f, .08f, 2.1f), band);
+        }
+
+        // arches: the Elizabeth Quay Bridge. Without them (second pass): the short bridge to the islet, the same hump with
+        // plain white rails, boats on the moorings beside it.
+        static CqChunkDraft Bridge(bool arches)
         {
             // The road goes up and over the white double-arched bridge: a Ramp platform (rise + crown); off the crown the
             // rider flies over the descending half. Water on both sides and under the deck; no ground beside the deck.
-            var d = new CqChunkDraft("Quay_Bridge", Drop);
+            var d = new CqChunkDraft(arches ? "Quay_Bridge" : "Quay_IslandBridge", Drop);
             float z0 = BridgeStart, z1 = z0 + BridgeRise, z2 = z1 + BridgeTop, z3 = z2 + BridgeDown;
             Promenade(d, z0, z3);
             K.Water(d.Road, -60f, RiverFar, z0, z3, WaterLevel, Water, Ripple, 31);
@@ -278,12 +437,15 @@ namespace CityScooter.EditorTools.Districts
             // The deck coming back down (system B): a reversed ramp, pivot at the foot (z3), rising back towards the crown,
             // so slow riders land on it and ride down instead of sinking into the deck; fast ones fly over it.
             d.Ramps.Add(new CqRampSpec { Name = "BridgeDown", X = 0f, Z = z3, Width = 2f * K.Edge, Rise = BridgeDown, Height = BridgeHeight, Top = 0f, Launch = 1f, Hang = .5f, Yaw = 180f });
-            BridgeDeck(d, z0, z1, z2, z3);
+            BridgeDeck(d, z0, z1, z2, z3, arches);
+            if (!arches)
+                for (int i = 0; i < 4; i++) Dinghy(d.Props, new Vector3(K.Edge + 5f + (i % 2) * 6f, d.Y(9f + i * 6.5f) + WaterLevel, 9f + i * 6.5f), i + 1);
             d.KeepOut.Add(KeepOutBox(d, -1, z0, z3)); d.KeepOut.Add(KeepOutBox(d, 1, z0, z3));
             // No obstacles on the hump or where riders land; a row of gifts after it, a gap in the middle for a lane.
             d.GiftSlots.Add(new Vector2(-2.6f, 37f)); d.GiftSlots.Add(new Vector2(2.6f, 37f));
-            CbdBuilder.DeepTowers(d, -1, 0, z0, 26);
-            CbdBuilder.DeepTowers(d, -1, z3 - 2f, 40, 26);
+            CbdBuilder.DeepTowers(d, -1, 0, z0, arches ? 26 : 36);
+            CbdBuilder.DeepTowers(d, -1, z3 - 2f, 40, arches ? 26 : 36);
+            SkylineRow(d, 0, 40, arches ? 5 : 11);
             return d;
         }
 
@@ -334,6 +496,7 @@ namespace CityScooter.EditorTools.Districts
             d.GiftSlots.Add(new Vector2(0f, 28f));
             d.Slot(-2.6f, 36f); d.Slot(2.6f, 36f);
             CbdBuilder.DeepTowers(d, -1, 0, 40, 27);
+            SkylineRow(d, 0, 40, 6);
             return d;
         }
 
@@ -362,14 +525,15 @@ namespace CityScooter.EditorTools.Districts
         }
 
         // The river on the right from the sidewalk edge, a white rail at the quay edge, the quay wall.
-        static void River(CqChunkDraft d, float z0, float z1, bool rail = true)
+        // side -1 (v0.6, the exit): the same on the left, out to where the shared far shore's water takes over.
+        static void River(CqChunkDraft d, float z0, float z1, bool rail = true, int side = 1)
         {
-            K.Water(d.Road, K.Edge, RiverFar, z0, z1, WaterLevel, Water, Ripple, Mathf.RoundToInt(z0 * 7 + z1));
+            K.Water(d.Road, side * K.Edge, side > 0 ? RiverFar : -100f, z0, z1, WaterLevel, Water, Ripple, Mathf.RoundToInt(z0 * 7 + z1) + (side > 0 ? 0 : 5));
             ComicMesh m = d.Road;
             m.Surface = ComicSurface.Concrete;
-            K.MinMaxBox(m, K.V(K.Edge - .02f, WaterLevel - 1f, z0), K.V(K.Edge + .25f, K.Kerb + .06f, z1), Limestone);
+            K.MinMaxBox(m, K.V(side * (K.Edge - .02f), WaterLevel - 1f, z0), K.V(side * (K.Edge + .25f), K.Kerb + .06f, z1), Limestone);
             if (!rail) return;
-            Railing(d.SlopedFrontage, 1, z0 + .3f, z1 - .3f, K.Edge + .3f);
+            Railing(d.SlopedFrontage, side, z0 + .3f, z1 - .3f, K.Edge + .3f);
         }
 
         static void Railing(ComicMesh m, int s, float z0, float z1, float x)
@@ -456,7 +620,7 @@ namespace CityScooter.EditorTools.Districts
             return BridgeHeight * (1f - (z - z2) / (z3 - z2));
         }
 
-        static void BridgeDeck(CqChunkDraft d, float z0, float z1, float z2, float z3)
+        static void BridgeDeck(CqChunkDraft d, float z0, float z1, float z2, float z3, bool arches = true)
         {
             ComicMesh m = d.SlopedFrontage;
             float w = K.Edge;
@@ -498,8 +662,11 @@ namespace CityScooter.EditorTools.Districts
                 }
             }
             // two white arches in sequence, leaning out on opposite sides (the bridge's S), with hanger cables
-            Arch(m, 1, z0 - 4f, (z1 + z2) * .5f + 3f, z0, z1, z2, z3);
-            Arch(m, -1, (z1 + z2) * .5f - 3f, z3 + 4f, z0, z1, z2, z3);
+            if (arches)
+            {
+                Arch(m, 1, z0 - 4f, (z1 + z2) * .5f + 3f, z0, z1, z2, z3);
+                Arch(m, -1, (z1 + z2) * .5f - 3f, z3 + 4f, z0, z1, z2, z3);
+            }
             // white piers into the water
             m.Surface = ComicSurface.Concrete;
             foreach (float z in new[] { z1, z2 })
@@ -559,17 +726,49 @@ namespace CityScooter.EditorTools.Districts
             m.Cylinder(K.V(p.x, y0 + 68f, p.z), .12f, 6f, K.R.ink, 6);
             // the copper sails: two curved wings hugging the spire either side, twisting a little as they rise
             m.Surface = ComicSurface.Metal;
+            // (v0.6) like sails, not like a tiled drum: each is three panels wide at the foot and narrows to a point,
+            // its top edge slanting; the one towards the city is taller (about 30 m, the bell chamber shows between them).
             for (int side = -1; side <= 1; side += 2)
-                for (int i = 0; i < 9; i++)
+            {
+                int rows = side < 0 ? 10 : 8;
+                for (int i = 0; i < rows; i++)
                     for (int k = -1; k <= 1; k++)
                     {
-                        float y = 1.8f + i * 3.1f, ang = side * 90f + k * 26f + side * i * 4f, r = 3.7f - i * .14f;
-                        Quaternion q = Quaternion.Euler(0, ang - 90f, 0);
+                        float t = (float)i / (rows - 1);
+                        if (t > .55f && k == side || t > .82f && k == 0) continue;           // the slanting top edge
+                        float y = 1.8f + i * 3.1f, ang = side * 90f + k * 26f + side * i * 4f, r = 3.9f - i * .16f;
                         Vector3 c = K.V(p.x, y0 + y, p.z) + Quaternion.Euler(0, ang, 0) * K.V(0, 0, r);
-                        m.Box(c, K.V(1.9f, 3.15f, .45f), (i + k) % 2 == 0 ? Copper : CopperDark, Quaternion.Euler(0, ang, 0));
+                        m.Box(c, K.V(1.95f, 3.15f, .4f), (i + k) % 2 == 0 ? Copper : CopperDark, Quaternion.Euler(0, ang, 0));
                     }
+            }
             m.Surface = ComicSurface.Glass;
             m.Cylinder(K.V(p.x, y0 + 8f, p.z), 3.2f, 12f, Color.Lerp(SpireGlass, K.R.ink, .2f), 8, .9f);
+        }
+
+        // First Contact (Laurel Nannup): a five-metre cast-aluminium bird standing in a boat, wings raised, on a granite
+        // base at the south-western shore by the bridge. Stylised silhouette, decoration only.
+        static void FirstContact(CqChunkDraft d, Vector3 p)
+        {
+            ComicMesh m = d.Landmark;
+            Color metal = K.Hex("E9ECEE"), shade = K.Hex("C3CAD0");
+            m.Surface = ComicSurface.Concrete;
+            m.Cylinder(p + K.V(0, .3f, 0), 1.7f, .6f, K.Hex("6F7378"), 10);
+            m.Surface = ComicSurface.Metal;
+            // the boat: a long hull with raised ends
+            m.Box(p + K.V(0, 1.1f, 0), K.V(1.1f, .7f, 3.6f), metal);
+            m.Box(p + K.V(0, 1.5f, 1.95f), K.V(.8f, 1.1f, .7f), metal, Quaternion.Euler(-28f, 0, 0));
+            m.Box(p + K.V(0, 1.5f, -1.95f), K.V(.8f, 1.1f, .7f), metal, Quaternion.Euler(28f, 0, 0));
+            m.Box(p + K.V(0, .86f, 0), K.V(1.16f, .16f, 3.7f), shade);
+            // the bird: body, long neck, head and beak, two wings swept up and back
+            m.Ellipsoid(p + K.V(0, 2.5f, 0), K.V(1f, 1.9f, 1.3f), metal);
+            m.Beam(p + K.V(0, 3.2f, -.3f), p + K.V(0, 4.5f, -.75f), .34f, metal);
+            m.Ellipsoid(p + K.V(0, 4.7f, -.85f), K.V(.5f, .46f, .66f), metal);
+            m.Box(p + K.V(0, 4.62f, -1.35f), K.V(.14f, .14f, .6f), shade);
+            for (int s = -1; s <= 1; s += 2)
+            {
+                m.Box(p + K.V(s * .75f, 3.4f, .35f), K.V(.16f, 1.9f, 1.1f), metal, Quaternion.Euler(-24f, 0, s * -30f));
+                m.Box(p + K.V(s * 1.2f, 4.5f, .9f), K.V(.14f, 1.5f, .8f), shade, Quaternion.Euler(-36f, 0, s * -16f));
+            }
         }
 
         // Spanda: nested white ellipse rings sharing their lowest point, about 29 m tall.

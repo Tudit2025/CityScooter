@@ -1,10 +1,13 @@
 OBS_Quay_Bollard 256 tris
 OBS_Quay_FoodTruck 1304 tris
 OBS_Quay_UmbrellaTable 688 tris
-CHN_Quay_Entry 14468 tris, 6 renderers
-CHN_Quay_Promenade 18198 tris, 6 renderers
-CHN_Quay_BellTower 20878 tris, 8 renderers
-CHN_Quay_Bridge 9872 tris, 6 renderers
-CHN_Quay_Spanda 23922 tris, 8 renderers
-CHN_Quay_Inlet 15328 tris, 6 renderers
-CHN_Quay_Exit 16580 tris, 6 renderers
+CHN_Quay_Entry 17358 tris, 6 renderers
+CHN_Quay_Promenade 18550 tris, 6 renderers
+CHN_Quay_BellTower 20942 tris, 8 renderers
+CHN_Quay_Bridge 10256 tris, 6 renderers
+CHN_Quay_Spanda 24322 tris, 8 renderers
+CHN_Quay_Jetty 21122 tris, 6 renderers
+CHN_Quay_IslandBridge 9608 tris, 6 renderers
+CHN_Quay_Landing 19978 tris, 8 renderers
+CHN_Quay_Inlet 15736 tris, 6 renderers
+CHN_Quay_Exit 10750 tris, 8 renderers

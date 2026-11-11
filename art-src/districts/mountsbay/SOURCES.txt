@@ -24,3 +24,27 @@ General knowledge of the place (no image copied):
 
 Proportions used: road 8 m + 4 m paths (contract), retaining wall 3 m high at x = +8.35 m, cliff up to 16-30 m from x = 12 m,
 water 1.1 m below the road, Narrows deck 9.4 m above the road, 15 m wide, piers outside |x| > 10 m.
+
+v0.6 polish (2026-11-11): checked against the real places (web pages read, nothing copied; no images downloaded)
+- Old Swan Brewery. https://en.wikipedia.org/wiki/Swan_Brewery ; inHerit (Heritage Council of WA) records of the
+  Old Swan Brewery precinct and its former stables, via search.
+  Took: "red brick and tile Federation style"; the 1879 building is the core of the complex, a landmark seen from the
+  Narrows and from Kings Park; a tall, high-roofed structure with turrets; a central lift and staircase tower on the
+  Mounts Bay Road face; the car park on the other side of the road stands where the stables were; Kennedy's Fountain,
+  a fresh-water spring, is at the foot of the Mount Eliza escarpment nearby.
+  In the game: gabled tile roofs, cross gables, string courses, arched windows, the stair tower with turrets, a brick
+  chimney, the footbridge to car-park decks in the escarpment. The name wall says OLD BREWERY (no brand name).
+- Narrows Bridge. https://en.wikipedia.org/wiki/Narrows_Bridge_(Perth)
+  Took: two road bridges with a railway bridge between them (2005); arched along its length (a vertical curve), five
+  spans, footpaths on the outer sides behind light aluminium balustrades with the lights built into the fence line;
+  links the Mitchell and Kwinana freeways between Point Lewis (at the foot of Mount Eliza) and Mill Point.
+  In the game (the exit): limestone abutment, balustrade and lamp standards on the river side, the freeway and the
+  railway with gantries on the other side, level water under the bridge, boards KWINANA FWY and NARROWS BRIDGE.
+- Mounts Bay Road shared path: City of Perth project page, via search (the red path along the river is the main
+  east-west cycling route between Crawley and the city).
+- General knowledge of the road, stylised: the Convention Centre at the city end; the State War Memorial obelisk on
+  the edge of Mount Eliza above the road; the Kokoda Track Memorial Walk climbing from Kennedy Fountain to the park;
+  Jacob's Ladder; Eliza, the bronze diver on a pile in the river at the old Crawley Baths, whom locals dress up;
+  black swans; South Perth's apartment towers and Norfolk pines across the water.
+- Colours added: scrub 546B3D 61703F 6E7547 5C633B 78734D, tiles 804A3D / 663B33, rail grey 999FA6, sign green
+  1A6B4D, sign blue 295C9E, ballast 807870, bronze 6B4F33.

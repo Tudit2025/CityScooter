@@ -45,3 +45,22 @@ Proportions
 - Inlet: jetty ramp 6 m up to 1.4 m, 3 m flat jetty end, then 6 m of water across the whole promenade.
 
 Previews: previews/*.png (DistrictCityScreenshots, chase camera, 1600x900).
+
+v0.6 polish (2026-11-11): checked against the real places (web pages read, nothing copied; no images downloaded)
+- Elizabeth Quay. https://en.wikipedia.org/wiki/Elizabeth_Quay ; DevelopmentWA's First Contact page and public art
+  walk guide, via search (https://developmentwa.com.au/projects/redevelopment/elizabeth-quay/first-contact).
+  Took: the inlet opens to the river at its south end; the islet at the mouth has the Florence Hummerston Kiosk
+  (1927, rebuilt there) and a playground; the Elizabeth Quay Bridge spans the mouth from the islet to the western
+  shore and a short bridge joins the islet to the eastern shore; Spanda (29 m) stands at The Landing on the north
+  shore with a carousel beside it; the Elizabeth Quay Jetty (ferries to South Perth) is on the western shore;
+  First Contact (Laurel Nannup, 5 m, cast aluminium: a bird standing in a boat) stands at the south-western shore
+  by the bridge's western end; The Towers (hotel and apartments) and public moorings on the eastern shore.
+  In the game: First Contact at the end of the plaza in the exit; second pass of the cycle = the jetty with its
+  canopy and two ferries, the short islet bridge with moored boats, The Landing with the carousel and two
+  bronze-glass towers.
+- Bell Tower. https://en.wikipedia.org/wiki/Swan_Bells
+  Took: 82.5 m copper-and-glass campanile at Barrack Square; a glass spire narrowing to a point; the bell chamber is
+  wrapped by copper sails about 30 m tall. In the game: two sails narrowing upwards with slanting tops, one taller.
+- The river and its far shore are Mounts Bay Rd's (one prefab): see art-src/districts/mountsbay/SOURCES.txt.
+- Colours changed: water 3379B3 with ripples 619FD1 (Mounts Bay's river); bronze glass B08A56 / C29A68; First
+  Contact E9ECEE / C3CAD0.

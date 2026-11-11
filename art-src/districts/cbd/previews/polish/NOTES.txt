@@ -1,0 +1,59 @@
+PERTH CBD - v0.6 polish notes (trunk B, 2026-11-11)
+=================================================
+
+Method (docs/v0.6-polish.md): a ride-through from the rider's chase camera every 20 m on the real route
+(test DistrictPolishRideShots.RideThrough, -cityscooterPolishIds "cbd>quay,cbd>mciver@-100"), read as contact sheets:
+  before-ride-1..3.png   as it was (the ride that turns to Elizabeth Quay)
+  after-ride-1..3.png    after two rounds
+16 pictures per sheet, 20 m apart; the last six are the exit, the boundary and Elizabeth Quay's entry.
+Both continuations: before/after-exit-to-quay.png and before/after-exit-to-mciver.png; from West Perth:
+before/after-entry-from-west-perth.png.
+
+The ten worst things (most visible first)
+-----------------------------------------
+ 1. The whole district was in shadow: the sun stands behind and to the left of the rider, and the towers on the left
+    kept the road, both footpaths and the mall dark from the first chunk to the last. Next to last night's sunlit
+    Beaufort Street the CBD looked like a winter evening. (before-ride-1.png)
+ 2. Entry and exit were hedge-and-lawn gaps with rows of plane trees: a park between West Perth's street and the
+    city, and again before the quay or McIver. (before-entry-from-west-perth.png, before-exit-to-*.png)
+ 3. The Town Hall could not be seen coming: its tower stood behind the building line, hidden by a 70 m glass tower
+    until the rider was beside it. (before-town-hall.png)
+ 4. Town Hall and the tallest towers came twice in one ride (the cycle was eight chunks, the district is 480-640 m).
+ 5. Eye level was dark lobby glass, tower after tower; no colour, no names.
+ 6. Hay Street Mall: dark grey pavers, every awning the same charcoal, black shop windows. (before-hay-st-mall.png)
+ 7. London Court was one 8 m front with a small gable, easy to miss.
+ 8. One plane tree stamped along every kerb, all the same size.
+ 9. The Town Hall had round-headed windows and a closed ground floor: the real one stands on pointed arches.
+10. No street names: nothing says St Georges Terrace or Hay Street.
+
+Round 1
+-------
+- Sunlit street: while the CBD's own chunks are built, the buildings on the left go into the chunk's Landmark
+  renderer (ink outline, receives but does not cast shadows). Trees, lamps, banners, awnings and traffic still throw
+  shadows; the mall's awnings always cast theirs. 8 renderers per chunk (the budget).
+- Entry: West Perth's street runs on: two-storey shops under awnings from z = 0, three-storey heritage fronts, then
+  the first towers. No hedge, no lawn.
+- Exit: towers, heritage fronts, then two- and three-storey fronts under awnings to the end, street trees and lamps:
+  the same city street before the quay and before McIver.
+- Town Hall: the corner at the crossing is an open square with a low sandstone building at its back, the hall and
+  its tower start 14 m on, so the tower shows from the chunk before. The building follows the real one: an open
+  undercroft of pointed arches, tall pointed hall windows, buttresses, a steep slate roof with dormers, the corner
+  tower with clock faces towards the rider and the road, pointed belfry openings, four corner turrets and a spire.
+- London Court: 12 m wide, three gables (the middle one taller) with bargeboards and flags, the oriel with the clock,
+  heraldic shields with red crosses, the arch with a wrought-iron gate, LONDON COURT over it.
+- Mall: lighter pavers, five awning colours, lit display windows, tree sizes varied, a HAY ST MALL street sign.
+- Terrace: banner poles, street signs ST GEORGES TCE and BARRACK ST (5-wide M, N, W), lit lobbies and doors and a
+  coloured canopy edge on every tower, plane trees in five sizes.
+
+Round 2
+-------
+- No landmark twice: the cycle is sixteen chunks with exactly the old order of chunk types (so the district ends
+  where it always did). The second time, St George's Cathedral (brick nave, steep roof, gabled front with a tall
+  pointed window, castellated bell tower) stands in the Town Hall's place, the plaza has other towers, and the mall
+  chunk without London Court comes first. (after-cathedral-second-pass.png)
+
+Left for later
+--------------
+- Facades on the left are in their own shade (the sun is behind them); they read cooler than the right side.
+- The glass towers are one recipe in different colours and crowns; two or three more silhouettes would help.
+- Murray Street Mall is not there as its own place (the mall chunks are Hay Street).

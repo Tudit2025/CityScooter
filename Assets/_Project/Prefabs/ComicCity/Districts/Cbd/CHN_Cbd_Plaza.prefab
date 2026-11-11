@@ -368,6 +368,96 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
   kind: 0
+--- !u!1 &2165534544709382523
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1491397176001030187}
+  - component: {fileID: 2072174544968928143}
+  - component: {fileID: 1280803868084087030}
+  m_Layer: 0
+  m_Name: InkOutline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1491397176001030187
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2165534544709382523}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3129857254501991582}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &2072174544968928143
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2165534544709382523}
+  m_Mesh: {fileID: 4300000, guid: 84acef4174e5c9e438f7f072e92bd134, type: 2}
+--- !u!23 &1280803868084087030
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2165534544709382523}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 547d8a0fb21293447bf5174d030f2e93, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &3024254641450648198
 GameObject:
   m_ObjectHideFlags: 0
@@ -556,6 +646,97 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: CityScooter.Runtime::CityScooter.Track.SpawnSlot
   kind: 0
+--- !u!1 &4173731436552247622
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3129857254501991582}
+  - component: {fileID: 5036480843668620471}
+  - component: {fileID: 4915355161102193877}
+  m_Layer: 0
+  m_Name: Landmark
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3129857254501991582
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4173731436552247622}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1491397176001030187}
+  m_Father: {fileID: 8500281528771517653}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &5036480843668620471
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4173731436552247622}
+  m_Mesh: {fileID: 4300000, guid: 84acef4174e5c9e438f7f072e92bd134, type: 2}
+--- !u!23 &4915355161102193877
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4173731436552247622}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: df16ade6caa101c42a2422d6b218e6a3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &4254388944372984470
 GameObject:
   m_ObjectHideFlags: 0
@@ -915,6 +1096,7 @@ Transform:
   - {fileID: 3400424258971239232}
   - {fileID: 6833834316416385156}
   - {fileID: 6404458417995793748}
+  - {fileID: 3129857254501991582}
   - {fileID: 3442783455067868845}
   - {fileID: 3031061629388431309}
   m_Father: {fileID: 0}
@@ -981,20 +1163,26 @@ MonoBehaviour:
     - id: PlaneTree
       position: {x: -8.95, y: -0.03603019, z: 3}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.5, z: 0}
-      size: {x: 0.4, y: 3, z: 0.4}
+      centre: {x: 0, y: 1.53, z: 0}
+      size: {x: 0.4, y: 3.06, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: -8.95, y: -1.1375043, z: 17}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.5, z: 0}
-      size: {x: 0.4, y: 3, z: 0.4}
+      centre: {x: 0, y: 1.38, z: 0}
+      size: {x: 0.4, y: 2.76, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: -8.95, y: -2.2389786, z: 31}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.5, z: 0}
-      size: {x: 0.4, y: 3, z: 0.4}
+      centre: {x: 0, y: 1.6500001, z: 0}
+      size: {x: 0.4, y: 3.3000002, z: 0.4}
+      canJumpOver: 0
+    - id: Banner
+      position: {x: -8.6, y: -0.7441208, z: 12}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 3.15, z: 0}
+      size: {x: 0.3, y: 6.3, z: 0.3}
       canJumpOver: 0
     - id: CafeUmbrella
       position: {x: 14.6, y: -0.2720604, z: 6}
@@ -1017,20 +1205,26 @@ MonoBehaviour:
     - id: PlaneTree
       position: {x: 8.95, y: -0.03603019, z: 3}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.5, z: 0}
-      size: {x: 0.4, y: 3, z: 0.4}
+      centre: {x: 0, y: 1.2, z: 0}
+      size: {x: 0.4, y: 2.4, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -1.1375043, z: 17}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.5, z: 0}
-      size: {x: 0.4, y: 3, z: 0.4}
+      centre: {x: 0, y: 1.29, z: 0}
+      size: {x: 0.4, y: 2.58, z: 0.4}
       canJumpOver: 0
     - id: PlaneTree
       position: {x: 8.95, y: -2.2389786, z: 31}
       rotation: {x: 0, y: 0, z: 0}
-      centre: {x: 0, y: 1.5, z: 0}
-      size: {x: 0.4, y: 3, z: 0.4}
+      centre: {x: 0, y: 1.53, z: 0}
+      size: {x: 0.4, y: 3.06, z: 0.4}
+      canJumpOver: 0
+    - id: Banner
+      position: {x: 8.6, y: -1.8455949, z: 26}
+      rotation: {x: 0, y: 0, z: 0}
+      centre: {x: 0, y: 3.15, z: 0}
+      size: {x: 0.3, y: 6.3, z: 0.3}
       canJumpOver: 0
     - id: StreetLamp
       position: {x: -8.55, y: -1.9242716, z: 27}
