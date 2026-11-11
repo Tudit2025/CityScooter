@@ -15,6 +15,7 @@ MonoBehaviour:
   id: kingspark
   displayName: KINGS PARK
   order: 30
+  line: 
   length: {x: 440, y: 600}
   chunks:
   - {fileID: 3144797091505651701, guid: 3d519dc9d817a7845840b26acfbf269c, type: 3}
@@ -56,6 +57,7 @@ MonoBehaviour:
   skyYaw: 0
   skySize: 1.1
   skyHeight: -3
+  skyline: 1
   farScenery: {fileID: 8226085152938728945, guid: ccdeaace185c93b4e9bfadd212cae6c3, type: 3}
   gateway: {fileID: 1859575677090391012, guid: 815895769b5ed3e48970018271c8415c, type: 3}
   ambience: {fileID: 0}
